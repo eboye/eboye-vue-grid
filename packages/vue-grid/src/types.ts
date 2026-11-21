@@ -345,7 +345,12 @@ export interface VirtualScrollingFeature {
   readonly feature: 'virtualScrolling'
   useVirtualRows: typeof import('./composables/useVirtualRows').useVirtualRows
 }
+export interface ColumnVisibilityFeature {
+  readonly feature: 'columnVisibility'
+  setColumnHidden: typeof import('./core/columns').setColumnHidden
+}
 export type GridFeature =
+  | ColumnVisibilityFeature
   | VirtualScrollingFeature
   | ColumnReorderFeature
   | ColumnPinningFeature

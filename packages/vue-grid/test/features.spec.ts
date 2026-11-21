@@ -7,6 +7,7 @@ import {
   allFeatures,
   columnPinningFeature,
   columnReorderFeature,
+  columnVisibilityFeature,
   filteringFeature,
   menusFeature,
   paginationFeature,
@@ -94,7 +95,7 @@ describe('features are opt-in', () => {
     await plain.find('.vg-header [data-col-key="name"]').trigger('contextmenu')
     await flushPromises()
     const labels = () => [...document.querySelectorAll('.vg-menu [role="menuitem"]')].map((e) => e.textContent?.trim())
-    expect(labels()).toContain('Hide column') // the menu did open
+    expect(labels()).toContain('Reset columns') // the menu did open
     expect(labels()).not.toContain('Sort ascending')
     expect(labels()).not.toContain('Filter…')
     plain.unmount()
@@ -135,7 +136,7 @@ describe('features are opt-in', () => {
     expect(headerKeys(bare)).toEqual(['name', 'score'])
     await bare.find('.vg-header [data-col-key="name"]').trigger('contextmenu')
     await flushPromises()
-    expect(labels()).toContain('Hide column')
+    expect(labels()).toContain('Reset columns')
     expect(labels()).not.toContain('Pin left')
     expect(labels()).not.toContain('Move right')
     expect(warn.mock.calls.map((c: unknown[]) => String(c[0])).join('\n')).toContain('needs the columnPinning feature')
@@ -150,6 +151,36 @@ describe('features are opt-in', () => {
     await full.find('.vg-header [data-col-key="score"]').trigger('contextmenu')
     await flushPromises()
     expect(labels()).toEqual(expect.arrayContaining(['Pin left', 'Pin right', 'Move left', 'Move right']))
+    full.unmount()
+  })
+
+  it('column visibility: hidden columns show without the feature; hide works with it', async () => {
+    const cols = [{ key: 'name' }, { key: 'score', hidden: true }]
+    const headerKeys = (w: ReturnType<typeof mount>) => w.findAll('.vg-header > [data-col-key]').map((h) => h.attributes('data-col-key'))
+    const labels = () => [...document.querySelectorAll('.vg-menu [role="menuitem"]')].map((e) => e.textContent?.trim())
+
+    const bare = mount(VGrid, { props: { rows, columns: cols, rowKey: 'id', features: [menusFeature] }, attachTo: document.body })
+    expect(headerKeys(bare)).toEqual(['name', 'score'])
+    await bare.find('.vg-header [data-col-key="name"]').trigger('contextmenu')
+    await flushPromises()
+    expect(labels()).toContain('Reset columns')
+    expect(labels()).not.toContain('Hide column')
+    expect(warn.mock.calls.map((c: unknown[]) => String(c[0])).join('\n')).toContain('needs the columnVisibility feature')
+    // a stored hidden list is ignored too
+    await bare.setProps({ columnState: { order: ['name', 'score'], hidden: ['name'] } })
+    expect(headerKeys(bare)).toEqual(['name', 'score'])
+    bare.unmount()
+
+    const full = mount(VGrid, {
+      props: { rows, columns: [{ key: 'name' }, { key: 'score' }, { key: 'id' }], rowKey: 'id', features: [menusFeature, columnVisibilityFeature] },
+      attachTo: document.body,
+    })
+    await full.find('.vg-header [data-col-key="score"]').trigger('contextmenu')
+    await flushPromises()
+    const hide = [...document.querySelectorAll<HTMLElement>('.vg-menu [role="menuitem"]')].find((e) => e.textContent?.trim() === 'Hide column')!
+    hide.click()
+    await flushPromises()
+    expect(headerKeys(full)).toEqual(['name', 'id'])
     full.unmount()
   })
 

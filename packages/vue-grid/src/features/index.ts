@@ -1,6 +1,7 @@
 import type { GridFeature } from '../types'
 import { columnPinningFeature } from './columnPinning'
 import { columnReorderFeature } from './columnReorder'
+import { columnVisibilityFeature } from './columnVisibility'
 import { filteringFeature } from './filtering'
 import { menusFeature } from './menus'
 import { paginationFeature } from './pagination'
@@ -13,6 +14,7 @@ import { virtualScrollingFeature } from './virtualScrolling'
 export {
   columnPinningFeature,
   columnReorderFeature,
+  columnVisibilityFeature,
   filteringFeature,
   menusFeature,
   paginationFeature,
@@ -35,4 +37,5 @@ export const allFeatures: readonly GridFeature[] = [
   columnReorderFeature,
   columnPinningFeature,
   virtualScrollingFeature,
+  columnVisibilityFeature,
 ]

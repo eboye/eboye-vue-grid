@@ -113,7 +113,7 @@ you leave out the renderer styles.
 ### Choosing features
 
 Out of the box `<VGrid>` is a plain table. Sorting, filtering, server data, pagination,
-selection, sub-grids, context menus, column reordering, column pinning and virtual scrolling are
+selection, sub-grids, context menus, column reordering, pinning and visibility, and virtual scrolling are
 opt-in features, and only the ones you import are bundled:
 
 ```ts
@@ -139,6 +139,7 @@ app.use(createVueGrid({ features: allFeatures })) // all of them
 | `columnReorderFeature` | dragging headers, Alt+←/→ on a header, the menu's Move items |
 | `columnPinningFeature` | `pinned` columns (sticky, with shadows), the menu's Pin items |
 | `virtualScrollingFeature` | `virtual` (render only the rows in view) |
+| `columnVisibilityFeature` | `hidden` columns, `columnState.hidden`, the menu's Hide column item |
 
 Without its feature, an option does nothing and a dev warning names the feature to add. A grid
 reads `features` once when it is created.
@@ -1000,11 +1001,18 @@ appended, so changing your column list never breaks a saved layout.
 
 ```vue
 <script setup lang="ts">
-import { VGrid, VGridColumnMenu } from '@eboye/vue-grid'
+import { VGrid, VGridColumnMenu, columnVisibilityFeature } from '@eboye/vue-grid'
 </script>
 
 <template>
-  <VGrid :rows="rows" :columns="columns" row-key="id" storage="orders-grid">
+  <!-- the picker's checkboxes hide columns, which needs columnVisibilityFeature -->
+  <VGrid
+    :rows="rows"
+    :columns="columns"
+    row-key="id"
+    storage="orders-grid"
+    :features="[columnVisibilityFeature]"
+  >
     <template #toolbar="{ columnState, setColumnState }">
       <VGridColumnMenu
         :columns="columns"

@@ -1,5 +1,5 @@
 import { nextTick, shallowRef, type Ref } from 'vue'
-import { effectivePin, normalizeColumnState, setColumnHidden, setColumnPinned, visibleColumns } from '../core/columns'
+import { effectivePin, normalizeColumnState, setColumnPinned, visibleColumns } from '../core/columns'
 import type { AnchorTarget } from '../internal/anchor'
 import type {
   CellContext,
@@ -29,6 +29,8 @@ export interface GridMenusOptions<T> {
   pinnable: (column: ColumnDef<T>) => boolean
   /** Whether the move items show (the reorder feature is on and the column is `reorderable`). */
   reorderable: (column: ColumnDef<T>) => boolean
+  /** Hides a column; only with the visibility feature (no Hide item without it). */
+  hideColumn?: (key: string) => void
   moveColumnBy: (key: string, direction: -1 | 1) => boolean
   contextMenu: () => ((ctx: CellContext<T>) => MenuItem[] | null | undefined) | undefined
   headerMenu: () => boolean | ((ctx: HeaderMenuContext<T>) => MenuItem[] | null | undefined)
@@ -149,7 +151,7 @@ export function useGridMenus<T>(opts: GridMenusOptions<T>) {
         SEPARATOR,
       )
     }
-    if (column.hideable !== false) {
+    if (opts.hideColumn && column.hideable !== false) {
       out.push({ name: 'vg:hide', label: 'Hide column', disabled: visible.length <= 1 })
     }
     out.push({ name: 'vg:reset', label: 'Reset columns' })
@@ -194,7 +196,7 @@ export function useGridMenus<T>(opts: GridMenusOptions<T>) {
         opts.moveColumnBy(column.key, 1)
         break
       case 'vg:hide':
-        opts.setColumnState(setColumnHidden(state, column.key, true))
+        opts.hideColumn?.(column.key)
         break
       case 'vg:filter':
         // After the menu has closed and handed focus back, so the popover keeps it.

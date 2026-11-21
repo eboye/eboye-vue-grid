@@ -210,13 +210,27 @@ const storageAdapter = computed<ColumnStateStorage | undefined>(() =>
 const storedState = shallowRef(storageAdapter.value?.load() ?? null)
 watch(storageAdapter, (adapter) => (storedState.value = adapter?.load() ?? null))
 
-/** The columns as laid out: without the pinning feature, pins (in the defs or the state) are ignored. */
-const layoutColumns = computed<readonly ColumnDef<T>[]>(() =>
-  features.columnPinning ? props.columns : props.columns.map((c) => (c.pinned ? { ...c, pinned: undefined } : c)),
-)
-const effectiveState = computed(() => {
+/**
+ * The columns as laid out. Without the pinning feature, pins are ignored; without the visibility
+ * feature, `hidden` is — in the defs and in the (stored) state alike.
+ */
+const layoutColumns = computed<readonly ColumnDef<T>[]>(() => {
+  const keepPins = !!features.columnPinning
+  const keepHidden = !!features.columnVisibility
+  if (keepPins && keepHidden) return props.columns
+  return props.columns.map((c) =>
+    (!keepPins && c.pinned) || (!keepHidden && c.hidden)
+      ? { ...c, pinned: keepPins ? c.pinned : undefined, hidden: keepHidden ? c.hidden : undefined }
+      : c,
+  )
+})
+const effectiveState = computed<ColumnState>(() => {
   const state = normalizeColumnState(layoutColumns.value, columnState.value ?? storedState.value)
-  return features.columnPinning || !state.pinned ? state : { ...state, pinned: undefined }
+  return {
+    ...state,
+    hidden: features.columnVisibility ? state.hidden : [],
+    pinned: features.columnPinning ? state.pinned : undefined,
+  }
 })
 
 function setColumnState(next: ColumnState) {
@@ -500,6 +514,9 @@ const menus = features.menus?.useMenus<T>({
   sortable,
   pinnable: canPin,
   reorderable: (col) => canReorder(col.key),
+  hideColumn:
+    features.columnVisibility &&
+    ((key) => setColumnState(features.columnVisibility!.setColumnHidden(effectiveState.value, key, true))),
   moveColumnBy,
   contextMenu: () => props.contextMenu,
   headerMenu: () => props.headerMenu,
@@ -572,6 +589,8 @@ if (process.env.NODE_ENV !== 'production') {
     if (!features.virtualScrolling && props.virtual) missing('virtualScrolling', '`virtual`')
     if (!features.selection && props.selectable) missing('selection', '`selectable`')
     if (!features.subGrids && (props.subRows || props.loadSubRows)) missing('subGrids', '`sub-rows` / `load-sub-rows`')
+    const hiddenCol = props.columns.find((c) => c.hidden)?.key ?? columnState.value?.hidden?.[0]
+    if (!features.columnVisibility && hiddenCol) missing('columnVisibility', `Column "${hiddenCol}" is hidden; that`)
     const pinnedCol = props.columns.find((c) => c.pinned)?.key
     if (!features.columnPinning && pinnedCol) missing('columnPinning', `Column "${pinnedCol}" is pinned; that`)
     if (!features.menus && (props.contextMenu || typeof props.headerMenu === 'function'))

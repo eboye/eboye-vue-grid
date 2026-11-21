@@ -177,6 +177,8 @@ test.describe('server data', () => {
     await popover.getByLabel('Novi Sad').uncheck()
     await expect(requests(page).first()).toContainText('city')
     await page.keyboard.press('Escape')
+    // let the filter request finish first, or it would take the failure armed below
+    await expect(requests(page).first()).toHaveAttribute('data-status', 'ok')
 
     // a failing request → Retry
     await page.getByTestId('fail').click()

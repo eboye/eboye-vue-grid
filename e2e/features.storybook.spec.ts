@@ -53,11 +53,11 @@ test('selection, sub-grids and menus, feature by feature', async ({ page }) => {
   await expect(menu.getByRole('menuitem', { name: 'Copy' })).toBeVisible()
   await page.keyboard.press('Escape')
   await page.locator('.vg-header > [data-col-key="name"]').click({ button: 'right' })
-  await expect(menu.getByRole('menuitem', { name: 'Hide column' })).toBeVisible()
+  await expect(menu.getByRole('menuitem', { name: 'Reset columns' })).toBeVisible()
   await expect(menu.getByRole('menuitem', { name: /Sort/ })).toHaveCount(0) // sorting not on
 })
 
-test('column reorder and pinning: ignored without their features, working with them', async ({ page }) => {
+test('column reorder, pinning and visibility: ignored without their features, working with them', async ({ page }) => {
   await story(page, 'grid-features--columns')
   const scroller = page.locator('#storybook-root .vg')
   const keys = () => page.locator('.vg-header > [data-col-key]').evaluateAll((els) => els.map((e) => e.getAttribute('data-col-key')))
@@ -77,7 +77,9 @@ test('column reorder and pinning: ignored without their features, working with t
     await page.mouse.up()
   }
 
-  // no features: the pinned `#` column scrolls away; dragging and Alt+→ change nothing
+  // no features: the `hidden: true` column shows; the pinned `#` column scrolls away; dragging
+  // and Alt+→ change nothing
+  await expect(header(page, 'change')).toBeVisible()
   const before = await keys()
   const id0 = await box('id')
   await scrollBy(400)
@@ -106,6 +108,14 @@ test('column reorder and pinning: ignored without their features, working with t
   const menu = page.locator('.vg-menu:popover-open')
   await expect(menu.getByRole('menuitem', { name: 'Pin left' })).toBeVisible()
   await expect(menu.getByRole('menuitem', { name: 'Move right' })).toBeVisible()
+  await expect(menu.getByRole('menuitem', { name: 'Hide column' })).toHaveCount(0)
+  await page.keyboard.press('Escape')
+
+  await page.getByLabel('columnVisibilityFeature').check()
+  await expect(header(page, 'change')).toHaveCount(0) // `hidden: true` now applies
+  await header(page, 'city').click({ button: 'right' })
+  await menu.getByRole('menuitem', { name: 'Hide column' }).click()
+  await expect(header(page, 'city')).toHaveCount(0)
 })
 
 test('virtual scrolling: all rows render without the feature, a scrolling window with it', async ({ page }) => {

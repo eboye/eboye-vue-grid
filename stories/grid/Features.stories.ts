@@ -5,6 +5,7 @@ import {
   VGridSearch,
   columnPinningFeature,
   columnReorderFeature,
+  columnVisibilityFeature,
   filteringFeature,
   menusFeature,
   paginationFeature,
@@ -39,7 +40,7 @@ const choices: { label: string; feature: GridFeature }[] = [
 
 /**
  * Sorting, filtering, server data, pagination, selection, sub-grids, context menus, column
- * reordering, column pinning and virtual scrolling are **opt-in features**. A grid gets only the features you register, per grid
+ * reordering, pinning and visibility, and virtual scrolling are **opt-in features**. A grid gets only the features you register, per grid
  * (`<VGrid :features="[sortingFeature]">`) or app-wide (`createVueGrid({ features: [...] })`,
  * `allFeatures` for all of them), and only those reach your bundle. Without them the matching
  * options (`sortable`, `filterable`, `data-source`, `pagination`, `selectable`, `sub-rows`,
@@ -144,16 +145,23 @@ export const RowsAndMenus: Story = {
 const columnChoices: { label: string; feature: GridFeature }[] = [
   { label: 'columnReorderFeature', feature: columnReorderFeature },
   { label: 'columnPinningFeature', feature: columnPinningFeature },
+  { label: 'columnVisibilityFeature', feature: columnVisibilityFeature },
   { label: 'menusFeature', feature: menusFeature },
 ]
 const wideColumns = betColumns().map((c) =>
-  c.key === 'id' ? { ...c, pinned: 'left' as const } : { ...c, width: '12rem' },
+  c.key === 'id'
+    ? { ...c, pinned: 'left' as const }
+    : c.key === 'change'
+      ? { ...c, width: '12rem', hidden: true }
+      : { ...c, width: '12rem' },
 ) as GridArgs['columns']
 
 /**
- * Reordering (drag a header, Alt+←/→, Move items in the header menu) and pinning (sticky `pinned`
- * columns, Pin items in the header menu) are features too. Without `columnPinningFeature` the `#`
- * column's `pinned: 'left'` is ignored and it scrolls away with the rest.
+ * Reordering (drag a header, Alt+←/→, Move items in the header menu), pinning (sticky `pinned`
+ * columns, Pin items in the header menu) and visibility (`hidden` columns, Hide column in the header
+ * menu) are features too. Without `columnPinningFeature` the `#` column's `pinned: 'left'` is
+ * ignored and it scrolls away with the rest; without `columnVisibilityFeature` the `hidden: true`
+ * "Δ odds" column shows.
  */
 export const Columns: Story = {
   render: (args) => ({

@@ -31,7 +31,7 @@
   where a browser lacks a feature — see [Browser support](#browser-support).
 - **Small by default, everything optional.** ESM, one file per module, zero runtime dependencies.
   Sorting, filtering, server data, pagination, selection, sub-grids, menus, column reordering,
-  column pinning and virtual scrolling are opt-in **features**, and renderers are opt-in too. A
+  pinning and visibility, and virtual scrolling are opt-in **features**, and renderers are opt-in too. A
   plain grid with text cells is **12.2 kB gzipped**, and each feature or renderer you add costs
   only itself.
 - **Typed end to end.** `<VGrid generic="T">`, typed column helpers, and renderer options checked
@@ -159,18 +159,19 @@ Measured by bundling small apps against the published build for production with 
 
 | You import | Initial chunk |
 |---|---|
-| `VGrid` (no features) | 33.9 kB / 12.2 kB |
-| `VGrid` + `sortingFeature` | 34.6 kB / 12.5 kB |
-| `VGrid` + `filteringFeature` | 37.7 kB / 13.4 kB |
-| `VGrid` + `selectionFeature` | 35.9 kB / 12.8 kB |
-| `VGrid` + `subGridsFeature` | 35.7 kB / 12.8 kB |
-| `VGrid` + `menusFeature` | 42.8 kB / 15.2 kB |
-| `VGrid` + `columnReorderFeature` | 35.9 kB / 12.9 kB |
-| `VGrid` + `columnPinningFeature` | 36.1 kB / 13.1 kB |
-| `VGrid` + `virtualScrollingFeature` | 35.1 kB / 12.6 kB |
-| `VGrid` + `allFeatures` + `VGridSearch` | 56.8 kB / 20.0 kB |
-| `VGrid` + `currencyRenderer` | 35.2 kB / 12.5 kB |
-| everything | 100.4 kB / 32.4 kB |
+| `VGrid` (no features) | 34.2 kB / 12.2 kB |
+| `VGrid` + `sortingFeature` | 34.9 kB / 12.6 kB |
+| `VGrid` + `filteringFeature` | 37.9 kB / 13.5 kB |
+| `VGrid` + `selectionFeature` | 36.1 kB / 12.9 kB |
+| `VGrid` + `subGridsFeature` | 35.9 kB / 12.9 kB |
+| `VGrid` + `menusFeature` | 42.9 kB / 15.3 kB |
+| `VGrid` + `columnReorderFeature` | 36.1 kB / 13.0 kB |
+| `VGrid` + `columnPinningFeature` | 36.3 kB / 13.2 kB |
+| `VGrid` + `virtualScrollingFeature` | 35.3 kB / 12.7 kB |
+| `VGrid` + `columnVisibilityFeature` | 34.3 kB / 12.3 kB |
+| `VGrid` + `allFeatures` + `VGridSearch` | 57.1 kB / 20.2 kB |
+| `VGrid` + `currencyRenderer` | 35.4 kB / 12.6 kB |
+| everything | 100.7 kB / 32.5 kB |
 
 With `filteringFeature`, the filter popover body and the filter-row editors load on demand. With
 `paginationFeature`, the pager does too.
