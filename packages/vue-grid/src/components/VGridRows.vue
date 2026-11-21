@@ -8,7 +8,7 @@ defineOptions({ name: 'VGridRows' })
 
 const props = withDefaults(
   defineProps<{
-    rows: readonly any[]
+    rows: readonly unknown[]
     depth?: number
     /** Index of `rows[0]` in the full row list (virtual mode). */
     indexOffset?: number

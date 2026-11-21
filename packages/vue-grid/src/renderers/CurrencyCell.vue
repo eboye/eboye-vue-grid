@@ -5,7 +5,7 @@ import type { CellRendererProps } from '../types'
 import { formatCurrency } from './format'
 import { resolveOption, type CurrencyOptions } from './options'
 
-const props = defineProps<CellRendererProps<any, unknown, CurrencyOptions>>()
+const props = defineProps<CellRendererProps<unknown, unknown, CurrencyOptions>>()
 const ctx = useGridContext()
 
 const text = computed(() => {

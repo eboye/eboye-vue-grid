@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- rows are an opaque, type-erased T inside the grid internals; the public <VGrid generic="T"> API stays fully typed. */
 import { inject, type Component, type ComputedRef, type InjectionKey, type Slots } from 'vue'
 import type { Align, CellRendererDefinition, ClassValue, ColumnDef, GridPart, RowKey } from '../types'
 import type { SelectionSummary } from '../core/selection'

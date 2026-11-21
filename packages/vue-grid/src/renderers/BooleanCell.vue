@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import type { CellRendererProps } from '../types'
 import type { BooleanOptions } from './options'
 
-const props = defineProps<CellRendererProps<any, unknown, BooleanOptions>>()
+const props = defineProps<CellRendererProps<unknown, unknown, BooleanOptions>>()
 
 const state = computed(() => (props.value === null || props.value === undefined ? 'null' : props.value ? 'true' : 'false'))
 const text = computed(

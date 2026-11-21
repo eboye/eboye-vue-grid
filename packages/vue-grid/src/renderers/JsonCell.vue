@@ -4,7 +4,7 @@ import type { CellRendererProps } from '../types'
 import { stringifyJson } from './format'
 import { resolveOption, type JsonOptions } from './options'
 
-const props = defineProps<CellRendererProps<any, unknown, JsonOptions>>()
+const props = defineProps<CellRendererProps<unknown, unknown, JsonOptions>>()
 
 const dialog = shallowRef<HTMLDialogElement>()
 const hasValue = computed(() => props.value !== null && props.value !== undefined && props.value !== '')

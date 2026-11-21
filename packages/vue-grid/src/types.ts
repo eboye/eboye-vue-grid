@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- `any` defaults (ColumnDef<T = any>, renderer props) let untyped columns and renderers accept any row; createColumnHelper<T>() gives the strict form. */
 import type { Component } from 'vue'
 
 export type RowKey = string | number
@@ -77,6 +78,17 @@ export interface ColumnDef<T = any, R extends RendererName = RendererName> {
   headerClass?: ClassValue
 }
 
+/**
+ * Typed column factory. `renderer` is inferred per column, so `rendererOptions` is checked against
+ * that renderer's options (including addon renderers registered via module augmentation).
+ *
+ * ```ts
+ * const col = createColumnHelper<Order>()
+ * const columns = [col({ key: 'total', renderer: 'currency', rendererOptions: { currency: 'EUR' } })]
+ * ```
+ */
+export type ColumnHelper<T> = <R extends RendererName = 'text'>(def: ColumnDef<T, R>) => ColumnDef<T>
+
 export interface FormatContext {
   locale: string
   currency: string
@@ -141,6 +153,15 @@ export interface VirtualOptions {
   rowHeight: number
   /** Extra rows rendered above/below the viewport. Default 6. */
   overscan?: number
+}
+
+/** Methods exposed on a `<VGrid>` template ref: `const grid = ref<VGridExposed>()`. */
+export interface VGridExposed {
+  scrollToTop(): void
+  scrollToRow(key: RowKey): void
+  expandAll(): void
+  collapseAll(): void
+  setColumnState(state: ColumnState): void
 }
 
 export interface VueGridConfig {

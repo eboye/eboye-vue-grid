@@ -11,5 +11,6 @@ export { nextSort, sortRows, compareValues } from './core/sort'
 export { localStorageAdapter } from './core/storage'
 export { pageItems, type PageItem } from './core/pagination'
 
+export { createColumnHelper } from './core/helpers'
 export * from './renderers'
 export type * from './types'

@@ -26,9 +26,9 @@ API, so not TS 7), ESLint (flat config) + Prettier, Vitest, Playwright.
 - `packages/vue-grid` — the library, name `@eboye/vue-grid`. Vite library mode (ESM), declarations by
   `vue-tsc --emitDeclarationOnly`. Exports:
   - `.` — `VGrid`, `VGridPagination`, `VGridColumnMenu`, `createVueGrid`, `defineCellRenderer`,
-    composables, types.
-  - `./renderers` — built-in renderers (tree-shakeable; also registered by default via
-    `builtinRenderers`).
+    `createColumnHelper`, core helpers, types, and the built-in renderers (definitions + components).
+    _Implementation decision:_ built-ins are always registered in `<VGrid>` (best DX, ~18 kB gzip for
+    the whole library), so a separate `./renderers` entry was dropped.
   - `./style.css` — the theme.
   - `sideEffects: ["**/*.css"]`.
 - `packages/cell-renderer-template` — boilerplate addon (`@eboye/vue-grid-renderer-template`),

@@ -7,7 +7,7 @@ import { RenderSlot } from '../internal/RenderSlot'
 import VGridCheckbox from './VGridCheckbox.vue'
 
 const props = defineProps<{
-  row: any
+  row: unknown
   rowKey: RowKey
   rowIndex: number
   depth: number

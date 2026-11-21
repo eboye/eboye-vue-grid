@@ -5,7 +5,7 @@ import { parseJsonish } from './format'
 import JsonTreeNode from './JsonTreeNode.vue'
 import type { JsonTreeOptions } from './options'
 
-const props = defineProps<CellRendererProps<any, unknown, JsonTreeOptions>>()
+const props = defineProps<CellRendererProps<unknown, unknown, JsonTreeOptions>>()
 const data = computed(() => parseJsonish(props.value))
 </script>
 

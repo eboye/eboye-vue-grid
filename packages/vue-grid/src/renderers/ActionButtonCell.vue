@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import type { CellRendererEmits, CellRendererProps } from '../types'
 import { resolveOption, type ActionButtonOptions } from './options'
 
-const props = defineProps<CellRendererProps<any, unknown, ActionButtonOptions>>()
+const props = defineProps<CellRendererProps<unknown, unknown, ActionButtonOptions>>()
 const emit = defineEmits<CellRendererEmits>()
 
 const label = computed(() => resolveOption(props.options.label, props.value, props.row) ?? String(props.value ?? ''))

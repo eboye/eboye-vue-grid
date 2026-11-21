@@ -5,7 +5,7 @@ import type { CellRendererProps } from '../types'
 import { formatNumber, formatSigned } from './format'
 import type { NumberOptions } from './options'
 
-const props = defineProps<CellRendererProps<any, unknown, NumberOptions & { signed?: boolean }>>()
+const props = defineProps<CellRendererProps<unknown, unknown, NumberOptions & { signed?: boolean }>>()
 const ctx = useGridContext()
 
 const text = computed(() => {

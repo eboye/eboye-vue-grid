@@ -2,6 +2,8 @@ import type { Component } from 'vue'
 
 export type Tone = 'success' | 'danger' | 'warning' | 'info' | 'neutral' | 'accent'
 
+// `any` so option callbacks can annotate their own value/row types: (v: string, row: Order) => ...
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type RowFn<R> = (value: any, row: any) => R
 
 export interface TextOptions {
@@ -96,6 +98,7 @@ export interface MenuAction {
 }
 
 export interface ActionsMenuOptions {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- see RowFn
   actions?: MenuAction[] | ((row: any) => MenuAction[])
   label?: string
 }

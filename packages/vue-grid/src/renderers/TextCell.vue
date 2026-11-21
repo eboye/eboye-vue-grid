@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import type { CellRendererProps } from '../types'
 import { resolveOption, type TextOptions } from './options'
 
-const props = defineProps<CellRendererProps<any, unknown, TextOptions>>()
+const props = defineProps<CellRendererProps<unknown, unknown, TextOptions>>()
 
 const text = computed(() => {
   const v = props.value

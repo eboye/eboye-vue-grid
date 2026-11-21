@@ -5,7 +5,7 @@ import type { CellRendererProps } from '../types'
 import { DATE_DEFAULT, formatDate, TIME_DEFAULT, toDate } from './format'
 import type { DateTimeOptions } from './options'
 
-const props = defineProps<CellRendererProps<any, unknown, DateTimeOptions>>()
+const props = defineProps<CellRendererProps<unknown, unknown, DateTimeOptions>>()
 const ctx = useGridContext()
 
 const date = computed(() => toDate(props.value))

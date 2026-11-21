@@ -5,7 +5,7 @@ import type { CellRendererProps } from '../types'
 import { formatCurrency, formatNumber, toNumber } from './format'
 import type { ChangeOptions } from './options'
 
-const props = defineProps<CellRendererProps<any, unknown, ChangeOptions>>()
+const props = defineProps<CellRendererProps<unknown, unknown, ChangeOptions>>()
 const ctx = useGridContext()
 
 const direction = computed(() => {

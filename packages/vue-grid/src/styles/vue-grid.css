@@ -140,7 +140,6 @@
     display: flex;
     align-items: center;
     gap: 0.25rem;
-    min-width: 0;
     padding: calc(var(--vg-header-padding-y) * var(--_vg-density)) var(--vg-header-padding-x);
     background: var(--vg-color-header-bg);
     color: var(--vg-color-header-text);
@@ -170,7 +169,8 @@
     display: inline-flex;
     align-items: center;
     gap: 0.25rem;
-    max-width: 100%;
+    /* Not `max-width: 100%`: on a <button> that zeroes its min-content contribution to auto tracks. */
+    min-width: 0;
     margin: -0.25rem -0.375rem;
     padding: 0.25rem 0.375rem;
     border: 0;
@@ -203,7 +203,6 @@
     display: flex;
     align-items: center;
     gap: 0.375rem;
-    min-width: 0;
     padding: calc(var(--vg-cell-padding-y) * var(--_vg-density)) var(--vg-cell-padding-x);
     background: var(--vg-color-surface);
     border-bottom: var(--vg-row-border);
@@ -464,7 +463,8 @@
   .vg-menu-item:disabled { opacity: 0.45; cursor: not-allowed; }
   .vg-menu-item.vg-tone-danger { color: var(--vg-color-danger); }
 
-  .vg-column-panel { display: grid; gap: 0.5rem; padding: 0.5rem; min-width: 14rem; }
+  .vg-column-panel { gap: 0.5rem; padding: 0.5rem; min-width: 14rem; }
+  .vg-column-panel:popover-open { display: grid; }
   .vg-column-list { display: grid; gap: 0.125rem; margin: 0; padding: 0; list-style: none; }
   .vg-column-option {
     display: flex;
@@ -507,7 +507,7 @@
   .vg-page-ellipsis { padding: 0 0.25rem; color: var(--vg-color-text-muted); }
 
   /* ── Built-in renderers ────────────────────────────────────────────────────────────────── */
-  .vg-text { min-width: 0; overflow-wrap: anywhere; }
+  .vg-text { min-width: 0; overflow-wrap: break-word; }
   .vg-text-ellipsis { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
   .vg-text-clamp {
     display: -webkit-box;

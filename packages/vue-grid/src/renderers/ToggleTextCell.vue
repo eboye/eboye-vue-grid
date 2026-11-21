@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import type { CellRendererEmits, CellRendererProps } from '../types'
 import { resolveOption, type ToggleTextOptions } from './options'
 
-const props = defineProps<CellRendererProps<any, unknown, ToggleTextOptions>>()
+const props = defineProps<CellRendererProps<unknown, unknown, ToggleTextOptions>>()
 const emit = defineEmits<CellRendererEmits>()
 
 const text = computed(() =>

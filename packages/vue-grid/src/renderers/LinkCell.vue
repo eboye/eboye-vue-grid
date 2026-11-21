@@ -4,7 +4,7 @@ import type { CellRendererEmits, CellRendererProps } from '../types'
 import { safeHref } from './format'
 import type { LinkOptions } from './options'
 
-const props = defineProps<CellRendererProps<any, unknown, LinkOptions>>()
+const props = defineProps<CellRendererProps<unknown, unknown, LinkOptions>>()
 const emit = defineEmits<CellRendererEmits>()
 
 // Without an `href` option, an absolute http(s) value links to itself. Unsafe schemes are dropped.

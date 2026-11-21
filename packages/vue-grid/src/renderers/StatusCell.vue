@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import type { CellRendererProps } from '../types'
 import type { StatusOptions, Tone } from './options'
 
-const props = defineProps<CellRendererProps<any, unknown, StatusOptions>>()
+const props = defineProps<CellRendererProps<unknown, unknown, StatusOptions>>()
 
 const tone = computed<Tone>(() => {
   const t = props.options.tone

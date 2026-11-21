@@ -3,7 +3,7 @@ import { computed, nextTick, onBeforeUnmount, ref, shallowRef, useId } from 'vue
 import type { CellRendererEmits, CellRendererProps } from '../types'
 import type { ActionsMenuOptions, MenuAction } from './options'
 
-const props = defineProps<CellRendererProps<any, unknown, ActionsMenuOptions>>()
+const props = defineProps<CellRendererProps<unknown, unknown, ActionsMenuOptions>>()
 const emit = defineEmits<CellRendererEmits>()
 
 const id = useId()

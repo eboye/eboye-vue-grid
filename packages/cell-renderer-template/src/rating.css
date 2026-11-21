@@ -1,0 +1,48 @@
+/*
+ * Addon styles live in their own layer, declared after the grid's, so they can build on grid
+ * tokens while consumers' unlayered CSS still overrides both.
+ */
+@layer vue-grid, vue-grid-addons;
+
+@layer vue-grid-addons {
+  :root {
+    --vg-rating-color: var(--vg-color-warning);
+    --vg-rating-empty-color: var(--vg-color-border-strong);
+    --vg-rating-size: 1.125rem;
+    --vg-rating-gap: 0.0625rem;
+  }
+
+  .vg-rating {
+    display: inline-flex;
+    gap: var(--vg-rating-gap);
+    line-height: 1;
+  }
+
+  .vg-rating-star {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--vg-rating-empty-color);
+    font-size: var(--vg-rating-size);
+    line-height: 1;
+  }
+
+  button.vg-rating-star {
+    cursor: pointer;
+    border-radius: var(--vg-radius-sm);
+    transition: transform var(--vg-transition);
+  }
+
+  button.vg-rating-star:hover {
+    transform: scale(1.15);
+  }
+
+  button.vg-rating-star:focus-visible {
+    outline: 2px solid var(--vg-color-focus-ring);
+    outline-offset: 1px;
+  }
+
+  .vg-rating-star-on {
+    color: var(--vg-rating-color);
+  }
+}

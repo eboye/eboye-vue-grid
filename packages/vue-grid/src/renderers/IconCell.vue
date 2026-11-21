@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import type { CellRendererProps } from '../types'
 import { resolveOption, type IconOptions } from './options'
 
-const props = defineProps<CellRendererProps<any, unknown, IconOptions>>()
+const props = defineProps<CellRendererProps<unknown, unknown, IconOptions>>()
 
 const icon = computed(() => (props.options.iconFor ? props.options.iconFor(props.value, props.row) : props.options.icon))
 const visible = computed(() => (props.options.show ? props.options.show(props.value, props.row) : true))

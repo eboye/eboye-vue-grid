@@ -38,6 +38,7 @@ import type {
   GridPart,
   RowKey,
   SortState,
+  VGridExposed,
   VirtualOptions,
 } from '../types'
 import VGridHeader from './VGridHeader.vue'
@@ -468,7 +469,7 @@ function collapseAll() {
   expanded.value = []
 }
 
-defineExpose({ scrollToTop, scrollToRow, expandAll, collapseAll, setColumnState })
+defineExpose<VGridExposed>({ scrollToTop, scrollToRow, expandAll, collapseAll, setColumnState })
 </script>
 
 <template>
