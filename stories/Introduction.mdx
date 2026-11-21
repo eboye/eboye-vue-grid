@@ -1,0 +1,76 @@
+import { Meta } from '@storybook/addon-docs/blocks'
+
+<Meta title="Introduction" />
+
+# @eboye/vue-grid
+
+A data grid for Vue 3 built on **CSS Grid**: real `subgrid` sub-rows, pinned columns, column
+reorder / visibility / pinning with persistence, selection, virtual scrolling, pagination, popover
+context menus, a pluggable **cell-renderer registry** for add-ons, and a theme made of **CSS variables**.
+
+## Install
+
+```sh
+npm i @eboye/vue-grid
+```
+
+```ts
+// main.ts
+import { createApp } from 'vue'
+import { createVueGrid } from '@eboye/vue-grid'
+import '@eboye/vue-grid/style.css'
+
+createApp(App)
+  .use(createVueGrid({ locale: 'en-GB', currency: 'EUR' })) // optional defaults + add-on renderers
+  .mount('#app')
+```
+
+## A first grid
+
+```vue
+<script setup lang="ts">
+import { VGrid, createColumnHelper } from '@eboye/vue-grid'
+
+const col = createColumnHelper<Order>()
+const columns = [
+  col({ key: 'id', header: '#', width: 'min-content' }),
+  col({
+    key: 'customer',
+    header: 'Customer',
+    field: 'customer.name',
+    width: '1fr',
+    sortable: true,
+  }),
+  col({ key: 'total', header: 'Total', renderer: 'currency', sortable: true }),
+  col({
+    key: 'status',
+    header: 'Status',
+    renderer: 'status',
+    rendererOptions: { tone: { Paid: 'success', Open: 'info' } },
+  }),
+]
+</script>
+
+<template>
+  <VGrid :rows="orders" :columns="columns" row-key="id" sort-mode="client" style="height: 420px" />
+</template>
+```
+
+## How this Storybook is organised
+
+| Section        | What's there                                                                                                                                                                         |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Grid**       | One page per feature: basics, sorting, selection, sub-grids, detail rows, columns (pinning, picker, persistence), context menus, pagination and virtual scrolling, slots and events. |
+| **Renderers**  | Every built-in renderer (29) with edge-case samples. Edit `rendererOptions` live in Controls.                                                                                        |
+| **Recipes**    | A back-office grid built only from generic renderers: copyable tickets, risk chips, results, campaign status, alerts, device popovers, switches, favourites.                         |
+| **Theming**    | `--vg-*` tokens with live controls, a brand theme, utility classes via `ui`, dark mode.                                                                                              |
+| **Components** | `VGridMenu`, `VGridPagination`, `VGridColumnMenu` on their own.                                                                                                                      |
+| **Add-ons**    | The boilerplate `rating` add-on, a locally registered renderer, a component used directly as a renderer.                                                                             |
+
+Each page has a **Docs** tab with the prop / event / slot tables generated from the TypeScript types,
+and every story has **Show code**. Events are logged in the **Actions** panel. Use the **Scheme**
+toolbar button to switch between light and dark.
+
+The written guide with copy-paste snippets for every feature is
+[`docs/examples.md`](https://gitea.rutuj.me/eboye/eboye-vue-grid/src/branch/main/docs/examples.md); the API reference is the
+[package README](https://gitea.rutuj.me/eboye/eboye-vue-grid/src/branch/main/packages/vue-grid/README.md).

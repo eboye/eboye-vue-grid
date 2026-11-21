@@ -7,6 +7,7 @@ import {
   provide,
   ref,
   shallowRef,
+  toRaw,
   useSlots,
   watch,
   watchEffect,
@@ -171,9 +172,10 @@ const registry = computed(() => createRendererRegistry(builtinRenderers, config?
 
 function resolveRenderer(col: ColumnDef<T>): { component: ResolvedColumn['component']; definition?: CellRendererDefinition } {
   const renderer = col.renderer ?? 'text'
-  if (typeof renderer !== 'string') return { component: renderer }
+  // toRaw: columns kept in ref()/reactive() would otherwise hand Vue a reactive component.
+  if (typeof renderer !== 'string') return { component: toRaw(renderer) }
   const definition = registry.value.get(renderer)
-  if (definition) return { component: definition.component, definition }
+  if (definition) return { component: toRaw(definition.component), definition }
   warnOnce(`renderer:${renderer}`, `Unknown renderer "${renderer}" (column "${col.key}"); falling back to "text".`)
   return { component: textRenderer.component, definition: textRenderer }
 }

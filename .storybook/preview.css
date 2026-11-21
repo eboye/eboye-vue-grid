@@ -1,0 +1,66 @@
+:root {
+  font-family: system-ui, sans-serif;
+}
+
+body {
+  background: light-dark(#ffffff, #0b0f17);
+  color: light-dark(#111827, #e5e7eb);
+}
+
+/* Fixed-height frame so headers stick and pinned/virtual demos scroll. */
+.sb-frame {
+  height: 420px;
+}
+
+.sb-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-block-end: 0.75rem;
+}
+
+.sb-stack {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.sb-btn {
+  font: inherit;
+  padding: 0.3rem 0.7rem;
+  border: 1px solid light-dark(#d1d5db, #374151);
+  border-radius: 0.4rem;
+  background: light-dark(#f9fafb, #111827);
+  color: inherit;
+  cursor: pointer;
+}
+
+.sb-note {
+  font-size: 0.875rem;
+  opacity: 0.75;
+  margin-block: 0.75rem 0;
+}
+
+/* The "brand" theme used by the theming stories. */
+.sb-brand {
+  --vg-color-accent: #db2777;
+  --vg-color-focus-ring: #f472b6;
+  --vg-color-header-bg: light-dark(#fdf2f8, #3b0a24);
+  --vg-color-header-text: light-dark(#9d174d, #fbcfe8);
+  --vg-color-row-hover: light-dark(#fff1f7, #2a0b1c);
+  --vg-radius: 1rem;
+  --vg-cell-padding-x: 1.25rem;
+  --vg-header-text-transform: uppercase;
+  --vg-font-family: Georgia, serif;
+}
+
+/* Stand-ins for utility classes (Tailwind `italic`, `font-mono`, `shadow-lg`): unlayered, so they beat the grid layer. */
+.u-italic {
+  font-style: italic;
+}
+.u-mono {
+  font-family: ui-monospace, monospace;
+}
+.u-shadow {
+  box-shadow: 0 10px 30px -10px rgb(0 0 0 / 0.3);
+}

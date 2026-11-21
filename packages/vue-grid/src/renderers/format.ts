@@ -84,6 +84,62 @@ export function parseJsonish(value: unknown): unknown {
   }
 }
 
+/**
+ * Black or white, whichever reads better on `color`. Understands hex (#rgb, #rrggbb) and rgb()/rgba();
+ * anything else (named colours, var(), hsl()) gets white.
+ */
+export function readableTextColor(color: string): '#000' | '#fff' {
+  let r: number, g: number, b: number
+  const hex = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(color.trim())?.[1]
+  const rgb = /^rgba?\(\s*(\d+)[\s,]+(\d+)[\s,]+(\d+)/i.exec(color.trim())
+  if (hex) {
+    const full = hex.length === 3 ? [...hex].map((c) => c + c).join('') : hex
+    ;[r, g, b] = [0, 2, 4].map((i) => parseInt(full.slice(i, i + 2), 16)) as [number, number, number]
+  } else if (rgb) {
+    ;[r, g, b] = [rgb[1], rgb[2], rgb[3]].map(Number) as [number, number, number]
+  } else {
+    return '#fff'
+  }
+  // WCAG relative luminance
+  const lin = (c: number) => {
+    const s = c / 255
+    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4
+  }
+  const lum = 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
+  return lum > 0.4 ? '#000' : '#fff'
+}
+
+/** Image URL with an optional base for relative paths; only http(s), relative and `data:image/` are allowed. */
+export function resolveImageSrc(src: unknown, baseUrl?: string): string | undefined {
+  if (typeof src !== 'string' || !src.trim()) return undefined
+  const s = src.trim()
+  if (/^data:image\//i.test(s)) return s
+  if (/^[a-z][a-z0-9+.-]*:/i.test(s) || s.startsWith('//')) return /^https?:/i.test(s) ? s : undefined
+  if (!baseUrl) return s
+  return `${baseUrl.replace(/\/+$/, '')}/${s.replace(/^\/+/, '')}`
+}
+
+export type JsonTokenType = 'key' | 'string' | 'number' | 'boolean' | 'null' | 'punct'
+
+/** Splits pretty-printed JSON into typed tokens (rendered as text nodes, never as HTML). */
+export function tokenizeJson(text: string): { type: JsonTokenType; text: string }[] {
+  const out: { type: JsonTokenType; text: string }[] = []
+  const re = /("(?:\\.|[^"\\])*")(\s*:)?|\b(true|false)\b|\bnull\b|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?/g
+  let last = 0
+  for (let m = re.exec(text); m; m = re.exec(text)) {
+    if (m.index > last) out.push({ type: 'punct', text: text.slice(last, m.index) })
+    if (m[1]) {
+      out.push({ type: m[2] ? 'key' : 'string', text: m[1] })
+      if (m[2]) out.push({ type: 'punct', text: m[2] })
+    } else if (m[3]) out.push({ type: 'boolean', text: m[0] })
+    else if (m[0] === 'null') out.push({ type: 'null', text: m[0] })
+    else out.push({ type: 'number', text: m[0] })
+    last = re.lastIndex
+  }
+  if (last < text.length) out.push({ type: 'punct', text: text.slice(last) })
+  return out
+}
+
 export function stringifyJson(value: unknown): string {
   try {
     return JSON.stringify(parseJsonish(value), null, 2) ?? String(value)

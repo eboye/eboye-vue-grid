@@ -1,0 +1,17 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["vite/client", "node"],
+    "paths": {
+      "@eboye/vue-grid": ["../packages/vue-grid/src/index.ts"],
+      "@eboye/vue-grid-renderer-template": ["../packages/cell-renderer-template/src/index.ts"]
+    }
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.vue",
+    "../.storybook/*.ts",
+    "../packages/vue-grid/src/**/*",
+    "../playground/src/data.ts"
+  ]
+}

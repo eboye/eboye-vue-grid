@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, ref, shallowRef, useId } from 'vue'
+import { nextTick, ref, shallowRef, toRaw, useId } from 'vue'
 import {
   anchorNameFor,
   placeWithoutAnchorSupport,
@@ -187,7 +187,7 @@ defineExpose({ id: menuId, openAt, close, isOpen })
         :class="['vg-menu-item', item.tone && `vg-tone-${item.tone}`]"
         @click="choose(item)"
       >
-        <component :is="item.icon" v-if="item.icon" class="vg-menu-icon" aria-hidden="true" />
+        <component :is="toRaw(item.icon)" v-if="item.icon" class="vg-menu-icon" aria-hidden="true" />
         <span class="vg-menu-label">{{ item.label }}</span>
         <span v-if="item.hint" class="vg-menu-hint">{{ item.hint }}</span>
       </button>

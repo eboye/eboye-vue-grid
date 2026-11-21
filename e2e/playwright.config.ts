@@ -2,6 +2,7 @@ import { defineConfig, devices } from '@playwright/test'
 
 export default defineConfig({
   testDir: '.',
+  testIgnore: '*storybook.spec.ts', // has its own config: storybook.config.ts
   timeout: 30_000,
   fullyParallel: true,
   reporter: [['list']],

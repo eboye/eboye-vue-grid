@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
-import { defineComponent, h, nextTick } from 'vue'
+import { defineComponent, h, nextTick, reactive } from 'vue'
 import VGridComponent from '../src/components/VGrid.vue'
 
 // @vue/test-utils cannot infer generic SFC props (T becomes unknown); typed usage is checked in the playground.
@@ -138,6 +138,26 @@ describe('VGrid renderers registry', () => {
     const w = mount(VGrid, { props: { rows, columns: [{ key: 'name', renderer: 'nope' }], rowKey: 'id' } })
     expect(bodyTexts(w, 'name')[0]).toBe('Bravo')
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('Unknown renderer "nope"'))
+    warn.mockRestore()
+  })
+
+  it('renders components from reactive columns without making them reactive', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const Badge = defineComponent({ props: ['value'], setup: (p) => () => h('b', String(p.value)) })
+    const Icon = defineComponent({ setup: () => () => h('i', { class: 'test-icon' }) })
+    // Columns kept in reactive state (ref, Pinia, Storybook args) proxy everything inside them.
+    const state = reactive({
+      columns: [
+        { key: 'name', renderer: Badge },
+        { key: 'score', renderer: 'icon', rendererOptions: { icon: Icon } },
+        { key: 'city', renderer: 'action-button', value: () => 'Go', rendererOptions: { icon: Icon } },
+      ] as ColumnDef<Row>[],
+    })
+    const w = mount(VGrid, { props: { rows, columns: state.columns, rowKey: 'id' } })
+    await nextTick()
+    expect(w.find('[data-col-key="name"] b').text()).toBe('Bravo')
+    expect(w.findAll('.test-icon').length).toBe(rows.length * 2)
+    expect(warn.mock.calls.filter(([msg]) => String(msg).includes('reactive object'))).toEqual([])
     warn.mockRestore()
   })
 })

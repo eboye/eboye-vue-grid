@@ -1,28 +1,41 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { parseJsonish } from './format'
 
 defineOptions({ name: 'JsonTreeNode' })
 
-const props = defineProps<{
-  name?: string | number
-  value: unknown
-  level: number
-  collapseAt: number
-}>()
+const props = withDefaults(
+  defineProps<{
+    name?: string | number
+    value: unknown
+    level: number
+    collapseAt: number
+    maxDepth?: number
+    parseNested?: boolean
+  }>(),
+  { maxDepth: Infinity, parseNested: false },
+)
 
-const isObject = computed(() => props.value !== null && typeof props.value === 'object' && !(props.value instanceof Date))
-const isArray = computed(() => Array.isArray(props.value))
+/** With `parseNested`, a string holding a JSON object/array becomes that object/array. */
+const resolved = computed(() => {
+  const v = props.value
+  if (!props.parseNested || typeof v !== 'string' || !/^\s*[[{]/.test(v)) return v
+  return parseJsonish(v)
+})
+const isObject = computed(() => resolved.value !== null && typeof resolved.value === 'object' && !(resolved.value instanceof Date))
+const isArray = computed(() => Array.isArray(resolved.value))
 const entries = computed<[string | number, unknown][]>(() =>
   isArray.value
-    ? (props.value as unknown[]).map((v, i) => [i, v])
+    ? (resolved.value as unknown[]).map((v, i) => [i, v])
     : isObject.value
-      ? Object.entries(props.value as Record<string, unknown>)
+      ? Object.entries(resolved.value as Record<string, unknown>)
       : [],
 )
+const canOpen = computed(() => entries.value.length > 0 && props.level < props.maxDepth)
 const open = ref(props.level < props.collapseAt)
 
 const primitive = computed(() => {
-  const v = props.value
+  const v = resolved.value
   if (v === null) return { type: 'null', text: 'null' }
   if (v instanceof Date) return { type: 'date', text: v.toISOString() }
   if (typeof v === 'string') return { type: 'string', text: JSON.stringify(v) }
@@ -35,10 +48,10 @@ const summary = computed(() => {
 </script>
 
 <template>
-  <li class="vg-json-node" :role="isObject ? 'treeitem' : 'none'" :aria-expanded="isObject && entries.length ? open : undefined">
+  <li class="vg-json-node" :role="isObject ? 'treeitem' : 'none'" :aria-expanded="isObject && canOpen ? open : undefined">
     <template v-if="isObject">
       <button
-        v-if="entries.length"
+        v-if="canOpen"
         type="button"
         class="vg-json-toggle"
         :aria-label="open ? 'Collapse' : 'Expand'"
@@ -48,7 +61,7 @@ const summary = computed(() => {
       </button>
       <span v-if="name !== undefined" class="vg-json-key">{{ name }}:</span>
       <span class="vg-json-summary">{{ summary }}</span>
-      <ul v-if="open && entries.length" class="vg-json-children" role="group">
+      <ul v-if="open && canOpen" class="vg-json-children" role="group">
         <JsonTreeNode
           v-for="[childName, child] in entries"
           :key="childName"
@@ -56,6 +69,8 @@ const summary = computed(() => {
           :value="child"
           :level="level + 1"
           :collapse-at="collapseAt"
+          :max-depth="maxDepth"
+          :parse-nested="parseNested"
         />
       </ul>
     </template>

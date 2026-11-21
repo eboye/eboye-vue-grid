@@ -15,21 +15,47 @@ import NumberCell from './NumberCell.vue'
 import StatusCell from './StatusCell.vue'
 import TextCell from './TextCell.vue'
 import ToggleTextCell from './ToggleTextCell.vue'
+import ButtonGroupCell from './ButtonGroupCell.vue'
+import CheckboxCell from './CheckboxCell.vue'
+import ChipCell from './ChipCell.vue'
+import CodeCell from './CodeCell.vue'
+import CopyCell from './CopyCell.vue'
+import DetailsCell from './DetailsCell.vue'
+import EditCell from './EditCell.vue'
+import IconToggleCell from './IconToggleCell.vue'
+import ImageCell from './ImageCell.vue'
+import ListCell from './ListCell.vue'
+import MultiLineCell from './MultiLineCell.vue'
+import RadioCell from './RadioCell.vue'
+import SwitchCell from './SwitchCell.vue'
 import { toDate, toNumber } from './format'
 import type {
   ActionButtonOptions,
   ActionsMenuOptions,
   BooleanOptions,
+  ButtonGroupOptions,
   ChangeOptions,
+  CheckboxOptions,
+  ChipOptions,
+  CodeOptions,
+  CopyOptions,
   CurrencyOptions,
   DateOptions,
   DateTimeOptions,
+  DetailsOptions,
+  EditOptions,
   IconOptions,
+  IconToggleOptions,
+  ImageOptions,
   JsonOptions,
   JsonTreeOptions,
   LinkOptions,
+  ListOptions,
+  MultiLineOptions,
   NumberOptions,
+  RadioOptions,
   StatusOptions,
+  SwitchOptions,
   TextOptions,
   ToggleTextOptions,
 } from './options'
@@ -52,6 +78,19 @@ declare module '../types' {
     'json-tree': JsonTreeOptions
     'actions-menu': ActionsMenuOptions
     'action-button': ActionButtonOptions
+    'multi-line': MultiLineOptions
+    copy: CopyOptions
+    chip: ChipOptions
+    checkbox: CheckboxOptions
+    switch: SwitchOptions
+    radio: RadioOptions
+    edit: EditOptions
+    image: ImageOptions
+    code: CodeOptions
+    'button-group': ButtonGroupOptions
+    'icon-toggle': IconToggleOptions
+    details: DetailsOptions
+    list: ListOptions
   }
 }
 
@@ -106,6 +145,51 @@ export const actionButtonRenderer = defineCellRenderer<ActionButtonOptions>({
   name: 'action-button',
   component: ActionButtonCell,
 })
+export const multiLineRenderer = defineCellRenderer<MultiLineOptions>({ name: 'multi-line', component: MultiLineCell })
+export const copyRenderer = defineCellRenderer<CopyOptions>({ name: 'copy', component: CopyCell })
+export const chipRenderer = defineCellRenderer<ChipOptions>({
+  name: 'chip',
+  component: ChipCell,
+  sortValue: (value) =>
+    value !== null && typeof value === 'object'
+      ? ((value as Record<string, unknown>).label ?? (value as Record<string, unknown>).name ?? null)
+      : value,
+})
+const booleanSort = (value: unknown) => (value === null || value === undefined ? null : value ? 1 : 0)
+export const checkboxRenderer = defineCellRenderer<CheckboxOptions>({
+  name: 'checkbox',
+  component: CheckboxCell,
+  align: 'center',
+  sortValue: booleanSort,
+})
+export const switchRenderer = defineCellRenderer<SwitchOptions>({
+  name: 'switch',
+  component: SwitchCell,
+  align: 'center',
+  sortValue: booleanSort,
+})
+export const radioRenderer = defineCellRenderer<RadioOptions>({
+  name: 'radio',
+  component: RadioCell,
+  align: 'center',
+  sortValue: booleanSort,
+})
+export const editRenderer = defineCellRenderer<EditOptions>({ name: 'edit', component: EditCell })
+export const imageRenderer = defineCellRenderer<ImageOptions>({ name: 'image', component: ImageCell, align: 'center' })
+export const codeRenderer = defineCellRenderer<CodeOptions>({ name: 'code', component: CodeCell })
+export const buttonGroupRenderer = defineCellRenderer<ButtonGroupOptions>({ name: 'button-group', component: ButtonGroupCell })
+export const iconToggleRenderer = defineCellRenderer<IconToggleOptions>({
+  name: 'icon-toggle',
+  component: IconToggleCell,
+  align: 'center',
+  sortValue: booleanSort,
+})
+export const detailsRenderer = defineCellRenderer<DetailsOptions>({ name: 'details', component: DetailsCell })
+export const listRenderer = defineCellRenderer<ListOptions>({
+  name: 'list',
+  component: ListCell,
+  sortValue: (value) => (Array.isArray(value) ? value.length : null),
+})
 
 /** Every built-in renderer; always registered in `<VGrid>` (plugin/local renderers can override by name). */
 export const builtinRenderers: CellRendererDefinition[] = [
@@ -125,22 +209,48 @@ export const builtinRenderers: CellRendererDefinition[] = [
   jsonTreeRenderer,
   actionsMenuRenderer,
   actionButtonRenderer,
+  multiLineRenderer,
+  copyRenderer,
+  chipRenderer,
+  checkboxRenderer,
+  switchRenderer,
+  radioRenderer,
+  editRenderer,
+  imageRenderer,
+  codeRenderer,
+  buttonGroupRenderer,
+  iconToggleRenderer,
+  detailsRenderer,
+  listRenderer,
 ]
 
 export {
   ActionButtonCell,
   ActionsMenuCell,
   BooleanCell,
+  ButtonGroupCell,
   ChangeCell,
+  CheckboxCell,
+  ChipCell,
+  CodeCell,
+  CopyCell,
   CurrencyCell,
   DateCell,
   DateTimeCell,
+  DetailsCell,
+  EditCell,
   IconCell,
+  IconToggleCell,
+  ImageCell,
   JsonCell,
   JsonTreeCell,
   LinkCell,
+  ListCell,
+  MultiLineCell,
   NumberCell,
+  RadioCell,
   StatusCell,
+  SwitchCell,
   TextCell,
   ToggleTextCell,
 }

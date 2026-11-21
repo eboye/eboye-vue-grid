@@ -8,6 +8,9 @@ reorder/visibility with persistence, selection, virtual scrolling, pagination, a
 - Plain CSS in `@layer vue-grid` — your CSS / Tailwind utilities override it without `!important`.
 - No `v-html` / `innerHTML` anywhere; link renderer drops `javascript:` URLs.
 
+**New here? Start with the [examples cookbook](../../docs/examples.md)** — runnable snippets for every
+feature. This README is the API reference.
+
 ## Install
 
 ```sh
@@ -238,22 +241,47 @@ header moves the column.
 
 ## Built-in renderers
 
+**Display**
+
 | Name | Options |
 |---|---|
-| `text` (default) | `ellipsis`, `lines`, `maxWidth`, `tooltip`, `placeholder`, `tone` |
+| `text` (default) | `ellipsis`, `lines`, `maxWidth`, `preserveNewlines`, `tooltip`, `placeholder`, `tone`, `toneMode` (`text`/`fill`), `bold`, `secondary` (muted suffix), `badge` + `badgePosition`, `icon`, `copyable` + `copyValue` → emits `copy` |
 | `toggle-text` | `clickable`, `highlighted` → emits `toggle` |
-| `number`, `signed-number` | `format` (`Intl.NumberFormatOptions`), `placeholder` |
-| `currency` | `currency` (code or `(value, row) => code`), `format` |
-| `change` | `direction`, `currency`, `format` (arrow + colour) |
+| `number`, `signed-number` | `format` (`Intl.NumberFormatOptions`), `placeholder`, `clickable` → emits `click` |
+| `currency` | `currency` (code or `(value, row) => code`), `format`, `placeholder`, `clickable` → emits `click` |
+| `change` | `direction`, `currency`, `format`, `iconOnly` (arrow + colour; booleans / `'true'` = trend) |
 | `date`, `datetime` | `format`, `placeholder`; `datetime`: `milliseconds`, `twoLines` |
-| `boolean` | `trueLabel`, `falseLabel`, `nullLabel` |
-| `status` | `tone` (map / fn / constant), `label`, `dot` |
-| `link` | `href`, `label`, `target` → emits `click` |
+| `boolean` | `trueLabel`, `falseLabel`, `nullLabel`, `display` (`text`/`icon`), `falseIcon` |
+| `status` | `tone` (map / fn / constant), `label` (fn or value → label map), `dot`, `variant` (`soft`/`solid`/`outline`), `placeholder`, `clickable` → emits `click` |
+| `chip` | `color` (any CSS colour, contrast text picked), `tone`, `label`, `tooltip`, `shape` (`square`/`circle`/`pill`), `size`; accepts `{ label \| name, color, description }` |
+| `multi-line` | `lines` (builder; default: the value array), `boldLines`, `ellipsis`, `target`, `placeholder`; each line: `{ text, href, to, tone, fill, bold, muted, tooltip, trend, action, badge }` |
+| `list` | `items`, `itemLabel`, `max` (default 1), `placeholder` → “+N more” toggle, emits `expand` |
+| `link` | `href`, `to` (router location → `<RouterLink>` when vue-router is installed), `label`, `target`, `tooltip` → emits `click` |
 | `icon` | `icon` / `iconFor`, `show`, `label`, `tone` |
+| `image` | `src`, `baseUrl`, `alt`, `size`, `fit`, `shape`; placeholder when empty or broken |
+| `code` | `language` (`auto`/`json`/`text`), `lines`, `indent`, `highlight` (JSON token colours) |
 | `json` | `label`, `dialogTitle` (escaped JSON in a `<dialog>`) |
-| `json-tree` | `collapseAt` |
-| `actions-menu` | `actions: MenuItem[] \| (row) => MenuItem[]`, `label` → emits the action name (popover + anchor positioning) |
-| `action-button` | `label`, `action`, `icon`, `tone`, `disabled` |
+| `json-tree` | `collapseAt`, `maxDepth`, `parseNested`, `collapsed` + `toggleLabel`, `emptyText` |
+| `details` | `tone`, `label`, `items` (`{ label, value, tone, detail, tooltip }[]`), `title`, `triggerLabel` → badge + info popover |
+
+**Actions and editing** — editable renderers are *controlled*: they show the data and emit the requested
+change; your `@cell-action` handler updates the row.
+
+| Name | Options → emits |
+|---|---|
+| `actions-menu` | `actions: MenuItem[] \| (row) => MenuItem[]`, `label` → the item's `name` |
+| `action-button` | `label`, `action`, `icon`, `tone`, `disabled`, `visible`, `variant` (`outline`/`solid`/`ghost`), `iconOnly` → `action` (default `click`) |
+| `button-group` | `buttons: ButtonSpec[] \| (row) => ButtonSpec[]` (`{ name, label, tone, variant, disabled, icon, hidden }`) → the button's `name` |
+| `copy` | `copyValue`, `iconOnly`, `title`, `label`, `placeholder` → `copy` (payload: copied text) / `copy-error` |
+| `edit` | `format`, `placeholder`, `label`, `disabled`, `bold` → `edit` |
+| `checkbox`, `switch` | `checked`, `disabled`, `disabledReason`, `label` → `change` (payload: the requested boolean) |
+| `radio` | same + `name` → `select` (payload: the row key) |
+| `icon-toggle` | `active`, `icon`, `activeIcon`, `activeTone`, `label`, `disabled` → `toggle` (payload: next state) |
+
+```vue
+<VGrid :rows="rows" :columns="[{ key: 'web', renderer: 'switch' }]" row-key="id"
+       @cell-action="({ name, payload, rowKey }) => name === 'change' && setWeb(rowKey, payload)" />
+```
 
 Values option callbacks receive `(value, row)`. The component of every renderer is exported too
 (`TextCell`, `CurrencyCell`, …) for composition.

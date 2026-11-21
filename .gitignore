@@ -7,3 +7,5 @@ e2e/screenshots/
 *.tsbuildinfo
 .DS_Store
 .vite/
+storybook-static/
+*storybook.log

@@ -1,19 +1,24 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useGridContext } from '../registry/plugin'
-import type { CellRendererProps } from '../types'
+import type { CellRendererEmits, CellRendererProps } from '../types'
 import { formatNumber, formatSigned } from './format'
-import type { NumberOptions } from './options'
+import { resolveOption, type NumberOptions } from './options'
+import NumberValue from './parts/NumberValue.vue'
 
 const props = defineProps<CellRendererProps<unknown, unknown, NumberOptions & { signed?: boolean }>>()
+const emit = defineEmits<CellRendererEmits>()
 const ctx = useGridContext()
 
-const text = computed(() => {
-  const fmt = props.options.signed ? formatSigned : formatNumber
-  return fmt(props.value, ctx.value, props.options.format) || (props.options.placeholder ?? '')
-})
+const formatted = computed(() => (props.options.signed ? formatSigned : formatNumber)(props.value, ctx.value, props.options.format))
+const clickable = computed(() => !!resolveOption(props.options.clickable, props.value, props.row))
 </script>
 
 <template>
-  <span class="vg-number">{{ text }}</span>
+  <NumberValue
+    :text="formatted || (options.placeholder ?? '')"
+    :muted="!formatted"
+    :clickable="clickable"
+    @click="emit('action', 'click', value)"
+  />
 </template>
