@@ -17,11 +17,12 @@ npm i @eboye/vue-grid
 ```ts
 // main.ts
 import { createApp } from 'vue'
-import { createVueGrid } from '@eboye/vue-grid'
+import { createVueGrid, filteringFeature, sortingFeature } from '@eboye/vue-grid'
 import '@eboye/vue-grid/style.css'
 
 createApp(App)
-  .use(createVueGrid({ locale: 'en-GB', currency: 'EUR' })) // optional defaults
+  // optional: defaults, and the opt-in features every grid gets (allFeatures for all of them)
+  .use(createVueGrid({ locale: 'en-GB', currency: 'EUR', features: [sortingFeature, filteringFeature] }))
   .mount('#app')
 ```
 
@@ -60,7 +61,7 @@ const columns = [
 
 | Section        | What's there                                                                                                                                                                         |
 | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Grid**       | One page per feature: basics, sorting, selection, sub-grids, detail rows, columns (pinning, picker, persistence), context menus, pagination and virtual scrolling, slots and events. |
+| **Grid**       | One page per feature: opt-in features, basics, sorting, filtering, server data, selection, sub-grids, detail rows, columns (pinning, picker, persistence), context menus, pagination and virtual scrolling, slots and events. |
 | **Renderers**  | Every built-in renderer (29) with edge-case samples. Edit `rendererOptions` live in Controls.                                                                                        |
 | **Recipes**    | A back-office grid built only from generic renderers: copyable tickets, risk chips, results, campaign status, alerts, device popovers, switches, favourites.                         |
 | **Theming**    | `--vg-*` tokens with live controls, a brand theme, utility classes via `ui`, dark mode.                                                                                              |

@@ -1,8 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- rows are an opaque, type-erased T inside the grid internals; the public <VGrid generic="T"> API stays fully typed. */
 import { inject, type Component, type ComputedRef, type InjectionKey, type Slots } from 'vue'
 import type { Align, CellRendererDefinition, ClassValue, ColumnDef, FlashMode, GridPart, RowKey } from '../types'
+import type { ColumnFilter, FilterState, FilterType } from '../core/filter'
 import type { SelectionSummary } from '../core/selection'
 import type { SubRowEntry } from '../composables/useSubRows'
+import type { DistinctValue } from '../composables/useGridFilters'
 
 export const SELECT_COLUMN_KEY = '__vg_select'
 
@@ -27,7 +29,10 @@ export interface GridContext {
   slots: Slots
   ui: ComputedRef<Partial<Record<GridPart, ClassValue>>>
   getKey(row: any): RowKey
+  /** Filters (client mode) and sorts one level of rows. */
   sortRows(rows: readonly any[]): any[]
+  /** The sorting feature is on and the column is `sortable`. */
+  sortable(col: ColumnDef): boolean
   // expansion
   treeMode: ComputedRef<boolean>
   hasDetail: ComputedRef<boolean>
@@ -49,6 +54,24 @@ export interface GridContext {
   rowClickable: ComputedRef<boolean>
   /** Grid-wide change highlight (columns may override with `flash`). */
   flash: ComputedRef<FlashMode>
+  /** Only with the filtering feature. */
+  filters?: {
+    FilterButton: Component
+    FilterInput: Component
+    state: ComputedRef<FilterState>
+    setSearch(search: string): void
+    setColumnFilter(key: string, filter: ColumnFilter | undefined): void
+    isActive(key: string): boolean
+    typeOf(col: ColumnDef): FilterType | 'custom'
+    /** Show the filter row (inputs inside the header cells). */
+    filterRow: ComputedRef<boolean>
+    /** Distinct values of a column, for its value-list filter. */
+    distinct(key: string): DistinctValue[]
+    /** DOM id of a column's filter popover. */
+    idFor(key: string): string
+    /** Opens a column's filter popover (header menu, filter row). */
+    open(key: string): void
+  }
   virtual: ComputedRef<boolean>
   pinStyle(key: string): Record<string, string> | undefined
   onRowClick(row: any, key: RowKey, event: MouseEvent | KeyboardEvent): void

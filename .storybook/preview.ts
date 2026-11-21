@@ -1,6 +1,6 @@
 import type { Preview } from '@storybook/vue3-vite'
 import { setup } from '@storybook/vue3-vite'
-import { allRenderers, createVueGrid } from '@eboye/vue-grid'
+import { allFeatures, allRenderers, createVueGrid } from '@eboye/vue-grid'
 import { ratingRenderer } from '@eboye/vue-grid-renderer-template'
 import '@eboye/vue-grid/style.css'
 import '@eboye/vue-grid-renderer-template/style.css'
@@ -11,6 +11,7 @@ setup((app) => {
   app.use(
     createVueGrid({
       renderers: [...allRenderers, ratingRenderer],
+      features: allFeatures, // every story can sort, filter and page; Grid/Features shows opting in
       locale: 'en-US',
       currency: 'EUR',
       timeZone: 'UTC',

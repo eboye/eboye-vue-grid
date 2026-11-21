@@ -102,12 +102,14 @@ export { textRenderer }
 export const toggleTextRenderer = /*#__PURE__*/ defineCellRenderer<ToggleTextOptions>({ name: 'toggle-text', component: ToggleTextCell })
 export const numberRenderer = /*#__PURE__*/ defineCellRenderer<NumberOptions>({
   name: 'number',
+  filterType: 'number',
   component: NumberCell,
   align: 'end',
   sortValue: numericSort,
 })
 export const signedNumberRenderer = /*#__PURE__*/ defineCellRenderer<NumberOptions & { signed?: boolean }>({
   name: 'signed-number',
+  filterType: 'number',
   component: NumberCell,
   defaults: { signed: true },
   align: 'end',
@@ -115,24 +117,27 @@ export const signedNumberRenderer = /*#__PURE__*/ defineCellRenderer<NumberOptio
 })
 export const currencyRenderer = /*#__PURE__*/ defineCellRenderer<CurrencyOptions>({
   name: 'currency',
+  filterType: 'number',
   component: CurrencyCell,
   align: 'end',
   sortValue: numericSort,
 })
 export const changeRenderer = /*#__PURE__*/ defineCellRenderer<ChangeOptions>({
   name: 'change',
+  filterType: 'number',
   component: ChangeCell,
   align: 'end',
   sortValue: numericSort,
 })
-export const dateRenderer = /*#__PURE__*/ defineCellRenderer<DateOptions>({ name: 'date', component: DateCell, sortValue: dateSort })
+export const dateRenderer = /*#__PURE__*/ defineCellRenderer<DateOptions>({ name: 'date', component: DateCell, sortValue: dateSort, filterType: 'date' })
 export const dateTimeRenderer = /*#__PURE__*/ defineCellRenderer<DateTimeOptions>({
   name: 'datetime',
+  filterType: 'date',
   component: DateTimeCell,
   sortValue: dateSort,
 })
-export const booleanRenderer = /*#__PURE__*/ defineCellRenderer<BooleanOptions>({ name: 'boolean', component: BooleanCell })
-export const statusRenderer = /*#__PURE__*/ defineCellRenderer<StatusOptions>({ name: 'status', component: StatusCell })
+export const booleanRenderer = /*#__PURE__*/ defineCellRenderer<BooleanOptions>({ name: 'boolean', component: BooleanCell, filterType: 'boolean' })
+export const statusRenderer = /*#__PURE__*/ defineCellRenderer<StatusOptions>({ name: 'status', component: StatusCell, filterType: 'set' })
 export const linkRenderer = /*#__PURE__*/ defineCellRenderer<LinkOptions>({ name: 'link', component: LinkCell })
 export const iconRenderer = /*#__PURE__*/ defineCellRenderer<IconOptions>({ name: 'icon', component: IconCell, align: 'center' })
 export const jsonRenderer = /*#__PURE__*/ defineCellRenderer<JsonOptions>({ name: 'json', component: JsonCell })
@@ -150,6 +155,7 @@ export const multiLineRenderer = /*#__PURE__*/ defineCellRenderer<MultiLineOptio
 export const copyRenderer = /*#__PURE__*/ defineCellRenderer<CopyOptions>({ name: 'copy', component: CopyCell })
 export const chipRenderer = /*#__PURE__*/ defineCellRenderer<ChipOptions>({
   name: 'chip',
+  filterType: 'set',
   component: ChipCell,
   sortValue: (value) =>
     value !== null && typeof value === 'object'
@@ -159,18 +165,21 @@ export const chipRenderer = /*#__PURE__*/ defineCellRenderer<ChipOptions>({
 const booleanSort = (value: unknown) => (value === null || value === undefined ? null : value ? 1 : 0)
 export const checkboxRenderer = /*#__PURE__*/ defineCellRenderer<CheckboxOptions>({
   name: 'checkbox',
+  filterType: 'boolean',
   component: CheckboxCell,
   align: 'center',
   sortValue: booleanSort,
 })
 export const switchRenderer = /*#__PURE__*/ defineCellRenderer<SwitchOptions>({
   name: 'switch',
+  filterType: 'boolean',
   component: SwitchCell,
   align: 'center',
   sortValue: booleanSort,
 })
 export const radioRenderer = /*#__PURE__*/ defineCellRenderer<RadioOptions>({
   name: 'radio',
+  filterType: 'boolean',
   component: RadioCell,
   align: 'center',
   sortValue: booleanSort,
@@ -181,6 +190,7 @@ export const codeRenderer = /*#__PURE__*/ defineCellRenderer<CodeOptions>({ name
 export const buttonGroupRenderer = /*#__PURE__*/ defineCellRenderer<ButtonGroupOptions>({ name: 'button-group', component: ButtonGroupCell })
 export const iconToggleRenderer = /*#__PURE__*/ defineCellRenderer<IconToggleOptions>({
   name: 'icon-toggle',
+  filterType: 'boolean',
   component: IconToggleCell,
   align: 'center',
   sortValue: booleanSort,

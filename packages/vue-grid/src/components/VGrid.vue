@@ -1,3 +1,9 @@
+<script lang="ts">
+// Replaced by the consumer's bundler, so dev-only blocks drop out of production builds (see
+// internal/dev.ts). Declared here: a generic <script setup> can't hold declarations.
+declare const process: { env: Record<string, string | undefined> }
+</script>
+
 <script setup lang="ts" generic="T">
 import {
   computed,
@@ -8,6 +14,7 @@ import {
   ref,
   shallowRef,
   toRaw,
+  useId,
   useSlots,
   watch,
   watchEffect,
@@ -21,7 +28,6 @@ import {
   visibleColumns,
 } from '../core/columns'
 import { selectionState, toggleRowSelection } from '../core/selection'
-import { sortRows } from '../core/sort'
 import { localStorageAdapter } from '../core/storage'
 import { getCellValue, resolveRowKey, type RowKeyGetter } from '../core/value'
 import type { RowPatches } from '../core/patch'
@@ -32,7 +38,9 @@ import { useGridMenus, type MenuHandle } from '../composables/useGridMenus'
 import { usePinnedOffsets } from '../composables/usePinnedOffsets'
 import { useScrollEdges } from '../composables/useScrollEdges'
 import { useSubRows } from '../composables/useSubRows'
-import { DEV, warnOnce } from '../internal/dev'
+import type { DataSource, GridQuery } from '../composables/useDataSource'
+import { resolveFeatures } from '../internal/features'
+import { warnOnce } from '../internal/dev'
 import { supportsHas } from '../internal/supports'
 import { GRID_CONTEXT_KEY, SELECT_COLUMN_KEY, type GridContext, type ResolvedColumn } from '../internal/context'
 import { FORMAT_CONTEXT_KEY, GRID_CONFIG_KEY, resolveFormatContext } from '../registry/plugin'
@@ -47,6 +55,9 @@ import type {
   ColumnDef,
   ColumnState,
   FlashMode,
+  FilterState,
+  GridFeature,
+  FilterStateStorage,
   ColumnStateStorage,
   ContextActionEvent,
   Density,
@@ -63,12 +74,37 @@ import VGridHeader from './VGridHeader.vue'
 import VGridMenu from './VGridMenu.vue'
 import VGridRows from './VGridRows.vue'
 
+const NO_FILTERS: FilterState = Object.freeze({ columns: Object.freeze({}), search: '' }) as FilterState
+
 const props = withDefaults(
   defineProps<{
-    rows: readonly T[]
+    /** The rows (client data). Omit when using `dataSource`. */
+    rows?: readonly T[]
     columns: readonly ColumnDef<T>[]
     rowKey: RowKeyGetter<T>
+    /**
+     * Opt-in features for this grid (added to the app-wide `createVueGrid({ features })`):
+     * `sortingFeature`, `filteringFeature`, `serverDataFeature`, `paginationFeature`, or
+     * `allFeatures`. Read once, when the grid is created.
+     */
+    features?: readonly GridFeature[]
+    /**
+     * Server data: called with the current query (sort, filters, search, page) whenever it changes.
+     * The grid cancels superseded requests, shows loading and errors, and sorts / filters / pages
+     * nothing itself.
+     */
+    dataSource?: DataSource<T>
+    /** Built-in pagination under the grid (server-side with `dataSource`, client-side otherwise). */
+    pagination?: boolean | { pageSizes?: number[] }
     sortMode?: 'controlled' | 'client'
+    /** `client` (default): the grid filters its rows. `controlled`: it only emits `update:filters`. */
+    filterMode?: 'client' | 'controlled'
+    /** Show the filter row: an input under each filterable column's header. */
+    filterRow?: boolean
+    /** Persist the filter model (`string` = localStorage key). */
+    filterStorage?: FilterStateStorage | string
+    /** Shown when filters hide every row. */
+    noMatchText?: string
     selectable?: boolean | 'single'
     selectionMode?: 'cascade' | 'independent'
     isRowSelectable?: (row: T) => boolean
@@ -101,8 +137,13 @@ const props = withDefaults(
     headerMenu?: boolean | ((ctx: HeaderMenuContext<T>) => MenuItem[] | null | undefined)
   }>(),
   {
+    rows: () => [],
+    pagination: false,
     headerMenu: true,
     sortMode: 'controlled',
+    filterMode: 'client',
+    filterRow: false,
+    noMatchText: 'No rows match the current filters.',
     selectable: false,
     selectionMode: 'cascade',
     rowClickable: false,
@@ -116,8 +157,14 @@ const sort = defineModel<SortState | null>('sort', { default: null })
 const columnState = defineModel<ColumnState | undefined>('columnState', { default: undefined })
 const expanded = defineModel<RowKey[]>('expanded', { default: () => [] })
 const selected = defineModel<RowKey[]>('selected', { default: () => [] })
+const filters = defineModel<FilterState | null>('filters', { default: null })
+const page = defineModel<number>('page', { default: 1 })
+const pageSize = defineModel<number>('pageSize', { default: 25 })
 
 const emit = defineEmits<{
+  /** The combined query (sort, filters, search, page) — on mount and whenever it changes. */
+  'query-change': [query: GridQuery]
+  'load-error': [error: unknown]
   'row-click': [row: T, event: MouseEvent | KeyboardEvent]
   'cell-click': [event: CellClickEvent<T>]
   'cell-action': [event: CellActionEvent<T>]
@@ -144,6 +191,11 @@ defineSlots<{
     columns: readonly ColumnDef<T>[]
     columnState: ColumnState
     setColumnState: (state: ColumnState) => void
+    filters: FilterState
+    setFilters: (state: FilterState) => void
+    clearFilters: () => void
+    /** Active column filters + search. */
+    activeFilterCount: number
   }) => unknown
 }>()
 
@@ -157,6 +209,10 @@ provide(
 )
 
 const getKey = (row: T) => resolveRowKey(row, props.rowKey)
+
+// Features are opt-in, so a grid only bundles what the app registers. Composables can't be added
+// later, so the set is fixed when the grid is created.
+const features = resolveFeatures(config?.features, props.features)
 
 // ── Column state ────────────────────────────────────────────────────────────────────────────
 const storageAdapter = computed<ColumnStateStorage | undefined>(() =>
@@ -191,12 +247,14 @@ function resolveRenderer(col: ColumnDef<T>): {
   if (typeof renderer !== 'string') return { component: toRaw(renderer) }
   const definition = registry.value.get(renderer)
   if (definition) return { component: toRaw(definition.component), definition }
-  warnOnce(
-    `renderer:${renderer}`,
-    `Unknown renderer "${renderer}" (column "${col.key}"); falling back to "text". ` +
-      `Pass the definition (renderer: ${camel(renderer)}Renderer) or register it by name: ` +
-      `createVueGrid({ renderers: [${camel(renderer)}Renderer] }) / <VGrid :renderers="[…]">.`,
-  )
+  if (process.env.NODE_ENV !== 'production') {
+    warnOnce(
+      `renderer:${renderer}`,
+      `Unknown renderer "${renderer}" (column "${col.key}"); falling back to "text". ` +
+        `Pass the definition (renderer: ${camel(renderer)}Renderer) or register it by name: ` +
+        `createVueGrid({ renderers: [${camel(renderer)}Renderer] }) / <VGrid :renderers="[…]">.`,
+    )
+  }
   return { component: textRenderer.component, definition: textRenderer, fallback: true }
 }
 
@@ -251,9 +309,12 @@ const resolvedColumns = computed<ResolvedColumn[]>(() => {
 const template = computed(() => gridTemplate(resolvedColumns.value.map((c) => c.def)))
 
 // ── Sorting ─────────────────────────────────────────────────────────────────────────────────
+const sortable = (col: ColumnDef<T>) => !!features.sorting && !!col.sortable
+
 function sortRowsFn(rows: readonly T[]): T[] {
   const state = sort.value
-  if (props.sortMode !== 'client' || !state) return rows as T[]
+  const sorting = features.sorting
+  if (!sorting || !clientSort.value || !state) return rows as T[]
   const col = props.columns.find((c) => c.key === state.key)
   if (!col) return rows as T[]
   const resolved = resolvedColumns.value.find((c) => c.key === col.key)
@@ -263,10 +324,11 @@ function sortRowsFn(rows: readonly T[]): T[] {
     (definition?.sortValue
       ? (row: T) => definition.sortValue!(getCellValue(row, col), resolved!.options)
       : (row: T) => getCellValue(row, col))
-  return sortRows(rows, state.dir, getter, col.sortFn)
+  return sorting.sortRows(rows, state.dir, getter, col.sortFn)
 }
 
 function onSort(key: string) {
+  if (!features.sorting) return
   const current = sort.value
   sort.value = !current || current.key !== key ? { key, dir: 'asc' } : current.dir === 'asc' ? { key, dir: 'desc' } : null
 }
@@ -297,9 +359,75 @@ function toggleExpanded(row: T) {
   expanded.value = [...next]
 }
 
-/** Pre-order walk over rows and every child row currently known (sync or already loaded). */
+// ── Filtering ───────────────────────────────────────────────────────────────────────────────
+const gridId = useId()
+const filt = features.filtering?.useFilters<T>({
+  model: filters,
+  storage: () => props.filterStorage,
+  mode: () => (serverMode.value ? 'controlled' : props.filterMode),
+  columns: () => props.columns,
+  visibleColumns: () => resolvedColumns.value.filter((c) => c.kind === 'data').map((c) => c.def as ColumnDef<T>),
+  definitionOf: (col) => resolveRenderer(col).definition,
+  rows: (): readonly T[] => sourceRows.value,
+  childrenOf: (row) => (treeMode.value ? sub.children(row) : undefined),
+  getKey,
+  timeZone: () => props.timeZone ?? config?.timeZone,
+})
+const filterIdFor = (key: string) => `vg-filter-${gridId}-${key.replace(/[^\w-]/g, '_')}`
+function openFilter(key: string) {
+  const el = document.getElementById(filterIdFor(key))
+  if (el && !el.matches(':popover-open')) el.showPopover?.()
+}
+const filterState = computed<FilterState>(() => filt?.state.value ?? NO_FILTERS)
+const activeFilterCount = computed(() => filt?.activeCount.value ?? 0)
+/** Client mode: filter one level of rows, then sort it. */
+const prepareRows = (rows: readonly T[]) => sortRowsFn(filt ? filt.apply(rows) : rows)
+
+// ── Server data & query ─────────────────────────────────────────────────────────────────────
+/** With a data source the backend sorts, filters and pages; the grid only shows what it returns. */
+const serverMode = computed(() => !!features.serverData && !!props.dataSource)
+const clientSort = computed(() => !serverMode.value && props.sortMode === 'client')
+const paginated = computed(() => !!features.pagination && !!props.pagination && !isVirtual.value)
+
+const query = computed<GridQuery>(() => ({
+  sort: sort.value,
+  filters: filterState.value,
+  page: paginated.value ? page.value : 1,
+  pageSize: paginated.value ? pageSize.value : null,
+}))
+
+const ds = features.serverData?.useDataSource<T>({
+  source: () => props.dataSource,
+  query: (): GridQuery => query.value,
+  getKey,
+  onError: (error) => emit('load-error', error),
+})
+
+const sourceRows = computed<readonly T[]>(() => (serverMode.value && ds ? ds.rows.value : props.rows))
+const isLoading = computed(() => props.loading || !!ds?.loading.value)
+const loadError = computed(() => (serverMode.value ? ds?.error.value : undefined))
+const reload = async () => {
+  await ds?.reload()
+}
+
+// A new sort or filter starts again at page 1.
+watch(
+  () => JSON.stringify([sort.value, filterState.value]),
+  () => {
+    if (page.value !== 1) page.value = 1
+  },
+)
+// One event for apps that fetch on their own (stores, GraphQL…): coalesced per tick, deduplicated.
+watch(
+  () => JSON.stringify(query.value),
+  () => emit('query-change', query.value),
+  { immediate: true, flush: 'post' },
+)
+
+/** Pre-order walk over the rows that pass the filters and every known child row (sync or loaded). */
 function walk(rows: readonly T[], visit: (row: T) => void) {
   for (const row of rows) {
+    if (filt && !filt.isVisible(row)) continue
     visit(row)
     if (treeMode.value) {
       const kids = sub.children(row)
@@ -348,7 +476,7 @@ function toggleRow(row: T) {
 const selectableKeys = computed(() => {
   if (!selectMode.value) return []
   const keys: RowKey[] = []
-  walk(props.rows, (row) => {
+  walk(sourceRows.value, (row) => {
     if (isRowSelectable(row)) keys.push(getKey(row))
   })
   return keys
@@ -406,11 +534,19 @@ const menus = useGridMenus<T>({
   columnState: () => effectiveState.value,
   setColumnState,
   sort,
+  sortable,
   moveColumnBy,
   contextMenu: () => props.contextMenu,
   headerMenu: () => props.headerMenu,
   onContextAction: (event) => emit('context-action', event),
   onHeaderAction: (event) => emit('header-action', event),
+  filters: filt && {
+    isActive: (key) => filt.isActive(key),
+    anyActive: () => filt.activeCount.value > 0,
+    open: (key) => openFilter(key),
+    clear: (key) => filt.setColumnFilter(key, undefined),
+    clearAll: () => filt.clearAll(),
+  },
 })
 
 // ── Virtualisation ──────────────────────────────────────────────────────────────────────────
@@ -441,7 +577,7 @@ onBeforeUnmount(() => {
   cancelAnimationFrame(scrollFrame)
 })
 
-const topRows = computed(() => sortRowsFn(props.rows))
+const topRows = computed(() => prepareRows(sourceRows.value))
 const virtualWindow = computed(() => {
   const v = props.virtual
   if (!v) return null
@@ -454,17 +590,30 @@ const virtualWindow = computed(() => {
     overscan: v.overscan ?? 6,
   })
 })
-const windowRows = computed(() =>
-  virtualWindow.value ? topRows.value.slice(virtualWindow.value.start, virtualWindow.value.end) : topRows.value,
-)
+/** Rows on all pages: the server's total, or the filtered client rows. */
+const totalRows = computed(() => (serverMode.value ? (ds?.total.value ?? sourceRows.value.length) : topRows.value.length))
+const windowRows = computed(() => {
+  if (virtualWindow.value) return topRows.value.slice(virtualWindow.value.start, virtualWindow.value.end)
+  if (paginated.value && !serverMode.value) {
+    const start = (page.value - 1) * pageSize.value
+    return topRows.value.slice(start, start + pageSize.value)
+  }
+  return topRows.value
+})
+// Client pagination: stay on a page that exists when filters shrink the rows.
+watch(totalRows, (total) => {
+  if (!paginated.value || serverMode.value) return
+  const last = Math.max(1, Math.ceil(total / pageSize.value))
+  if (page.value > last) page.value = last
+})
 
-if (DEV) {
+if (process.env.NODE_ENV !== 'production') {
   watchEffect(() => {
     if (props.virtual && (props.subRows || props.loadSubRows || slots.detail)) {
       warnOnce('virtual-expand', 'Sub-rows and detail rows are disabled in virtual mode.')
     }
     const seen = new Set<RowKey>()
-    for (const row of props.rows) {
+    for (const row of sourceRows.value) {
       const key = getKey(row)
       if (seen.has(key)) {
         warnOnce(`dup:${String(key)}`, `Duplicate row key "${String(key)}". Row keys must be unique.`)
@@ -473,6 +622,25 @@ if (DEV) {
       seen.add(key)
     }
   })
+  // A feature-dependent option without its feature does nothing: say which feature to add.
+  const missing = (feature: string, what: string) =>
+    warnOnce(
+      `feature:${feature}`,
+      `${what} needs the ${feature} feature. Add ${feature}Feature: <VGrid :features="[${feature}Feature]"> ` +
+        `or createVueGrid({ features: [${feature}Feature] }) (allFeatures for everything).`,
+    )
+  watchEffect(() => {
+    const col = (flag: 'sortable' | 'filterable') => props.columns.find((c) => c[flag])?.key
+    if (!features.sorting && col('sortable')) missing('sorting', `Column "${col('sortable')}" is sortable; that`)
+    if (!features.filtering && (col('filterable') || props.filterRow || filters.value))
+      missing('filtering', 'Filtering (`filterable` columns, `filter-row`, `v-model:filters`)')
+    if (!features.serverData && props.dataSource) missing('serverData', '`data-source`')
+    if (!features.pagination && props.pagination) missing('pagination', '`pagination`')
+  })
+  watch(
+    () => props.features,
+    () => warnOnce('features-changed', '`features` is read once, when the grid is created; changes are ignored.'),
+  )
 }
 
 // ── Events ──────────────────────────────────────────────────────────────────────────────────
@@ -483,7 +651,8 @@ const context: GridContext = {
   slots,
   ui: computed(() => props.ui ?? {}),
   getKey,
-  sortRows: sortRowsFn,
+  sortRows: prepareRows,
+  sortable,
   treeMode,
   hasDetail,
   canExpand,
@@ -501,6 +670,22 @@ const context: GridContext = {
   rowClass: (row, index) => props.rowClass?.(row, index),
   rowClickable: computed(() => props.rowClickable),
   flash: computed(() => props.flash ?? false),
+  filters: filt && {
+    FilterButton: features.filtering!.FilterButton,
+    FilterInput: features.filtering!.FilterInput,
+    state: filt.state,
+    setSearch: filt.setSearch,
+    setColumnFilter: filt.setColumnFilter,
+    isActive: filt.isActive,
+    typeOf: (col) => filt.typeOf(col as ColumnDef<T>),
+    filterRow: computed(() => props.filterRow),
+    distinct: (key) => {
+      const col = props.columns.find((c) => c.key === key)
+      return col ? filt.distinctValues(col) : []
+    },
+    idFor: filterIdFor,
+    open: openFilter,
+  },
   virtual: isVirtual,
   pinStyle: (key) => {
     const offset = pinOffsets.value[key]
@@ -535,7 +720,7 @@ function scrollToRow(key: RowKey) {
 
 function expandAll() {
   const keys: RowKey[] = []
-  walk(props.rows, (row) => {
+  walk(sourceRows.value, (row) => {
     if (canExpand(row)) keys.push(getKey(row))
   })
   expanded.value = keys
@@ -547,26 +732,52 @@ function collapseAll() {
 
 /** Field patches for lazily loaded child rows (top-level rows belong to the app: patch those). */
 function patchLoadedRows(patches: RowPatches<T>): number {
-  return sub.patchLoaded(patches)
+  return sub.patchLoaded(patches) + (serverMode.value && ds ? ds.patch(patches) : 0)
 }
 
-defineExpose<VGridExposed>({ scrollToTop, scrollToRow, expandAll, collapseAll, setColumnState, patchLoadedRows })
+function setFilters(state: FilterState) {
+  if (filt) filt.setFilters(state)
+  else if (process.env.NODE_ENV !== 'production') warnOnce('feature:filtering', 'setFilters() needs the filtering feature (filteringFeature).')
+}
+const clearFilters = () => filt?.clearAll()
+
+defineExpose<VGridExposed>({
+  scrollToTop,
+  scrollToRow,
+  expandAll,
+  collapseAll,
+  setColumnState,
+  patchLoadedRows,
+  setFilters,
+  clearFilters,
+  openFilter,
+  reload,
+})
 </script>
 
 <template>
   <div :class="['vg-root', ui?.root]" :data-density="density ?? config?.density">
     <div v-if="slots.toolbar" class="vg-toolbar">
-      <slot name="toolbar" :columns="columns" :column-state="effectiveState" :set-column-state="setColumnState" />
+      <slot
+        name="toolbar"
+        :columns="columns"
+        :column-state="effectiveState"
+        :set-column-state="setColumnState"
+        :filters="filterState"
+        :set-filters="setFilters"
+        :clear-filters="clearFilters"
+        :active-filter-count="activeFilterCount"
+      />
     </div>
     <div class="vg-viewport">
-      <div v-if="loading" class="vg-progress" aria-hidden="true" />
+      <div v-if="isLoading" class="vg-progress" aria-hidden="true" />
       <div
         ref="root"
         :class="['vg', { 'vg-virtual': isVirtual, 'vg-is-dragging': drag.dragging.value }]"
         :role="treeMode ? 'treegrid' : 'grid'"
         tabindex="0"
         :aria-label="ariaLabel"
-        :aria-busy="loading || undefined"
+        :aria-busy="isLoading || undefined"
         :aria-rowcount="isVirtual ? topRows.length + 1 : undefined"
         :aria-colcount="resolvedColumns.length"
         :aria-multiselectable="selectMode === 'multi' || undefined"
@@ -590,7 +801,7 @@ defineExpose<VGridExposed>({ scrollToTop, scrollToRow, expandAll, collapseAll, s
           @drag-start="drag.onPointerDown"
           @header-click="drag.consumeClick"
         />
-        <template v-if="rows.length">
+        <template v-if="windowRows.length">
           <div
             v-if="virtualWindow"
             class="vg-spacer"
@@ -612,12 +823,29 @@ defineExpose<VGridExposed>({ scrollToTop, scrollToRow, expandAll, collapseAll, s
         </template>
         <div v-else role="row" class="vg-empty-row">
           <div role="gridcell" tabindex="-1" :class="['vg-empty', ui?.empty]">
-            <slot v-if="loading" name="loading">Loading…</slot>
+            <slot v-if="isLoading" name="loading">Loading…</slot>
+            <span v-else-if="loadError" class="vg-no-match vg-load-error" role="alert">
+              Couldn't load the rows.
+              <button type="button" class="vg-link-button" @click="reload()">Retry</button>
+            </span>
+            <span v-else-if="(serverMode || rows.length) && activeFilterCount" class="vg-no-match">
+              {{ noMatchText }}
+              <button type="button" class="vg-link-button" @click="clearFilters()">Clear filters</button>
+            </span>
             <slot v-else name="empty">{{ emptyText }}</slot>
           </div>
         </div>
       </div>
     </div>
+    <component
+      :is="features.pagination.Pagination"
+      v-if="paginated && features.pagination"
+      v-model:page="page"
+      v-model:page-size="pageSize"
+      class="vg-grid-pagination"
+      :total="totalRows"
+      :page-sizes="typeof pagination === 'object' ? pagination.pageSizes : undefined"
+    />
     <VGridMenu ref="menuRef" :items="menus.items.value" :label="menus.label.value" placement="point" @select="menus.onSelect" />
   </div>
 </template>

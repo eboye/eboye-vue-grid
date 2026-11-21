@@ -23,11 +23,20 @@ export interface GridMenusOptions<T> {
   columnState: () => ColumnState
   setColumnState: (state: ColumnState) => void
   sort: Ref<SortState | null>
+  /** Whether a column can be sorted (the sorting feature is on and the column is `sortable`). */
+  sortable: (column: ColumnDef<T>) => boolean
   moveColumnBy: (key: string, direction: -1 | 1) => boolean
   contextMenu: () => ((ctx: CellContext<T>) => MenuItem[] | null | undefined) | undefined
   headerMenu: () => boolean | ((ctx: HeaderMenuContext<T>) => MenuItem[] | null | undefined)
   onContextAction: (event: ContextActionEvent<T>) => void
   onHeaderAction: (event: HeaderActionEvent<T>) => void
+  filters?: {
+    isActive(key: string): boolean
+    anyActive(): boolean
+    open(key: string): void
+    clear(key: string): void
+    clearAll(): void
+  }
 }
 
 const SEPARATOR: MenuItem = { separator: true }
@@ -99,7 +108,7 @@ export function useGridMenus<T>(opts: GridMenusOptions<T>) {
   function builtinHeaderItems(column: ColumnDef<T>): MenuItem[] {
     const state = opts.columnState()
     const out: MenuItem[] = []
-    if (column.sortable) {
+    if (opts.sortable(column)) {
       const dir = opts.sort.value?.key === column.key ? opts.sort.value.dir : null
       out.push(
         { name: 'vg:sort-asc', label: 'Sort ascending', disabled: dir === 'asc' },
@@ -107,6 +116,14 @@ export function useGridMenus<T>(opts: GridMenusOptions<T>) {
         { name: 'vg:sort-clear', label: 'Clear sort', disabled: !dir },
         SEPARATOR,
       )
+    }
+    if (opts.filters && column.filterable) {
+      out.push(
+        { name: 'vg:filter', label: 'Filter…' },
+        { name: 'vg:filter-clear', label: 'Clear filter', disabled: !opts.filters.isActive(column.key) },
+      )
+      if (opts.filters.anyActive()) out.push({ name: 'vg:filter-clear-all', label: 'Clear all filters' })
+      out.push(SEPARATOR)
     }
     if (column.pinnable !== false) {
       const pin = effectivePin(column, state)
@@ -174,6 +191,16 @@ export function useGridMenus<T>(opts: GridMenusOptions<T>) {
         break
       case 'vg:hide':
         opts.setColumnState(setColumnHidden(state, column.key, true))
+        break
+      case 'vg:filter':
+        // After the menu has closed and handed focus back, so the popover keeps it.
+        window.setTimeout(() => opts.filters?.open(column.key), 0)
+        break
+      case 'vg:filter-clear':
+        opts.filters?.clear(column.key)
+        break
+      case 'vg:filter-clear-all':
+        opts.filters?.clearAll()
         break
       case 'vg:reset':
         opts.setColumnState(normalizeColumnState(columns, null))

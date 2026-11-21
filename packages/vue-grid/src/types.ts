@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- `any` defaults (ColumnDef<T = any>, renderer props) let untyped columns and renderers accept any row; createColumnHelper<T>() gives the strict form. */
 import type { Component } from 'vue'
+import type { ColumnFilter, FilterState, FilterType } from './core/filter'
 
 export type RowKey = string | number
 
@@ -16,6 +17,34 @@ export interface SortState {
 }
 
 export type PinSide = 'left' | 'right'
+
+export type { ColumnFilter, FilterState, FilterStateStorage, FilterType } from './core/filter'
+
+export interface FilterOption {
+  value: unknown
+  label?: string
+  /** Shown next to the option (e.g. number of rows). */
+  count?: number
+}
+
+export type FilterOptionsLoader = (search: string, ctx: { signal: AbortSignal }) => Promise<readonly FilterOption[]>
+
+export interface ColumnFilterOptions {
+  type?: FilterType
+  /**
+   * Choices for a `set` filter: a list, or a loader called with the search text (e.g. from a
+   * backend — honour `signal`). Default: distinct values from the rows.
+   */
+  options?: readonly FilterOption[] | FilterOptionsLoader
+  /** Placeholder of the filter-row input. */
+  placeholder?: string
+}
+
+/** Props of a column's custom `filterComponent`. */
+export interface FilterComponentProps<T = any> {
+  modelValue: ColumnFilter | undefined
+  column: ColumnDef<T>
+}
 
 /** Change highlight: off, a neutral tint, or green / red by numeric direction. */
 export type FlashMode = boolean | 'direction'
@@ -96,6 +125,18 @@ export interface ColumnDef<T = any, R extends RendererRef = RendererName> {
   reorderable?: boolean
   /** Cell click emits `cell-click` instead of `row-click`. */
   clickable?: boolean
+  /** Show a filter for this column (funnel in the header, and an input in the filter row). */
+  filterable?: boolean
+  /** Filter type — default from the renderer (number, date, boolean, set for status/chip, else text) — or options. */
+  filter?: FilterType | ColumnFilterOptions
+  /** Value used for filtering (default: the cell value). */
+  filterValue?: (row: T) => unknown
+  /** Custom predicate; replaces the built-in matching for this column. */
+  filterFn?: (row: T, filter: ColumnFilter, value: unknown) => boolean
+  /** Custom filter UI (popover), receives `modelValue` / emits `update:modelValue` with a filter. */
+  filterComponent?: Component
+  /** Include in the quick search. Default `true` for visible columns. */
+  searchable?: boolean
   /**
    * Briefly highlight the cell when its value changes (overrides the grid's `flash` prop).
    * `'direction'`: green when a number goes up, red when it goes down.
@@ -147,6 +188,8 @@ export interface CellRendererDefinition<O = any> {
   sortValue?: (value: unknown, options: O) => unknown
   /** Plain-text form of the value (tooltips, accessibility, exports). */
   format?: (value: unknown, options: O, ctx: FormatContext) => string
+  /** Default filter type for columns using this renderer (default `text`). */
+  filterType?: FilterType
 }
 
 export interface CellActionEvent<T = any> {
@@ -239,10 +282,47 @@ export interface VGridExposed {
    * (assign fields on reactive rows, or use `patchRows`). Returns the number of rows patched.
    */
   patchLoadedRows(patches: ReadonlyMap<RowKey, Record<string, unknown>> | readonly Record<string, unknown>[]): number
+  /** Replaces the filter model (also persisted with `filter-storage`). */
+  setFilters(state: FilterState): void
+  /** Removes every column filter and the search. */
+  clearFilters(): void
+  /** Opens a column's filter popover. */
+  openFilter(key: string): void
+  /** Re-runs the `dataSource` with the current query. */
+  reload(): Promise<void>
 }
+
+// ── Features (opt-in, tree-shakeable) ─────────────────────────────────────────────────────────
+// A grid only gets the features you register — per grid (`<VGrid :features>`) or app-wide
+// (`createVueGrid({ features })`) — and only those reach your bundle.
+
+export interface SortingFeature {
+  readonly feature: 'sorting'
+  sortRows: typeof import('./core/sort').sortRows
+}
+export interface FilteringFeature {
+  readonly feature: 'filtering'
+  useFilters: typeof import('./composables/useGridFilters').useGridFilters
+  /** The header funnel and its popover. */
+  FilterButton: Component
+  /** The filter-row editor. */
+  FilterInput: Component
+}
+export interface ServerDataFeature {
+  readonly feature: 'serverData'
+  useDataSource: typeof import('./composables/useDataSource').useDataSource
+}
+export interface PaginationFeature {
+  readonly feature: 'pagination'
+  Pagination: Component
+}
+export type GridFeature = SortingFeature | FilteringFeature | ServerDataFeature | PaginationFeature
+export type GridFeatureName = GridFeature['feature']
 
 export interface VueGridConfig {
   renderers?: CellRendererDefinition[]
+  /** Features every grid in the app gets (`allFeatures` for all of them). */
+  features?: readonly GridFeature[]
   locale?: string
   currency?: string
   timeZone?: string

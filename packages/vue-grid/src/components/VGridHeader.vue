@@ -24,7 +24,7 @@ const emit = defineEmits<{
 const grid = useInternalGrid()
 
 function ariaSort(col: ResolvedColumn) {
-  if (!col.def.sortable) return undefined
+  if (!grid.sortable(col.def)) return undefined
   if (props.sort?.key !== col.key) return 'none'
   return props.sort.dir === 'asc' ? 'ascending' : 'descending'
 }
@@ -45,13 +45,15 @@ function ariaSort(col: ResolvedColumn) {
         `vg-align-${col.align}`,
         {
           'vg-header-select': col.kind === 'select',
-          'vg-sorted': col.def.sortable && sort?.key === col.key,
+          'vg-sorted': grid.sortable(col.def) && sort?.key === col.key,
           'vg-reorderable': col.kind === 'data' && canReorder(col.key),
           'vg-dragging': dragging === col.key,
           'vg-drop-before': dropTarget?.key === col.key && dropTarget.side === 'before',
           'vg-drop-after': dropTarget?.key === col.key && dropTarget.side === 'after',
           [`vg-pin-${col.pinned}`]: col.pinned,
           'vg-pin-edge': col.pinEdge,
+          'vg-filtered': col.kind === 'data' && grid.filters?.isActive(col.key),
+          'vg-has-filter-row': grid.filters?.filterRow.value,
         },
         col.def.headerClass,
         grid.ui.value.headerCell,
@@ -72,7 +74,7 @@ function ariaSort(col: ResolvedColumn) {
       </template>
       <template v-else>
         <button
-          v-if="col.def.sortable"
+          v-if="grid.sortable(col.def)"
           type="button"
           class="vg-sort"
           tabindex="-1"
@@ -91,6 +93,18 @@ function ariaSort(col: ResolvedColumn) {
           <RenderSlot v-if="grid.slots[`header-${col.key}`]" :fn="grid.slots[`header-${col.key}`]" :scope="{ column: col.def }" />
           <template v-else>{{ col.def.header ?? col.key }}</template>
         </span>
+        <template v-if="grid.filters && col.def.filterable">
+          <component :is="grid.filters.FilterButton" :column="col" />
+          <component
+            :is="grid.filters.FilterInput"
+            v-if="grid.filters.filterRow.value"
+            :column="col.def"
+            :type="grid.filters.typeOf(col.def)"
+            :model-value="grid.filters.state.value.columns[col.key]"
+            @update:model-value="grid.filters.setColumnFilter(col.key, $event)"
+            @open="grid.filters.open(col.key)"
+          />
+        </template>
       </template>
     </div>
   </div>

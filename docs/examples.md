@@ -40,14 +40,16 @@ export interface Order {
 10. [Detail rows](#10-detail-rows)
 11. [Column state: order, visibility, pinning, persistence](#11-column-state-order-visibility-pinning-persistence)
 12. [Context menus](#12-context-menus)
-13. [Pagination (server-style)](#13-pagination-server-style)
-14. [Virtual scrolling](#14-virtual-scrolling)
-15. [Loading and empty states](#15-loading-and-empty-states)
-16. [Programmatic control (template ref)](#16-programmatic-control-template-ref)
-17. [Theming](#17-theming)
-18. [Writing a cell renderer add-on](#18-writing-a-cell-renderer-add-on)
-19. [Using VGridMenu in your own components](#19-using-vgridmenu-in-your-own-components)
-20. [Pure helpers](#20-pure-helpers)
+13. [Filtering](#13-filtering)
+14. [Server data](#14-server-data)
+15. [Pagination (server-style)](#15-pagination-server-style)
+16. [Virtual scrolling](#16-virtual-scrolling)
+17. [Loading and empty states](#17-loading-and-empty-states)
+18. [Programmatic control (template ref)](#18-programmatic-control-template-ref)
+19. [Theming](#19-theming)
+20. [Writing a cell renderer add-on](#20-writing-a-cell-renderer-add-on)
+21. [Using VGridMenu in your own components](#21-using-vgridmenu-in-your-own-components)
+22. [Pure helpers](#22-pure-helpers)
 
 ---
 
@@ -72,6 +74,7 @@ createApp(App)
       timeZone: 'Europe/Belgrade', // optional, for date renderers
       density: 'cozy', // 'compact' | 'cozy' | 'comfortable'
       renderers: [], // renderers usable by name — see “Choosing renderers” below
+      features: [], // sorting, filtering, server data, pagination — see “Choosing features” below
     }),
   )
   .mount('#app')
@@ -106,6 +109,34 @@ and logs a dev warning.
 
 CSS: `@eboye/vue-grid/style.css` contains everything; `core.css` + (optionally) `renderers.css` let
 you leave out the renderer styles.
+
+### Choosing features
+
+Out of the box `<VGrid>` is a plain table. Sorting, filtering, server data and pagination are
+opt-in features, and only the ones you import are bundled:
+
+```ts
+import { allFeatures, filteringFeature, paginationFeature, serverDataFeature, sortingFeature } from '@eboye/vue-grid'
+
+// per grid
+// <VGrid :features="[sortingFeature, filteringFeature]" … />
+
+// or for every grid (merged with each grid's own list)
+app.use(createVueGrid({ features: [sortingFeature, filteringFeature] }))
+app.use(createVueGrid({ features: allFeatures })) // all four
+```
+
+| Feature | Needed for |
+|---|---|
+| `sortingFeature` | `sortable` columns, `v-model:sort` header UI, `sort-mode="client"` |
+| `filteringFeature` | `filterable` columns, `filter-row`, `<VGridSearch>`, `v-model:filters`, `filter-storage` |
+| `serverDataFeature` | `data-source` |
+| `paginationFeature` | `pagination`, `v-model:page`, `v-model:page-size` |
+
+Without its feature, an option does nothing and a dev warning names the feature to add. A grid
+reads `features` once when it is created.
+
+The examples below assume `createVueGrid({ renderers: allRenderers, features: allFeatures })`.
 
 ---
 
@@ -665,7 +696,7 @@ A `#cell-<key>` slot replaces the renderer for that column; `#header-<key>` repl
 ```
 
 Cell slot props: `{ row, value, rowKey, rowIndex, depth, column }`. Use a slot for a one-off; write
-a renderer (§18) for anything reused across grids.
+a renderer (§20) for anything reused across grids.
 
 ---
 
@@ -1089,7 +1120,238 @@ sort, Pin left / Pin right / Unpin, Move left / right, Hide column, Reset column
 
 ---
 
-## 13. Pagination (server-style)
+## 13. Filtering
+
+### Header filters, filter row and quick search
+
+```vue
+<script setup lang="ts">
+import { ref } from 'vue'
+import {
+  VGrid,
+  VGridSearch,
+  dateRenderer,
+  numberRenderer,
+  statusRenderer,
+  booleanRenderer,
+  type FilterState,
+} from '@eboye/vue-grid'
+
+const filters = ref<FilterState | null>(null)
+const columns = [
+  { key: 'player', header: 'Player', filterable: true },                             // text
+  { key: 'city', header: 'City', filterable: true, filter: 'set' },                  // value list
+  { key: 'stake', header: 'Stake', filterable: true, renderer: numberRenderer },     // number
+  { key: 'status', header: 'Status', filterable: true, renderer: statusRenderer },   // value list
+  { key: 'placedAt', header: 'Placed', filterable: true, renderer: dateRenderer },   // date
+  { key: 'vip', header: 'VIP', filterable: true, renderer: booleanRenderer },        // yes / no
+  { key: 'notes', header: 'Notes', searchable: false },                              // not in quick search
+]
+</script>
+
+<template>
+  <VGrid v-model:filters="filters" :rows="bets" :columns="columns" row-key="id" filter-row>
+    <template #toolbar="{ activeFilterCount, clearFilters }">
+      <VGridSearch placeholder="Search bets…" />
+      <button v-if="activeFilterCount" type="button" @click="clearFilters()">
+        Clear filters ({{ activeFilterCount }})
+      </button>
+    </template>
+  </VGrid>
+</template>
+```
+
+- Hover a header to show its funnel. Click it to open a popover with the editor for the column's
+  type. Changes apply right away, and **Clear** removes the filter.
+- The filter row takes shorthand: type `>100`, `10..50` or `!=0` into *Stake*, or `>2026-01-01`
+  into *Placed*.
+- Matching ignores case and accents, so `nis` finds *Niš*.
+- `filters` is plain JSON, so you can save it, put it in the URL or send it to a backend:
+
+```ts
+filters.value = {
+  columns: {
+    stake: { type: 'number', op: 'between', value: 10, to: 50 },
+    status: { type: 'set', values: ['Won', 'Open'] },
+    placedAt: { type: 'date', op: 'after', value: '2026-01-01' },
+  },
+  search: 'ana',
+}
+```
+
+### Remember filters
+
+```vue
+<VGrid :rows :columns row-key="id" filter-storage="bets-filters" />
+<!-- or your own storage: { load(): FilterState | null, save(state): void } -->
+```
+
+### Popover only, opened from your own button
+
+```vue
+<script setup lang="ts">
+const grid = ref<VGridExposed>()
+</script>
+
+<template>
+  <button @click="grid?.openFilter('city')">Filter by city</button>
+  <VGrid ref="grid" :rows :columns row-key="id" />
+</template>
+```
+
+`grid.setFilters(state)` and `grid.clearFilters()` work the same way. The header right-click menu
+also has *Filter…*, *Clear filter* and *Clear all filters*.
+
+### A custom filter
+
+```vue
+<!-- EvenOddFilter.vue -->
+<script setup lang="ts">
+import type { ColumnFilter } from '@eboye/vue-grid'
+
+defineProps<{ modelValue: ColumnFilter | undefined }>()
+const emit = defineEmits<{ 'update:modelValue': [ColumnFilter | undefined] }>()
+</script>
+
+<template>
+  <select @change="(e) => {
+    const v = (e.target as HTMLSelectElement).value
+    emit('update:modelValue', v ? { type: 'custom', value: v } : undefined)
+  }">
+    <option value="">Any</option>
+    <option value="even">Even</option>
+    <option value="odd">Odd</option>
+  </select>
+</template>
+```
+
+```ts
+col({
+  key: 'id',
+  filterable: true,
+  filterComponent: EvenOddFilter,
+  filterFn: (row, filter) => {
+    const v = (filter as { value: string }).value
+    return v === 'even' ? row.id % 2 === 0 : row.id % 2 === 1
+  },
+})
+```
+
+`filterFn` can also replace the matching for a built-in type, and `filterValue: (row) => …`
+changes the value a column is filtered by. For example, filter a formatted name by its raw id.
+
+### Trees and sub-grids
+
+Filtering sees nested rows. A parent stays visible when one of its children matches, and a
+matching parent keeps all its children. Select-all only selects the rows you can see.
+
+---
+
+## 14. Server data
+
+### Let the grid fetch: `dataSource`
+
+```vue
+<script setup lang="ts">
+import { VGrid, type DataSource } from '@eboye/vue-grid'
+
+const fetchBets: DataSource<Bet> = async (query, { signal }) => {
+  // query = { sort: { key, dir } | null, filters: { columns, search }, page, pageSize }
+  const res = await fetch('/api/bets/search', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(query),
+    signal, // the grid aborts superseded requests
+  })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  const body = await res.json()
+  return { rows: body.items, total: body.total }
+}
+</script>
+
+<template>
+  <VGrid
+    ref="grid"
+    :data-source="fetchBets"
+    :columns="columns"
+    row-key="id"
+    :pagination="{ pageSizes: [25, 50, 100] }"
+    filter-row
+    @load-error="(e) => toast.error(e.message)"
+  />
+</template>
+```
+
+- Clicking a header, changing a filter, searching, or changing the page or page size calls
+  `fetchBets` with the new query. The grid shows the rows it gets back as they are, without
+  sorting, filtering or slicing them.
+- New sorts and filters go back to page 1.
+- The grid shows a progress bar while a request runs, and *Couldn't load the rows.* with a
+  *Retry* button when one fails.
+- After a mutation, call `grid.value?.reload()`. Live field updates go through
+  `grid.value?.patchLoadedRows([{ id, status: 'Won' }])`.
+
+**Value lists from the backend.** A `set` filter can load its options, with search:
+
+```ts
+col({
+  key: 'city',
+  filterable: true,
+  filter: {
+    type: 'set',
+    options: async (search, { signal }) => {
+      const res = await fetch(`/api/cities?q=${encodeURIComponent(search)}`, { signal })
+      const cities: string[] = await res.json()
+      return cities.map((name) => ({ value: name })) // { value, label?, count? }[]
+    },
+  },
+})
+```
+
+### Fetch it yourself: `@query-change`
+
+If your data already lives in a store, keep `rows` yourself and listen to one event:
+
+```vue
+<script setup lang="ts">
+import type { GridQuery } from '@eboye/vue-grid'
+
+const rows = ref<Bet[]>([])
+const loading = ref(false)
+async function load(query: GridQuery) {
+  loading.value = true
+  try {
+    rows.value = await store.searchBets(query)
+  } finally {
+    loading.value = false
+  }
+}
+</script>
+
+<template>
+  <VGrid
+    :rows="rows"
+    :columns="columns"
+    row-key="id"
+    :loading="loading"
+    sort-mode="controlled"
+    filter-mode="controlled"
+    @query-change="load"
+  />
+</template>
+```
+
+`query-change` fires once on mount and then on every real change. Identical queries are dropped.
+Handle ordering of overlapping requests yourself, or use `dataSource`, which already does.
+
+### Server-side matching
+
+`matchesFilter(value, filter, { timeZone })` and `filterTree` are pure functions, so a Node backend
+or a test can apply exactly the grid's rules to the same `FilterState`.
+
+---
+
+## 15. Pagination (server-style)
 
 ```vue
 <script setup lang="ts">
@@ -1135,11 +1397,18 @@ watch(
 ```
 
 `VGridPagination` is independent of the grid — use it with anything. Pass `summary=""` to hide the
-summary text. For client-side paging, slice the rows yourself (see `sortRows` in §20).
+summary text.
+
+Simpler: `<VGrid pagination>` renders the same pager under the grid. With `rows` it pages the
+sorted and filtered rows, and with a `dataSource` it requests pages (§14):
+
+```vue
+<VGrid :rows="orders" :columns row-key="id" :pagination="{ pageSizes: [10, 25, 50] }" v-model:page-size="pageSize" />
+```
 
 ---
 
-## 14. Virtual scrolling
+## 16. Virtual scrolling
 
 For thousands of rows, render only what's visible:
 
@@ -1160,7 +1429,7 @@ For thousands of rows, render only what's visible:
 
 ---
 
-## 15. Loading and empty states
+## 17. Loading and empty states
 
 ```vue
 <VGrid :rows="rows" :columns="columns" row-key="id" :loading="loading" empty-text="No orders yet.">
@@ -1179,7 +1448,7 @@ place of the empty message.
 
 ---
 
-## 16. Programmatic control (template ref)
+## 18. Programmatic control (template ref)
 
 ```vue
 <script setup lang="ts">
@@ -1259,7 +1528,7 @@ animation (`--vg-flash-color`, `--vg-flash-up`, `--vg-flash-down`, `--vg-flash-d
 
 ---
 
-## 17. Theming
+## 19. Theming
 
 All styles live in `@layer vue-grid` and read `--vg-*` CSS variables, so any unlayered CSS — yours
 or Tailwind's — wins without `!important`.
@@ -1341,7 +1610,7 @@ Stable class names are available for anything else: `.vg`, `.vg-header-cell`, `.
 
 ---
 
-## 18. Writing a cell renderer add-on
+## 20. Writing a cell renderer add-on
 
 A renderer is a component plus a definition. The complete, publishable example is
 [`packages/cell-renderer-template`](../packages/cell-renderer-template) (a star rating).
@@ -1460,7 +1729,7 @@ Ship plain CSS in `@layer vue-grid-addons` and use the grid's tokens so it follo
 
 ---
 
-## 19. Using VGridMenu in your own components
+## 21. Using VGridMenu in your own components
 
 The menu behind `actions-menu` and the context menus is exported.
 
@@ -1514,7 +1783,7 @@ exposed. Events: `select(item)`, `open`, `close`.
 
 ---
 
-## 20. Pure helpers
+## 22. Pure helpers
 
 The grid's logic is exported as plain functions, handy for server-style code or tests:
 

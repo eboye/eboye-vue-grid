@@ -29,8 +29,10 @@
 - **CSS first.** Sticky pinned columns, pin shadows, popover menus anchored with CSS anchor
   positioning, `light-dark()` theming, native `<details>` disclosures. JavaScript only fills in
   where a browser lacks a feature — see [Browser support](#browser-support).
-- **Small by default.** ESM, one file per module, zero runtime dependencies. Renderers are opt-in:
-  a grid with plain text cells is **14.5 kB gzipped**, and every renderer you add costs only itself.
+- **Small by default, everything optional.** ESM, one file per module, zero runtime dependencies.
+  Sorting, filtering, server data and pagination are opt-in **features**, and renderers are
+  opt-in too. A plain grid with text cells is **17.6 kB gzipped**, and each feature or renderer
+  you add costs only itself.
 - **Typed end to end.** `<VGrid generic="T">`, typed column helpers, and renderer options checked
   against the renderer you pick.
 - **Accessible.** `grid` / `treegrid` semantics, `aria-sort`, full keyboard navigation (cells,
@@ -42,7 +44,9 @@
 
 | Area | What you get |
 |---|---|
-| **Data** | Plain row objects · partial updates that re-render only changed cells, with an optional change highlight · client or server (controlled) sorting · selection (multi, single, cascading) · pagination component · 10,000+ rows with virtual scrolling |
+| **Data** | Plain row objects · partial updates that re-render only changed cells, with an optional change highlight · client or server (controlled) sorting · selection (multi, single, cascading) · built-in or standalone pagination · 10,000+ rows with virtual scrolling |
+| **Filtering** | Typed column filters in header popovers (text, number, date, yes / no, value list with counts, your own component) · optional filter row with shorthand (`>10`, `5..20`) · quick search · case- and accent-insensitive · tree-aware · persisted to `localStorage` |
+| **Server data** | A `dataSource(query, { signal })` function: the grid sends sort, filters and page, cancels superseded requests, and shows loading, error and retry states · or a single `query-change` event if you fetch yourself · backend-loaded value lists |
 | **Columns** | Pin left / right (also at runtime) · drag or keyboard reordering · show / hide picker · any CSS grid track as width · layout persisted to `localStorage` or your own storage |
 | **Rows** | Nested sub-grids (sync or lazy-loaded, with retry) · detail rows with any content, including another grid · row highlighting and classes |
 | **Menus** | Right-click menus for cells and headers (sort, pin, move, hide, reset, your own items) · `⋯` actions menu · keyboard: ContextMenu / Shift+F10, arrows, typeahead |
@@ -82,6 +86,7 @@ import {
   VGrid,
   createColumnHelper,
   currencyRenderer,
+  sortingFeature,
   statusRenderer,
   type SortState,
 } from '@eboye/vue-grid'
@@ -120,11 +125,16 @@ const columns = [
     :rows="rows"
     :columns="columns"
     row-key="id"
+    :features="[sortingFeature]"
     sort-mode="client"
     style="height: 420px"
   />
 </template>
 ```
+
+Features are opt-in: list them per grid with `:features`, or once for the whole app with
+`app.use(createVueGrid({ features: [sortingFeature, filteringFeature] }))` (`allFeatures` for
+all of them). Without `sortingFeature`, `sortable` columns stay plain headers.
 
 ## Theming
 
@@ -142,16 +152,23 @@ listed in the [API reference](packages/vue-grid/README.md#theming).
 
 ## Bundle size
 
-Measured by bundling small apps against the published build (minified / gzip, Vue excluded):
+Measured by bundling small apps against the published build for production with esbuild
+(minified / gzip, Vue excluded):
 
-| You import | Bundled |
+| You import | Initial chunk |
 |---|---|
-| `VGrid` | 41.2 kB / 14.5 kB |
-| `VGrid` + `currencyRenderer` | 42.6 kB / 15.0 kB |
-| `VGrid` + `VGridPagination` + `VGridColumnMenu` | 46.3 kB / 16.1 kB |
-| everything | 81.4 kB / 25.4 kB |
+| `VGrid` (no features) | 49.9 kB / 17.6 kB |
+| `VGrid` + `sortingFeature` | 50.6 kB / 17.9 kB |
+| `VGrid` + `filteringFeature` | 52.3 kB / 18.3 kB |
+| `VGrid` + `serverDataFeature` | 50.8 kB / 18.0 kB |
+| `VGrid` + `allFeatures` + `VGridSearch` | 55.0 kB / 19.3 kB |
+| `VGrid` + `currencyRenderer` | 51.2 kB / 18.0 kB |
+| everything | 98.5 kB / 31.1 kB |
 
-CSS: `style.css` has everything (7.3 kB gzip); `core.css` + optional `renderers.css` let you trim it.
+With `filteringFeature`, the filter popover body and the filter-row editors load on demand. With
+`paginationFeature`, the pager does too.
+
+CSS: `style.css` has everything (8.2 kB gzip); `core.css` + optional `renderers.css` let you trim it.
 
 ## Browser support
 

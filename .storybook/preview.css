@@ -64,3 +64,18 @@ body {
 .u-shadow {
   box-shadow: 0 10px 30px -10px rgb(0 0 0 / 0.3);
 }
+
+.sb-log {
+  margin: 0.5rem 0 0;
+  padding-inline-start: 1.25rem;
+  font-size: 0.8125rem;
+  display: grid;
+  gap: 0.125rem;
+}
+.sb-log [data-status="aborted"] {
+  opacity: 0.55;
+  text-decoration: line-through;
+}
+.sb-log [data-status="error"] {
+  color: #dc2626;
+}
