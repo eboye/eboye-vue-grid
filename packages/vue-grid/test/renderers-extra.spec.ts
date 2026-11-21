@@ -209,8 +209,9 @@ describe('new renderers', () => {
   it('chip: raw colour with contrast, object values, tone map, tooltip', () => {
     const raw = cell(ChipCell, { name: 'A', color: '#facc15', description: 'Low risk' })
     expect(raw.text()).toBe('A')
-    expect(raw.attributes('style')).toContain('background-color: rgb(250, 204, 21)')
-    expect(raw.attributes('style')).toMatch(/(^|; )color: rgb\(0, 0, 0\)/)
+    // colour handed to CSS, which paints it and picks readable text (checked in the browser tests)
+    expect(raw.classes()).toContain('vg-chip-raw')
+    expect((raw.element as HTMLElement).style.getPropertyValue('--vg-chip-bg')).toBe('#facc15')
     expect(raw.attributes('title')).toBe('Low risk')
     const toned = cell(ChipCell, 'C', { tone: { A: 'success', C: 'danger' }, shape: 'circle' })
     expect(toned.classes()).toEqual(expect.arrayContaining(['vg-chip-circle', 'vg-tone-danger', 'vg-chip-toned']))
@@ -318,23 +319,26 @@ describe('new renderers', () => {
 
   it('list: first item(s) and a +N more toggle', async () => {
     const w = cell(ListCell, [{ p: 'a' }, { p: 'b' }, { p: 'c' }], { itemLabel: (i: { p: string }) => i.p })
-    expect(w.findAll('li').map((l) => l.text())).toEqual(['a'])
-    const more = w.find('button')
-    expect(more.text()).toBe('+2 more')
-    await more.trigger('click')
-    expect(w.findAll('li')).toHaveLength(3)
-    expect(more.attributes('aria-expanded')).toBe('true')
+    // first item visible, the rest inside a native <details> (open state is the browser's)
+    expect(w.find('.vg-list > .vg-list-items').findAll('li').map((l) => l.text())).toEqual(['a'])
+    const details = w.find('details')
+    expect(details.find('summary').text()).toContain('+2 more')
+    expect(details.findAll('li').map((l) => l.text())).toEqual(['b', 'c'])
+    ;(details.element as HTMLDetailsElement).open = true
+    await details.trigger('toggle')
     expect(actions(w)).toEqual([['expand', true]])
-    expect(cell(ListCell, ['x'], {}).find('button').exists()).toBe(false)
+    expect(cell(ListCell, ['x'], {}).find('details').exists()).toBe(false)
   })
 })
 
 describe('json-tree and action-button options', () => {
   it('json-tree: nested JSON strings, max depth, collapsed start, empty text', async () => {
     const w = cell(JsonTreeCell, { payload: '{"inner":{"deep":1}}' }, { parseNested: true, collapseAt: 9, collapsed: true })
-    expect(w.find('.vg-json-tree').exists()).toBe(false)
-    await w.find('.vg-json-reveal').trigger('click')
-    expect(w.text()).toContain('deep')
+    // collapsed → a native <details> that starts closed
+    const reveal = w.find('details.vg-json-reveal')
+    expect((reveal.element as HTMLDetailsElement).open).toBe(false)
+    expect(reveal.find('summary').text()).toBe('More info')
+    expect(w.text()).toContain('deep') // nested JSON string parsed into the tree
     const shallow = cell(JsonTreeCell, { a: { b: { c: 1 } } }, { collapseAt: 9, maxDepth: 1 })
     expect(shallow.text()).toContain('{1 key}')
     expect(shallow.text()).not.toContain('c:')

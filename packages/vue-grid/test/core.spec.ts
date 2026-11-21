@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { getByPath, getCellValue, resolveRowKey } from '../src/core/value'
+import { cssPinOffsets, isFixedTrack } from '../src/composables/usePinnedOffsets'
 import {
   effectivePin,
   gridTemplate,
@@ -238,5 +239,31 @@ describe('storage', () => {
     })
     expect(a.load()).toBeNull()
     spy.mockRestore()
+  })
+})
+
+describe('pinned offsets in CSS', () => {
+  const col = (key: string, pinned: 'left' | 'right' | undefined, width?: string, minWidth?: string) => ({ key, pinned, def: { width, minWidth } })
+
+  it('sums definite widths into calc() per side; the outermost width is never needed', () => {
+    expect(
+      cssPinOffsets([
+        col('sel', 'left', 'var(--vg-select-column-width)'),
+        col('id', 'left', '4rem'),
+        col('name', 'left', 'auto'), // innermost left: its own width does not matter
+        col('mid', undefined, '1fr'),
+        col('a', 'right', 'min-content'), // innermost right
+        col('b', 'right', '120px'),
+      ]),
+    ).toEqual({ sel: '0px', id: 'calc(var(--vg-select-column-width))', name: 'calc(var(--vg-select-column-width) + 4rem)', b: '0px', a: 'calc(120px)' })
+  })
+
+  it('falls back (null) when an inner pinned column is content-sized', () => {
+    expect(cssPinOffsets([col('a', 'left', 'auto'), col('b', 'left', '4rem')])).toBeNull()
+    expect(cssPinOffsets([col('a', 'left', '1fr'), col('b', 'left')])).toBeNull()
+    expect(cssPinOffsets([col('a', 'left', '8rem', '4rem'), col('b', 'left')])).toBeNull() // minmax()
+    expect(isFixedTrack({ width: '12.5rem' })).toBe(true)
+    expect(isFixedTrack({ width: '50%' })).toBe(false)
+    expect(isFixedTrack({})).toBe(false)
   })
 })

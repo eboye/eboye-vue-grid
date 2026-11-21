@@ -24,7 +24,7 @@ import { createVueGrid } from '@eboye/vue-grid'
 import '@eboye/vue-grid/style.css'
 
 createApp(App)
-  .use(createVueGrid({ locale: 'en-US', currency: 'EUR' })) // optional: app-wide defaults + addon renderers
+  .use(createVueGrid({ locale: 'en-US', currency: 'EUR' })) // optional: app-wide defaults
   .mount('#app')
 ```
 
@@ -33,7 +33,15 @@ createApp(App)
 ```vue
 <script setup lang="ts">
 import { ref } from 'vue'
-import { VGrid, createColumnHelper, type SortState } from '@eboye/vue-grid'
+import {
+  VGrid,
+  createColumnHelper,
+  currencyRenderer,
+  dateTimeRenderer,
+  numberRenderer,
+  statusRenderer,
+  type SortState,
+} from '@eboye/vue-grid'
 
 interface Order { id: number; customer: { name: string }; total: number; status: 'Paid' | 'Open'; placedAt: string }
 
@@ -42,11 +50,11 @@ const sort = ref<SortState | null>(null)
 
 const col = createColumnHelper<Order>()
 const columns = [
-  col({ key: 'id', header: '#', renderer: 'number', width: 'min-content', pinned: 'left' }),
+  col({ key: 'id', header: '#', renderer: numberRenderer, width: 'min-content', pinned: 'left' }),
   col({ key: 'customer', header: 'Customer', field: 'customer.name', sortable: true, width: 'minmax(10rem, 1fr)' }),
-  col({ key: 'total', header: 'Total', renderer: 'currency', sortable: true }),
-  col({ key: 'status', header: 'Status', renderer: 'status', rendererOptions: { tone: { Paid: 'success', Open: 'info' } } }),
-  col({ key: 'placedAt', header: 'Placed', renderer: 'datetime' }),
+  col({ key: 'total', header: 'Total', renderer: currencyRenderer, sortable: true }),
+  col({ key: 'status', header: 'Status', renderer: statusRenderer, rendererOptions: { tone: { Paid: 'success', Open: 'info' } } }),
+  col({ key: 'placedAt', header: 'Placed', renderer: dateTimeRenderer }),
 ]
 </script>
 
@@ -55,8 +63,31 @@ const columns = [
 </template>
 ```
 
-`createColumnHelper<T>()` is optional; it infers each column's `renderer` so `rendererOptions` is
-type-checked against that renderer (including addon renderers).
+`createColumnHelper<T>()` is optional; it types each column's `rendererOptions` from its renderer.
+
+## Tree-shaking: import only what you use
+
+The package is ESM, one file per module, with `sideEffects` limited to CSS — bundlers keep only
+what you import.
+
+- **Renderers are opt-in.** `<VGrid>` bundles just the default `text` renderer. Use others either
+  - **per column** (recommended, smallest bundle, typed options): `renderer: currencyRenderer`, or
+  - **by name**, after registering them: `createVueGrid({ renderers: [currencyRenderer, statusRenderer] })`
+    or `<VGrid :renderers="[…]">`, then `renderer: 'currency'`. `allRenderers` registers every built-in.
+  An unregistered name renders as plain text and logs a dev warning saying how to register it.
+- **Components and helpers** (`VGridPagination`, `VGridColumnMenu`, `VGridMenu`, `sortRows`, …) are
+  only bundled when imported.
+- **CSS**: `@eboye/vue-grid/style.css` has everything. To trim it, import
+  `@eboye/vue-grid/core.css` (grid, menus, pagination, column menu, text renderer) and add
+  `@eboye/vue-grid/renderers.css` only if you use other renderers.
+
+| Import (minified / gzip, Vue excluded) | Bundled |
+|---|---|
+| `VGrid` | 41.2 kB / 14.5 kB |
+| `VGrid` + `currencyRenderer` | 42.6 kB / 15.0 kB |
+| `VGrid` + `VGridPagination` + `VGridColumnMenu` | 46.3 kB / 16.1 kB |
+| `sortRows` only | 0.7 kB / 0.4 kB |
+| everything | 81.4 kB / 25.4 kB |
 
 ## `<VGrid>` API
 
@@ -84,7 +115,8 @@ type-checked against that renderer (including addon renderers).
 | `rowClickable` | `boolean` | `false` | Pointer cursor; `row-click` is always emitted. |
 | `rowClass` | `(row, index) => ClassValue` | — | |
 | `highlightedRows` | `RowKey[]` | — | |
-| `renderers` | `CellRendererDefinition[]` | — | Local renderers (override plugin/built-ins by name). |
+| `flash` | `boolean \| 'direction'` | `false` | Briefly highlight cells whose value changes; `'direction'` = green up / red down. Columns override with `flash`. |
+| `renderers` | `CellRendererDefinition[]` | — | Renderers usable by name in this grid (override plugin ones). |
 | `locale` / `currency` / `timeZone` | `string` | plugin → browser | Formatting context for renderers. |
 | `density` | `'compact' \| 'cozy' \| 'comfortable'` | `'cozy'` | Scales cell padding. |
 | `loading` | `boolean` | `false` | Progress bar + `aria-busy`. |
@@ -113,7 +145,29 @@ Clicks on links, buttons and inputs inside a cell never trigger `row-click`.
 ```ts
 const grid = ref<VGridExposed>()
 grid.value?.scrollToTop() / scrollToRow(key) / expandAll() / collapseAll() / setColumnState(state)
+grid.value?.patchLoadedRows([{ id: 'c2', city: 'Niš' }]) // field updates for lazily loaded children
 ```
+
+### Partial updates
+
+Changing part of the data re-renders only what changed — the table is never rebuilt:
+
+- **Reactive rows** (`reactive()` / `ref()`): assign the field — `row.city = 'Niš'` — and only that
+  cell re-renders.
+- **Immutable rows** (e.g. a `shallowRef` holding a large list): replace the changed rows and keep
+  the others' identity. `patchRows(rows, patches, rowKey)` does exactly that for a batch of
+  patches by key; only the patched rows re-render, and a batch that changes nothing returns the
+  same array.
+- **Lazily loaded children** live in the grid's cache: use `grid.patchLoadedRows(patches)`.
+
+Mutating a field in place under a `shallowRef` is not observed — assign a new array (`patchRows`)
+or use reactive rows.
+
+**Change highlight.** `<VGrid flash>` briefly tints cells whose value changes (not on first render,
+not when a re-fetched row has equal values); `flash="direction"` tints numbers green when they rise
+and red when they fall. Columns override with `flash: false | true | 'direction'`. It's a CSS
+animation — tune it with `--vg-flash-color`, `--vg-flash-up`, `--vg-flash-down`,
+`--vg-flash-duration`. With `prefers-reduced-motion` the tint is held briefly instead of fading.
 
 ### `ColumnDef<T>`
 
@@ -123,8 +177,8 @@ grid.value?.scrollToTop() / scrollToRow(key) / expandAll() / collapseAll() / set
   header?: string; headerTooltip?: string
   field?: string                 // dot path, defaults to key
   value?: (row) => unknown       // computed value, wins over field
-  renderer?: string | Component  // default 'text'
-  rendererOptions?: object
+  renderer?: RendererDefinition | string | Component  // currencyRenderer (tree-shakeable), a registered name, or a component; default text
+  rendererOptions?: object       // typed from the renderer
   width?: string                 // any grid track: 'auto' (default), '8rem', '1fr', 'minmax(8rem, 2fr)', 'min-content'
   minWidth?: string              // combined into minmax(minWidth, width)
   align?: 'start' | 'center' | 'end'
@@ -132,6 +186,7 @@ grid.value?.scrollToTop() / scrollToRow(key) / expandAll() / collapseAll() / set
   pinned?: 'left' | 'right'; pinnable?: boolean   // pinnable: can the header menu change it (default true)
   hidden?: boolean; hideable?: boolean; reorderable?: boolean
   clickable?: boolean
+  flash?: boolean | 'direction'  // change highlight for this column (overrides the grid's `flash`)
   cellClass?: ClassValue | ((row) => ClassValue); headerClass?: ClassValue
 }
 ```
@@ -317,7 +372,7 @@ export const ratingRenderer = defineCellRenderer<{ max?: number }>({
 Renderer props: `value`, `row`, `rowKey`, `rowIndex`, `depth`, `column`, `options` (defaults merged
 with `rendererOptions`). Emit `action(name, payload)`; the grid re-emits it as `cell-action` with the
 row and column. `useGridContext()` gives `{ locale, currency, timeZone }`. Lookup order:
-column component → `:renderers` → plugin → built-ins.
+a definition or component on the column → `:renderers` → plugin → `text` (the only renderer built in).
 
 ## Theming
 
@@ -340,6 +395,7 @@ Override any token on `:root`, a wrapper, or the grid itself:
 | Space & shape | `--vg-cell-padding-x/y` `--vg-header-padding-x/y` `--vg-gap` `--vg-radius` `--vg-radius-sm` `--vg-radius-pill` `--vg-border-width` `--vg-row-border` `--vg-header-border` `--vg-outer-border` `--vg-select-column-width` `--vg-expander-size` |
 | Sub-grid | `--vg-subgrid-bg` `--vg-subgrid-indent` `--vg-subgrid-border` `--vg-subgrid-radius` |
 | Elevation | `--vg-shadow-pinned` `--vg-shadow-popover` `--vg-z-header` `--vg-z-pinned` `--vg-z-pinned-header` `--vg-transition` `--vg-menu-gap` |
+| Change highlight | `--vg-flash-color` `--vg-flash-up` `--vg-flash-down` `--vg-flash-duration` |
 
 Colours use `light-dark()`: set `color-scheme: light dark` on `html` to follow the OS, or
 `color-scheme: dark` to force dark. Stable class names (`.vg-header-cell`, `.vg-cell`, `.vg-row`,
@@ -348,5 +404,21 @@ Colours use `light-dark()`: set `color-scheme: light dark` on `html` to follow t
 ## Browser support
 
 Evergreen browsers: CSS `subgrid`, `light-dark()`, `@layer`, the Popover API and `<dialog>`
-(Chrome/Edge 123+, Firefox 125+, Safari 17.5+). Menus are placed with CSS anchor positioning where
-available (Chrome/Edge 125+, Safari 26+, current Firefox) and fall back to JS placement elsewhere.
+(Chrome/Edge 123+, Firefox 125+, Safari 17.5+).
+
+**CSS first, JS only as a fallback.** Everything the browser can do in CSS / HTML is done there; a
+small JS fallback runs only when a feature check (`CSS.supports`) says the browser can't:
+
+| Behaviour | Done with | JS fallback when unsupported |
+|---|---|---|
+| Menu / popover placement, flipping, following the anchor on scroll | Popover API + CSS anchor positioning | measured placement, re-run on scroll / resize |
+| Hiding a popover once its anchor scrolls out of view | `position-visibility: anchor-visible` | IntersectionObserver (e.g. Firefox 159) |
+| Sticky offsets of pinned columns | `calc()` sums of the declared widths | ResizeObserver, only for content-sized pinned columns |
+| Which pinned column gets the edge shadow | `:has()` / sibling selectors | a class |
+| Shadow only while content is scrolled under pinned columns | `@container scroll-state(scrollable: …)` | scroll listener sets `data-vg-scrollable` |
+| Readable text on data-coloured chips | `contrast-color()` / relative colours | computed black / white |
+| Expand / collapse (JSON tree, “More info”, list “+N more”) | native `<details>` / `<summary>` | — |
+| Closing the JSON dialog on a backdrop click | `<dialog closedby="any">` | backdrop click handler |
+
+What stays in JS is what CSS can't express: data (sorting, selection, expansion state), keyboard
+navigation, column drag, virtual scrolling and lazy loading.

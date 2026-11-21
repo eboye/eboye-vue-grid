@@ -21,7 +21,7 @@ import { createVueGrid } from '@eboye/vue-grid'
 import '@eboye/vue-grid/style.css'
 
 createApp(App)
-  .use(createVueGrid({ locale: 'en-GB', currency: 'EUR' })) // optional defaults + add-on renderers
+  .use(createVueGrid({ locale: 'en-GB', currency: 'EUR' })) // optional defaults
   .mount('#app')
 ```
 
@@ -29,7 +29,7 @@ createApp(App)
 
 ```vue
 <script setup lang="ts">
-import { VGrid, createColumnHelper } from '@eboye/vue-grid'
+import { VGrid, createColumnHelper, currencyRenderer, statusRenderer } from '@eboye/vue-grid'
 
 const col = createColumnHelper<Order>()
 const columns = [
@@ -41,11 +41,11 @@ const columns = [
     width: '1fr',
     sortable: true,
   }),
-  col({ key: 'total', header: 'Total', renderer: 'currency', sortable: true }),
+  col({ key: 'total', header: 'Total', renderer: currencyRenderer, sortable: true }),
   col({
     key: 'status',
     header: 'Status',
-    renderer: 'status',
+    renderer: statusRenderer,
     rendererOptions: { tone: { Paid: 'success', Open: 'info' } },
   }),
 ]

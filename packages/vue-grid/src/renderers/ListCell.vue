@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, useId } from 'vue'
+import { computed } from 'vue'
 import type { CellRendererEmits, CellRendererProps } from '../types'
 import type { ListOptions } from './options'
 
@@ -15,32 +15,35 @@ const all = computed(() => {
   })
 })
 const max = computed(() => Math.max(1, props.options.max ?? 1))
-const expanded = ref(false)
-const shown = computed(() => (expanded.value ? all.value : all.value.slice(0, max.value)))
-const hidden = computed(() => all.value.length - max.value)
-const listId = `vg-list-${useId()}`
+const first = computed(() => all.value.slice(0, max.value))
+const rest = computed(() => all.value.slice(max.value))
 
-function toggle() {
-  expanded.value = !expanded.value
-  emit('action', 'expand', expanded.value)
+// Open / closed state, keyboard and a11y come from the native <details>; this only reports it.
+function onToggle(event: Event) {
+  emit('action', 'expand', (event.target as HTMLDetailsElement).open)
 }
 </script>
 
 <template>
   <span v-if="all.length" class="vg-list">
-    <ul :id="listId" class="vg-list-items">
-      <li v-for="(item, i) in shown" :key="i" class="vg-text vg-text-ellipsis" :title="item">{{ item }}</li>
+    <ul class="vg-list-items">
+      <li v-for="(item, i) in first" :key="i" class="vg-text vg-text-ellipsis" :title="item">
+        {{ item }}
+      </li>
     </ul>
-    <button
-      v-if="hidden > 0"
-      type="button"
-      class="vg-link-button vg-list-more"
-      :aria-expanded="expanded"
-      :aria-controls="listId"
-      @click="toggle"
-    >
-      {{ expanded ? 'Show less' : `+${hidden} more` }}
-    </button>
+    <details v-if="rest.length" class="vg-list-more" @toggle="onToggle">
+      <summary class="vg-link-button">
+        <span class="vg-list-more-closed">+{{ rest.length }} more</span
+        ><span class="vg-list-more-open">Show less</span>
+      </summary>
+      <ul class="vg-list-items">
+        <li v-for="(item, i) in rest" :key="i" class="vg-text vg-text-ellipsis" :title="item">
+          {{ item }}
+        </li>
+      </ul>
+    </details>
   </span>
-  <span v-else-if="options.placeholder" class="vg-text vg-text-muted">{{ options.placeholder }}</span>
+  <span v-else-if="options.placeholder" class="vg-text vg-text-muted">{{
+    options.placeholder
+  }}</span>
 </template>

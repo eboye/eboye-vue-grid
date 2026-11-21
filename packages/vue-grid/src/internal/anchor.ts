@@ -3,6 +3,7 @@
  * `position-area` + `position-try-fallbacks`); this module only provides unique anchor names and a
  * JS fallback for browsers without anchor positioning.
  */
+import { supportsAnchorVisibility } from './supports'
 
 let supported: boolean | undefined
 
@@ -41,4 +42,44 @@ export function placeWithoutAnchorSupport(floating: HTMLElement, target: AnchorT
 
   floating.style.left = `${left}px`
   floating.style.top = `${top}px`
+}
+
+/**
+ * JS fallbacks for an open anchored popover, each only where CSS can't do the job:
+ * - no CSS anchor positioning → place it now and again on scroll / resize, so it follows its anchor;
+ * - no working `position-visibility: anchor-visible` → hide it (`data-vg-anchor-hidden`) while the
+ *   anchor element is clipped by a scroll container (IntersectionObserver applies ancestor clipping).
+ * Returns a cleanup function; call it when the popover closes.
+ */
+export function trackAnchor(floating: HTMLElement, target: AnchorTarget, placement: Placement): () => void {
+  const cleanups: (() => void)[] = []
+
+  if (!supportsAnchorPositioning()) {
+    let frame = 0
+    const place = () => {
+      cancelAnimationFrame(frame)
+      frame = requestAnimationFrame(() => placeWithoutAnchorSupport(floating, target, placement))
+    }
+    placeWithoutAnchorSupport(floating, target, placement)
+    window.addEventListener('scroll', place, { capture: true, passive: true })
+    window.addEventListener('resize', place, { passive: true })
+    cleanups.push(() => {
+      cancelAnimationFrame(frame)
+      window.removeEventListener('scroll', place, { capture: true })
+      window.removeEventListener('resize', place)
+    })
+  }
+
+  if (!supportsAnchorVisibility() && target instanceof HTMLElement && typeof IntersectionObserver !== 'undefined') {
+    const io = new IntersectionObserver(([entry]) => {
+      floating.toggleAttribute('data-vg-anchor-hidden', !!entry && !entry.isIntersecting)
+    })
+    io.observe(target)
+    cleanups.push(() => {
+      io.disconnect()
+      floating.removeAttribute('data-vg-anchor-hidden')
+    })
+  }
+
+  return () => cleanups.splice(0).forEach((fn) => fn())
 }

@@ -1,7 +1,7 @@
 import type { Ref } from 'vue'
 
 const CELL = '[role="gridcell"], [role="columnheader"]'
-const FOCUSABLE = 'button, a[href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+const FOCUSABLE = 'button, a[href], input, select, textarea, summary, [tabindex]:not([tabindex="-1"])'
 
 export interface GridKeyboardOptions {
   /** Alt+ArrowLeft/Right on a header cell. */

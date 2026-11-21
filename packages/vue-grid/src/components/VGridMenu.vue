@@ -1,12 +1,6 @@
 <script setup lang="ts">
-import { nextTick, ref, shallowRef, toRaw, useId } from 'vue'
-import {
-  anchorNameFor,
-  placeWithoutAnchorSupport,
-  supportsAnchorPositioning,
-  type AnchorTarget,
-  type Placement,
-} from '../internal/anchor'
+import { nextTick, onBeforeUnmount, ref, shallowRef, toRaw, useId } from 'vue'
+import { anchorNameFor, trackAnchor, type AnchorTarget, type Placement } from '../internal/anchor'
 import type { MenuAction, MenuItem } from '../types'
 
 /**
@@ -50,6 +44,8 @@ const isOpen = ref(false)
 let anchoredElement: HTMLElement | null = null
 let fallbackTarget: AnchorTarget | null = null
 let returnFocus: HTMLElement | null = null
+let stopTracking = () => {}
+onBeforeUnmount(() => stopTracking())
 
 const isAction = (item: MenuItem): item is MenuAction => !('separator' in item)
 const enabledItems = () =>
@@ -99,14 +95,14 @@ function onToggle(event: Event) {
       anchorName.value = props.anchorName ?? ownAnchor
       placement.value = props.placement
     }
-    if (!supportsAnchorPositioning() && fallbackTarget && menu.value) {
-      placeWithoutAnchorSupport(menu.value, fallbackTarget, placement.value)
-    }
+    // Placed, followed and hidden by CSS; JS only where the browser can't (see trackAnchor).
+    if (fallbackTarget && menu.value) stopTracking = trackAnchor(menu.value, fallbackTarget, placement.value)
     nextTick(() => enabledItems()[0]?.focus({ preventScroll: true }))
     emit('open')
   } else {
     const focusInside = !document.activeElement || document.activeElement === document.body || menu.value?.contains(document.activeElement)
     if (focusInside && returnFocus?.isConnected) returnFocus.focus({ preventScroll: true })
+    stopTracking()
     releaseAnchor()
     point.value = null
     fallbackTarget = null

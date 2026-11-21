@@ -1,4 +1,5 @@
 import { shallowReactive } from 'vue'
+import { patchRows, type RowPatches } from '../core/patch'
 import type { RowKey } from '../types'
 
 export type SubRowEntry =
@@ -77,5 +78,22 @@ export function useSubRows<T>(opts: SubRowsOptions<T>) {
     return cache.get(opts.getKey(row))
   }
 
-  return { children, mayHaveChildren, ensure, retry: load, state }
+  /**
+   * Applies field patches to lazily loaded children (they live in this cache, not in the app's
+   * data). Immutable: only entries containing a patched row are replaced, so only those rows
+   * re-render. Returns how many rows were patched.
+   */
+  function patchLoaded(patches: RowPatches<T>): number {
+    let count = 0
+    for (const [key, entry] of cache) {
+      if (entry.status !== 'loaded') continue
+      const next = patchRows(entry.rows as T[], patches, opts.getKey)
+      if (next === entry.rows) continue
+      count += next.filter((row, i) => row !== entry.rows[i]).length
+      cache.set(key, { status: 'loaded', rows: next })
+    }
+    return count
+  }
+
+  return { children, mayHaveChildren, ensure, retry: load, state, patchLoaded }
 }

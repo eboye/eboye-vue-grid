@@ -71,7 +71,7 @@ createApp(App)
       currency: 'EUR', // default for the currency renderer
       timeZone: 'Europe/Belgrade', // optional, for date renderers
       density: 'cozy', // 'compact' | 'cozy' | 'comfortable'
-      renderers: [], // add-on renderers, see §18
+      renderers: [], // renderers usable by name — see “Choosing renderers” below
     }),
   )
   .mount('#app')
@@ -79,6 +79,33 @@ createApp(App)
 
 The plugin is optional — `<VGrid>` works without it, using the browser locale and USD.
 Every setting can also be given per grid (`:locale`, `:currency`, `:time-zone`, `:density`).
+
+### Choosing renderers (tree-shaking)
+
+Only the `text` renderer is built into `<VGrid>`; the rest are opt-in so your bundle only contains
+what you use. Two ways:
+
+```ts
+import { createColumnHelper, currencyRenderer, statusRenderer } from '@eboye/vue-grid'
+
+// 1. Per column — smallest bundle, options type-checked against the renderer
+const col = createColumnHelper<Order>()
+const columns = [
+  col({ key: 'total', renderer: currencyRenderer, rendererOptions: { currency: 'EUR' } }),
+  col({ key: 'status', renderer: statusRenderer, rendererOptions: { tone: { Paid: 'success' } } }),
+]
+
+// 2. By name — register once (app-wide or per grid), then use 'currency', 'status', …
+app.use(createVueGrid({ renderers: [currencyRenderer, statusRenderer] }))
+// or everything: import { allRenderers } … createVueGrid({ renderers: allRenderers })
+```
+
+The examples below use names for brevity — they assume `createVueGrid({ renderers: allRenderers })`
+(or swap each `'name'` for its `nameRenderer` import). An unregistered name renders as plain text
+and logs a dev warning.
+
+CSS: `@eboye/vue-grid/style.css` contains everything; `core.css` + (optionally) `renderers.css` let
+you leave out the renderer styles.
 
 ---
 
@@ -164,7 +191,7 @@ Column keys must be unique: they name sort state, column state and slots (`#cell
 
 ## 4. Every built-in renderer
 
-Pick a renderer with `renderer: '<name>'`, configure it with `rendererOptions`. Options that accept
+Pick a renderer with `renderer: currencyRenderer` (or a registered name such as `'currency'`, see §1), configure it with `rendererOptions`. Options that accept
 functions receive `(value, row)`. Values that are `null`/`undefined` render the `placeholder` (or
 nothing).
 
@@ -1173,6 +1200,63 @@ const grid = ref<VGridExposed>()
 </template>
 ```
 
+### Partial updates (enrichment, live data)
+
+The grid re-renders only what changed, so you can update a few fields of a few rows — data
+arriving later from another service, a live price feed — without rebuilding the table.
+
+**Reactive rows**: assign the field; exactly that cell re-renders.
+
+```ts
+const rows = ref<Order[]>(await api.orders())
+// later…
+const order = rows.value.find((o) => o.id === 42)
+if (order) order.status = 'Paid'
+```
+
+**Immutable rows** (recommended for large lists — no deep reactivity): keep the list in a
+`shallowRef` and apply patches by key with `patchRows`. Patched rows become new objects, every other
+row keeps its identity, so only the patched rows re-render.
+
+```ts
+import { patchRows } from '@eboye/vue-grid'
+
+const rows = shallowRef<Order[]>(await api.orders())
+
+// enrichment arrives later, for some rows and some fields
+const cities = await geo.lookup(rows.value.map((o) => o.customerId)) // [{ id: 3, city: 'Niš' }, …]
+rows.value = patchRows(rows.value, cities, 'id')
+
+// a Map works too, and nested sub-rows can be patched in place
+rows.value = patchRows(rows.value, new Map([[42, { status: 'Paid' }]]), 'id', { children: 'children' })
+```
+
+Mutating a field under a `shallowRef` (`rows.value[0].city = 'x'`) is **not** observed — assign the
+array `patchRows` returns instead.
+
+**Lazily loaded children** (`loadSubRows`) live in the grid's cache, so patch them through the grid:
+
+```ts
+const grid = ref<VGridExposed>()
+grid.value?.patchLoadedRows([{ id: 'c2', city: 'Zrenjanin' }]) // returns how many rows changed
+```
+
+**Highlight changes.** Add `flash` to briefly tint cells whose value changed — handy for live data:
+
+```vue
+<VGrid :rows="rows" :columns="columns" row-key="id" flash />            <!-- subtle accent tint -->
+<VGrid :rows="rows" :columns="columns" row-key="id" flash="direction" /> <!-- green up, red down -->
+```
+
+```ts
+col({ key: 'name', flash: false })          // opt a column out
+col({ key: 'price', flash: 'direction' })   // or in, with direction colours
+```
+
+Nothing flashes on the first render or when a re-fetched row brings equal values. It is a pure CSS
+animation (`--vg-flash-color`, `--vg-flash-up`, `--vg-flash-down`, `--vg-flash-duration`); with
+`prefers-reduced-motion` the tint is held briefly instead of fading.
+
 ---
 
 ## 17. Theming
@@ -1348,9 +1432,9 @@ col({ key: 'rating', renderer: 'rating', rendererOptions: { max: 10 } }) // type
 
 ### Lookup order and overrides
 
-A column's renderer is resolved as: a component passed directly in `renderer` → the grid's
-`:renderers` → plugin renderers → built-ins. Registering a renderer with a built-in's name
-(e.g. `name: 'currency'`) replaces it.
+A column's renderer is resolved as: a definition or component passed directly in `renderer` → the
+grid's `:renderers` → plugin renderers → `text` (the only built-in default). Registering a renderer
+with a built-in's name (e.g. `name: 'currency'`) replaces it for that name.
 
 For a one-off you can skip the registry and pass the component:
 
@@ -1439,6 +1523,7 @@ import {
   getByPath, // getByPath(order, 'customer.city')
   getCellValue, // value of a column for a row (value fn → field → key)
   sortRows, // sortRows(rows, 'asc', (row) => row.total) — stable, nulls last
+  patchRows, // patchRows(rows, [{ id: 3, city: 'Niš' }], 'id') — immutable, minimal partial updates
   compareValues, // number/date/boolean/natural-order string comparison
   nextSort, // asc → desc → null cycle
   normalizeColumnState, // reconcile saved state with columns

@@ -14,6 +14,7 @@ import LinkCell from './LinkCell.vue'
 import NumberCell from './NumberCell.vue'
 import StatusCell from './StatusCell.vue'
 import TextCell from './TextCell.vue'
+import { textRenderer } from './text'
 import ToggleTextCell from './ToggleTextCell.vue'
 import ButtonGroupCell from './ButtonGroupCell.vue'
 import CheckboxCell from './CheckboxCell.vue'
@@ -97,57 +98,57 @@ declare module '../types' {
 const numericSort = (value: unknown) => toNumber(value)
 const dateSort = (value: unknown) => toDate(value)?.getTime() ?? null
 
-export const textRenderer = defineCellRenderer<TextOptions>({ name: 'text', component: TextCell })
-export const toggleTextRenderer = defineCellRenderer<ToggleTextOptions>({ name: 'toggle-text', component: ToggleTextCell })
-export const numberRenderer = defineCellRenderer<NumberOptions>({
+export { textRenderer }
+export const toggleTextRenderer = /*#__PURE__*/ defineCellRenderer<ToggleTextOptions>({ name: 'toggle-text', component: ToggleTextCell })
+export const numberRenderer = /*#__PURE__*/ defineCellRenderer<NumberOptions>({
   name: 'number',
   component: NumberCell,
   align: 'end',
   sortValue: numericSort,
 })
-export const signedNumberRenderer = defineCellRenderer<NumberOptions & { signed?: boolean }>({
+export const signedNumberRenderer = /*#__PURE__*/ defineCellRenderer<NumberOptions & { signed?: boolean }>({
   name: 'signed-number',
   component: NumberCell,
   defaults: { signed: true },
   align: 'end',
   sortValue: numericSort,
 })
-export const currencyRenderer = defineCellRenderer<CurrencyOptions>({
+export const currencyRenderer = /*#__PURE__*/ defineCellRenderer<CurrencyOptions>({
   name: 'currency',
   component: CurrencyCell,
   align: 'end',
   sortValue: numericSort,
 })
-export const changeRenderer = defineCellRenderer<ChangeOptions>({
+export const changeRenderer = /*#__PURE__*/ defineCellRenderer<ChangeOptions>({
   name: 'change',
   component: ChangeCell,
   align: 'end',
   sortValue: numericSort,
 })
-export const dateRenderer = defineCellRenderer<DateOptions>({ name: 'date', component: DateCell, sortValue: dateSort })
-export const dateTimeRenderer = defineCellRenderer<DateTimeOptions>({
+export const dateRenderer = /*#__PURE__*/ defineCellRenderer<DateOptions>({ name: 'date', component: DateCell, sortValue: dateSort })
+export const dateTimeRenderer = /*#__PURE__*/ defineCellRenderer<DateTimeOptions>({
   name: 'datetime',
   component: DateTimeCell,
   sortValue: dateSort,
 })
-export const booleanRenderer = defineCellRenderer<BooleanOptions>({ name: 'boolean', component: BooleanCell })
-export const statusRenderer = defineCellRenderer<StatusOptions>({ name: 'status', component: StatusCell })
-export const linkRenderer = defineCellRenderer<LinkOptions>({ name: 'link', component: LinkCell })
-export const iconRenderer = defineCellRenderer<IconOptions>({ name: 'icon', component: IconCell, align: 'center' })
-export const jsonRenderer = defineCellRenderer<JsonOptions>({ name: 'json', component: JsonCell })
-export const jsonTreeRenderer = defineCellRenderer<JsonTreeOptions>({ name: 'json-tree', component: JsonTreeCell })
-export const actionsMenuRenderer = defineCellRenderer<ActionsMenuOptions>({
+export const booleanRenderer = /*#__PURE__*/ defineCellRenderer<BooleanOptions>({ name: 'boolean', component: BooleanCell })
+export const statusRenderer = /*#__PURE__*/ defineCellRenderer<StatusOptions>({ name: 'status', component: StatusCell })
+export const linkRenderer = /*#__PURE__*/ defineCellRenderer<LinkOptions>({ name: 'link', component: LinkCell })
+export const iconRenderer = /*#__PURE__*/ defineCellRenderer<IconOptions>({ name: 'icon', component: IconCell, align: 'center' })
+export const jsonRenderer = /*#__PURE__*/ defineCellRenderer<JsonOptions>({ name: 'json', component: JsonCell })
+export const jsonTreeRenderer = /*#__PURE__*/ defineCellRenderer<JsonTreeOptions>({ name: 'json-tree', component: JsonTreeCell })
+export const actionsMenuRenderer = /*#__PURE__*/ defineCellRenderer<ActionsMenuOptions>({
   name: 'actions-menu',
   component: ActionsMenuCell,
   align: 'center',
 })
-export const actionButtonRenderer = defineCellRenderer<ActionButtonOptions>({
+export const actionButtonRenderer = /*#__PURE__*/ defineCellRenderer<ActionButtonOptions>({
   name: 'action-button',
   component: ActionButtonCell,
 })
-export const multiLineRenderer = defineCellRenderer<MultiLineOptions>({ name: 'multi-line', component: MultiLineCell })
-export const copyRenderer = defineCellRenderer<CopyOptions>({ name: 'copy', component: CopyCell })
-export const chipRenderer = defineCellRenderer<ChipOptions>({
+export const multiLineRenderer = /*#__PURE__*/ defineCellRenderer<MultiLineOptions>({ name: 'multi-line', component: MultiLineCell })
+export const copyRenderer = /*#__PURE__*/ defineCellRenderer<CopyOptions>({ name: 'copy', component: CopyCell })
+export const chipRenderer = /*#__PURE__*/ defineCellRenderer<ChipOptions>({
   name: 'chip',
   component: ChipCell,
   sortValue: (value) =>
@@ -156,43 +157,47 @@ export const chipRenderer = defineCellRenderer<ChipOptions>({
       : value,
 })
 const booleanSort = (value: unknown) => (value === null || value === undefined ? null : value ? 1 : 0)
-export const checkboxRenderer = defineCellRenderer<CheckboxOptions>({
+export const checkboxRenderer = /*#__PURE__*/ defineCellRenderer<CheckboxOptions>({
   name: 'checkbox',
   component: CheckboxCell,
   align: 'center',
   sortValue: booleanSort,
 })
-export const switchRenderer = defineCellRenderer<SwitchOptions>({
+export const switchRenderer = /*#__PURE__*/ defineCellRenderer<SwitchOptions>({
   name: 'switch',
   component: SwitchCell,
   align: 'center',
   sortValue: booleanSort,
 })
-export const radioRenderer = defineCellRenderer<RadioOptions>({
+export const radioRenderer = /*#__PURE__*/ defineCellRenderer<RadioOptions>({
   name: 'radio',
   component: RadioCell,
   align: 'center',
   sortValue: booleanSort,
 })
-export const editRenderer = defineCellRenderer<EditOptions>({ name: 'edit', component: EditCell })
-export const imageRenderer = defineCellRenderer<ImageOptions>({ name: 'image', component: ImageCell, align: 'center' })
-export const codeRenderer = defineCellRenderer<CodeOptions>({ name: 'code', component: CodeCell })
-export const buttonGroupRenderer = defineCellRenderer<ButtonGroupOptions>({ name: 'button-group', component: ButtonGroupCell })
-export const iconToggleRenderer = defineCellRenderer<IconToggleOptions>({
+export const editRenderer = /*#__PURE__*/ defineCellRenderer<EditOptions>({ name: 'edit', component: EditCell })
+export const imageRenderer = /*#__PURE__*/ defineCellRenderer<ImageOptions>({ name: 'image', component: ImageCell, align: 'center' })
+export const codeRenderer = /*#__PURE__*/ defineCellRenderer<CodeOptions>({ name: 'code', component: CodeCell })
+export const buttonGroupRenderer = /*#__PURE__*/ defineCellRenderer<ButtonGroupOptions>({ name: 'button-group', component: ButtonGroupCell })
+export const iconToggleRenderer = /*#__PURE__*/ defineCellRenderer<IconToggleOptions>({
   name: 'icon-toggle',
   component: IconToggleCell,
   align: 'center',
   sortValue: booleanSort,
 })
-export const detailsRenderer = defineCellRenderer<DetailsOptions>({ name: 'details', component: DetailsCell })
-export const listRenderer = defineCellRenderer<ListOptions>({
+export const detailsRenderer = /*#__PURE__*/ defineCellRenderer<DetailsOptions>({ name: 'details', component: DetailsCell })
+export const listRenderer = /*#__PURE__*/ defineCellRenderer<ListOptions>({
   name: 'list',
   component: ListCell,
   sortValue: (value) => (Array.isArray(value) ? value.length : null),
 })
 
-/** Every built-in renderer; always registered in `<VGrid>` (plugin/local renderers can override by name). */
-export const builtinRenderers: CellRendererDefinition[] = [
+/**
+ * Every built-in renderer, for apps that want them all by name:
+ * `app.use(createVueGrid({ renderers: allRenderers }))`. Importing it bundles all of them — import
+ * single renderers (`currencyRenderer`, …) instead to keep the bundle small.
+ */
+export const allRenderers: CellRendererDefinition[] = [
   textRenderer,
   toggleTextRenderer,
   numberRenderer,

@@ -5,7 +5,12 @@ export { default as VGridMenu } from './components/VGridMenu.vue'
 export { anchorNameFor, supportsAnchorPositioning } from './internal/anchor'
 
 export { createVueGrid, useGridContext, GRID_CONFIG_KEY } from './registry/plugin'
-export { defineCellRenderer, createRendererRegistry, type RendererRegistry } from './registry/registry'
+export {
+  defineCellRenderer,
+  createRendererRegistry,
+  isRendererDefinition,
+  type RendererRegistry,
+} from './registry/registry'
 
 export { getByPath, getCellValue, resolveRowKey, type RowKeyGetter } from './core/value'
 export {
@@ -18,6 +23,7 @@ export {
   effectivePin,
 } from './core/columns'
 export { nextSort, sortRows, compareValues } from './core/sort'
+export { patchRows, type RowPatches, type PatchRowsOptions } from './core/patch'
 export { localStorageAdapter } from './core/storage'
 export { pageItems, type PageItem } from './core/pagination'
 

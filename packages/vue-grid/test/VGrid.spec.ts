@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { flushPromises, mount } from '@vue/test-utils'
+import { config, flushPromises, mount } from '@vue/test-utils'
 import { defineComponent, h, nextTick, reactive } from 'vue'
 import VGridComponent from '../src/components/VGrid.vue'
 
@@ -9,6 +9,7 @@ const VGrid = VGridComponent as any
 import VGridColumnMenu from '../src/components/VGridColumnMenu.vue'
 import VGridPagination from '../src/components/VGridPagination.vue'
 import { defineCellRenderer } from '../src/registry/registry'
+import { numberRenderer } from '../src/renderers'
 import { createVueGrid } from '../src/registry/plugin'
 import type { ColumnDef } from '../src/types'
 
@@ -139,6 +140,39 @@ describe('VGrid renderers registry', () => {
     expect(bodyTexts(w, 'name')[0]).toBe('Bravo')
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('Unknown renderer "nope"'))
     warn.mockRestore()
+  })
+
+  it('renderers are opt-in: only text is built in; definitions work without registration', async () => {
+    const saved = config.global.plugins
+    config.global.plugins = [] // a bare app: no createVueGrid({ renderers })
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    try {
+      const w = mount(VGrid, {
+        props: {
+          rows,
+          rowKey: 'id',
+          columns: [
+            { key: 'name' }, // text: always available
+            { key: 'score', renderer: numberRenderer, rendererOptions: { format: { minimumFractionDigits: 1 } } },
+            // unregistered name → plain text, the column's options are not handed to text
+            { key: 'city', field: 'owner.city', renderer: 'icon', rendererOptions: { icon: 'not-a-text-option' } },
+          ],
+        },
+      })
+      expect(bodyTexts(w, 'name')).toEqual(['Bravo', 'alpha', 'Charlie'])
+      expect(bodyTexts(w, 'score')[0]).toBe('20.0') // numberRenderer used straight from the column
+      expect(w.find('[data-col-key="score"] .vg-number').exists()).toBe(true)
+      expect(bodyTexts(w, 'city')[0]).toBe('Beograd')
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('register it by name'))
+      // a locally registered name works too
+      const local = mount(VGrid, {
+        props: { rows, rowKey: 'id', renderers: [numberRenderer], columns: [{ key: 'score', renderer: 'number' }] },
+      })
+      expect(local.find('[data-col-key="score"] .vg-number').exists()).toBe(true)
+    } finally {
+      config.global.plugins = saved
+      warn.mockRestore()
+    }
   })
 
   it('renders components from reactive columns without making them reactive', async () => {

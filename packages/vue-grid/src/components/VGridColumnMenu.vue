@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, shallowRef, useId } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, shallowRef, useId } from 'vue'
 import { normalizeColumnState, setColumnHidden } from '../core/columns'
-import { anchorNameFor, placeWithoutAnchorSupport, supportsAnchorPositioning } from '../internal/anchor'
+import { anchorNameFor, trackAnchor } from '../internal/anchor'
 import type { ColumnDef, ColumnState } from '../types'
 
 const props = withDefaults(
@@ -51,12 +51,14 @@ function reset() {
   columnState.value = normalizeColumnState(props.columns, null)
 }
 
+let stopTracking = () => {}
+onBeforeUnmount(() => stopTracking())
+
 function onToggle(event: Event) {
+  stopTracking()
   if ((event as ToggleEvent).newState !== 'open') return
-  // Placed by CSS anchor positioning; JS only for browsers without it.
-  if (!supportsAnchorPositioning() && panel.value && trigger.value) {
-    placeWithoutAnchorSupport(panel.value, trigger.value, 'bottom-end')
-  }
+  // Placed, followed and hidden by CSS anchor positioning; JS only where unsupported.
+  if (panel.value && trigger.value) stopTracking = trackAnchor(panel.value, trigger.value, 'bottom-end')
   nextTick(() => filterInput.value?.focus({ preventScroll: true }))
 }
 </script>

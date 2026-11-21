@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- rows are an opaque, type-erased T inside the grid internals; the public <VGrid generic="T"> API stays fully typed. */
 import { inject, type Component, type ComputedRef, type InjectionKey, type Slots } from 'vue'
-import type { Align, CellRendererDefinition, ClassValue, ColumnDef, GridPart, RowKey } from '../types'
+import type { Align, CellRendererDefinition, ClassValue, ColumnDef, FlashMode, GridPart, RowKey } from '../types'
 import type { SelectionSummary } from '../core/selection'
 import type { SubRowEntry } from '../composables/useSubRows'
 
@@ -16,7 +16,7 @@ export interface ResolvedColumn {
   options: Record<string, unknown>
   align: Align
   pinned: 'left' | 'right' | undefined
-  /** Last left-pinned or first right-pinned column (gets the pin shadow). */
+  /** Last left-pinned or first right-pinned column. Only set where CSS `:has()` is unsupported. */
   pinEdge: boolean
   /** First data column — hosts the expander and the depth indent. */
   isTree: boolean
@@ -47,6 +47,8 @@ export interface GridContext {
   isHighlighted(key: RowKey): boolean
   rowClass(row: any, index: number): ClassValue
   rowClickable: ComputedRef<boolean>
+  /** Grid-wide change highlight (columns may override with `flash`). */
+  flash: ComputedRef<FlashMode>
   virtual: ComputedRef<boolean>
   pinStyle(key: string): Record<string, string> | undefined
   onRowClick(row: any, key: RowKey, event: MouseEvent | KeyboardEvent): void

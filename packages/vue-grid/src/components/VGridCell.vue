@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, shallowRef, watch } from 'vue'
 import { getCellValue } from '../core/value'
+import { toNumber } from '../renderers/format'
 import { useInternalGrid, type ResolvedColumn } from '../internal/context'
-import type { RowKey } from '../types'
+import type { FlashMode, RowKey } from '../types'
 import { RenderSlot } from '../internal/RenderSlot'
 import VGridCheckbox from './VGridCheckbox.vue'
 
@@ -17,6 +18,33 @@ const props = defineProps<{
 const grid = useInternalGrid()
 
 const value = computed(() => (props.column.kind === 'data' ? getCellValue(props.row, props.column.def) : undefined))
+
+// ── Change highlight ──────────────────────────────────────────────────────────────────────
+// The animation is pure CSS; this only notices a changed value and flips `data-vg-flash`
+// between 1 and 2 (two identical keyframes), which restarts the animation on every change.
+const flashMode = computed<FlashMode>(() =>
+  props.column.kind === 'data' ? (props.column.def.flash ?? grid.flash.value) : false,
+)
+const flash = shallowRef<{ n: 1 | 2; dir?: 'up' | 'down' } | null>(null)
+const same = (a: unknown, b: unknown) => {
+  if (Object.is(a, b)) return true
+  if (a === null || b === null || typeof a !== 'object' || typeof b !== 'object') return false
+  try {
+    return JSON.stringify(a) === JSON.stringify(b) // new object, same content (e.g. a re-fetched row)
+  } catch {
+    return false
+  }
+}
+watch(value, (next, prev) => {
+  if (!flashMode.value || same(next, prev)) return
+  let dir: 'up' | 'down' | undefined
+  if (flashMode.value === 'direction') {
+    const a = toNumber(prev)
+    const b = toNumber(next)
+    if (a !== null && b !== null && a !== b) dir = b > a ? 'up' : 'down'
+  }
+  flash.value = { n: flash.value?.n === 1 ? 2 : 1, dir }
+})
 
 const cellClass = computed(() => {
   const c = props.column.def.cellClass
@@ -39,7 +67,7 @@ function onContextMenu(event: MouseEvent) {
 function onClick(event: MouseEvent) {
   if (props.column.kind !== 'data') return
   // Clicks on interactive content (links, buttons, inputs) belong to that content.
-  const interactive = (event.target as Element).closest('a, button, input, select, textarea, label, [role="menu"]')
+  const interactive = (event.target as Element).closest('a, button, input, select, textarea, label, summary, [role="menu"]')
   if (interactive && (event.currentTarget as Element).contains(interactive)) return
   if (props.column.def.clickable) grid.onCellClick(props.row, props.rowKey, props.column, event)
   else grid.onRowClick(props.row, props.rowKey, event)
@@ -65,6 +93,8 @@ function onClick(event: MouseEvent) {
       grid.ui.value.cell,
     ]"
     :style="grid.pinStyle(column.key)"
+    :data-vg-flash="flash?.n"
+    :data-vg-flash-dir="flash?.dir"
     @click="onClick"
     @contextmenu="onContextMenu"
   >

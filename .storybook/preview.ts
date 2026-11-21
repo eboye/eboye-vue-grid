@@ -1,6 +1,6 @@
 import type { Preview } from '@storybook/vue3-vite'
 import { setup } from '@storybook/vue3-vite'
-import { createVueGrid } from '@eboye/vue-grid'
+import { allRenderers, createVueGrid } from '@eboye/vue-grid'
 import { ratingRenderer } from '@eboye/vue-grid-renderer-template'
 import '@eboye/vue-grid/style.css'
 import '@eboye/vue-grid-renderer-template/style.css'
@@ -10,7 +10,7 @@ import './preview.css'
 setup((app) => {
   app.use(
     createVueGrid({
-      renderers: [ratingRenderer],
+      renderers: [...allRenderers, ratingRenderer],
       locale: 'en-US',
       currency: 'EUR',
       timeZone: 'UTC',

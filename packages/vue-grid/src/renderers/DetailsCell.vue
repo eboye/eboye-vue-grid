@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, shallowRef, useId } from 'vue'
-import { anchorNameFor, placeWithoutAnchorSupport, supportsAnchorPositioning } from '../internal/anchor'
+import { computed, onBeforeUnmount, shallowRef, useId } from 'vue'
+import { anchorNameFor, trackAnchor } from '../internal/anchor'
 import type { CellRendererProps } from '../types'
 import { resolveOption, resolveTone, type DetailsOptions } from './options'
 import { CrossIcon, InfoIcon } from './parts/icons'
@@ -21,10 +21,14 @@ const items = computed(() => props.options.items?.(props.value, props.row) ?? []
 const title = computed(() => resolveOption(props.options.title, props.value, props.row) ?? props.column.header ?? '')
 const triggerLabel = computed(() => `${props.options.triggerLabel ?? 'Details'}${title.value ? `: ${title.value}` : ''}`)
 
+let stopTracking = () => {}
+onBeforeUnmount(() => stopTracking())
+
 function onToggle(event: Event) {
-  // Placed by CSS anchor positioning; JS only for browsers without it.
-  if ((event as ToggleEvent).newState === 'open' && !supportsAnchorPositioning() && panel.value && trigger.value) {
-    placeWithoutAnchorSupport(panel.value, trigger.value, 'bottom-start')
+  stopTracking()
+  // Placed, followed and hidden by CSS anchor positioning; JS only where unsupported.
+  if ((event as ToggleEvent).newState === 'open' && panel.value && trigger.value) {
+    stopTracking = trackAnchor(panel.value, trigger.value, 'bottom-start')
   }
 }
 </script>

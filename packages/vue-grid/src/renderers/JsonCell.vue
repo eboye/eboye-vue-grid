@@ -15,12 +15,19 @@ const title = computed(() => resolveOption(props.options.dialogTitle, props.valu
 function open() {
   dialog.value?.showModal()
 }
+
+// Light dismiss comes from `closedby="any"`; this is the fallback for browsers without it:
+// a click whose target is the <dialog> itself landed on the backdrop.
+const needsLightDismissFallback = typeof HTMLDialogElement !== 'undefined' && !('closedBy' in HTMLDialogElement.prototype)
+function onDialogClick(event: MouseEvent) {
+  if (needsLightDismissFallback && event.target === dialog.value) dialog.value?.close()
+}
 </script>
 
 <template>
   <span v-if="hasValue" class="vg-json">
     <button type="button" class="vg-link-button" @click.stop="open">{{ options.label ?? 'View' }}</button>
-    <dialog ref="dialog" class="vg-dialog" closedby="any" @click.stop @keydown.stop>
+    <dialog ref="dialog" class="vg-dialog" closedby="any" @click.stop="onDialogClick" @keydown.stop>
       <header class="vg-dialog-header">
         <strong>{{ title }}</strong>
         <form method="dialog"><button class="vg-icon-button" aria-label="Close">✕</button></form>

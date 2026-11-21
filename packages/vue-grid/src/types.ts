@@ -17,6 +17,9 @@ export interface SortState {
 
 export type PinSide = 'left' | 'right'
 
+/** Change highlight: off, a neutral tint, or green / red by numeric direction. */
+export type FlashMode = boolean | 'direction'
+
 export interface ColumnState {
   /** Column keys in display order (all known columns, visible or not). */
   order: string[]
@@ -48,11 +51,20 @@ export interface CellRendererRegistry {}
 
 export type RendererName = keyof CellRendererRegistry | (string & {})
 
-export type RendererOptions<R> = R extends keyof CellRendererRegistry
-  ? CellRendererRegistry[R]
-  : Record<string, unknown>
+/**
+ * How a column picks its renderer: a registered name (`'currency'`), or the renderer definition
+ * itself (`currencyRenderer`) — the tree-shakeable way: only imported renderers end up in the bundle.
+ */
+export type RendererRef = RendererName | CellRendererDefinition<any>
 
-export interface ColumnDef<T = any, R extends RendererName = RendererName> {
+export type RendererOptions<R> =
+  R extends CellRendererDefinition<infer O>
+    ? O
+    : R extends keyof CellRendererRegistry
+      ? CellRendererRegistry[R]
+      : Record<string, unknown>
+
+export interface ColumnDef<T = any, R extends RendererRef = RendererName> {
   /** Unique, stable column id. Also used for sort state, column state and slot names. */
   key: string
   header?: string
@@ -61,7 +73,7 @@ export interface ColumnDef<T = any, R extends RendererName = RendererName> {
   field?: string
   /** Computes the cell value; wins over `field`. */
   value?: (row: T) => unknown
-  /** Renderer name from the registry, or a component. Defaults to `text`. */
+  /** A renderer definition (`currencyRenderer`), a registered renderer name, or a component. Defaults to `text`. */
   renderer?: R | Component
   rendererOptions?: RendererOptions<R>
   /** Any CSS grid track size. Defaults to `auto`. */
@@ -84,6 +96,11 @@ export interface ColumnDef<T = any, R extends RendererName = RendererName> {
   reorderable?: boolean
   /** Cell click emits `cell-click` instead of `row-click`. */
   clickable?: boolean
+  /**
+   * Briefly highlight the cell when its value changes (overrides the grid's `flash` prop).
+   * `'direction'`: green when a number goes up, red when it goes down.
+   */
+  flash?: FlashMode
   cellClass?: ClassValue | ((row: T) => ClassValue)
   headerClass?: ClassValue
 }
@@ -97,7 +114,7 @@ export interface ColumnDef<T = any, R extends RendererName = RendererName> {
  * const columns = [col({ key: 'total', renderer: 'currency', rendererOptions: { currency: 'EUR' } })]
  * ```
  */
-export type ColumnHelper<T> = <R extends RendererName = 'text'>(def: ColumnDef<T, R>) => ColumnDef<T>
+export type ColumnHelper<T> = <R extends RendererRef = 'text'>(def: ColumnDef<T, R>) => ColumnDef<T>
 
 export interface FormatContext {
   locale: string
@@ -216,6 +233,12 @@ export interface VGridExposed {
   expandAll(): void
   collapseAll(): void
   setColumnState(state: ColumnState): void
+  /**
+   * Applies field patches to lazily loaded child rows (`loadSubRows`), which the grid caches and the
+   * app can't reach. Top-level and synchronous `subRows` data belong to the app: update them there
+   * (assign fields on reactive rows, or use `patchRows`). Returns the number of rows patched.
+   */
+  patchLoadedRows(patches: ReadonlyMap<RowKey, Record<string, unknown>> | readonly Record<string, unknown>[]): number
 }
 
 export interface VueGridConfig {

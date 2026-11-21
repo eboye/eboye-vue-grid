@@ -46,6 +46,52 @@ test.describe('actions menu (popover + anchor positioning)', () => {
   })
 })
 
+test.describe('menu visibility', () => {
+  test('opening menus logs no CSS deprecation warnings', async ({ page }) => {
+    const warnings: string[] = []
+    page.on('console', (m) => {
+      if (/deprecated/i.test(m.text())) warnings.push(m.text())
+    })
+    await page.reload()
+    await demo(page, 'basic').locator('[data-row-key="2"]').getByRole('button', { name: 'Actions' }).click()
+    await expect(openMenu(page)).toBeVisible()
+    await demo(page, 'basic').locator('[role="columnheader"][data-col-key="stake"]').click({ button: 'right' })
+    await expect(openMenu(page)).toBeVisible()
+    expect(warnings).toEqual([])
+  })
+
+  test('hides once its trigger is scrolled out of the grid', async ({ page, browserName }) => {
+    // Chromium hides it with CSS `position-visibility`; Firefox 159 can't, so a JS fallback does.
+    test.info().annotations.push({ type: 'engine', description: browserName })
+    const grid = demo(page, 'basic')
+    const trigger = grid.locator('[data-row-key="2"]').getByRole('button', { name: 'Actions' })
+    await trigger.click()
+    const menu = page.locator('.vg-actions-menu [role="menu"]:popover-open')
+    await expect(menu).toBeVisible()
+    // Put the grid mid-page, then scroll its body just far enough that the trigger is clipped by the
+    // grid's scroll container while still inside the page viewport: only `position-visibility`
+    // (or its JS fallback) can hide the menu then — it would otherwise float over the grid, on screen.
+    const scroller = grid.locator('.vg')
+    await scroller.evaluate((el) => window.scrollBy(0, el.getBoundingClientRect().top - 320))
+    const s = await box(scroller)
+    const t = await box(trigger)
+    await scroller.evaluate((el, by) => (el.scrollTop += by), t.y + t.height - s.y + 4)
+    await expect.poll(async () => (await box(trigger)).y + (await box(trigger)).height).toBeLessThan(s.y)
+    expect((await box(trigger)).y).toBeGreaterThan(0) // still on the page
+    // Hidden boxes keep their computed style but are no longer painted or hit-testable.
+    const hitsMenu = () =>
+      menu.evaluate((el) => {
+        const r = el.getBoundingClientRect()
+        const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)
+        return !!hit && el.contains(hit)
+      })
+    await expect.poll(hitsMenu).toBe(false)
+    // and shows again when it scrolls back
+    await grid.locator('.vg').evaluate((el) => (el.scrollTop = 0))
+    await expect.poll(hitsMenu).toBe(true)
+  })
+})
+
 test.describe('cell context menu', () => {
   test('opens at the pointer on right-click and emits context-action', async ({ page }) => {
     const grid = demo(page, 'basic')
@@ -163,12 +209,18 @@ test.describe('header context menu', () => {
     )
     expect((await headerKeys(grid)).slice(0, 3)).toEqual(['id', 'player', 'stake'])
     await expect(stake).toHaveClass(/vg-pin-left/)
-    await expect(stake).toHaveClass(/vg-pin-edge/)
+    const shadow = (key: string) =>
+      grid.locator(`[role="columnheader"][data-col-key="${key}"]`).evaluate((el) => getComputedStyle(el).boxShadow)
+    // No edge shadow until content scrolls under the pinned columns.
+    expect(await shadow('stake')).toBe('none')
 
     const x0 = (await box(stake)).x
     await grid.locator('.vg').evaluate((el) => (el.scrollLeft = 400))
     await expect.poll(async () => (await box(grid.locator('[role="columnheader"][data-col-key="city"]'))).x).toBeLessThan(x0)
     expect((await box(stake)).x).toBeCloseTo(x0, 0)
+    // Now the new innermost pinned column (Stake) carries the edge shadow, Player no longer does.
+    await expect.poll(() => shadow('stake')).not.toBe('none')
+    expect(await shadow('player')).toBe('none')
     // body cells of the newly pinned column stick too
     const bodyStake = grid.locator('.vg-row').first().locator('[data-col-key="stake"]')
     expect((await box(bodyStake)).x).toBeCloseTo(x0, 0)

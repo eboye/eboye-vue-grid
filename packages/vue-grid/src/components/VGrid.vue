@@ -24,17 +24,20 @@ import { selectionState, toggleRowSelection } from '../core/selection'
 import { sortRows } from '../core/sort'
 import { localStorageAdapter } from '../core/storage'
 import { getCellValue, resolveRowKey, type RowKeyGetter } from '../core/value'
+import type { RowPatches } from '../core/patch'
 import { computeVirtualWindow } from '../core/virtual'
 import { useColumnDrag } from '../composables/useColumnDrag'
 import { useGridKeyboard } from '../composables/useGridKeyboard'
 import { useGridMenus, type MenuHandle } from '../composables/useGridMenus'
 import { usePinnedOffsets } from '../composables/usePinnedOffsets'
+import { useScrollEdges } from '../composables/useScrollEdges'
 import { useSubRows } from '../composables/useSubRows'
 import { DEV, warnOnce } from '../internal/dev'
+import { supportsHas } from '../internal/supports'
 import { GRID_CONTEXT_KEY, SELECT_COLUMN_KEY, type GridContext, type ResolvedColumn } from '../internal/context'
 import { FORMAT_CONTEXT_KEY, GRID_CONFIG_KEY, resolveFormatContext } from '../registry/plugin'
-import { createRendererRegistry } from '../registry/registry'
-import { builtinRenderers, textRenderer } from '../renderers'
+import { createRendererRegistry, isRendererDefinition } from '../registry/registry'
+import { textRenderer } from '../renderers/text'
 import type {
   CellActionEvent,
   CellClickEvent,
@@ -43,6 +46,7 @@ import type {
   ClassValue,
   ColumnDef,
   ColumnState,
+  FlashMode,
   ColumnStateStorage,
   ContextActionEvent,
   Density,
@@ -75,6 +79,8 @@ const props = withDefaults(
     rowClickable?: boolean
     rowClass?: (row: T, index: number) => ClassValue
     highlightedRows?: readonly RowKey[]
+    /** Briefly highlight cells whose value changes (live data, enrichment). Columns can override. */
+    flash?: FlashMode
     virtual?: VirtualOptions | false
     storage?: ColumnStateStorage | string
     renderers?: CellRendererDefinition[]
@@ -168,16 +174,30 @@ function setColumnState(next: ColumnState) {
 }
 
 // ── Renderers & resolved columns ────────────────────────────────────────────────────────────
-const registry = computed(() => createRendererRegistry(builtinRenderers, config?.renderers, props.renderers))
+const registry = computed(() => createRendererRegistry([textRenderer], config?.renderers, props.renderers))
 
-function resolveRenderer(col: ColumnDef<T>): { component: ResolvedColumn['component']; definition?: CellRendererDefinition } {
+const camel = (name: string) => name.replace(/-(\w)/g, (_, c: string) => c.toUpperCase())
+
+function resolveRenderer(col: ColumnDef<T>): {
+  component: ResolvedColumn['component']
+  definition?: CellRendererDefinition
+  /** The named renderer isn't registered: rendered as text, without the column's (foreign) options. */
+  fallback?: boolean
+} {
   const renderer = col.renderer ?? 'text'
+  // A definition object (`renderer: currencyRenderer`) — the tree-shakeable form.
+  if (isRendererDefinition(renderer)) return { component: toRaw(renderer.component), definition: renderer }
   // toRaw: columns kept in ref()/reactive() would otherwise hand Vue a reactive component.
   if (typeof renderer !== 'string') return { component: toRaw(renderer) }
   const definition = registry.value.get(renderer)
   if (definition) return { component: toRaw(definition.component), definition }
-  warnOnce(`renderer:${renderer}`, `Unknown renderer "${renderer}" (column "${col.key}"); falling back to "text".`)
-  return { component: textRenderer.component, definition: textRenderer }
+  warnOnce(
+    `renderer:${renderer}`,
+    `Unknown renderer "${renderer}" (column "${col.key}"); falling back to "text". ` +
+      `Pass the definition (renderer: ${camel(renderer)}Renderer) or register it by name: ` +
+      `createVueGrid({ renderers: [${camel(renderer)}Renderer] }) / <VGrid :renderers="[…]">.`,
+  )
+  return { component: textRenderer.component, definition: textRenderer, fallback: true }
 }
 
 const isVirtual = computed(() => !!props.virtual)
@@ -204,24 +224,27 @@ const resolvedColumns = computed<ResolvedColumn[]>(() => {
     })
   }
   data.forEach((def, i) => {
-    const { component, definition } = resolveRenderer(def)
+    const { component, definition, fallback } = resolveRenderer(def)
     list.push({
       key: def.key,
       kind: 'data',
       def,
       component,
       definition,
-      options: { ...(definition?.defaults as object), ...(def.rendererOptions as object) },
+      options: fallback ? {} : { ...(definition?.defaults as object), ...(def.rendererOptions as object) },
       align: def.align ?? definition?.align ?? 'start',
       pinned: effectivePin(def, state),
       pinEdge: false,
       isTree: i === 0,
     })
   })
-  const lastLeft = list.findLastIndex((c) => c.pinned === 'left')
-  const firstRight = list.findIndex((c) => c.pinned === 'right')
-  if (lastLeft >= 0) list[lastLeft]!.pinEdge = true
-  if (firstRight >= 0) list[firstRight]!.pinEdge = true
+  // The pin edge is found in CSS (`:has()`); the class is only a fallback for engines without it.
+  if (!supportsHas()) {
+    const lastLeft = list.findLastIndex((c) => c.pinned === 'left')
+    const firstRight = list.findIndex((c) => c.pinned === 'right')
+    if (lastLeft >= 0) list[lastLeft]!.pinEdge = true
+    if (firstRight >= 0) list[firstRight]!.pinEdge = true
+  }
   return list
 })
 
@@ -341,6 +364,7 @@ function toggleAll() {
 
 // ── Pinned columns, drag & keyboard ─────────────────────────────────────────────────────────
 const pinOffsets = usePinnedOffsets(root, () => resolvedColumns.value)
+useScrollEdges(root, () => template.value)
 
 const canReorder = (key: string) => props.columns.find((c) => c.key === key)?.reorderable !== false
 
@@ -476,10 +500,11 @@ const context: GridContext = {
   isHighlighted: (key) => highlighted.value.has(key),
   rowClass: (row, index) => props.rowClass?.(row, index),
   rowClickable: computed(() => props.rowClickable),
+  flash: computed(() => props.flash ?? false),
   virtual: isVirtual,
   pinStyle: (key) => {
     const offset = pinOffsets.value[key]
-    return offset === undefined ? undefined : { '--vg-pin-offset': `${offset}px` }
+    return offset === undefined ? undefined : { '--vg-pin-offset': offset }
   },
   onRowClick: (row, _key, event) => emit('row-click', row, event),
   onCellClick: (row, rowKey, column, event) =>
@@ -520,7 +545,12 @@ function collapseAll() {
   expanded.value = []
 }
 
-defineExpose<VGridExposed>({ scrollToTop, scrollToRow, expandAll, collapseAll, setColumnState })
+/** Field patches for lazily loaded child rows (top-level rows belong to the app: patch those). */
+function patchLoadedRows(patches: RowPatches<T>): number {
+  return sub.patchLoaded(patches)
+}
+
+defineExpose<VGridExposed>({ scrollToTop, scrollToRow, expandAll, collapseAll, setColumnState, patchLoadedRows })
 </script>
 
 <template>

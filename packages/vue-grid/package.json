@@ -4,8 +4,19 @@
   "description": "CSS-Grid based data grid for Vue 3 with pluggable cell renderers, sub-grids and CSS-variable theming.",
   "license": "MIT",
   "type": "module",
-  "keywords": ["vue", "vue3", "grid", "table", "data-grid", "css-grid", "subgrid"],
-  "files": ["dist", "README.md"],
+  "keywords": [
+    "vue",
+    "vue3",
+    "grid",
+    "table",
+    "data-grid",
+    "css-grid",
+    "subgrid"
+  ],
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/types/index.d.ts",
@@ -14,9 +25,13 @@
       "types": "./dist/types/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./style.css": "./dist/vue-grid.css"
+    "./style.css": "./dist/vue-grid.css",
+    "./core.css": "./dist/core.css",
+    "./renderers.css": "./dist/renderers.css"
   },
-  "sideEffects": ["**/*.css"],
+  "sideEffects": [
+    "**/*.css"
+  ],
   "scripts": {
     "build": "vite build && vue-tsc -p tsconfig.build.json",
     "test": "vitest run",

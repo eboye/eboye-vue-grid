@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { supportsRelativeColor } from '../internal/supports'
 import type { CellRendererProps } from '../types'
 import { readableTextColor } from './format'
 import { resolveOption, resolveTone, type ChipOptions } from './options'
@@ -18,7 +19,13 @@ const label = computed(() => {
 })
 const color = computed(() => {
   const c = resolveOption(props.options.color, props.value, props.row) ?? record.value?.color
-  return typeof c === 'string' && c.trim() ? c : undefined
+  if (typeof c !== 'string' || !c.trim()) return undefined
+  // Only real colours reach the style (never url()/image() or other tokens).
+  const ok =
+    typeof CSS !== 'undefined' && typeof CSS.supports === 'function'
+      ? CSS.supports('color', c)
+      : !/[(;:]/.test(c.replace(/^(rgba?|hsla?|hwb|lab|lch|oklab|oklch|color)\([^()]*\)$/i, ''))
+  return ok ? c.trim() : undefined
 })
 // A tone map is keyed by the label (e.g. { A: 'success' }); a tone function gets (value, row) like elsewhere.
 const tone = computed(() => {
@@ -27,8 +34,11 @@ const tone = computed(() => {
   return resolveTone(t, typeof t === 'function' ? props.value : label.value, props.row)
 })
 const style = computed(() => ({
-  // backgroundColor (not `background`): data can only set a colour, never an image url().
-  ...(color.value ? { backgroundColor: color.value, color: readableTextColor(color.value) } : {}),
+  // The chip CSS paints --vg-chip-bg as background-color (never `background`, so data can't set an
+  // image url()) and picks readable text in CSS; JS computes the text colour only as a fallback.
+  ...(color.value
+    ? { '--vg-chip-bg': color.value, ...(supportsRelativeColor() ? {} : { color: readableTextColor(color.value) }) }
+    : {}),
   '--vg-chip-size': props.options.size,
 }))
 const tooltip = computed(() => {
@@ -42,7 +52,7 @@ const tooltip = computed(() => {
 <template>
   <span
     v-if="label"
-    :class="['vg-chip', `vg-chip-${options.shape ?? 'square'}`, tone && `vg-tone-${tone}`, { 'vg-chip-toned': !color }]"
+    :class="['vg-chip', `vg-chip-${options.shape ?? 'square'}`, tone && `vg-tone-${tone}`, color ? 'vg-chip-raw' : 'vg-chip-toned']"
     :style="style"
     :title="tooltip"
     >{{ label }}</span

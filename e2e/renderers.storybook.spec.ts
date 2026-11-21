@@ -96,20 +96,53 @@ test('details: popover anchored under its button, lists items, closes with Esc a
   await expect(valueCell(page, 3).getByRole('button')).toHaveCount(0) // no devices → no button
 })
 
-test('list and collapsed json-tree expand on click', async ({ page }) => {
+test('native <details>: list "+N more", collapsed json-tree and tree nodes, by mouse and keyboard', async ({
+  page,
+}) => {
   await story(page, 'renderers--list')
   const cell = valueCell(page, 1)
-  await expect(cell.getByRole('listitem')).toHaveCount(1)
-  await cell.getByRole('button', { name: '+2 more' }).click()
-  await expect(cell.getByRole('listitem')).toHaveCount(3)
-  await cell.getByRole('button', { name: 'Show less' }).click()
-  await expect(cell.getByRole('listitem')).toHaveCount(1)
+  const visibleItems = cell.locator('li:visible')
+  await expect(visibleItems).toHaveCount(1)
+  await cell.locator('summary', { hasText: '+2 more' }).click()
+  await expect(visibleItems).toHaveCount(3)
+  // "Show less" sits under the revealed items
+  const less = cell.locator('summary', { hasText: 'Show less' })
+  await expect(less).toBeVisible()
+  expect((await less.boundingBox())!.y).toBeGreaterThan(
+    (await visibleItems.last().boundingBox())!.y,
+  )
+  await less.click()
+  await expect(visibleItems).toHaveCount(1)
+  // keyboard: focus the summary and press Enter
+  await cell.locator('summary').focus()
+  await page.keyboard.press('Enter')
+  await expect(visibleItems).toHaveCount(3)
 
   await story(page, 'renderers--json-tree-nested')
   const tree = valueCell(page, 1)
-  await expect(tree.getByRole('tree')).toHaveCount(0)
-  await tree.getByRole('button', { name: /More info/ }).click()
-  await expect(tree.getByRole('tree')).toContainText('home')
+  await expect(tree.locator('.vg-json-tree')).toBeHidden()
+  await tree.locator('summary', { hasText: 'More info' }).click()
+  await expect(tree.locator('.vg-json-tree')).toBeVisible()
+  await expect(tree.locator('.vg-json-tree')).toContainText('home')
+  // collapse a node, then expand it again
+  const payload = tree.locator('.vg-json-node summary', { hasText: 'payload' })
+  await payload.click()
+  await expect(tree.getByText('home')).toBeHidden()
+  await payload.click()
+  await expect(tree.getByText('home')).toBeVisible()
+})
+
+test('chip text colour is chosen in CSS for raw data colours', async ({ page }) => {
+  await story(page, 'renderers--chip')
+  const colour = (row: number) =>
+    valueCell(page, row)
+      .locator('.vg-chip')
+      .evaluate((el) => getComputedStyle(el).color)
+  expect(await colour(2)).toBe('rgb(0, 0, 0)') // yellow → black text
+  expect(await colour(3)).toBe('rgb(255, 255, 255)') // dark red → white text
+  expect(await valueCell(page, 2).locator('.vg-chip').getAttribute('style')).not.toMatch(
+    /(^|;\s*)color:/,
+  ) // not set by JS
 })
 
 test('recipes grid: switches and stars apply, popover opens, layout fits', async ({ page }) => {
