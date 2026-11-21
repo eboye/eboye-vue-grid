@@ -58,6 +58,7 @@ function ariaSort(col: ResolvedColumn) {
       ]"
       :style="grid.pinStyle(col.key)"
       @pointerdown="col.kind === 'data' && emit('dragStart', $event, col.key)"
+      @contextmenu="col.kind === 'data' && grid.onHeaderContextMenu(col, $event, $event.currentTarget as HTMLElement)"
     >
       <template v-if="col.kind === 'select'">
         <VGridCheckbox

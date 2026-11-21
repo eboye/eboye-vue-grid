@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, shallowRef, useId } from 'vue'
 import { normalizeColumnState, setColumnHidden } from '../core/columns'
+import { anchorNameFor, placeWithoutAnchorSupport, supportsAnchorPositioning } from '../internal/anchor'
 import type { ColumnDef, ColumnState } from '../types'
 
 const props = withDefaults(
@@ -20,7 +21,7 @@ const trigger = shallowRef<HTMLButtonElement>()
 const panel = shallowRef<HTMLElement>()
 const filterInput = shallowRef<HTMLInputElement>()
 const filter = ref('')
-const position = ref({ top: '0px', left: '0px' })
+const anchor = anchorNameFor(`columns-${id}`)
 
 const state = computed(() => normalizeColumnState(props.columns, columnState.value))
 const byKey = computed(() => new Map(props.columns.map((c) => [c.key, c])))
@@ -52,12 +53,9 @@ function reset() {
 
 function onToggle(event: Event) {
   if ((event as ToggleEvent).newState !== 'open') return
-  const btn = trigger.value?.getBoundingClientRect()
-  const pop = panel.value?.getBoundingClientRect()
-  if (btn && pop) {
-    const left = Math.min(Math.max(4, btn.right - pop.width), window.innerWidth - pop.width - 4)
-    const below = btn.bottom + 4 + pop.height <= window.innerHeight
-    position.value = { top: `${below ? btn.bottom + 4 : Math.max(4, btn.top - 4 - pop.height)}px`, left: `${left}px` }
+  // Placed by CSS anchor positioning; JS only for browsers without it.
+  if (!supportsAnchorPositioning() && panel.value && trigger.value) {
+    placeWithoutAnchorSupport(panel.value, trigger.value, 'bottom-end')
   }
   nextTick(() => filterInput.value?.focus({ preventScroll: true }))
 }
@@ -72,13 +70,14 @@ function onToggle(event: Event) {
       aria-haspopup="dialog"
       :aria-controls="id"
       :popovertarget="id"
+      :style="{ 'anchor-name': anchor }"
     >
       <svg viewBox="0 0 16 16" aria-hidden="true" class="vg-button-icon">
         <path d="M2 3h12M2 8h12M2 13h12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
       </svg>
       {{ label }}
     </button>
-    <div :id="id" ref="panel" popover="auto" role="dialog" :aria-label="label" class="vg-menu vg-column-panel" :style="position" @toggle="onToggle">
+    <div :id="id" ref="panel" popover="auto" role="dialog" :aria-label="label" class="vg-menu vg-column-panel" data-placement="bottom-end" :style="{ 'position-anchor': anchor }" @toggle="onToggle">
       <input ref="filterInput" v-model="filter" type="search" class="vg-input" :placeholder="filterPlaceholder" :aria-label="filterPlaceholder" />
       <ul class="vg-column-list">
         <li v-for="col in items" :key="col.key">

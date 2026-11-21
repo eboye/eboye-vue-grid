@@ -11,7 +11,14 @@ import {
   watch,
   watchEffect,
 } from 'vue'
-import { gridTemplate, moveColumn, moveColumnRelative, normalizeColumnState, visibleColumns } from '../core/columns'
+import {
+  effectivePin,
+  gridTemplate,
+  moveColumn,
+  moveColumnRelative,
+  normalizeColumnState,
+  visibleColumns,
+} from '../core/columns'
 import { selectionState, toggleRowSelection } from '../core/selection'
 import { sortRows } from '../core/sort'
 import { localStorageAdapter } from '../core/storage'
@@ -19,6 +26,7 @@ import { getCellValue, resolveRowKey, type RowKeyGetter } from '../core/value'
 import { computeVirtualWindow } from '../core/virtual'
 import { useColumnDrag } from '../composables/useColumnDrag'
 import { useGridKeyboard } from '../composables/useGridKeyboard'
+import { useGridMenus, type MenuHandle } from '../composables/useGridMenus'
 import { usePinnedOffsets } from '../composables/usePinnedOffsets'
 import { useSubRows } from '../composables/useSubRows'
 import { DEV, warnOnce } from '../internal/dev'
@@ -29,19 +37,25 @@ import { builtinRenderers, textRenderer } from '../renderers'
 import type {
   CellActionEvent,
   CellClickEvent,
+  CellContext,
   CellRendererDefinition,
   ClassValue,
   ColumnDef,
   ColumnState,
   ColumnStateStorage,
+  ContextActionEvent,
   Density,
   GridPart,
+  HeaderActionEvent,
+  HeaderMenuContext,
+  MenuItem,
   RowKey,
   SortState,
   VGridExposed,
   VirtualOptions,
 } from '../types'
 import VGridHeader from './VGridHeader.vue'
+import VGridMenu from './VGridMenu.vue'
 import VGridRows from './VGridRows.vue'
 
 const props = withDefaults(
@@ -71,8 +85,16 @@ const props = withDefaults(
     emptyText?: string
     ariaLabel?: string
     ui?: Partial<Record<GridPart, ClassValue>>
+    /** Right-click menu items for a body cell. Return `null`/`[]` to keep the browser's menu. */
+    contextMenu?: (ctx: CellContext<T>) => MenuItem[] | null | undefined
+    /**
+     * Header right-click menu: `true` = built-in items (sort, pin, move, hide, reset), `false` = off,
+     * or a function that receives the built-in items and returns the items to show.
+     */
+    headerMenu?: boolean | ((ctx: HeaderMenuContext<T>) => MenuItem[] | null | undefined)
   }>(),
   {
+    headerMenu: true,
     sortMode: 'controlled',
     selectable: false,
     selectionMode: 'cascade',
@@ -93,6 +115,8 @@ const emit = defineEmits<{
   'cell-click': [event: CellClickEvent<T>]
   'cell-action': [event: CellActionEvent<T>]
   'sub-rows-error': [event: { row: T; error: unknown }]
+  'context-action': [event: ContextActionEvent<T>]
+  'header-action': [event: HeaderActionEvent<T>]
 }>()
 
 defineSlots<{
@@ -160,7 +184,8 @@ const selectMode = computed<false | 'multi' | 'single'>(() =>
 )
 
 const resolvedColumns = computed<ResolvedColumn[]>(() => {
-  const data = visibleColumns(props.columns, effectiveState.value)
+  const state = effectiveState.value
+  const data = visibleColumns(props.columns, state)
   const list: ResolvedColumn[] = []
   if (selectMode.value) {
     list.push({
@@ -171,7 +196,7 @@ const resolvedColumns = computed<ResolvedColumn[]>(() => {
       definition: undefined,
       options: {},
       align: 'center',
-      pinned: data.some((c) => c.pinned === 'left') ? 'left' : undefined,
+      pinned: data.some((c) => effectivePin(c, state) === 'left') ? 'left' : undefined,
       pinEdge: false,
       isTree: false,
     })
@@ -186,7 +211,7 @@ const resolvedColumns = computed<ResolvedColumn[]>(() => {
       definition,
       options: { ...(definition?.defaults as object), ...(def.rendererOptions as object) },
       align: def.align ?? definition?.align ?? 'start',
-      pinned: def.pinned,
+      pinned: effectivePin(def, state),
       pinEdge: false,
       isTree: i === 0,
     })
@@ -327,18 +352,39 @@ const drag = useColumnDrag({
   },
 })
 
+/** Swaps a column with its visible neighbour (keyboard Alt+←/→ and the header menu). */
+function moveColumnBy(key: string, direction: -1 | 1): boolean {
+  const data = resolvedColumns.value.filter((c) => c.kind === 'data')
+  const neighbour = data[data.findIndex((c) => c.key === key) + direction]
+  if (!neighbour) return false
+  const next = moveColumn(props.columns, effectiveState.value, key, neighbour.key)
+  if (next === effectiveState.value) return false
+  setColumnState(next)
+  return true
+}
+
 const keyboard = useGridKeyboard(root, {
   moveColumn(key, direction) {
-    const data = resolvedColumns.value.filter((c) => c.kind === 'data')
-    const neighbour = data[data.findIndex((c) => c.key === key) + direction]
-    if (!neighbour) return
-    const next = moveColumn(props.columns, effectiveState.value, key, neighbour.key)
-    if (next === effectiveState.value) return
-    setColumnState(next)
+    if (!moveColumnBy(key, direction)) return
     nextTick(() =>
       keyboard.focusCell(root.value?.querySelector<HTMLElement>(`.vg-header > [data-col-key="${CSS.escape(key)}"]`)),
     )
   },
+})
+
+// ── Context menus ───────────────────────────────────────────────────────────────────────────
+const menuRef = shallowRef<MenuHandle>()
+const menus = useGridMenus<T>({
+  menu: menuRef,
+  columns: () => props.columns,
+  columnState: () => effectiveState.value,
+  setColumnState,
+  sort,
+  moveColumnBy,
+  contextMenu: () => props.contextMenu,
+  headerMenu: () => props.headerMenu,
+  onContextAction: (event) => emit('context-action', event),
+  onHeaderAction: (event) => emit('header-action', event),
 })
 
 // ── Virtualisation ──────────────────────────────────────────────────────────────────────────
@@ -438,6 +484,9 @@ const context: GridContext = {
     emit('cell-click', { row, rowKey, column: column.def, value: getCellValue(row, column.def), event }),
   onCellAction: (row, rowKey, column, name, payload) =>
     emit('cell-action', { name, payload, row, rowKey, column: column.def }),
+  onCellContextMenu: (row, rowKey, column, event, el) =>
+    menus.openCellMenu({ row, rowKey, column: column.def, value: getCellValue(row, column.def) }, event, el),
+  onHeaderContextMenu: (column, event, el) => menus.openHeaderMenu(column.def, event, el),
 }
 provide(GRID_CONTEXT_KEY, context)
 
@@ -537,5 +586,6 @@ defineExpose<VGridExposed>({ scrollToTop, scrollToRow, expandAll, collapseAll, s
         </div>
       </div>
     </div>
+    <VGridMenu ref="menuRef" :items="menus.items.value" :label="menus.label.value" placement="point" @select="menus.onSelect" />
   </div>
 </template>

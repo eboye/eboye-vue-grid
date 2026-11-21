@@ -1,6 +1,7 @@
 import type { Component } from 'vue'
+import type { MenuItem, MenuTone } from '../types'
 
-export type Tone = 'success' | 'danger' | 'warning' | 'info' | 'neutral' | 'accent'
+export type Tone = MenuTone
 
 // `any` so option callbacks can annotate their own value/row types: (v: string, row: Order) => ...
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -90,16 +91,10 @@ export interface JsonTreeOptions {
   collapseAt?: number
 }
 
-export interface MenuAction {
-  name: string
-  label: string
-  disabled?: boolean
-  tone?: Tone
-}
-
 export interface ActionsMenuOptions {
+  /** Menu items (actions and `{ separator: true }`), or a function of the row. */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- see RowFn
-  actions?: MenuAction[] | ((row: any) => MenuAction[])
+  actions?: MenuItem[] | ((row: any) => MenuItem[])
   label?: string
 }
 

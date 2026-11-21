@@ -52,6 +52,8 @@ export interface GridContext {
   onRowClick(row: any, key: RowKey, event: MouseEvent | KeyboardEvent): void
   onCellClick(row: any, key: RowKey, column: ResolvedColumn, event: MouseEvent | KeyboardEvent): void
   onCellAction(row: any, key: RowKey, column: ResolvedColumn, name: string, payload: unknown): void
+  onCellContextMenu(row: any, key: RowKey, column: ResolvedColumn, event: MouseEvent, el: HTMLElement): void
+  onHeaderContextMenu(column: ResolvedColumn, event: MouseEvent, el: HTMLElement): void
 }
 
 export const GRID_CONTEXT_KEY: InjectionKey<GridContext> = Symbol('vue-grid:context')

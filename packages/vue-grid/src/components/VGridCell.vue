@@ -31,6 +31,11 @@ function onAction(name: string, payload?: unknown) {
   grid.onCellAction(props.row, props.rowKey, props.column, name, payload)
 }
 
+function onContextMenu(event: MouseEvent) {
+  if (props.column.kind !== 'data') return
+  grid.onCellContextMenu(props.row, props.rowKey, props.column, event, event.currentTarget as HTMLElement)
+}
+
 function onClick(event: MouseEvent) {
   if (props.column.kind !== 'data') return
   // Clicks on interactive content (links, buttons, inputs) belong to that content.
@@ -61,6 +66,7 @@ function onClick(event: MouseEvent) {
     ]"
     :style="grid.pinStyle(column.key)"
     @click="onClick"
+    @contextmenu="onContextMenu"
   >
     <template v-if="column.kind === 'select'">
       <VGridCheckbox

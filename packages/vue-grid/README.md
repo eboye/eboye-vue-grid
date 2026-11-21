@@ -66,7 +66,7 @@ type-checked against that renderer (including addon renderers).
 | `rowKey` | `keyof T \| (row) => string \| number` | — | Stable unique id; all row state is keyed by it. |
 | `v-model:sort` | `{ key, dir: 'asc' \| 'desc' } \| null` | `null` | Header click cycles asc → desc → none. |
 | `sortMode` | `'controlled' \| 'client'` | `'controlled'` | `controlled` only emits (server-side sorting). |
-| `v-model:columnState` | `{ order: string[]; hidden: string[] }` | derived | Column order & visibility. |
+| `v-model:columnState` | `{ order: string[]; hidden: string[]; pinned?: Record<string, "left" \| "right" \| null> }` | derived | Column order, visibility and runtime pins. |
 | `storage` | `string \| ColumnStateStorage` | — | Persist column state (`string` = localStorage key). |
 | `v-model:expanded` | `RowKey[]` | `[]` | Expanded rows (sub-grids and detail rows). |
 | `subRows` | `(row) => T[] \| undefined` | — | Synchronous children → sub-grid. |
@@ -87,12 +87,14 @@ type-checked against that renderer (including addon renderers).
 | `loading` | `boolean` | `false` | Progress bar + `aria-busy`. |
 | `emptyText` | `string` | `'No data to show.'` | |
 | `ariaLabel` | `string` | — | |
+| `contextMenu` | `(ctx: { row, rowKey, column, value }) => MenuItem[] \| null` | — | Right-click menu for body cells. |
+| `headerMenu` | `boolean \| ({ column, items }) => MenuItem[] \| null` | `true` | Built-in header menu (sort, pin, move, hide, reset). |
 | `ui` | `Partial<Record<'root' \| 'header' \| 'headerCell' \| 'row' \| 'cell' \| 'subgrid' \| 'detail' \| 'empty', ClassValue>>` | — | Extra classes per part (Tailwind-friendly). |
 
 ### Events
 
 `row-click(row, event)` · `cell-click({ row, rowKey, column, value, event })` (columns with `clickable: true`) ·
-`cell-action({ name, payload, row, rowKey, column })` (from renderers) · `sub-rows-error({ row, error })` ·
+`cell-action({ name, payload, row, rowKey, column })` (from renderers) · `sub-rows-error({ row, error })` · `context-action({ name, item, row, rowKey, column, value })` · `header-action({ name, item, column })` ·
 plus the `update:*` events of every `v-model`.
 
 Clicks on links, buttons and inputs inside a cell never trigger `row-click`.
@@ -124,7 +126,7 @@ grid.value?.scrollToTop() / scrollToRow(key) / expandAll() / collapseAll() / set
   minWidth?: string              // combined into minmax(minWidth, width)
   align?: 'start' | 'center' | 'end'
   sortable?: boolean; sortValue?: (row) => unknown; sortFn?: (a, b) => number
-  pinned?: 'left' | 'right'
+  pinned?: 'left' | 'right'; pinnable?: boolean   // pinnable: can the header menu change it (default true)
   hidden?: boolean; hideable?: boolean; reorderable?: boolean
   clickable?: boolean
   cellClass?: ClassValue | ((row) => ClassValue); headerClass?: ClassValue
@@ -159,6 +161,58 @@ Drag a header to move it (pointer events: mouse, pen, touch), or focus a header 
 **Alt+←/→**. Pinned columns only move within their pin group. Stored state is reconciled with the
 current column definitions (unknown keys dropped, new columns appended).
 
+## Context menus
+
+Menus use the **Popover API** (top layer — never clipped by the grid's scroll container; Esc and
+outside click close them) and **CSS anchor positioning** (`position-anchor` + `position-area` +
+`position-try-fallbacks`): they flip to stay on screen and follow their anchor while the grid
+scrolls. No JS positioning, except a small fallback for browsers without anchor positioning.
+
+### Body cells
+
+```vue
+<VGrid
+  :rows :columns row-key="id"
+  :context-menu="({ row, column, value }) => column.key === 'link' ? [] : [
+    { name: 'copy', label: 'Copy', hint: 'Ctrl+C' },
+    { name: 'open', label: `Open #${row.id}` },
+    { separator: true },
+    { name: 'delete', label: 'Delete', tone: 'danger', disabled: !row.canDelete },
+  ]"
+  @context-action="({ name, row, column, value }) => run(name, row)"
+/>
+```
+
+Right-click opens the menu at the pointer; the **ContextMenu** key or **Shift+F10** opens it under the
+focused cell. Return `[]`/`null` to keep the browser's native menu for that cell. Items:
+`{ name, label, disabled?, tone?, icon?, hint? }` or `{ separator: true }`. Arrow keys, Home/End and
+typeahead move through items; focus returns to the cell on close.
+
+### Column headers
+
+Right-clicking a header opens a built-in menu: **Sort ascending / descending / Clear sort** (sortable
+columns), **Pin left / Pin right / Unpin**, **Move left / right**, **Hide column**, **Reset columns**.
+Runtime pins are stored in column state (`columnState.pinned`) and persisted with `storage`.
+
+```vue
+<!-- extend (or replace) the built-in items; custom items emit header-action -->
+<VGrid :header-menu="({ column, items }) => [{ name: 'copy', label: 'Copy column' }, { separator: true }, ...items]"
+       @header-action="({ name, column }) => …" />
+<VGrid :header-menu="false" />                  <!-- off -->
+```
+
+Columns opt out with `pinnable: false`, `reorderable: false`, `hideable: false`.
+
+### `VGridMenu` for your own triggers
+
+The same component powers the `actions-menu` renderer and is exported for add-ons:
+
+```vue
+<button popovertarget="row-menu" :style="{ 'anchor-name': '--row-menu' }">⋮</button>
+<VGridMenu id="row-menu" anchor-name="--row-menu" :items="items" @select="(item) => …" />
+<!-- or imperatively: menuRef.value.openAt(element | { x, y }) -->
+```
+
 ## Pagination
 
 ```vue
@@ -178,7 +232,7 @@ rows are disabled in virtual mode.
 ## Keyboard
 
 The grid is one tab stop. Arrow keys move between cells (header, rows, sub-grid rows, detail rows),
-`Home`/`End`, `Ctrl+Home`/`Ctrl+End`, `PageUp`/`PageDown`. `Enter` sorts a header or activates the
+`Home`/`End`, `Ctrl+Home`/`Ctrl+End`, `PageUp`/`PageDown`; `ContextMenu` / `Shift+F10` opens the context menu. `Enter` sorts a header or activates the
 cell's control; `Space` toggles row selection; `→`/`←` on a tree cell expands/collapses; `Alt+←/→` on a
 header moves the column.
 
@@ -198,7 +252,7 @@ header moves the column.
 | `icon` | `icon` / `iconFor`, `show`, `label`, `tone` |
 | `json` | `label`, `dialogTitle` (escaped JSON in a `<dialog>`) |
 | `json-tree` | `collapseAt` |
-| `actions-menu` | `actions: [{ name, label, disabled?, tone? }] \| (row) => …`, `label` → emits the action name |
+| `actions-menu` | `actions: MenuItem[] \| (row) => MenuItem[]`, `label` → emits the action name (popover + anchor positioning) |
 | `action-button` | `label`, `action`, `icon`, `tone`, `disabled` |
 
 Values option callbacks receive `(value, row)`. The component of every renderer is exported too
@@ -257,7 +311,7 @@ Override any token on `:root`, a wrapper, or the grid itself:
 | Colour | `--vg-color-text` `-text-muted` `-surface` `-surface-raised` `-header-bg` `-header-text` `-border` `-border-strong` `-row-hover` `-row-selected` `-row-highlight` `-accent` `-accent-contrast` `-focus-ring` `-success` `-danger` `-warning` `-info` `-neutral` |
 | Space & shape | `--vg-cell-padding-x/y` `--vg-header-padding-x/y` `--vg-gap` `--vg-radius` `--vg-radius-sm` `--vg-radius-pill` `--vg-border-width` `--vg-row-border` `--vg-header-border` `--vg-outer-border` `--vg-select-column-width` `--vg-expander-size` |
 | Sub-grid | `--vg-subgrid-bg` `--vg-subgrid-indent` `--vg-subgrid-border` `--vg-subgrid-radius` |
-| Elevation | `--vg-shadow-pinned` `--vg-shadow-popover` `--vg-z-header` `--vg-z-pinned` `--vg-z-pinned-header` `--vg-transition` |
+| Elevation | `--vg-shadow-pinned` `--vg-shadow-popover` `--vg-z-header` `--vg-z-pinned` `--vg-z-pinned-header` `--vg-transition` `--vg-menu-gap` |
 
 Colours use `light-dark()`: set `color-scheme: light dark` on `html` to follow the OS, or
 `color-scheme: dark` to force dark. Stable class names (`.vg-header-cell`, `.vg-cell`, `.vg-row`,
@@ -266,4 +320,5 @@ Colours use `light-dark()`: set `color-scheme: light dark` on `html` to follow t
 ## Browser support
 
 Evergreen browsers: CSS `subgrid`, `light-dark()`, `@layer`, the Popover API and `<dialog>`
-(Chrome/Edge 123+, Firefox 125+, Safari 17.5+).
+(Chrome/Edge 123+, Firefox 125+, Safari 17.5+). Menus are placed with CSS anchor positioning where
+available (Chrome/Edge 125+, Safari 26+, current Firefox) and fall back to JS placement elsewhere.

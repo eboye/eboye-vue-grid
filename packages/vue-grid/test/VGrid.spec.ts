@@ -152,7 +152,7 @@ describe('VGrid column state', () => {
     })
     await nextTick()
     expect(headerTexts(w)).toEqual(['City', 'Name'])
-    expect(JSON.parse(localStorage.getItem('cols')!)).toEqual({ order: ['city', 'name', 'score'], hidden: ['score'] })
+    expect(JSON.parse(localStorage.getItem('cols')!)).toEqual({ order: ['city', 'name', 'score'], hidden: ['score'], pinned: {} })
 
     const again = mount(VGrid, { props: { rows, columns, rowKey: 'id', storage: 'cols' } })
     expect(headerTexts(again)).toEqual(['City', 'Name'])
@@ -302,6 +302,110 @@ describe('VGrid virtual mode', () => {
     expect(rendered.length).toBeLessThan(60)
     expect(rendered[0]!.attributes('aria-rowindex')).toBe('2')
     expect(w.find('.vg').attributes('aria-rowcount')).toBe('10001')
+  })
+})
+
+describe('VGrid context menus', () => {
+  const menuItems = (w: ReturnType<typeof mount>) => w.findAll('[role="menu"] [role="menuitem"]')
+
+  it('right-click on a cell shows app items and emits context-action', async () => {
+    const contextMenu = vi.fn((ctx: { row: Row }) => [
+      { name: 'open', label: `Open ${ctx.row.name}` },
+      { separator: true as const },
+      { name: 'delete', label: 'Delete', tone: 'danger' as const },
+    ])
+    const w = mount(VGrid, { props: { rows, columns, rowKey: 'id', contextMenu }, attachTo: document.body })
+    const cell = w.find('[data-row-key="3"] > [data-col-key="city"]')
+    const event = new MouseEvent('contextmenu', { bubbles: true, cancelable: true, button: 2, clientX: 40, clientY: 50 })
+    cell.element.dispatchEvent(event)
+    await flushPromises()
+    expect(event.defaultPrevented).toBe(true)
+    expect(contextMenu).toHaveBeenCalledWith(expect.objectContaining({ rowKey: 3, value: 'Novi Sad' }))
+    expect(menuItems(w).map((b) => b.text())).toEqual(['Open Charlie', 'Delete'])
+    expect(w.find('[role="menu"] [role="separator"]').exists()).toBe(true)
+    await menuItems(w)[1]!.trigger('click')
+    expect(w.emitted('context-action')?.[0]?.[0]).toMatchObject({ name: 'delete', rowKey: 3, column: { key: 'city' } })
+    w.unmount()
+  })
+
+  it('keeps the native menu when no items are returned', async () => {
+    const w = mount(VGrid, { props: { rows, columns, rowKey: 'id', contextMenu: () => null } })
+    const event = new MouseEvent('contextmenu', { bubbles: true, cancelable: true, button: 2 })
+    w.find('[data-row-key="1"] > [data-col-key="name"]').element.dispatchEvent(event)
+    await flushPromises()
+    expect(event.defaultPrevented).toBe(false)
+  })
+
+  it('header menu sorts, pins, moves and hides columns', async () => {
+    const w = mount(VGrid, { props: { rows, columns, rowKey: 'id' }, attachTo: document.body })
+    const openHeader = async (key: string) => {
+      w.find(`[role="columnheader"][data-col-key="${key}"]`).element.dispatchEvent(
+        new MouseEvent('contextmenu', { bubbles: true, cancelable: true, button: 2, clientX: 10, clientY: 10 }),
+      )
+      await flushPromises()
+    }
+    const click = async (label: string) => {
+      const item = menuItems(w).find((b) => b.text() === label)
+      expect(item, label).toBeTruthy()
+      await item!.trigger('click')
+    }
+
+    await openHeader('score')
+    expect(menuItems(w).map((b) => b.text())).toEqual([
+      'Sort ascending', 'Sort descending', 'Clear sort',
+      'Pin left', 'Pin right', 'Unpin',
+      'Move left', 'Move right',
+      'Hide column', 'Reset columns',
+    ])
+    await click('Sort descending')
+    expect(w.emitted('update:sort')?.at(-1)).toEqual([{ key: 'score', dir: 'desc' }])
+
+    await openHeader('city')
+    await click('Pin left')
+    expect(headerTexts(w)).toEqual(['City', 'Name', 'Score'])
+    expect(w.emitted('update:columnState')?.at(-1)?.[0]).toMatchObject({ pinned: { city: 'left' } })
+
+    await openHeader('city')
+    expect(menuItems(w).find((b) => b.text() === 'Pin left')!.attributes('disabled')).toBeDefined()
+    expect(menuItems(w).find((b) => b.text() === 'Move right')!.attributes('disabled')).toBeDefined()
+    await click('Unpin')
+
+    await openHeader('name')
+    await click('Move right')
+    expect(headerTexts(w)).toEqual(['City', 'Score', 'Name'])
+
+    await openHeader('score')
+    await click('Hide column')
+    expect(headerTexts(w)).toEqual(['City', 'Name'])
+
+    await openHeader('name')
+    await click('Reset columns')
+    expect(headerTexts(w)).toEqual(['Name', 'Score', 'City'])
+    w.unmount()
+  })
+
+  it('custom header items emit header-action; headerMenu=false disables it', async () => {
+    const w = mount(VGrid, {
+      props: {
+        rows,
+        columns,
+        rowKey: 'id',
+        headerMenu: ({ items }: { items: unknown[] }) => [{ name: 'copy', label: 'Copy column' }, { separator: true }, ...items],
+      },
+      attachTo: document.body,
+    })
+    w.find('[role="columnheader"][data-col-key="name"]').element.dispatchEvent(
+      new MouseEvent('contextmenu', { bubbles: true, cancelable: true, button: 2, clientX: 5, clientY: 5 }),
+    )
+    await flushPromises()
+    await menuItems(w)[0]!.trigger('click')
+    expect(w.emitted('header-action')?.[0]?.[0]).toMatchObject({ name: 'copy', column: { key: 'name' } })
+    w.unmount()
+
+    const off = mount(VGrid, { props: { rows, columns, rowKey: 'id', headerMenu: false } })
+    const event = new MouseEvent('contextmenu', { bubbles: true, cancelable: true, button: 2 })
+    off.find('[role="columnheader"][data-col-key="name"]').element.dispatchEvent(event)
+    expect(event.defaultPrevented).toBe(false)
   })
 })
 

@@ -57,6 +57,14 @@ export function useGridKeyboard(root: Ref<HTMLElement | undefined>, opts: GridKe
     const { allRows, rowIndex, colIndex } = position(cell)
     if (rowIndex < 0) return
     const isHeader = cell.getAttribute('role') === 'columnheader'
+
+    // Keyboard context menu: re-dispatch as an (untrusted) contextmenu event on the cell, which the
+    // grid anchors to the cell instead of a pointer position.
+    if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) {
+      event.preventDefault()
+      cell.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }))
+      return
+    }
     const ctrl = event.ctrlKey || event.metaKey
 
     if (isHeader && event.altKey && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {

@@ -1,11 +1,13 @@
 import { describe, expect, it, vi } from 'vitest'
 import { getByPath, getCellValue, resolveRowKey } from '../src/core/value'
 import {
+  effectivePin,
   gridTemplate,
   moveColumn,
   moveColumnRelative,
   normalizeColumnState,
   setColumnHidden,
+  setColumnPinned,
   visibleColumns,
 } from '../src/core/columns'
 import { compareValues, nextSort, sortRows } from '../src/core/sort'
@@ -55,11 +57,52 @@ describe('columns', () => {
     expect(normalizeColumnState(cols, null)).toEqual({
       order: ['a', 'b', 'c', 'd', 'e'],
       hidden: ['c'],
+      pinned: {},
     })
-    expect(normalizeColumnState(cols, { order: ['zz', 'e', 'a'], hidden: ['zz', 'a'] })).toEqual({
+    expect(
+      normalizeColumnState(cols, {
+        order: ['zz', 'e', 'a'],
+        hidden: ['zz', 'a'],
+        pinned: { zz: 'left', a: 'right', b: null, e: 'sideways' as never },
+      }),
+    ).toEqual({
       order: ['e', 'a', 'b', 'c', 'd'],
       hidden: ['a'],
+      pinned: { a: 'right', b: null },
     })
+  })
+
+  it('pin overrides in state win over column defaults', () => {
+    const state = normalizeColumnState(cols, { pinned: { a: 'left', d: null } })
+    expect(effectivePin(cols[0]!, state)).toBe('left')
+    expect(effectivePin(cols[3]!, state)).toBeUndefined()
+    expect(effectivePin(cols[1]!, state)).toBe('right')
+    expect(visibleColumns(cols, state).map((c) => c.key)).toEqual(['a', 'd', 'e', 'b'])
+  })
+
+  it('pins at the inner edge of the pin group and unpins', () => {
+    const c: ColumnDef[] = [{ key: 'a', pinned: 'left' }, { key: 'b' }, { key: 'c' }, { key: 'd', pinned: 'right' }]
+    const s = normalizeColumnState(c, null)
+    const left = setColumnPinned(c, s, 'c', 'left')
+    expect(left.pinned).toEqual({ c: 'left' })
+    expect(visibleColumns(c, left).map((x) => x.key)).toEqual(['a', 'c', 'b', 'd'])
+    const right = setColumnPinned(c, s, 'b', 'right')
+    expect(visibleColumns(c, right).map((x) => x.key)).toEqual(['a', 'c', 'b', 'd'])
+    const unpinned = setColumnPinned(c, s, 'a', null)
+    expect(unpinned.pinned).toEqual({ a: null })
+    expect(visibleColumns(c, unpinned).map((x) => x.key)).toEqual(['a', 'b', 'c', 'd'])
+    // back to the definition default removes the override
+    expect(setColumnPinned(c, unpinned, 'a', 'left').pinned).toEqual({})
+    // pinnable: false is respected
+    const locked: ColumnDef[] = [{ key: 'x', pinnable: false }]
+    const ls = normalizeColumnState(locked, null)
+    expect(setColumnPinned(locked, ls, 'x', 'left')).toBe(ls)
+  })
+
+  it('reorder honours runtime pins', () => {
+    const state = normalizeColumnState(cols, { pinned: { a: 'left' } })
+    expect(moveColumn(cols, state, 'a', 'd').order).toEqual(['b', 'c', 'd', 'a', 'e'])
+    expect(moveColumn(cols, state, 'a', 'c')).toBe(state)
   })
 
   it('visible columns: hidden removed, left pins first, right pins last', () => {
@@ -184,8 +227,8 @@ describe('storage', () => {
     localStorage.clear()
     const a = localStorageAdapter('grid')
     expect(a.load()).toBeNull()
-    a.save({ order: ['a'], hidden: [] })
-    expect(a.load()).toEqual({ order: ['a'], hidden: [] })
+    a.save({ order: ['a'], hidden: [], pinned: {} })
+    expect(a.load()).toEqual({ order: ['a'], hidden: [], pinned: {} })
     localStorage.setItem('grid', '{nope')
     expect(a.load()).toBeNull()
     localStorage.setItem('grid', '{"order":"x"}')

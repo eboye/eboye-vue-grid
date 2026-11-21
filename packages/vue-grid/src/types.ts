@@ -15,11 +15,18 @@ export interface SortState {
   dir: SortDir
 }
 
+export type PinSide = 'left' | 'right'
+
 export interface ColumnState {
   /** Column keys in display order (all known columns, visible or not). */
   order: string[]
   /** Keys of hidden columns. */
   hidden: string[]
+  /**
+   * Runtime pin overrides (e.g. from the header menu). `null` = explicitly unpinned; a missing key
+   * falls back to the column's `pinned` definition. Optional so older persisted state still loads.
+   */
+  pinned?: Record<string, PinSide | null>
 }
 
 export interface ColumnStateStorage {
@@ -65,7 +72,10 @@ export interface ColumnDef<T = any, R extends RendererName = RendererName> {
   sortable?: boolean
   sortValue?: (row: T) => unknown
   sortFn?: (a: T, b: T) => number
-  pinned?: 'left' | 'right'
+  /** Initial pin side (the header menu can change it at runtime unless `pinnable: false`). */
+  pinned?: PinSide
+  /** Can the user pin/unpin it from the header menu? Default `true`. */
+  pinnable?: boolean
   /** Initial visibility (column state wins once it exists). */
   hidden?: boolean
   /** Can the user hide it from the column menu? Default `true`. */
@@ -153,6 +163,50 @@ export interface VirtualOptions {
   rowHeight: number
   /** Extra rows rendered above/below the viewport. Default 6. */
   overscan?: number
+}
+
+export type MenuTone = 'success' | 'danger' | 'warning' | 'info' | 'neutral' | 'accent'
+
+export interface MenuAction {
+  /** Emitted as the action name. */
+  name: string
+  label: string
+  disabled?: boolean
+  tone?: MenuTone
+  icon?: Component
+  /** Shown right-aligned, e.g. a shortcut hint. */
+  hint?: string
+}
+
+export interface MenuSeparator {
+  separator: true
+}
+
+export type MenuItem = MenuAction | MenuSeparator
+
+/** What was right-clicked in the body. */
+export interface CellContext<T = any> {
+  row: T
+  rowKey: RowKey
+  column: ColumnDef<T>
+  value: unknown
+}
+
+export interface ContextActionEvent<T = any> extends CellContext<T> {
+  name: string
+  item: MenuAction
+}
+
+export interface HeaderMenuContext<T = any> {
+  column: ColumnDef<T>
+  /** The built-in items (sort, pin, move, hide, reset) for this column. */
+  items: MenuItem[]
+}
+
+export interface HeaderActionEvent<T = any> {
+  name: string
+  item: MenuAction
+  column: ColumnDef<T>
 }
 
 /** Methods exposed on a `<VGrid>` template ref: `const grid = ref<VGridExposed>()`. */

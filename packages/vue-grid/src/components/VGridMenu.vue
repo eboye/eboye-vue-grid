@@ -1,0 +1,196 @@
+<script setup lang="ts">
+import { nextTick, ref, shallowRef, useId } from 'vue'
+import {
+  anchorNameFor,
+  placeWithoutAnchorSupport,
+  supportsAnchorPositioning,
+  type AnchorTarget,
+  type Placement,
+} from '../internal/anchor'
+import type { MenuAction, MenuItem } from '../types'
+
+/**
+ * Accessible menu rendered with the Popover API (top layer: never clipped by the grid's overflow;
+ * light-dismiss on outside click / Esc) and placed with CSS anchor positioning.
+ *
+ * Two ways to open it:
+ * - declaratively: a trigger with `popovertarget="<id>"` and `style="anchor-name: <anchorName>"`
+ *   (pass the same `anchor-name` prop) — see the `actions-menu` renderer;
+ * - imperatively: `openAt(element | { x, y })` — used for context menus.
+ */
+const props = withDefaults(
+  defineProps<{
+    items: readonly MenuItem[]
+    label?: string
+    placement?: Placement
+    /** Popover id (for `popovertarget`). Generated when omitted. */
+    id?: string
+    /** `anchor-name` set on an external trigger (declarative mode). */
+    anchorName?: string
+  }>(),
+  { label: 'Menu', placement: 'bottom-end' },
+)
+
+const emit = defineEmits<{
+  select: [item: MenuAction]
+  open: []
+  close: []
+}>()
+
+const uid = useId()
+const menuId = props.id ?? `vg-menu-${uid}`
+const ownAnchor = anchorNameFor(uid)
+const pointAnchor = `${ownAnchor}-pt`
+
+const menu = shallowRef<HTMLElement>()
+const point = ref<{ x: number; y: number } | null>(null)
+const placement = ref<Placement>(props.placement)
+const anchorName = ref(props.anchorName ?? ownAnchor)
+const isOpen = ref(false)
+let anchoredElement: HTMLElement | null = null
+let fallbackTarget: AnchorTarget | null = null
+let returnFocus: HTMLElement | null = null
+
+const isAction = (item: MenuItem): item is MenuAction => !('separator' in item)
+const enabledItems = () =>
+  Array.from(menu.value?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]:not(:disabled)') ?? [])
+
+function releaseAnchor() {
+  if (anchoredElement?.style.getPropertyValue('anchor-name') === ownAnchor) {
+    anchoredElement.style.removeProperty('anchor-name')
+  }
+  anchoredElement = null
+}
+
+/** Opens the menu anchored to an element (keyboard / cell) or a viewport point (pointer). */
+async function openAt(target: AnchorTarget, focusAfterClose?: HTMLElement | null) {
+  if (isOpen.value) menu.value?.hidePopover?.()
+  releaseAnchor()
+  returnFocus = focusAfterClose ?? (document.activeElement as HTMLElement | null)
+  fallbackTarget = target
+  if (target instanceof HTMLElement) {
+    point.value = null
+    target.style.setProperty('anchor-name', ownAnchor)
+    anchoredElement = target
+    anchorName.value = ownAnchor
+    placement.value = props.placement === 'point' ? 'bottom-start' : props.placement
+  } else {
+    point.value = { x: target.x, y: target.y }
+    anchorName.value = pointAnchor
+    placement.value = 'point'
+  }
+  await nextTick() // render the point anchor / new anchor name before showing
+  menu.value?.showPopover?.()
+}
+
+function close() {
+  menu.value?.hidePopover?.()
+}
+
+function onToggle(event: Event) {
+  const open = (event as ToggleEvent).newState === 'open'
+  isOpen.value = open
+  if (open) {
+    if (!fallbackTarget) {
+      // Declarative mode: opened by a `popovertarget` trigger.
+      const invoker = document.querySelector<HTMLElement>(`[popovertarget="${CSS.escape(menuId)}"]`)
+      returnFocus = invoker
+      fallbackTarget = invoker
+      anchorName.value = props.anchorName ?? ownAnchor
+      placement.value = props.placement
+    }
+    if (!supportsAnchorPositioning() && fallbackTarget && menu.value) {
+      placeWithoutAnchorSupport(menu.value, fallbackTarget, placement.value)
+    }
+    nextTick(() => enabledItems()[0]?.focus({ preventScroll: true }))
+    emit('open')
+  } else {
+    const focusInside = !document.activeElement || document.activeElement === document.body || menu.value?.contains(document.activeElement)
+    if (focusInside && returnFocus?.isConnected) returnFocus.focus({ preventScroll: true })
+    releaseAnchor()
+    point.value = null
+    fallbackTarget = null
+    returnFocus = null
+    emit('close')
+  }
+}
+
+function onKeydown(event: KeyboardEvent) {
+  const list = enabledItems()
+  const index = list.indexOf(document.activeElement as HTMLButtonElement)
+  const move = (i: number) => list[(i + list.length) % list.length]?.focus({ preventScroll: true })
+  switch (event.key) {
+    case 'ArrowDown':
+      move(index + 1)
+      break
+    case 'ArrowUp':
+      move(index - 1)
+      break
+    case 'Home':
+      move(0)
+      break
+    case 'End':
+      move(list.length - 1)
+      break
+    case 'Tab':
+      close()
+      return
+    default: {
+      // Typeahead: jump to the next item starting with the typed character.
+      if (event.key.length !== 1 || event.ctrlKey || event.metaKey || event.altKey) return
+      const ch = event.key.toLowerCase()
+      const order = [...list.slice(index + 1), ...list.slice(0, index + 1)]
+      order.find((b) => b.textContent?.trim().toLowerCase().startsWith(ch))?.focus({ preventScroll: true })
+    }
+  }
+  event.preventDefault()
+  event.stopPropagation()
+}
+
+function choose(item: MenuAction) {
+  close()
+  emit('select', item)
+}
+
+defineExpose({ id: menuId, openAt, close, isOpen })
+</script>
+
+<template>
+  <span
+    v-if="point"
+    class="vg-menu-point"
+    aria-hidden="true"
+    :style="{ left: `${point.x}px`, top: `${point.y}px`, 'anchor-name': pointAnchor }"
+  />
+  <div
+    :id="menuId"
+    ref="menu"
+    popover="auto"
+    role="menu"
+    :aria-label="label"
+    class="vg-menu"
+    :data-placement="placement"
+    :style="{ 'position-anchor': anchorName }"
+    @toggle="onToggle"
+    @keydown="onKeydown"
+    @click.stop
+    @contextmenu.prevent
+  >
+    <template v-for="(item, i) in items" :key="isAction(item) ? item.name : `sep-${i}`">
+      <div v-if="!isAction(item)" role="separator" class="vg-menu-separator" />
+      <button
+        v-else
+        type="button"
+        role="menuitem"
+        tabindex="-1"
+        :disabled="item.disabled"
+        :class="['vg-menu-item', item.tone && `vg-tone-${item.tone}`]"
+        @click="choose(item)"
+      >
+        <component :is="item.icon" v-if="item.icon" class="vg-menu-icon" aria-hidden="true" />
+        <span class="vg-menu-label">{{ item.label }}</span>
+        <span v-if="item.hint" class="vg-menu-hint">{{ item.hint }}</span>
+      </button>
+    </template>
+  </div>
+</template>

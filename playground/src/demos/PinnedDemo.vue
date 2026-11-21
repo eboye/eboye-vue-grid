@@ -32,7 +32,7 @@ const columns = [
     <h2>Pinned columns, column menu, drag / keyboard reorder, persistence</h2>
     <p>
       Scroll sideways: # and Player stay left, Open stays right. Drag headers (or focus one and press Alt+←/→) to
-      reorder. Layout is saved in localStorage.
+      reorder. Right-click a header to pin / unpin / move / hide. Layout is saved in localStorage.
     </p>
     <VGrid class="pg-fixed" :rows="rows" :columns="columns" row-key="id" storage="pg-pinned-columns" aria-label="Pinned">
       <template #toolbar="{ columnState, setColumnState }">
