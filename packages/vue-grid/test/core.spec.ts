@@ -1,6 +1,13 @@
 import { describe, expect, it, vi } from 'vitest'
 import { getByPath, getCellValue, resolveRowKey } from '../src/core/value'
-import { gridTemplate, moveColumn, normalizeColumnState, visibleColumns } from '../src/core/columns'
+import {
+  gridTemplate,
+  moveColumn,
+  moveColumnRelative,
+  normalizeColumnState,
+  setColumnHidden,
+  visibleColumns,
+} from '../src/core/columns'
 import { compareValues, nextSort, sortRows } from '../src/core/sort'
 import { selectionState, toggleRowSelection } from '../src/core/selection'
 import { computeVirtualWindow } from '../src/core/virtual'
@@ -67,6 +74,22 @@ describe('columns', () => {
     expect(moveColumn(cols, state, 'a', 'd')).toBe(state) // into left pin group
     expect(moveColumn(cols, state, 'e', 'a')).toBe(state) // not reorderable
     expect(moveColumn(cols, state, 'a', 'e')).toBe(state) // target not reorderable
+  })
+
+  it('drops columns before/after a target regardless of drag direction', () => {
+    const c = [{ key: 'a' }, { key: 'b' }, { key: 'c' }, { key: 'd' }]
+    const s = normalizeColumnState(c, null)
+    expect(moveColumnRelative(c, s, 'a', 'c', 'before').order).toEqual(['b', 'a', 'c', 'd'])
+    expect(moveColumnRelative(c, s, 'a', 'c', 'after').order).toEqual(['b', 'c', 'a', 'd'])
+    expect(moveColumnRelative(c, s, 'd', 'b', 'before').order).toEqual(['a', 'd', 'b', 'c'])
+    expect(moveColumnRelative(c, s, 'd', 'b', 'after').order).toEqual(['a', 'b', 'd', 'c'])
+    expect(moveColumnRelative(c, s, 'a', 'b', 'before')).toBe(s) // no-op
+  })
+
+  it('toggles hidden keeping order', () => {
+    const s = normalizeColumnState(cols, null)
+    expect(setColumnHidden(s, 'a', true).hidden).toEqual(['a', 'c'])
+    expect(setColumnHidden(s, 'c', false).hidden).toEqual([])
   })
 
   it('builds a grid template', () => {

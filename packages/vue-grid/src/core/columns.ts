@@ -64,6 +64,21 @@ export function moveColumn(
   return { ...state, order }
 }
 
+/** Drag & drop variant: puts `from` immediately before or after `to`. Same rules as `moveColumn`. */
+export function moveColumnRelative(
+  columns: readonly ColumnDef[],
+  state: ColumnState,
+  from: string,
+  to: string,
+  side: 'before' | 'after',
+): ColumnState {
+  if (moveColumn(columns, state, from, to) === state) return state
+  const order = state.order.filter((k) => k !== from)
+  const toIndex = order.indexOf(to)
+  order.splice(side === 'after' ? toIndex + 1 : toIndex, 0, from)
+  return order.every((k, i) => k === state.order[i]) ? state : { ...state, order }
+}
+
 export function setColumnHidden(state: ColumnState, key: string, hidden: boolean): ColumnState {
   const set = new Set(state.hidden)
   if (hidden) set.add(key)
