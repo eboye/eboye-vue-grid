@@ -330,7 +330,20 @@ export interface MenusFeature {
   useMenus: typeof import('./composables/useGridMenus').useGridMenus
   Menu: Component
 }
+export interface ColumnReorderFeature {
+  readonly feature: 'columnReorder'
+  useColumnDrag: typeof import('./composables/useColumnDrag').useColumnDrag
+  moveColumn: typeof import('./core/columns').moveColumn
+  moveColumnRelative: typeof import('./core/columns').moveColumnRelative
+}
+export interface ColumnPinningFeature {
+  readonly feature: 'columnPinning'
+  usePinnedOffsets: typeof import('./composables/usePinnedOffsets').usePinnedOffsets
+  useScrollEdges: typeof import('./composables/useScrollEdges').useScrollEdges
+}
 export type GridFeature =
+  | ColumnReorderFeature
+  | ColumnPinningFeature
   | SortingFeature
   | FilteringFeature
   | ServerDataFeature

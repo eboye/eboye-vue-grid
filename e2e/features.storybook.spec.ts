@@ -57,6 +57,57 @@ test('selection, sub-grids and menus, feature by feature', async ({ page }) => {
   await expect(menu.getByRole('menuitem', { name: /Sort/ })).toHaveCount(0) // sorting not on
 })
 
+test('column reorder and pinning: ignored without their features, working with them', async ({ page }) => {
+  await story(page, 'grid-features--columns')
+  const scroller = page.locator('#storybook-root .vg')
+  const keys = () => page.locator('.vg-header > [data-col-key]').evaluateAll((els) => els.map((e) => e.getAttribute('data-col-key')))
+  const box = async (key: string) => (await header(page, key).boundingBox())!
+  const scrollBy = async (dx: number) => {
+    await scroller.evaluate((el) => (el.scrollLeft = 0))
+    await scroller.hover()
+    await page.mouse.wheel(dx, 0)
+    await expect.poll(() => scroller.evaluate((el) => el.scrollLeft)).toBeGreaterThan(100)
+  }
+  const drag = async (from: string, to: string) => {
+    const a = await box(from)
+    const b = await box(to)
+    await page.mouse.move(a.x + a.width / 2, a.y + a.height / 2)
+    await page.mouse.down()
+    await page.mouse.move(b.x + 20, b.y + b.height / 2, { steps: 8 })
+    await page.mouse.up()
+  }
+
+  // no features: the pinned `#` column scrolls away; dragging and Alt+→ change nothing
+  const before = await keys()
+  const id0 = await box('id')
+  await scrollBy(400)
+  expect((await box('id')).x).toBeLessThan(id0.x - 100)
+  await scroller.evaluate((el) => (el.scrollLeft = 0))
+  await drag('status', 'player')
+  expect(await keys()).toEqual(before)
+  await header(page, 'stake').click()
+  await page.keyboard.press('Alt+ArrowLeft')
+  expect(await keys()).toEqual(before)
+
+  await page.getByLabel('columnPinningFeature').check()
+  await expect(header(page, 'id')).toHaveClass(/vg-pin-left/)
+  const pinned0 = await box('id')
+  await scrollBy(400)
+  expect((await box('id')).x).toBeCloseTo(pinned0.x, 0)
+  await scroller.evaluate((el) => (el.scrollLeft = 0))
+
+  await page.getByLabel('columnReorderFeature').check()
+  await drag('status', 'player')
+  await expect.poll(keys).not.toEqual(before)
+  expect((await keys()).indexOf('status')).toBeLessThan((await keys()).indexOf('player'))
+
+  await page.getByLabel('menusFeature').check()
+  await header(page, 'city').click({ button: 'right' })
+  const menu = page.locator('.vg-menu:popover-open')
+  await expect(menu.getByRole('menuitem', { name: 'Pin left' })).toBeVisible()
+  await expect(menu.getByRole('menuitem', { name: 'Move right' })).toBeVisible()
+})
+
 test('opting in, feature by feature', async ({ page }) => {
   await story(page, 'grid-features--opt-in')
   await expect(page.locator('.vg-sort')).toHaveCount(0)

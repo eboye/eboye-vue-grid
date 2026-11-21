@@ -30,9 +30,9 @@
   positioning, `light-dark()` theming, native `<details>` disclosures. JavaScript only fills in
   where a browser lacks a feature — see [Browser support](#browser-support).
 - **Small by default, everything optional.** ESM, one file per module, zero runtime dependencies.
-  Sorting, filtering, server data, pagination, selection, sub-grids and menus are opt-in
-  **features**, and renderers are opt-in too. A plain grid with text cells is **13.8 kB gzipped**, and each feature or renderer
-  you add costs only itself.
+  Sorting, filtering, server data, pagination, selection, sub-grids, menus, column reordering and
+  column pinning are opt-in **features**, and renderers are opt-in too. A plain grid with text
+  cells is **12.4 kB gzipped**, and each feature or renderer you add costs only itself.
 - **Typed end to end.** `<VGrid generic="T">`, typed column helpers, and renderer options checked
   against the renderer you pick.
 - **Accessible.** `grid` / `treegrid` semantics, `aria-sort`, full keyboard navigation (cells,
@@ -86,6 +86,7 @@ import {
   VGrid,
   createColumnHelper,
   currencyRenderer,
+  columnPinningFeature,
   sortingFeature,
   statusRenderer,
   type SortState,
@@ -125,7 +126,7 @@ const columns = [
     :rows="rows"
     :columns="columns"
     row-key="id"
-    :features="[sortingFeature]"
+    :features="[sortingFeature, columnPinningFeature]"
     sort-mode="client"
     style="height: 420px"
   />
@@ -134,7 +135,7 @@ const columns = [
 
 Features are opt-in: list them per grid with `:features`, or once for the whole app with
 `app.use(createVueGrid({ features: [sortingFeature, filteringFeature] }))` (`allFeatures` for
-all of them). Without `sortingFeature`, `sortable` columns stay plain headers.
+all of them). Without `sortingFeature`, `sortable` columns stay plain headers; without `columnPinningFeature`, `pinned` is ignored.
 
 ## Theming
 
@@ -157,15 +158,17 @@ Measured by bundling small apps against the published build for production with 
 
 | You import | Initial chunk |
 |---|---|
-| `VGrid` (no features) | 38.3 kB / 13.8 kB |
-| `VGrid` + `sortingFeature` | 39.0 kB / 14.1 kB |
-| `VGrid` + `filteringFeature` | 42.0 kB / 15.0 kB |
-| `VGrid` + `selectionFeature` | 40.2 kB / 14.4 kB |
-| `VGrid` + `subGridsFeature` | 40.0 kB / 14.5 kB |
-| `VGrid` + `menusFeature` | 47.1 kB / 16.8 kB |
-| `VGrid` + `allFeatures` + `VGridSearch` | 55.8 kB / 19.7 kB |
-| `VGrid` + `currencyRenderer` | 39.5 kB / 14.2 kB |
-| everything | 99.4 kB / 31.8 kB |
+| `VGrid` (no features) | 34.7 kB / 12.4 kB |
+| `VGrid` + `sortingFeature` | 35.4 kB / 12.8 kB |
+| `VGrid` + `filteringFeature` | 38.4 kB / 13.7 kB |
+| `VGrid` + `selectionFeature` | 36.6 kB / 13.1 kB |
+| `VGrid` + `subGridsFeature` | 36.4 kB / 13.1 kB |
+| `VGrid` + `menusFeature` | 43.5 kB / 15.5 kB |
+| `VGrid` + `columnReorderFeature` | 36.6 kB / 13.2 kB |
+| `VGrid` + `columnPinningFeature` | 36.8 kB / 13.3 kB |
+| `VGrid` + `allFeatures` + `VGridSearch` | 56.4 kB / 19.9 kB |
+| `VGrid` + `currencyRenderer` | 35.9 kB / 12.8 kB |
+| everything | 100.0 kB / 32.2 kB |
 
 With `filteringFeature`, the filter popover body and the filter-row editors load on demand. With
 `paginationFeature`, the pager does too.

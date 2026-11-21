@@ -3,6 +3,8 @@ import { computed, defineComponent, inject, provide, ref } from 'vue'
 import {
   GRID_CONFIG_KEY,
   VGridSearch,
+  columnPinningFeature,
+  columnReorderFeature,
   filteringFeature,
   menusFeature,
   paginationFeature,
@@ -35,8 +37,8 @@ const choices: { label: string; feature: GridFeature }[] = [
 ]
 
 /**
- * Sorting, filtering, server data, pagination, selection, sub-grids and context menus are
- * **opt-in features**. A grid gets only the features you register, per grid
+ * Sorting, filtering, server data, pagination, selection, sub-grids, context menus, column
+ * reordering and column pinning are **opt-in features**. A grid gets only the features you register, per grid
  * (`<VGrid :features="[sortingFeature]">`) or app-wide (`createVueGrid({ features: [...] })`,
  * `allFeatures` for all of them), and only those reach your bundle. Without them the matching
  * options (`sortable`, `filterable`, `data-source`, `pagination`, `selectable`, `sub-rows`,
@@ -133,6 +135,43 @@ export const RowsAndMenus: Story = {
             :sub-rows="subRows"
             :context-menu="contextMenu"
           />
+        </div>
+      </BareApp>`,
+  }),
+}
+
+const columnChoices: { label: string; feature: GridFeature }[] = [
+  { label: 'columnReorderFeature', feature: columnReorderFeature },
+  { label: 'columnPinningFeature', feature: columnPinningFeature },
+  { label: 'menusFeature', feature: menusFeature },
+]
+const wideColumns = betColumns().map((c) =>
+  c.key === 'id' ? { ...c, pinned: 'left' as const } : { ...c, width: '12rem' },
+) as GridArgs['columns']
+
+/**
+ * Reordering (drag a header, Alt+←/→, Move items in the header menu) and pinning (sticky `pinned`
+ * columns, Pin items in the header menu) are features too. Without `columnPinningFeature` the `#`
+ * column's `pinned: 'left'` is ignored and it scrolls away with the rest.
+ */
+export const Columns: Story = {
+  render: (args) => ({
+    components: { VGrid, BareApp },
+    setup() {
+      const on = ref<string[]>([])
+      const features = computed(() => columnChoices.filter((c) => on.value.includes(c.label)).map((c) => c.feature))
+      return { args, on, columnChoices, features, wideColumns }
+    },
+    template: `
+      <fieldset class="sb-note" style="display:flex;gap:1rem;border:0;padding:0">
+        <legend style="float:left;margin-right:.5rem">features:</legend>
+        <label v-for="c in columnChoices" :key="c.label">
+          <input v-model="on" type="checkbox" :value="c.label" /> <code>{{ c.label }}</code>
+        </label>
+      </fieldset>
+      <BareApp>
+        <div class="sb-frame" style="max-width: 640px">
+          <VGrid :key="on.join()" v-bind="args" :columns="wideColumns" :features="features" />
         </div>
       </BareApp>`,
   }),

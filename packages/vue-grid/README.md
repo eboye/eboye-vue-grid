@@ -39,6 +39,7 @@ import {
   currencyRenderer,
   dateTimeRenderer,
   numberRenderer,
+  columnPinningFeature,
   sortingFeature,
   statusRenderer,
   type SortState,
@@ -65,7 +66,7 @@ const columns = [
     :rows="rows"
     :columns="columns"
     row-key="id"
-    :features="[sortingFeature]"
+    :features="[sortingFeature, columnPinningFeature]"
     sort-mode="client"
     style="height: 480px"
   />
@@ -76,9 +77,9 @@ const columns = [
 
 ## Features: everything optional
 
-Out of the box `<VGrid>` is a plain, read-only table: columns with any renderer, pinning,
-drag-and-keyboard reordering, column visibility and persistence, detail rows, virtual scrolling,
-keyboard navigation and theming. Everything else is an opt-in feature:
+Out of the box `<VGrid>` is a plain, read-only table: columns with any renderer and any width,
+column visibility and persistence, detail rows, virtual scrolling, keyboard navigation and
+theming. Everything else is an opt-in feature:
 
 | Feature | Turns on |
 |---|---|
@@ -89,6 +90,8 @@ keyboard navigation and theming. Everything else is an opt-in feature:
 | `selectionFeature` | `selectable` (multi or single), `v-model:selected`, `selection-mode`, `is-row-selectable`, select-all, Space to select |
 | `subGridsFeature` | `sub-rows` / `load-sub-rows` / `has-sub-rows`: nested rows in a CSS `subgrid` (detail rows don't need it) |
 | `menusFeature` | The header right-click menu (`header-menu`) and body-cell menus (`context-menu`); without it the browser's menu shows. The standalone `<VGridMenu>` and the `actions-menu` renderer don't need it |
+| `columnReorderFeature` | Dragging headers to reorder (mouse, pen, touch), Alt+←/→ on a header, the header menu's Move items |
+| `columnPinningFeature` | Sticky `pinned: 'left' \| 'right'` columns with edge shadows, the header menu's Pin items; without it pins are ignored |
 
 ```ts
 // per grid
@@ -123,19 +126,21 @@ what you import.
 
 | Import (minified / gzip, Vue excluded) | Initial chunk |
 |---|---|
-| `VGrid` (no features) | 38.3 kB / 13.8 kB |
-| `VGrid` + `sortingFeature` | 39.0 kB / 14.1 kB |
-| `VGrid` + `filteringFeature` | 42.0 kB / 15.0 kB |
-| `VGrid` + `serverDataFeature` | 39.7 kB / 14.4 kB |
-| `VGrid` + `paginationFeature` | 38.4 kB / 13.9 kB |
-| `VGrid` + `selectionFeature` | 40.2 kB / 14.4 kB |
-| `VGrid` + `subGridsFeature` | 40.0 kB / 14.5 kB |
-| `VGrid` + `menusFeature` | 47.1 kB / 16.8 kB |
-| `VGrid` + `allFeatures` + `VGridSearch` | 55.8 kB / 19.7 kB |
-| `VGrid` + `currencyRenderer` | 39.5 kB / 14.2 kB |
-| `VGrid` + `VGridPagination` + `VGridColumnMenu` | 42.7 kB / 15.3 kB |
+| `VGrid` (no features) | 34.7 kB / 12.4 kB |
+| `VGrid` + `sortingFeature` | 35.4 kB / 12.8 kB |
+| `VGrid` + `filteringFeature` | 38.4 kB / 13.7 kB |
+| `VGrid` + `serverDataFeature` | 36.1 kB / 13.0 kB |
+| `VGrid` + `paginationFeature` | 34.8 kB / 12.5 kB |
+| `VGrid` + `selectionFeature` | 36.6 kB / 13.1 kB |
+| `VGrid` + `subGridsFeature` | 36.4 kB / 13.1 kB |
+| `VGrid` + `menusFeature` | 43.5 kB / 15.5 kB |
+| `VGrid` + `columnReorderFeature` | 36.6 kB / 13.2 kB |
+| `VGrid` + `columnPinningFeature` | 36.8 kB / 13.3 kB |
+| `VGrid` + `allFeatures` + `VGridSearch` | 56.4 kB / 19.9 kB |
+| `VGrid` + `currencyRenderer` | 35.9 kB / 12.8 kB |
+| `VGrid` + `VGridPagination` + `VGridColumnMenu` | 39.1 kB / 13.9 kB |
 | `sortRows` only | 0.7 kB / 0.5 kB |
-| everything | 99.4 kB / 31.8 kB |
+| everything | 100.0 kB / 32.2 kB |
 
 With `filteringFeature`, the filter popover body and the filter-row editors are **on-demand
 chunks**: they load the first time a popover opens or `filter-row` is on. With
@@ -250,8 +255,8 @@ animation — tune it with `--vg-flash-color`, `--vg-flash-up`, `--vg-flash-down
   minWidth?: string              // combined into minmax(minWidth, width)
   align?: 'start' | 'center' | 'end'
   sortable?: boolean; sortValue?: (row) => unknown; sortFn?: (a, b) => number
-  pinned?: 'left' | 'right'; pinnable?: boolean   // pinnable: can the header menu change it (default true)
-  hidden?: boolean; hideable?: boolean; reorderable?: boolean
+  pinned?: 'left' | 'right'; pinnable?: boolean   // needs columnPinningFeature; pinnable: can the header menu change it (default true)
+  hidden?: boolean; hideable?: boolean; reorderable?: boolean   // reorderable: needs columnReorderFeature (default true)
   clickable?: boolean
   flash?: boolean | 'direction'  // change highlight for this column (overrides the grid's `flash`)
   filterable?: boolean           // funnel button in the header (and an input in the filter row)
@@ -289,7 +294,7 @@ Need children with a **different** set of columns? Put another `<VGrid>` in the 
 </VGrid>
 ```
 
-Drag a header to move it (pointer events: mouse, pen, touch), or focus a header and press
+With `columnReorderFeature`, drag a header to move it (pointer events: mouse, pen, touch), or focus a header and press
 **Alt+←/→**. Pinned columns only move within their pin group. Stored state is reconciled with the
 current column definitions (unknown keys dropped, new columns appended).
 
@@ -324,7 +329,7 @@ typeahead move through items; focus returns to the cell on close.
 
 Right-clicking a header opens a built-in menu: **Sort ascending / descending / Clear sort** (sortable
 columns), **Pin left / Pin right / Unpin**, **Move left / right**, **Hide column**, **Reset columns**.
-Runtime pins are stored in column state (`columnState.pinned`) and persisted with `storage`.
+Pin items need `columnPinningFeature`, move items `columnReorderFeature`. Runtime pins are stored in column state (`columnState.pinned`) and persisted with `storage`.
 
 ```vue
 <!-- extend (or replace) the built-in items; custom items emit header-action -->

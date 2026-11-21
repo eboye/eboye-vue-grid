@@ -25,6 +25,10 @@ export interface GridMenusOptions<T> {
   sort: Ref<SortState | null>
   /** Whether a column can be sorted (the sorting feature is on and the column is `sortable`). */
   sortable: (column: ColumnDef<T>) => boolean
+  /** Whether the pin items show (the pinning feature is on and the column is `pinnable`). */
+  pinnable: (column: ColumnDef<T>) => boolean
+  /** Whether the move items show (the reorder feature is on and the column is `reorderable`). */
+  reorderable: (column: ColumnDef<T>) => boolean
   moveColumnBy: (key: string, direction: -1 | 1) => boolean
   contextMenu: () => ((ctx: CellContext<T>) => MenuItem[] | null | undefined) | undefined
   headerMenu: () => boolean | ((ctx: HeaderMenuContext<T>) => MenuItem[] | null | undefined)
@@ -125,7 +129,7 @@ export function useGridMenus<T>(opts: GridMenusOptions<T>) {
       if (opts.filters.anyActive()) out.push({ name: 'vg:filter-clear-all', label: 'Clear all filters' })
       out.push(SEPARATOR)
     }
-    if (column.pinnable !== false) {
+    if (opts.pinnable(column)) {
       const pin = effectivePin(column, state)
       out.push(
         { name: 'vg:pin-left', label: 'Pin left', disabled: pin === 'left' },
@@ -135,10 +139,10 @@ export function useGridMenus<T>(opts: GridMenusOptions<T>) {
       )
     }
     const visible = visibleColumns(opts.columns(), state)
-    if (column.reorderable !== false) {
+    if (opts.reorderable(column)) {
       const i = visible.findIndex((c) => c.key === column.key)
       const sameGroup = (c: ColumnDef<T> | undefined) =>
-        !!c && c.reorderable !== false && effectivePin(c, state) === effectivePin(column, state)
+        !!c && opts.reorderable(c) && effectivePin(c, state) === effectivePin(column, state)
       out.push(
         { name: 'vg:move-left', label: 'Move left', disabled: !sameGroup(visible[i - 1]) },
         { name: 'vg:move-right', label: 'Move right', disabled: !sameGroup(visible[i + 1]) },

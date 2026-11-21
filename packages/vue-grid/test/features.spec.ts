@@ -5,6 +5,8 @@ import VGridComponent from '../src/components/VGrid.vue'
 import { createVueGrid } from '../src/registry/plugin'
 import {
   allFeatures,
+  columnPinningFeature,
+  columnReorderFeature,
   filteringFeature,
   menusFeature,
   paginationFeature,
@@ -118,6 +120,36 @@ describe('features are opt-in', () => {
     expect(full.findAll('.vg-subgrid .vg-row')).toHaveLength(2)
     await full.find('.vg-header [type="checkbox"]').setValue(true)
     expect(((full.emitted('update:selected') as number[][][]).at(-1)![0]! as number[]).sort()).toEqual([1, 10, 2])
+  })
+
+  it('column reorder and pinning: off without their features (pins ignored, no drag / move items)', async () => {
+    const cols = [{ key: 'name', pinned: 'left' as const }, { key: 'score' }]
+    const headerKeys = (w: ReturnType<typeof mount>) => w.findAll('.vg-header > [data-col-key]').map((h) => h.attributes('data-col-key'))
+    const labels = () => [...document.querySelectorAll('.vg-menu [role="menuitem"]')].map((e) => e.textContent?.trim())
+
+    const bare = mount(VGrid, { props: { rows, columns: cols, rowKey: 'id', features: [menusFeature] }, attachTo: document.body })
+    expect(bare.find('.vg-pin-left').exists()).toBe(false)
+    expect(bare.find('.vg-reorderable').exists()).toBe(false)
+    await bare.find('.vg-header [data-col-key="name"]').trigger('keydown', { key: 'ArrowRight', altKey: true })
+    expect(headerKeys(bare)).toEqual(['name', 'score'])
+    await bare.find('.vg-header [data-col-key="name"]').trigger('contextmenu')
+    await flushPromises()
+    expect(labels()).toContain('Hide column')
+    expect(labels()).not.toContain('Pin left')
+    expect(labels()).not.toContain('Move right')
+    expect(warn.mock.calls.map((c: unknown[]) => String(c[0])).join('\n')).toContain('needs the columnPinning feature')
+    bare.unmount()
+
+    const full = mount(VGrid, {
+      props: { rows, columns: cols, rowKey: 'id', features: [menusFeature, columnReorderFeature, columnPinningFeature] },
+      attachTo: document.body,
+    })
+    expect(full.find('.vg-header .vg-pin-left[data-col-key="name"]').exists()).toBe(true)
+    expect(full.find('.vg-header [data-col-key="score"]').classes()).toContain('vg-reorderable')
+    await full.find('.vg-header [data-col-key="score"]').trigger('contextmenu')
+    await flushPromises()
+    expect(labels()).toEqual(expect.arrayContaining(['Pin left', 'Pin right', 'Move left', 'Move right']))
+    full.unmount()
   })
 
   it('per grid: only the listed features are on', async () => {

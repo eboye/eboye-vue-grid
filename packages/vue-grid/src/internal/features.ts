@@ -1,4 +1,6 @@
 import type {
+  ColumnPinningFeature,
+  ColumnReorderFeature,
   FilteringFeature,
   GridFeature,
   MenusFeature,
@@ -18,6 +20,8 @@ export interface FeatureSet {
   selection?: SelectionFeature
   subGrids?: SubGridsFeature
   menus?: MenusFeature
+  columnReorder?: ColumnReorderFeature
+  columnPinning?: ColumnPinningFeature
 }
 
 /** Merges feature lists (app-wide, then per grid); a later entry with the same name wins. */

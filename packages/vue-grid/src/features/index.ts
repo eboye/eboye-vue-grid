@@ -1,4 +1,6 @@
 import type { GridFeature } from '../types'
+import { columnPinningFeature } from './columnPinning'
+import { columnReorderFeature } from './columnReorder'
 import { filteringFeature } from './filtering'
 import { menusFeature } from './menus'
 import { paginationFeature } from './pagination'
@@ -8,6 +10,8 @@ import { sortingFeature } from './sorting'
 import { subGridsFeature } from './subGrids'
 
 export {
+  columnPinningFeature,
+  columnReorderFeature,
   filteringFeature,
   menusFeature,
   paginationFeature,
@@ -26,4 +30,6 @@ export const allFeatures: readonly GridFeature[] = [
   selectionFeature,
   subGridsFeature,
   menusFeature,
+  columnReorderFeature,
+  columnPinningFeature,
 ]

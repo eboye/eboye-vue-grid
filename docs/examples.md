@@ -113,8 +113,8 @@ you leave out the renderer styles.
 ### Choosing features
 
 Out of the box `<VGrid>` is a plain table. Sorting, filtering, server data, pagination,
-selection, sub-grids and context menus are opt-in features, and only the ones you import are
-bundled:
+selection, sub-grids, context menus, column reordering and column pinning are opt-in features,
+and only the ones you import are bundled:
 
 ```ts
 import { allFeatures, filteringFeature, sortingFeature } from '@eboye/vue-grid'
@@ -136,6 +136,8 @@ app.use(createVueGrid({ features: allFeatures })) // all of them
 | `selectionFeature` | `selectable`, `v-model:selected`, `selection-mode`, `is-row-selectable` |
 | `subGridsFeature` | `sub-rows`, `load-sub-rows`, `has-sub-rows` (detail rows work without it) |
 | `menusFeature` | the header right-click menu (`header-menu`) and `context-menu` for body cells |
+| `columnReorderFeature` | dragging headers, Alt+←/→ on a header, the menu's Move items |
+| `columnPinningFeature` | `pinned` columns (sticky, with shadows), the menu's Pin items |
 
 Without its feature, an option does nothing and a dev warning names the feature to add. A grid
 reads `features` once when it is created.
@@ -1043,7 +1045,8 @@ col({ key: 'id', pinned: 'left', width: '4rem' }),
 col({ key: 'actions', pinned: 'right', width: 'min-content' }),
 ```
 
-Pinned columns stay put while the grid scrolls sideways; a shadow marks the edge
+With `columnPinningFeature`, pinned columns stay put while the grid scrolls sideways (without it,
+`pinned` is ignored); a shadow marks the edge
 (`--vg-shadow-pinned`). They can only be reordered within their pin group. Users can pin/unpin at
 runtime from the header menu unless the column has `pinnable: false`.
 

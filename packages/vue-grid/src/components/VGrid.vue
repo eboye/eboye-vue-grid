@@ -22,8 +22,6 @@ import {
 import {
   effectivePin,
   gridTemplate,
-  moveColumn,
-  moveColumnRelative,
   normalizeColumnState,
   visibleColumns,
 } from '../core/columns'
@@ -31,11 +29,8 @@ import { localStorageAdapter } from '../core/storage'
 import { getCellValue, resolveRowKey, type RowKeyGetter } from '../core/value'
 import type { RowPatches } from '../core/patch'
 import { computeVirtualWindow } from '../core/virtual'
-import { useColumnDrag } from '../composables/useColumnDrag'
 import { useGridKeyboard } from '../composables/useGridKeyboard'
 import type { MenuHandle } from '../composables/useGridMenus'
-import { usePinnedOffsets } from '../composables/usePinnedOffsets'
-import { useScrollEdges } from '../composables/useScrollEdges'
 import type { DataSource, GridQuery } from '../composables/useDataSource'
 import { resolveFeatures } from '../internal/features'
 import { warnOnce } from '../internal/dev'
@@ -218,10 +213,17 @@ const storageAdapter = computed<ColumnStateStorage | undefined>(() =>
 const storedState = shallowRef(storageAdapter.value?.load() ?? null)
 watch(storageAdapter, (adapter) => (storedState.value = adapter?.load() ?? null))
 
-const effectiveState = computed(() => normalizeColumnState(props.columns, columnState.value ?? storedState.value))
+/** The columns as laid out: without the pinning feature, pins (in the defs or the state) are ignored. */
+const layoutColumns = computed<readonly ColumnDef<T>[]>(() =>
+  features.columnPinning ? props.columns : props.columns.map((c) => (c.pinned ? { ...c, pinned: undefined } : c)),
+)
+const effectiveState = computed(() => {
+  const state = normalizeColumnState(layoutColumns.value, columnState.value ?? storedState.value)
+  return features.columnPinning || !state.pinned ? state : { ...state, pinned: undefined }
+})
 
 function setColumnState(next: ColumnState) {
-  const normalized = normalizeColumnState(props.columns, next)
+  const normalized = normalizeColumnState(layoutColumns.value, next)
   columnState.value = normalized
   storageAdapter.value?.save(normalized)
 }
@@ -262,7 +264,7 @@ const selectMode = computed<false | 'multi' | 'single'>(() =>
 
 const resolvedColumns = computed<ResolvedColumn[]>(() => {
   const state = effectiveState.value
-  const data = visibleColumns(props.columns, state)
+  const data = visibleColumns(layoutColumns.value, state)
   const list: ResolvedColumn[] = []
   if (selectMode.value) {
     list.push({
@@ -448,27 +450,32 @@ const allState = computed(() => sel?.allState.value ?? 'none')
 const hasSelectableRows = computed(() => !!sel?.selectableKeys.value.length)
 
 // ── Pinned columns, drag & keyboard ─────────────────────────────────────────────────────────
-const pinOffsets = usePinnedOffsets(root, () => resolvedColumns.value)
-useScrollEdges(root, () => template.value)
+const pinning = features.columnPinning
+const pinOffsets = pinning?.usePinnedOffsets(root, () => resolvedColumns.value)
+pinning?.useScrollEdges(root, () => template.value)
+const canPin = (col: ColumnDef<T>) => !!pinning && col.pinnable !== false
 
-const canReorder = (key: string) => props.columns.find((c) => c.key === key)?.reorderable !== false
+const reorder = features.columnReorder
+const canReorder = (key: string) =>
+  !!reorder && props.columns.find((c) => c.key === key)?.reorderable !== false
 
-const drag = useColumnDrag({
+const drag = reorder?.useColumnDrag({
   canDrag: canReorder,
-  canDrop: (from, to) => moveColumn(props.columns, effectiveState.value, from, to) !== effectiveState.value,
+  canDrop: (from, to) => reorder.moveColumn(layoutColumns.value, effectiveState.value, from, to) !== effectiveState.value,
   onDrop: (from, to) => {
-    const side = drag.target.value?.side ?? 'before'
-    const next = moveColumnRelative(props.columns, effectiveState.value, from, to, side)
+    const side = drag?.target.value?.side ?? 'before'
+    const next = reorder.moveColumnRelative(layoutColumns.value, effectiveState.value, from, to, side)
     if (next !== effectiveState.value) setColumnState(next)
   },
 })
 
 /** Swaps a column with its visible neighbour (keyboard Alt+←/→ and the header menu). */
 function moveColumnBy(key: string, direction: -1 | 1): boolean {
+  if (!reorder) return false
   const data = resolvedColumns.value.filter((c) => c.kind === 'data')
   const neighbour = data[data.findIndex((c) => c.key === key) + direction]
   if (!neighbour) return false
-  const next = moveColumn(props.columns, effectiveState.value, key, neighbour.key)
+  const next = reorder.moveColumn(layoutColumns.value, effectiveState.value, key, neighbour.key)
   if (next === effectiveState.value) return false
   setColumnState(next)
   return true
@@ -487,11 +494,13 @@ const keyboard = useGridKeyboard(root, {
 const menuRef = shallowRef<MenuHandle>()
 const menus = features.menus?.useMenus<T>({
   menu: menuRef,
-  columns: () => props.columns,
+  columns: () => layoutColumns.value,
   columnState: () => effectiveState.value,
   setColumnState,
   sort,
   sortable,
+  pinnable: canPin,
+  reorderable: (col) => canReorder(col.key),
   moveColumnBy,
   contextMenu: () => props.contextMenu,
   headerMenu: () => props.headerMenu,
@@ -595,6 +604,8 @@ if (process.env.NODE_ENV !== 'production') {
     if (!features.pagination && props.pagination) missing('pagination', '`pagination`')
     if (!features.selection && props.selectable) missing('selection', '`selectable`')
     if (!features.subGrids && (props.subRows || props.loadSubRows)) missing('subGrids', '`sub-rows` / `load-sub-rows`')
+    const pinnedCol = props.columns.find((c) => c.pinned)?.key
+    if (!features.columnPinning && pinnedCol) missing('columnPinning', `Column "${pinnedCol}" is pinned; that`)
     if (!features.menus && (props.contextMenu || typeof props.headerMenu === 'function'))
       missing('menus', '`context-menu` / a `header-menu` function')
   })
@@ -650,7 +661,7 @@ const context: GridContext = {
   },
   virtual: isVirtual,
   pinStyle: (key) => {
-    const offset = pinOffsets.value[key]
+    const offset = pinOffsets?.value[key]
     return offset === undefined ? undefined : { '--vg-pin-offset': offset }
   },
   onRowClick: (row, _key, event) => emit('row-click', row, event),
@@ -735,7 +746,7 @@ defineExpose<VGridExposed>({
       <div v-if="isLoading" class="vg-progress" aria-hidden="true" />
       <div
         ref="root"
-        :class="['vg', { 'vg-virtual': isVirtual, 'vg-is-dragging': drag.dragging.value }]"
+        :class="['vg', { 'vg-virtual': isVirtual, 'vg-is-dragging': drag?.dragging.value }]"
         :role="treeMode ? 'treegrid' : 'grid'"
         tabindex="0"
         :aria-label="ariaLabel"
@@ -755,13 +766,13 @@ defineExpose<VGridExposed>({
           :sort="sort"
           :all-state="allState"
           :has-selectable-rows="hasSelectableRows"
-          :dragging="drag.dragging.value"
-          :drop-target="drag.target.value"
+          :dragging="drag?.dragging.value ?? null"
+          :drop-target="drag?.target.value ?? null"
           :can-reorder="canReorder"
           @sort="onSort"
           @toggle-all="sel?.toggleAll()"
-          @drag-start="drag.onPointerDown"
-          @header-click="drag.consumeClick"
+          @drag-start="(event: PointerEvent, key: string) => drag?.onPointerDown(event, key)"
+          @header-click="(event: MouseEvent) => drag?.consumeClick(event)"
         />
         <template v-if="windowRows.length">
           <div
