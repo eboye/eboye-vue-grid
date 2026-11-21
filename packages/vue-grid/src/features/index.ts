@@ -1,10 +1,29 @@
 import type { GridFeature } from '../types'
 import { filteringFeature } from './filtering'
+import { menusFeature } from './menus'
 import { paginationFeature } from './pagination'
+import { selectionFeature } from './selection'
 import { serverDataFeature } from './serverData'
 import { sortingFeature } from './sorting'
+import { subGridsFeature } from './subGrids'
 
-export { filteringFeature, paginationFeature, serverDataFeature, sortingFeature }
+export {
+  filteringFeature,
+  menusFeature,
+  paginationFeature,
+  selectionFeature,
+  serverDataFeature,
+  sortingFeature,
+  subGridsFeature,
+}
 
 /** Every built-in feature, for apps that want them all: `createVueGrid({ features: allFeatures })`. */
-export const allFeatures: readonly GridFeature[] = [sortingFeature, filteringFeature, serverDataFeature, paginationFeature]
+export const allFeatures: readonly GridFeature[] = [
+  sortingFeature,
+  filteringFeature,
+  serverDataFeature,
+  paginationFeature,
+  selectionFeature,
+  subGridsFeature,
+  menusFeature,
+]

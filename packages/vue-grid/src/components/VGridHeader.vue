@@ -3,7 +3,6 @@ import type { SelectionSummary } from '../core/selection'
 import { useInternalGrid, type ResolvedColumn } from '../internal/context'
 import { RenderSlot } from '../internal/RenderSlot'
 import type { SortState } from '../types'
-import VGridCheckbox from './VGridCheckbox.vue'
 
 const props = defineProps<{
   sort: SortState | null | undefined
@@ -63,7 +62,8 @@ function ariaSort(col: ResolvedColumn) {
       @contextmenu="col.kind === 'data' && grid.onHeaderContextMenu(col, $event, $event.currentTarget as HTMLElement)"
     >
       <template v-if="col.kind === 'select'">
-        <VGridCheckbox
+        <component
+          :is="grid.Checkbox"
           v-if="grid.selectMode.value === 'multi'"
           :checked="allState === 'all'"
           :indeterminate="allState === 'some'"

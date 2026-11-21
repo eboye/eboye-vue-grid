@@ -76,9 +76,9 @@ const columns = [
 
 ## Features: everything optional
 
-Out of the box `<VGrid>` is a plain, read-only table: columns, pinning, reordering, column
-visibility, selection, sub-grids, detail rows, menus and virtual scrolling. Everything that
-changes *which* rows you see is an opt-in feature:
+Out of the box `<VGrid>` is a plain, read-only table: columns with any renderer, pinning,
+drag-and-keyboard reordering, column visibility and persistence, detail rows, virtual scrolling,
+keyboard navigation and theming. Everything else is an opt-in feature:
 
 | Feature | Turns on |
 |---|---|
@@ -86,6 +86,9 @@ changes *which* rows you see is an opt-in feature:
 | `filteringFeature` | Funnels on `filterable` headers, `filter-row`, `<VGridSearch>`, `v-model:filters`, `filter-storage`, the header menu's filter items |
 | `serverDataFeature` | `data-source`: the grid fetches sorted, filtered pages itself |
 | `paginationFeature` | `pagination` and `v-model:page` / `v-model:page-size` (the standalone `<VGridPagination>` doesn't need it) |
+| `selectionFeature` | `selectable` (multi or single), `v-model:selected`, `selection-mode`, `is-row-selectable`, select-all, Space to select |
+| `subGridsFeature` | `sub-rows` / `load-sub-rows` / `has-sub-rows`: nested rows in a CSS `subgrid` (detail rows don't need it) |
+| `menusFeature` | The header right-click menu (`header-menu`) and body-cell menus (`context-menu`); without it the browser's menu shows. The standalone `<VGridMenu>` and the `actions-menu` renderer don't need it |
 
 ```ts
 // per grid
@@ -93,7 +96,7 @@ changes *which* rows you see is an opt-in feature:
 
 // or for every grid in the app (merged with each grid's own list)
 app.use(createVueGrid({ features: [sortingFeature, filteringFeature] }))
-app.use(createVueGrid({ features: allFeatures }))   // all four
+app.use(createVueGrid({ features: allFeatures }))   // all of them
 ```
 
 Only the features you import reach your bundle. Without its feature, an option does nothing:
@@ -120,16 +123,19 @@ what you import.
 
 | Import (minified / gzip, Vue excluded) | Initial chunk |
 |---|---|
-| `VGrid` (no features) | 49.9 kB / 17.6 kB |
-| `VGrid` + `sortingFeature` | 50.6 kB / 17.9 kB |
-| `VGrid` + `filteringFeature` | 52.3 kB / 18.3 kB |
-| `VGrid` + `serverDataFeature` | 50.8 kB / 18.0 kB |
-| `VGrid` + `paginationFeature` | 50.1 kB / 17.7 kB |
-| `VGrid` + `allFeatures` + `VGridSearch` | 55.0 kB / 19.3 kB |
-| `VGrid` + `currencyRenderer` | 51.2 kB / 18.0 kB |
-| `VGrid` + `VGridPagination` + `VGridColumnMenu` | 52.9 kB / 18.5 kB |
+| `VGrid` (no features) | 38.3 kB / 13.8 kB |
+| `VGrid` + `sortingFeature` | 39.0 kB / 14.1 kB |
+| `VGrid` + `filteringFeature` | 42.0 kB / 15.0 kB |
+| `VGrid` + `serverDataFeature` | 39.7 kB / 14.4 kB |
+| `VGrid` + `paginationFeature` | 38.4 kB / 13.9 kB |
+| `VGrid` + `selectionFeature` | 40.2 kB / 14.4 kB |
+| `VGrid` + `subGridsFeature` | 40.0 kB / 14.5 kB |
+| `VGrid` + `menusFeature` | 47.1 kB / 16.8 kB |
+| `VGrid` + `allFeatures` + `VGridSearch` | 55.8 kB / 19.7 kB |
+| `VGrid` + `currencyRenderer` | 39.5 kB / 14.2 kB |
+| `VGrid` + `VGridPagination` + `VGridColumnMenu` | 42.7 kB / 15.3 kB |
 | `sortRows` only | 0.7 kB / 0.5 kB |
-| everything | 98.5 kB / 31.1 kB |
+| everything | 99.4 kB / 31.8 kB |
 
 With `filteringFeature`, the filter popover body and the filter-row editors are **on-demand
 chunks**: they load the first time a popover opens or `filter-row` is on. With
@@ -159,11 +165,11 @@ chunks**: they load the first time a popover opens or `filter-row` is on. With
 | `v-model:columnState` | `{ order: string[]; hidden: string[]; pinned?: Record<string, "left" \| "right" \| null> }` | derived | Column order, visibility and runtime pins. |
 | `storage` | `string \| ColumnStateStorage` | — | Persist column state (`string` = localStorage key). |
 | `v-model:expanded` | `RowKey[]` | `[]` | Expanded rows (sub-grids and detail rows). |
-| `subRows` | `(row) => T[] \| undefined` | — | Synchronous children → sub-grid. |
+| `subRows` | `(row) => T[] \| undefined` | — | Synchronous children → sub-grid. Needs `subGridsFeature` (as do the next two). |
 | `loadSubRows` | `(row) => Promise<T[]>` | — | Lazy children (cached, loading/error/retry). |
 | `hasSubRows` | `(row) => boolean` | — | Which rows get an expander when lazy. |
 | `rowExpandable` | `(row) => boolean` | — | Which rows can open the `#detail` slot. |
-| `selectable` | `boolean \| 'single'` | `false` | Adds a selection column. |
+| `selectable` | `boolean \| 'single'` | `false` | Adds a selection column. Needs `selectionFeature` (as do the next three). |
 | `v-model:selected` | `RowKey[]` | `[]` | |
 | `selectionMode` | `'cascade' \| 'independent'` | `'cascade'` | Whether selecting a parent selects its children. |
 | `isRowSelectable` | `(row) => boolean` | — | |
@@ -178,8 +184,8 @@ chunks**: they load the first time a popover opens or `filter-row` is on. With
 | `loading` | `boolean` | `false` | Progress bar + `aria-busy`. |
 | `emptyText` | `string` | `'No data to show.'` | |
 | `ariaLabel` | `string` | — | |
-| `contextMenu` | `(ctx: { row, rowKey, column, value }) => MenuItem[] \| null` | — | Right-click menu for body cells. |
-| `headerMenu` | `boolean \| ({ column, items }) => MenuItem[] \| null` | `true` | Built-in header menu (sort, pin, move, hide, reset). |
+| `contextMenu` | `(ctx: { row, rowKey, column, value }) => MenuItem[] \| null` | — | Right-click menu for body cells. Needs `menusFeature`. |
+| `headerMenu` | `boolean \| ({ column, items }) => MenuItem[] \| null` | `true` | Built-in header menu (sort, pin, move, hide, reset). Needs `menusFeature`. |
 | `ui` | `Partial<Record<'root' \| 'header' \| 'headerCell' \| 'row' \| 'cell' \| 'subgrid' \| 'detail' \| 'empty', ClassValue>>` | — | Extra classes per part (Tailwind-friendly). |
 
 ### Events

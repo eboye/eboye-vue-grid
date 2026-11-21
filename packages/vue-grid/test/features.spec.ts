@@ -3,7 +3,16 @@ import { config, flushPromises, mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import VGridComponent from '../src/components/VGrid.vue'
 import { createVueGrid } from '../src/registry/plugin'
-import { allFeatures, filteringFeature, paginationFeature, serverDataFeature, sortingFeature } from '../src/features'
+import {
+  allFeatures,
+  filteringFeature,
+  menusFeature,
+  paginationFeature,
+  selectionFeature,
+  serverDataFeature,
+  sortingFeature,
+  subGridsFeature,
+} from '../src/features'
 import { resolveFeatures } from '../src/internal/features'
 import type { VGridExposed } from '../src/types'
 
@@ -70,8 +79,15 @@ describe('features are opt-in', () => {
     expect(warn.mock.calls.map((c: unknown[]) => String(c[0])).join('\n')).toContain('needs the serverData feature')
   })
 
-  it('header menu offers sort and filter items only with their features', async () => {
-    const plain = mount(VGrid, { props: { rows, columns, rowKey: 'id' }, attachTo: document.body })
+  it('menus: none without the feature (the browser menu stays); with it, no sort / filter items unless those are on', async () => {
+    const bare = mount(VGrid, { props: { rows, columns, rowKey: 'id' }, attachTo: document.body })
+    expect(bare.find('.vg-menu').exists()).toBe(false)
+    const event = new MouseEvent('contextmenu', { bubbles: true, cancelable: true })
+    bare.find('.vg-header [data-col-key="name"]').element.dispatchEvent(event)
+    expect(event.defaultPrevented).toBe(false)
+    bare.unmount()
+
+    const plain = mount(VGrid, { props: { rows, columns, rowKey: 'id', features: [menusFeature] }, attachTo: document.body })
     await plain.find('.vg-header [data-col-key="name"]').trigger('contextmenu')
     await flushPromises()
     const labels = () => [...document.querySelectorAll('.vg-menu [role="menuitem"]')].map((e) => e.textContent?.trim())
@@ -79,6 +95,29 @@ describe('features are opt-in', () => {
     expect(labels()).not.toContain('Sort ascending')
     expect(labels()).not.toContain('Filter…')
     plain.unmount()
+  })
+
+  it('selection and sub-grids: off without their features, on with them', async () => {
+    interface Node extends Row {
+      kids?: Node[]
+    }
+    const tree: Node[] = [{ id: 10, name: 'Group', score: 0, kids: [rows[0]!, rows[1]!] }]
+    const props = { rows: tree, columns, rowKey: 'id', selectable: true, subRows: (r: Node) => r.kids, expanded: [10] }
+
+    const bare = mount(VGrid, { props })
+    expect(bare.find('.vg-cell-select').exists()).toBe(false)
+    expect(bare.find('.vg-subgrid').exists()).toBe(false)
+    expect(bare.find('.vg-expander').exists()).toBe(false)
+    expect(bare.find('[role="treegrid"]').exists()).toBe(false)
+    const hints = warn.mock.calls.map((c: unknown[]) => String(c[0])).join('\n')
+    expect(hints).toContain('needs the selection feature')
+    expect(hints).toContain('needs the subGrids feature')
+
+    const full = mount(VGrid, { props: { ...props, features: [selectionFeature, subGridsFeature] } })
+    expect(full.find('[role="treegrid"]').exists()).toBe(true)
+    expect(full.findAll('.vg-subgrid .vg-row')).toHaveLength(2)
+    await full.find('.vg-header [type="checkbox"]').setValue(true)
+    expect(((full.emitted('update:selected') as number[][][]).at(-1)![0]! as number[]).sort()).toEqual([1, 10, 2])
   })
 
   it('per grid: only the listed features are on', async () => {

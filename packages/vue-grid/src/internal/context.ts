@@ -45,6 +45,8 @@ export interface GridContext {
   retrySubRows(row: any): void
   // selection
   selectMode: ComputedRef<false | 'multi' | 'single'>
+  /** The selection checkbox (from the selection feature; only rendered when `selectMode` is set). */
+  Checkbox: Component | undefined
   isRowSelectable(row: any): boolean
   rowCheckState(row: any): SelectionSummary
   toggleRow(row: any): void

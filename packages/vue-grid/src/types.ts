@@ -316,7 +316,28 @@ export interface PaginationFeature {
   readonly feature: 'pagination'
   Pagination: Component
 }
-export type GridFeature = SortingFeature | FilteringFeature | ServerDataFeature | PaginationFeature
+export interface SelectionFeature {
+  readonly feature: 'selection'
+  useSelection: typeof import('./composables/useGridSelection').useGridSelection
+  Checkbox: Component
+}
+export interface SubGridsFeature {
+  readonly feature: 'subGrids'
+  useSubRows: typeof import('./composables/useSubRows').useSubRows
+}
+export interface MenusFeature {
+  readonly feature: 'menus'
+  useMenus: typeof import('./composables/useGridMenus').useGridMenus
+  Menu: Component
+}
+export type GridFeature =
+  | SortingFeature
+  | FilteringFeature
+  | ServerDataFeature
+  | PaginationFeature
+  | SelectionFeature
+  | SubGridsFeature
+  | MenusFeature
 export type GridFeatureName = GridFeature['feature']
 
 export interface VueGridConfig {

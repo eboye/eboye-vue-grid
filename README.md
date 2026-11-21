@@ -30,8 +30,8 @@
   positioning, `light-dark()` theming, native `<details>` disclosures. JavaScript only fills in
   where a browser lacks a feature — see [Browser support](#browser-support).
 - **Small by default, everything optional.** ESM, one file per module, zero runtime dependencies.
-  Sorting, filtering, server data and pagination are opt-in **features**, and renderers are
-  opt-in too. A plain grid with text cells is **17.6 kB gzipped**, and each feature or renderer
+  Sorting, filtering, server data, pagination, selection, sub-grids and menus are opt-in
+  **features**, and renderers are opt-in too. A plain grid with text cells is **13.8 kB gzipped**, and each feature or renderer
   you add costs only itself.
 - **Typed end to end.** `<VGrid generic="T">`, typed column helpers, and renderer options checked
   against the renderer you pick.
@@ -157,13 +157,15 @@ Measured by bundling small apps against the published build for production with 
 
 | You import | Initial chunk |
 |---|---|
-| `VGrid` (no features) | 49.9 kB / 17.6 kB |
-| `VGrid` + `sortingFeature` | 50.6 kB / 17.9 kB |
-| `VGrid` + `filteringFeature` | 52.3 kB / 18.3 kB |
-| `VGrid` + `serverDataFeature` | 50.8 kB / 18.0 kB |
-| `VGrid` + `allFeatures` + `VGridSearch` | 55.0 kB / 19.3 kB |
-| `VGrid` + `currencyRenderer` | 51.2 kB / 18.0 kB |
-| everything | 98.5 kB / 31.1 kB |
+| `VGrid` (no features) | 38.3 kB / 13.8 kB |
+| `VGrid` + `sortingFeature` | 39.0 kB / 14.1 kB |
+| `VGrid` + `filteringFeature` | 42.0 kB / 15.0 kB |
+| `VGrid` + `selectionFeature` | 40.2 kB / 14.4 kB |
+| `VGrid` + `subGridsFeature` | 40.0 kB / 14.5 kB |
+| `VGrid` + `menusFeature` | 47.1 kB / 16.8 kB |
+| `VGrid` + `allFeatures` + `VGridSearch` | 55.8 kB / 19.7 kB |
+| `VGrid` + `currencyRenderer` | 39.5 kB / 14.2 kB |
+| everything | 99.4 kB / 31.8 kB |
 
 With `filteringFeature`, the filter popover body and the filter-row editors load on demand. With
 `paginationFeature`, the pager does too.

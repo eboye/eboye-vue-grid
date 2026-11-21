@@ -4,11 +4,14 @@ import {
   GRID_CONFIG_KEY,
   VGridSearch,
   filteringFeature,
+  menusFeature,
   paginationFeature,
+  selectionFeature,
   sortingFeature,
+  subGridsFeature,
   type GridFeature,
 } from '@eboye/vue-grid'
-import { betColumns, makeBets } from '../data'
+import { betColumns, makeBets, makeMarkets, marketColumns, type Market } from '../data'
 import { Grid as VGrid, type GridArgs } from '../support'
 
 const rows = makeBets(40)
@@ -32,11 +35,12 @@ const choices: { label: string; feature: GridFeature }[] = [
 ]
 
 /**
- * Sorting, filtering, server data and pagination are **opt-in features**. A grid gets only the
- * features you register, per grid (`<VGrid :features="[sortingFeature]">`) or app-wide
- * (`createVueGrid({ features: [...] })`, `allFeatures` for all of them), and only those reach your
- * bundle. Without them, `sortable` / `filterable` columns, `filter-row`, `data-source` and
- * `pagination` do nothing (a dev warning names the missing feature).
+ * Sorting, filtering, server data, pagination, selection, sub-grids and context menus are
+ * **opt-in features**. A grid gets only the features you register, per grid
+ * (`<VGrid :features="[sortingFeature]">`) or app-wide (`createVueGrid({ features: [...] })`,
+ * `allFeatures` for all of them), and only those reach your bundle. Without them the matching
+ * options (`sortable`, `filterable`, `data-source`, `pagination`, `selectable`, `sub-rows`,
+ * `context-menu` …) do nothing, and a dev warning names the missing feature.
  *
  * The other stories register `allFeatures` app-wide; this one starts from an app without any.
  */
@@ -84,6 +88,51 @@ export const OptIn: Story = {
           >
             <template #toolbar><VGridSearch /></template>
           </VGrid>
+        </div>
+      </BareApp>`,
+  }),
+}
+
+const rowChoices: { label: string; feature: GridFeature }[] = [
+  { label: 'selectionFeature', feature: selectionFeature },
+  { label: 'subGridsFeature', feature: subGridsFeature },
+  { label: 'menusFeature', feature: menusFeature },
+]
+const markets = makeMarkets()
+
+/**
+ * Selection, sub-grids and context menus are features too. Without `menusFeature`, right-click
+ * shows the browser's own menu.
+ */
+export const RowsAndMenus: Story = {
+  render: () => ({
+    components: { VGrid, BareApp },
+    setup() {
+      const on = ref<string[]>([])
+      const features = computed(() => rowChoices.filter((c) => on.value.includes(c.label)).map((c) => c.feature))
+      const contextMenu = () => [{ name: 'copy', label: 'Copy' }]
+      return { on, rowChoices, features, markets, marketColumns, contextMenu, subRows: (m: Market) => m.children }
+    },
+    template: `
+      <fieldset class="sb-note" style="display:flex;gap:1rem;border:0;padding:0">
+        <legend style="float:left;margin-right:.5rem">features:</legend>
+        <label v-for="c in rowChoices" :key="c.label">
+          <input v-model="on" type="checkbox" :value="c.label" /> <code>{{ c.label }}</code>
+        </label>
+      </fieldset>
+      <BareApp>
+        <div class="sb-frame">
+          <VGrid
+            :key="on.join()"
+            :rows="markets"
+            :columns="marketColumns"
+            row-key="id"
+            aria-label="Markets"
+            :features="features"
+            selectable
+            :sub-rows="subRows"
+            :context-menu="contextMenu"
+          />
         </div>
       </BareApp>`,
   }),

@@ -5,7 +5,6 @@ import { toNumber } from '../renderers/format'
 import { useInternalGrid, type ResolvedColumn } from '../internal/context'
 import type { FlashMode, RowKey } from '../types'
 import { RenderSlot } from '../internal/RenderSlot'
-import VGridCheckbox from './VGridCheckbox.vue'
 
 const props = defineProps<{
   row: unknown
@@ -99,7 +98,8 @@ function onClick(event: MouseEvent) {
     @contextmenu="onContextMenu"
   >
     <template v-if="column.kind === 'select'">
-      <VGridCheckbox
+      <component
+        :is="grid.Checkbox"
         :type="grid.selectMode.value === 'single' ? 'radio' : 'checkbox'"
         :checked="grid.rowCheckState(row) === 'all'"
         :indeterminate="grid.rowCheckState(row) === 'some'"

@@ -19,12 +19,42 @@ test('no features: a plain table; clicking a sortable header does nothing; no fu
   await header(page, 'player').click()
   expect(await players(page)).toEqual(before)
   await expect(header(page, 'player')).not.toHaveAttribute('aria-sort', /.+/)
-  // the header menu still opens, without sort or filter items
+  // no menus feature: right-click leaves the browser's own menu (no grid menu, default not prevented)
+  const prevented = page.evaluate(
+    () =>
+      new Promise<boolean>((resolve) => {
+        window.addEventListener('contextmenu', (e) => resolve(e.defaultPrevented), { once: true })
+      }),
+  )
   await header(page, 'player').click({ button: 'right' })
+  expect(await prevented).toBe(false)
+  await page.keyboard.press('Escape')
+  await expect(page.locator('.vg-menu')).toHaveCount(0)
+})
+
+test('selection, sub-grids and menus, feature by feature', async ({ page }) => {
+  await story(page, 'grid-features--rows-and-menus')
+  await expect(page.locator('.vg-cell-select')).toHaveCount(0)
+  await expect(page.locator('.vg-expander')).toHaveCount(0)
+
+  await page.getByLabel('selectionFeature').check()
+  const firstRow = page.locator('.vg-row').first()
+  await firstRow.getByRole('checkbox', { name: 'Select row' }).click()
+  await expect(firstRow).toHaveAttribute('aria-selected', 'true')
+
+  await page.getByLabel('subGridsFeature').check()
+  await page.locator('#storybook-root [role="treegrid"]').waitFor()
+  await page.locator('.vg-expander').first().click()
+  await expect(page.locator('.vg-subgrid .vg-row').first()).toBeVisible()
+
+  await page.getByLabel('menusFeature').check()
+  await page.locator('.vg-row > [data-col-key="name"]').first().click({ button: 'right' })
   const menu = page.locator('.vg-menu:popover-open')
+  await expect(menu.getByRole('menuitem', { name: 'Copy' })).toBeVisible()
+  await page.keyboard.press('Escape')
+  await page.locator('.vg-header > [data-col-key="name"]').click({ button: 'right' })
   await expect(menu.getByRole('menuitem', { name: 'Hide column' })).toBeVisible()
-  await expect(menu.getByRole('menuitem', { name: /Sort/ })).toHaveCount(0)
-  await expect(menu.getByRole('menuitem', { name: /Filter/ })).toHaveCount(0)
+  await expect(menu.getByRole('menuitem', { name: /Sort/ })).toHaveCount(0) // sorting not on
 })
 
 test('opting in, feature by feature', async ({ page }) => {

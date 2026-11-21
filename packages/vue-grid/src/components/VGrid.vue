@@ -27,17 +27,15 @@ import {
   normalizeColumnState,
   visibleColumns,
 } from '../core/columns'
-import { selectionState, toggleRowSelection } from '../core/selection'
 import { localStorageAdapter } from '../core/storage'
 import { getCellValue, resolveRowKey, type RowKeyGetter } from '../core/value'
 import type { RowPatches } from '../core/patch'
 import { computeVirtualWindow } from '../core/virtual'
 import { useColumnDrag } from '../composables/useColumnDrag'
 import { useGridKeyboard } from '../composables/useGridKeyboard'
-import { useGridMenus, type MenuHandle } from '../composables/useGridMenus'
+import type { MenuHandle } from '../composables/useGridMenus'
 import { usePinnedOffsets } from '../composables/usePinnedOffsets'
 import { useScrollEdges } from '../composables/useScrollEdges'
-import { useSubRows } from '../composables/useSubRows'
 import type { DataSource, GridQuery } from '../composables/useDataSource'
 import { resolveFeatures } from '../internal/features'
 import { warnOnce } from '../internal/dev'
@@ -71,7 +69,6 @@ import type {
   VirtualOptions,
 } from '../types'
 import VGridHeader from './VGridHeader.vue'
-import VGridMenu from './VGridMenu.vue'
 import VGridRows from './VGridRows.vue'
 
 const NO_FILTERS: FilterState = Object.freeze({ columns: Object.freeze({}), search: '' }) as FilterState
@@ -260,7 +257,7 @@ function resolveRenderer(col: ColumnDef<T>): {
 
 const isVirtual = computed(() => !!props.virtual)
 const selectMode = computed<false | 'multi' | 'single'>(() =>
-  props.selectable === 'single' ? 'single' : props.selectable ? 'multi' : false,
+  !features.selection ? false : props.selectable === 'single' ? 'single' : props.selectable ? 'multi' : false,
 )
 
 const resolvedColumns = computed<ResolvedColumn[]>(() => {
@@ -334,7 +331,7 @@ function onSort(key: string) {
 }
 
 // ── Expansion & sub-rows ────────────────────────────────────────────────────────────────────
-const sub = useSubRows<T>({
+const sub = features.subGrids?.useSubRows<T>({
   getKey,
   subRows: () => props.subRows,
   loadSubRows: () => props.loadSubRows,
@@ -342,12 +339,14 @@ const sub = useSubRows<T>({
   onError: (row, error) => emit('sub-rows-error', { row, error }),
 })
 
-const treeMode = computed(() => !isVirtual.value && !!(props.subRows || props.loadSubRows))
+const treeMode = computed(() => !!sub && !isVirtual.value && !!(props.subRows || props.loadSubRows))
 const hasDetail = computed(() => !isVirtual.value && !!slots.detail)
 const expandedSet = computed(() => new Set(expanded.value))
+/** Known child rows (sub-grids only). */
+const childrenOf = (row: T) => (treeMode.value ? sub?.children(row) : undefined)
 
 function canExpand(row: T): boolean {
-  if (treeMode.value && sub.mayHaveChildren(row)) return true
+  if (treeMode.value && sub?.mayHaveChildren(row)) return true
   return hasDetail.value && (props.rowExpandable ? props.rowExpandable(row) : true)
 }
 
@@ -369,7 +368,7 @@ const filt = features.filtering?.useFilters<T>({
   visibleColumns: () => resolvedColumns.value.filter((c) => c.kind === 'data').map((c) => c.def as ColumnDef<T>),
   definitionOf: (col) => resolveRenderer(col).definition,
   rows: (): readonly T[] => sourceRows.value,
-  childrenOf: (row) => (treeMode.value ? sub.children(row) : undefined),
+  childrenOf,
   getKey,
   timeZone: () => props.timeZone ?? config?.timeZone,
 })
@@ -429,66 +428,24 @@ function walk(rows: readonly T[], visit: (row: T) => void) {
   for (const row of rows) {
     if (filt && !filt.isVisible(row)) continue
     visit(row)
-    if (treeMode.value) {
-      const kids = sub.children(row)
-      if (kids) walk(kids, visit)
-    }
+    const kids = childrenOf(row)
+    if (kids) walk(kids, visit)
   }
 }
 
 // ── Selection ───────────────────────────────────────────────────────────────────────────────
-const selectedSet = computed(() => new Set(selected.value))
-const cascade = computed(() => selectMode.value === 'multi' && props.selectionMode === 'cascade' && treeMode.value)
-const isRowSelectable = (row: T) => (props.isRowSelectable ? props.isRowSelectable(row) : true)
-
-function descendantKeys(row: T): RowKey[] {
-  const keys: RowKey[] = []
-  walk(sub.children(row) ?? [], (r) => {
-    if (isRowSelectable(r)) keys.push(getKey(r))
-  })
-  return keys
-}
-
-function rowCheckState(row: T) {
-  const key = getKey(row)
-  if (cascade.value) {
-    const desc = descendantKeys(row)
-    if (desc.length) return selectionState([key, ...desc], selectedSet.value)
-  }
-  return selectedSet.value.has(key) ? 'all' : 'none'
-}
-
-function toggleRow(row: T) {
-  if (!selectMode.value || !isRowSelectable(row)) return
-  const key = getKey(row)
-  if (selectMode.value === 'single') {
-    selected.value = selectedSet.value.has(key) ? [] : [key]
-    return
-  }
-  const fullySelected = rowCheckState(row) === 'all'
-  const desc = cascade.value ? descendantKeys(row) : []
-  // A partially selected parent becomes fully selected on click.
-  const base = new Set(selectedSet.value)
-  if (!fullySelected) base.delete(key)
-  selected.value = [...toggleRowSelection(base, key, desc, cascade.value)]
-}
-
-const selectableKeys = computed(() => {
-  if (!selectMode.value) return []
-  const keys: RowKey[] = []
-  walk(sourceRows.value, (row) => {
-    if (isRowSelectable(row)) keys.push(getKey(row))
-  })
-  return keys
+const sel = features.selection?.useSelection<T>({
+  selected,
+  mode: () => selectMode.value,
+  cascade: () => selectMode.value === 'multi' && props.selectionMode === 'cascade' && treeMode.value,
+  isRowSelectable: () => props.isRowSelectable,
+  getKey,
+  rows: (): readonly T[] => sourceRows.value,
+  children: childrenOf,
+  walk,
 })
-const allState = computed(() => selectionState(selectableKeys.value, selectedSet.value))
-
-function toggleAll() {
-  const next = new Set(selectedSet.value)
-  if (allState.value === 'all') for (const k of selectableKeys.value) next.delete(k)
-  else for (const k of selectableKeys.value) next.add(k)
-  selected.value = [...next]
-}
+const allState = computed(() => sel?.allState.value ?? 'none')
+const hasSelectableRows = computed(() => !!sel?.selectableKeys.value.length)
 
 // ── Pinned columns, drag & keyboard ─────────────────────────────────────────────────────────
 const pinOffsets = usePinnedOffsets(root, () => resolvedColumns.value)
@@ -528,7 +485,7 @@ const keyboard = useGridKeyboard(root, {
 
 // ── Context menus ───────────────────────────────────────────────────────────────────────────
 const menuRef = shallowRef<MenuHandle>()
-const menus = useGridMenus<T>({
+const menus = features.menus?.useMenus<T>({
   menu: menuRef,
   columns: () => props.columns,
   columnState: () => effectiveState.value,
@@ -636,6 +593,10 @@ if (process.env.NODE_ENV !== 'production') {
       missing('filtering', 'Filtering (`filterable` columns, `filter-row`, `v-model:filters`)')
     if (!features.serverData && props.dataSource) missing('serverData', '`data-source`')
     if (!features.pagination && props.pagination) missing('pagination', '`pagination`')
+    if (!features.selection && props.selectable) missing('selection', '`selectable`')
+    if (!features.subGrids && (props.subRows || props.loadSubRows)) missing('subGrids', '`sub-rows` / `load-sub-rows`')
+    if (!features.menus && (props.contextMenu || typeof props.headerMenu === 'function'))
+      missing('menus', '`context-menu` / a `header-menu` function')
   })
   watch(
     () => props.features,
@@ -658,14 +619,15 @@ const context: GridContext = {
   canExpand,
   isExpanded: (key) => expandedSet.value.has(key),
   toggleExpanded,
-  children: (row) => sub.children(row),
-  subRowState: (row) => sub.state(row),
-  ensureSubRows: (row) => sub.ensure(row),
-  retrySubRows: (row) => sub.retry(row),
+  children: (row) => childrenOf(row),
+  subRowState: (row) => sub?.state(row),
+  ensureSubRows: (row) => sub?.ensure(row),
+  retrySubRows: (row) => sub?.retry(row),
   selectMode,
-  isRowSelectable,
-  rowCheckState,
-  toggleRow,
+  Checkbox: features.selection?.Checkbox,
+  isRowSelectable: (row) => sel?.isRowSelectable(row) ?? false,
+  rowCheckState: (row) => sel?.rowCheckState(row) ?? 'none',
+  toggleRow: (row) => sel?.toggleRow(row),
   isHighlighted: (key) => highlighted.value.has(key),
   rowClass: (row, index) => props.rowClass?.(row, index),
   rowClickable: computed(() => props.rowClickable),
@@ -697,8 +659,8 @@ const context: GridContext = {
   onCellAction: (row, rowKey, column, name, payload) =>
     emit('cell-action', { name, payload, row, rowKey, column: column.def }),
   onCellContextMenu: (row, rowKey, column, event, el) =>
-    menus.openCellMenu({ row, rowKey, column: column.def, value: getCellValue(row, column.def) }, event, el),
-  onHeaderContextMenu: (column, event, el) => menus.openHeaderMenu(column.def, event, el),
+    menus?.openCellMenu({ row, rowKey, column: column.def, value: getCellValue(row, column.def) }, event, el),
+  onHeaderContextMenu: (column, event, el) => menus?.openHeaderMenu(column.def, event, el),
 }
 provide(GRID_CONTEXT_KEY, context)
 
@@ -732,7 +694,7 @@ function collapseAll() {
 
 /** Field patches for lazily loaded child rows (top-level rows belong to the app: patch those). */
 function patchLoadedRows(patches: RowPatches<T>): number {
-  return sub.patchLoaded(patches) + (serverMode.value && ds ? ds.patch(patches) : 0)
+  return (sub?.patchLoaded(patches) ?? 0) + (serverMode.value && ds ? ds.patch(patches) : 0)
 }
 
 function setFilters(state: FilterState) {
@@ -792,12 +754,12 @@ defineExpose<VGridExposed>({
         <VGridHeader
           :sort="sort"
           :all-state="allState"
-          :has-selectable-rows="selectableKeys.length > 0"
+          :has-selectable-rows="hasSelectableRows"
           :dragging="drag.dragging.value"
           :drop-target="drag.target.value"
           :can-reorder="canReorder"
           @sort="onSort"
-          @toggle-all="toggleAll"
+          @toggle-all="sel?.toggleAll()"
           @drag-start="drag.onPointerDown"
           @header-click="drag.consumeClick"
         />
@@ -846,6 +808,14 @@ defineExpose<VGridExposed>({
       :total="totalRows"
       :page-sizes="typeof pagination === 'object' ? pagination.pageSizes : undefined"
     />
-    <VGridMenu ref="menuRef" :items="menus.items.value" :label="menus.label.value" placement="point" @select="menus.onSelect" />
+    <component
+      :is="features.menus.Menu"
+      v-if="features.menus && menus"
+      ref="menuRef"
+      :items="menus.items.value"
+      :label="menus.label.value"
+      placement="point"
+      @select="menus.onSelect"
+    />
   </div>
 </template>

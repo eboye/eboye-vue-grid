@@ -1,4 +1,13 @@
-import type { FilteringFeature, GridFeature, PaginationFeature, ServerDataFeature, SortingFeature } from '../types'
+import type {
+  FilteringFeature,
+  GridFeature,
+  MenusFeature,
+  PaginationFeature,
+  SelectionFeature,
+  ServerDataFeature,
+  SortingFeature,
+  SubGridsFeature,
+} from '../types'
 
 /** The features a grid has, by name. */
 export interface FeatureSet {
@@ -6,6 +15,9 @@ export interface FeatureSet {
   filtering?: FilteringFeature
   serverData?: ServerDataFeature
   pagination?: PaginationFeature
+  selection?: SelectionFeature
+  subGrids?: SubGridsFeature
+  menus?: MenusFeature
 }
 
 /** Merges feature lists (app-wide, then per grid); a later entry with the same name wins. */

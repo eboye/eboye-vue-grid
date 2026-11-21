@@ -112,18 +112,19 @@ you leave out the renderer styles.
 
 ### Choosing features
 
-Out of the box `<VGrid>` is a plain table. Sorting, filtering, server data and pagination are
-opt-in features, and only the ones you import are bundled:
+Out of the box `<VGrid>` is a plain table. Sorting, filtering, server data, pagination,
+selection, sub-grids and context menus are opt-in features, and only the ones you import are
+bundled:
 
 ```ts
-import { allFeatures, filteringFeature, paginationFeature, serverDataFeature, sortingFeature } from '@eboye/vue-grid'
+import { allFeatures, filteringFeature, sortingFeature } from '@eboye/vue-grid'
 
 // per grid
 // <VGrid :features="[sortingFeature, filteringFeature]" … />
 
 // or for every grid (merged with each grid's own list)
 app.use(createVueGrid({ features: [sortingFeature, filteringFeature] }))
-app.use(createVueGrid({ features: allFeatures })) // all four
+app.use(createVueGrid({ features: allFeatures })) // all of them
 ```
 
 | Feature | Needed for |
@@ -132,6 +133,9 @@ app.use(createVueGrid({ features: allFeatures })) // all four
 | `filteringFeature` | `filterable` columns, `filter-row`, `<VGridSearch>`, `v-model:filters`, `filter-storage` |
 | `serverDataFeature` | `data-source` |
 | `paginationFeature` | `pagination`, `v-model:page`, `v-model:page-size` |
+| `selectionFeature` | `selectable`, `v-model:selected`, `selection-mode`, `is-row-selectable` |
+| `subGridsFeature` | `sub-rows`, `load-sub-rows`, `has-sub-rows` (detail rows work without it) |
+| `menusFeature` | the header right-click menu (`header-menu`) and `context-menu` for body cells |
 
 Without its feature, an option does nothing and a dev warning names the feature to add. A grid
 reads `features` once when it is created.
