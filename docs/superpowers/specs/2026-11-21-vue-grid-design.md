@@ -18,6 +18,7 @@ cell-renderer addons, themeable through CSS custom properties.
 | Selection | Computed state, tri-state select-all |
 | Safety | No `innerHTML` / `document.write`: JSON shown as text nodes / `<pre>` textContent and a recursive Vue tree component |
 | Styling | Plain CSS + `--vg-*` tokens in `@layer vue-grid`; locale/currency via props or `provide`; no design-system or store coupling |
+
 ## 2. Packages & tooling
 
 npm workspaces, Node ≥ 20, Vue `^3.5` peer, TypeScript 6 strict (`vue-tsc` needs the JS compiler
