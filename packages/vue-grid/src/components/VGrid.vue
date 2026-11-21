@@ -9,9 +9,7 @@ import {
   computed,
   inject,
   nextTick,
-  onBeforeUnmount,
   provide,
-  ref,
   shallowRef,
   toRaw,
   useId,
@@ -28,7 +26,6 @@ import {
 import { localStorageAdapter } from '../core/storage'
 import { getCellValue, resolveRowKey, type RowKeyGetter } from '../core/value'
 import type { RowPatches } from '../core/patch'
-import { computeVirtualWindow } from '../core/virtual'
 import { useGridKeyboard } from '../composables/useGridKeyboard'
 import type { MenuHandle } from '../composables/useGridMenus'
 import type { DataSource, GridQuery } from '../composables/useDataSource'
@@ -257,7 +254,9 @@ function resolveRenderer(col: ColumnDef<T>): {
   return { component: textRenderer.component, definition: textRenderer, fallback: true }
 }
 
-const isVirtual = computed(() => !!props.virtual)
+/** `virtual`, when the virtual scrolling feature is on. */
+const virtualOptions = computed(() => (features.virtualScrolling ? props.virtual || false : false))
+const isVirtual = computed(() => !!virtualOptions.value)
 const selectMode = computed<false | 'multi' | 'single'>(() =>
   !features.selection ? false : props.selectable === 'single' ? 'single' : props.selectable ? 'multi' : false,
 )
@@ -516,46 +515,14 @@ const menus = features.menus?.useMenus<T>({
 })
 
 // ── Virtualisation ──────────────────────────────────────────────────────────────────────────
-const scrollTop = ref(0)
-const viewportHeight = ref(0)
-let scrollFrame = 0
-let resizeObserver: ResizeObserver | undefined
-
-function onScroll() {
-  if (!isVirtual.value) return
-  cancelAnimationFrame(scrollFrame)
-  scrollFrame = requestAnimationFrame(() => (scrollTop.value = root.value?.scrollTop ?? 0))
-}
-
-watch(
-  [root, isVirtual],
-  ([el, virtual]) => {
-    resizeObserver?.disconnect()
-    if (!el || !virtual || typeof ResizeObserver === 'undefined') return
-    resizeObserver = new ResizeObserver(() => (viewportHeight.value = el.clientHeight))
-    resizeObserver.observe(el)
-    viewportHeight.value = el.clientHeight
-  },
-  { immediate: true },
-)
-onBeforeUnmount(() => {
-  resizeObserver?.disconnect()
-  cancelAnimationFrame(scrollFrame)
-})
-
 const topRows = computed(() => prepareRows(sourceRows.value))
-const virtualWindow = computed(() => {
-  const v = props.virtual
-  if (!v) return null
-  return computeVirtualWindow({
-    scrollTop: scrollTop.value,
-    // Before the first measurement, render one screen's worth rather than nothing.
-    viewportHeight: viewportHeight.value || 800,
-    rowHeight: v.rowHeight,
-    rowCount: topRows.value.length,
-    overscan: v.overscan ?? 6,
-  })
+const virt = features.virtualScrolling?.useVirtualRows({
+  root,
+  options: () => virtualOptions.value,
+  rowCount: () => topRows.value.length,
 })
+const virtualWindow = computed(() => virt?.window.value ?? null)
+const onScroll = () => virt?.onScroll()
 /** Rows on all pages: the server's total, or the filtered client rows. */
 const totalRows = computed(() => (serverMode.value ? (ds?.total.value ?? sourceRows.value.length) : topRows.value.length))
 const windowRows = computed(() => {
@@ -575,7 +542,7 @@ watch(totalRows, (total) => {
 
 if (process.env.NODE_ENV !== 'production') {
   watchEffect(() => {
-    if (props.virtual && (props.subRows || props.loadSubRows || slots.detail)) {
+    if (isVirtual.value && (props.subRows || props.loadSubRows || slots.detail)) {
       warnOnce('virtual-expand', 'Sub-rows and detail rows are disabled in virtual mode.')
     }
     const seen = new Set<RowKey>()
@@ -602,6 +569,7 @@ if (process.env.NODE_ENV !== 'production') {
       missing('filtering', 'Filtering (`filterable` columns, `filter-row`, `v-model:filters`)')
     if (!features.serverData && props.dataSource) missing('serverData', '`data-source`')
     if (!features.pagination && props.pagination) missing('pagination', '`pagination`')
+    if (!features.virtualScrolling && props.virtual) missing('virtualScrolling', '`virtual`')
     if (!features.selection && props.selectable) missing('selection', '`selectable`')
     if (!features.subGrids && (props.subRows || props.loadSubRows)) missing('subGrids', '`sub-rows` / `load-sub-rows`')
     const pinnedCol = props.columns.find((c) => c.pinned)?.key
@@ -681,10 +649,9 @@ function scrollToTop() {
 }
 
 function scrollToRow(key: RowKey) {
-  const v = props.virtual
-  if (v) {
+  if (virt && isVirtual.value) {
     const index = topRows.value.findIndex((r) => getKey(r) === key)
-    if (index >= 0 && root.value) root.value.scrollTop = index * v.rowHeight
+    if (index >= 0) virt.scrollToIndex(index)
     return
   }
   const cell = root.value?.querySelector<HTMLElement>(`[data-row-key="${CSS.escape(String(key))}"] > .vg-cell`)
@@ -756,7 +723,7 @@ defineExpose<VGridExposed>({
         :aria-multiselectable="selectMode === 'multi' || undefined"
         :style="{
           '--vg-columns': template,
-          '--vg-row-height': virtual ? `${virtual.rowHeight}px` : undefined,
+          '--vg-row-height': virtualOptions ? `${virtualOptions.rowHeight}px` : undefined,
         }"
         @scroll.passive="onScroll"
         @keydown="keyboard.onKeyDown"

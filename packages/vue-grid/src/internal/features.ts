@@ -9,6 +9,7 @@ import type {
   ServerDataFeature,
   SortingFeature,
   SubGridsFeature,
+  VirtualScrollingFeature,
 } from '../types'
 
 /** The features a grid has, by name. */
@@ -22,6 +23,7 @@ export interface FeatureSet {
   menus?: MenusFeature
   columnReorder?: ColumnReorderFeature
   columnPinning?: ColumnPinningFeature
+  virtualScrolling?: VirtualScrollingFeature
 }
 
 /** Merges feature lists (app-wide, then per grid); a later entry with the same name wins. */

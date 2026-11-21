@@ -11,6 +11,7 @@ import {
   selectionFeature,
   sortingFeature,
   subGridsFeature,
+  virtualScrollingFeature,
   type GridFeature,
 } from '@eboye/vue-grid'
 import { betColumns, makeBets, makeMarkets, marketColumns, type Market } from '../data'
@@ -38,7 +39,7 @@ const choices: { label: string; feature: GridFeature }[] = [
 
 /**
  * Sorting, filtering, server data, pagination, selection, sub-grids, context menus, column
- * reordering and column pinning are **opt-in features**. A grid gets only the features you register, per grid
+ * reordering, column pinning and virtual scrolling are **opt-in features**. A grid gets only the features you register, per grid
  * (`<VGrid :features="[sortingFeature]">`) or app-wide (`createVueGrid({ features: [...] })`,
  * `allFeatures` for all of them), and only those reach your bundle. Without them the matching
  * options (`sortable`, `filterable`, `data-source`, `pagination`, `selectable`, `sub-rows`,
@@ -172,6 +173,36 @@ export const Columns: Story = {
       <BareApp>
         <div class="sb-frame" style="max-width: 640px">
           <VGrid :key="on.join()" v-bind="args" :columns="wideColumns" :features="features" />
+        </div>
+      </BareApp>`,
+  }),
+}
+
+const manyRows = makeBets(2000)
+
+/**
+ * Virtual scrolling is a feature too: with `virtualScrollingFeature`, `:virtual="{ rowHeight: 40 }"`
+ * renders only the rows in view. Without it, `virtual` is ignored and all 2,000 rows render.
+ */
+export const VirtualScrolling: Story = {
+  render: (args) => ({
+    components: { VGrid, BareApp },
+    setup() {
+      const on = ref(false)
+      const features = computed(() => (on.value ? [virtualScrollingFeature] : []))
+      const rendered = ref(0)
+      const count = () => (rendered.value = document.querySelectorAll('#storybook-root .vg-row').length)
+      return { args, on, features, manyRows, rendered, count }
+    },
+    template: `
+      <p class="sb-note">
+        <label><input v-model="on" type="checkbox" /> <code>virtualScrollingFeature</code></label>
+        · <button type="button" @click="count">Count rendered rows</button>
+        <output data-testid="rendered">{{ rendered }}</output>
+      </p>
+      <BareApp>
+        <div class="sb-frame">
+          <VGrid :key="String(on)" v-bind="args" :rows="manyRows" :features="features" :virtual="{ rowHeight: 40 }" style="height: 420px" />
         </div>
       </BareApp>`,
   }),

@@ -78,7 +78,7 @@ const columns = [
 ## Features: everything optional
 
 Out of the box `<VGrid>` is a plain, read-only table: columns with any renderer and any width,
-column visibility and persistence, detail rows, virtual scrolling, keyboard navigation and
+column visibility and persistence, detail rows, keyboard navigation and
 theming. Everything else is an opt-in feature:
 
 | Feature | Turns on |
@@ -92,6 +92,7 @@ theming. Everything else is an opt-in feature:
 | `menusFeature` | The header right-click menu (`header-menu`) and body-cell menus (`context-menu`); without it the browser's menu shows. The standalone `<VGridMenu>` and the `actions-menu` renderer don't need it |
 | `columnReorderFeature` | Dragging headers to reorder (mouse, pen, touch), Alt+←/→ on a header, the header menu's Move items |
 | `columnPinningFeature` | Sticky `pinned: 'left' \| 'right'` columns with edge shadows, the header menu's Pin items; without it pins are ignored |
+| `virtualScrollingFeature` | `virtual: { rowHeight, overscan? }`: only the rows in view render; without it every row renders |
 
 ```ts
 // per grid
@@ -126,21 +127,22 @@ what you import.
 
 | Import (minified / gzip, Vue excluded) | Initial chunk |
 |---|---|
-| `VGrid` (no features) | 34.7 kB / 12.4 kB |
-| `VGrid` + `sortingFeature` | 35.4 kB / 12.8 kB |
-| `VGrid` + `filteringFeature` | 38.4 kB / 13.7 kB |
-| `VGrid` + `serverDataFeature` | 36.1 kB / 13.0 kB |
-| `VGrid` + `paginationFeature` | 34.8 kB / 12.5 kB |
-| `VGrid` + `selectionFeature` | 36.6 kB / 13.1 kB |
-| `VGrid` + `subGridsFeature` | 36.4 kB / 13.1 kB |
-| `VGrid` + `menusFeature` | 43.5 kB / 15.5 kB |
-| `VGrid` + `columnReorderFeature` | 36.6 kB / 13.2 kB |
-| `VGrid` + `columnPinningFeature` | 36.8 kB / 13.3 kB |
-| `VGrid` + `allFeatures` + `VGridSearch` | 56.4 kB / 19.9 kB |
-| `VGrid` + `currencyRenderer` | 35.9 kB / 12.8 kB |
-| `VGrid` + `VGridPagination` + `VGridColumnMenu` | 39.1 kB / 13.9 kB |
+| `VGrid` (no features) | 33.9 kB / 12.2 kB |
+| `VGrid` + `sortingFeature` | 34.6 kB / 12.5 kB |
+| `VGrid` + `filteringFeature` | 37.7 kB / 13.4 kB |
+| `VGrid` + `serverDataFeature` | 35.3 kB / 12.8 kB |
+| `VGrid` + `paginationFeature` | 34.1 kB / 12.2 kB |
+| `VGrid` + `selectionFeature` | 35.9 kB / 12.8 kB |
+| `VGrid` + `subGridsFeature` | 35.7 kB / 12.8 kB |
+| `VGrid` + `menusFeature` | 42.8 kB / 15.2 kB |
+| `VGrid` + `columnReorderFeature` | 35.9 kB / 12.9 kB |
+| `VGrid` + `columnPinningFeature` | 36.1 kB / 13.1 kB |
+| `VGrid` + `virtualScrollingFeature` | 35.1 kB / 12.6 kB |
+| `VGrid` + `allFeatures` + `VGridSearch` | 56.8 kB / 20.0 kB |
+| `VGrid` + `currencyRenderer` | 35.2 kB / 12.5 kB |
+| `VGrid` + `VGridPagination` + `VGridColumnMenu` | 38.4 kB / 13.7 kB |
 | `sortRows` only | 0.7 kB / 0.5 kB |
-| everything | 100.0 kB / 32.2 kB |
+| everything | 100.4 kB / 32.4 kB |
 
 With `filteringFeature`, the filter popover body and the filter-row editors are **on-demand
 chunks**: they load the first time a popover opens or `filter-row` is on. With
@@ -178,7 +180,7 @@ chunks**: they load the first time a popover opens or `filter-row` is on. With
 | `v-model:selected` | `RowKey[]` | `[]` | |
 | `selectionMode` | `'cascade' \| 'independent'` | `'cascade'` | Whether selecting a parent selects its children. |
 | `isRowSelectable` | `(row) => boolean` | — | |
-| `virtual` | `{ rowHeight: number; overscan?: number } \| false` | `false` | Fixed-height virtual scrolling. |
+| `virtual` | `{ rowHeight: number; overscan?: number } \| false` | `false` | Fixed-height virtual scrolling. Needs `virtualScrollingFeature`. |
 | `rowClickable` | `boolean` | `false` | Pointer cursor; `row-click` is always emitted. |
 | `rowClass` | `(row, index) => ClassValue` | — | |
 | `highlightedRows` | `RowKey[]` | — | |
@@ -496,7 +498,8 @@ Or place the standalone component yourself and feed the grid one page at a time:
 ## Virtual scrolling
 
 ```vue
-<VGrid :rows="tenThousandRows" :columns row-key="id" :virtual="{ rowHeight: 40 }" style="height: 600px" />
+<VGrid :rows="tenThousandRows" :columns row-key="id" :features="[virtualScrollingFeature]"
+       :virtual="{ rowHeight: 40 }" style="height: 600px" />
 ```
 
 Rows have a fixed height; only the visible window plus `overscan` is rendered. Sub-rows and detail

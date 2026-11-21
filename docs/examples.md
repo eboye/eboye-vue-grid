@@ -113,8 +113,8 @@ you leave out the renderer styles.
 ### Choosing features
 
 Out of the box `<VGrid>` is a plain table. Sorting, filtering, server data, pagination,
-selection, sub-grids, context menus, column reordering and column pinning are opt-in features,
-and only the ones you import are bundled:
+selection, sub-grids, context menus, column reordering, column pinning and virtual scrolling are
+opt-in features, and only the ones you import are bundled:
 
 ```ts
 import { allFeatures, filteringFeature, sortingFeature } from '@eboye/vue-grid'
@@ -138,6 +138,7 @@ app.use(createVueGrid({ features: allFeatures })) // all of them
 | `menusFeature` | the header right-click menu (`header-menu`) and `context-menu` for body cells |
 | `columnReorderFeature` | dragging headers, Alt+←/→ on a header, the menu's Move items |
 | `columnPinningFeature` | `pinned` columns (sticky, with shadows), the menu's Pin items |
+| `virtualScrollingFeature` | `virtual` (render only the rows in view) |
 
 Without its feature, an option does nothing and a dev warning names the feature to add. A grid
 reads `features` once when it is created.
@@ -1417,13 +1418,15 @@ sorted and filtered rows, and with a `dataSource` it requests pages (§14):
 
 ## 16. Virtual scrolling
 
-For thousands of rows, render only what's visible:
+For thousands of rows, render only what's visible (needs `virtualScrollingFeature`; without it
+`virtual` is ignored and every row renders):
 
 ```vue
 <VGrid
   :rows="tenThousandRows"
   :columns="columns"
   row-key="id"
+  :features="[virtualScrollingFeature]"
   :virtual="{ rowHeight: 40, overscan: 8 }"
   style="height: 600px"
 />

@@ -108,6 +108,33 @@ test('column reorder and pinning: ignored without their features, working with t
   await expect(menu.getByRole('menuitem', { name: 'Move right' })).toBeVisible()
 })
 
+test('virtual scrolling: all rows render without the feature, a scrolling window with it', async ({ page }) => {
+  await story(page, 'grid-features--virtual-scrolling')
+  const rows = page.locator('#storybook-root .vg-row')
+  await expect(rows).toHaveCount(2000)
+  await expect(page.locator('.vg-spacer')).toHaveCount(0)
+
+  await page.getByLabel('virtualScrollingFeature').check()
+  await expect(page.locator('#storybook-root .vg.vg-virtual')).toBeVisible()
+  await expect.poll(() => rows.count()).toBeLessThan(40)
+  const scroller = page.locator('#storybook-root .vg')
+  await scroller.hover()
+  for (let i = 0; i < 10; i++) await page.mouse.wheel(0, 2000)
+  await expect.poll(() => scroller.evaluate((el) => el.scrollTop)).toBeGreaterThan(15000)
+  // the rendered rows follow the scroll position (row i sits at i * 40px); Firefox scrolls
+  // smoothly, so compare once the position has settled
+  const offBy = async () => {
+    const top = await scroller.evaluate((el) => el.scrollTop)
+    const first = Number(await rows.first().getAttribute('aria-rowindex'))
+    return first - top / 40
+  }
+  await expect.poll(async () => {
+    const d = await offBy()
+    return d > -10 && d < 2
+  }).toBe(true)
+  expect(await rows.count()).toBeLessThan(40)
+})
+
 test('opting in, feature by feature', async ({ page }) => {
   await story(page, 'grid-features--opt-in')
   await expect(page.locator('.vg-sort')).toHaveCount(0)

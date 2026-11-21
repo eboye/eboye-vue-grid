@@ -14,6 +14,7 @@ import {
   serverDataFeature,
   sortingFeature,
   subGridsFeature,
+  virtualScrollingFeature,
 } from '../src/features'
 import { resolveFeatures } from '../src/internal/features'
 import type { VGridExposed } from '../src/types'
@@ -150,6 +151,21 @@ describe('features are opt-in', () => {
     await flushPromises()
     expect(labels()).toEqual(expect.arrayContaining(['Pin left', 'Pin right', 'Move left', 'Move right']))
     full.unmount()
+  })
+
+  it('virtual scrolling: every row renders without the feature; only a window with it', async () => {
+    const many = Array.from({ length: 500 }, (_, i) => ({ id: i + 1, name: `Row ${i + 1}`, score: i }))
+    const props = { rows: many, columns, rowKey: 'id', virtual: { rowHeight: 40 } }
+    const bare = mount(VGrid, { props })
+    expect(bare.findAll('.vg-row')).toHaveLength(500)
+    expect(bare.find('.vg-spacer').exists()).toBe(false)
+    expect(bare.find('.vg').classes()).not.toContain('vg-virtual')
+    expect(warn.mock.calls.map((c: unknown[]) => String(c[0])).join('\n')).toContain('needs the virtualScrolling feature')
+
+    const virtual = mount(VGrid, { props: { ...props, features: [virtualScrollingFeature] } })
+    expect(virtual.find('.vg').classes()).toContain('vg-virtual')
+    expect(virtual.findAll('.vg-row').length).toBeLessThan(60)
+    expect(virtual.find('.vg').attributes('aria-rowcount')).toBe('501')
   })
 
   it('per grid: only the listed features are on', async () => {

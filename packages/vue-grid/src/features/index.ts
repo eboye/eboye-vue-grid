@@ -8,6 +8,7 @@ import { selectionFeature } from './selection'
 import { serverDataFeature } from './serverData'
 import { sortingFeature } from './sorting'
 import { subGridsFeature } from './subGrids'
+import { virtualScrollingFeature } from './virtualScrolling'
 
 export {
   columnPinningFeature,
@@ -19,6 +20,7 @@ export {
   serverDataFeature,
   sortingFeature,
   subGridsFeature,
+  virtualScrollingFeature,
 }
 
 /** Every built-in feature, for apps that want them all: `createVueGrid({ features: allFeatures })`. */
@@ -32,4 +34,5 @@ export const allFeatures: readonly GridFeature[] = [
   menusFeature,
   columnReorderFeature,
   columnPinningFeature,
+  virtualScrollingFeature,
 ]

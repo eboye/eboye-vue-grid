@@ -341,7 +341,12 @@ export interface ColumnPinningFeature {
   usePinnedOffsets: typeof import('./composables/usePinnedOffsets').usePinnedOffsets
   useScrollEdges: typeof import('./composables/useScrollEdges').useScrollEdges
 }
+export interface VirtualScrollingFeature {
+  readonly feature: 'virtualScrolling'
+  useVirtualRows: typeof import('./composables/useVirtualRows').useVirtualRows
+}
 export type GridFeature =
+  | VirtualScrollingFeature
   | ColumnReorderFeature
   | ColumnPinningFeature
   | SortingFeature
