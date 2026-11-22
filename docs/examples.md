@@ -115,7 +115,7 @@ you leave out the renderer styles.
 ### Choosing features
 
 Out of the box `<VGrid>` is a plain table. Sorting, filtering, server data, pagination,
-selection, sub-grids, context menus, column reordering, pinning and visibility, virtual scrolling and keyboard navigation are
+selection, sub-grids, context menus, column reordering, resizing, pinning and visibility, virtual scrolling and keyboard navigation are
 opt-in features, and only the ones you import are bundled:
 
 ```ts
@@ -143,6 +143,7 @@ app.use(createVueGrid({ features: allFeatures })) // all of them
 | `virtualScrollingFeature` | `virtual` (render only the rows in view) |
 | `columnVisibilityFeature` | `hidden` columns, `columnState.hidden`, the menu's Hide column item |
 | `keyboardNavigationFeature` | arrow-key navigation between cells (ARIA grid); without it an ARIA table with tabbable controls |
+| `columnResizingFeature` | dragging a header edge to resize, double-click to fit, `resizable`, `maxWidth`, `columnState.widths` |
 
 Without its feature, an option does nothing and a dev warning names the feature to add. A grid
 reads `features` once when it is created.
@@ -1049,6 +1050,22 @@ const columnState = ref<ColumnState>({
   <button @click="columnState = { ...columnState, hidden: [] }">Show all</button>
 </template>
 ```
+
+### Resizable columns
+
+```vue
+<VGrid :rows :columns row-key="id" storage="orders-grid" :features="[columnResizingFeature]" />
+```
+
+```ts
+col({ key: 'player', width: '11rem', minWidth: '8rem', maxWidth: '20rem' }), // bounds for resizing
+col({ key: 'id', width: '4rem', resizable: false }),                          // no handle
+```
+
+Drag a header's right edge to resize (mouse, pen, touch). Double-click the edge to fit the widest
+cell. Focus the edge and press ← / → (Shift for bigger steps), or, with keyboard navigation,
+Alt+Shift+← / → on a header. The header menu gains *Fit width* and *Reset width*. Widths are saved
+in `columnState.widths` (e.g. `{ player: '240px' }`) and persisted with `storage`.
 
 ### Pinned columns
 

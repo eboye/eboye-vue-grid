@@ -113,6 +113,34 @@ export const Controlled: Story = {
   }),
 }
 
+/**
+ * With `columnResizingFeature` (registered app-wide here via `allFeatures`), drag a header's right
+ * edge to resize it (mouse, pen, touch), double-click the edge to fit the content, or focus the edge
+ * and press ← / → (Shift for bigger steps). With keyboard navigation, Alt+Shift+← / → on a focused
+ * header does the same. `minWidth` / `maxWidth` bound it (Player: 8–20rem); `resizable: false` opts
+ * out (#). Widths go into `columnState.widths` and `storage`, and the header menu gains Fit width /
+ * Reset width.
+ */
+export const Resizing: Story = {
+  args: {
+    storage: 'storybook-columns-resizing',
+    columns: [
+      bet({ key: 'id', header: '#', pinned: 'left', width: '4rem', resizable: false }),
+      bet({ key: 'player', header: 'Player', field: 'player.name', pinned: 'left', width: '11rem', minWidth: '8rem', maxWidth: '20rem' }),
+      bet({ key: 'city', header: 'City', field: 'player.city', width: '10rem' }),
+      bet({ key: 'status', header: 'Status', renderer: 'status', rendererOptions: { tone: statusTones }, width: '9rem' }),
+      bet({ key: 'stake', header: 'Stake', renderer: 'currency', width: '9rem' }),
+      bet({ key: 'site', header: 'URL', width: '14rem', rendererOptions: { ellipsis: true } }),
+      bet({ key: 'placedAt', header: 'Placed', renderer: 'date', width: '9rem' }),
+    ],
+  },
+  render: (args) => ({
+    components: { VGrid },
+    setup: () => ({ args }),
+    template: `<div class="sb-frame" style="max-width: 900px"><VGrid v-bind="args" /></div>`,
+  }),
+}
+
 /** `width` takes any CSS grid track: fixed, `fr`, `minmax()`, `min-content`; `minWidth` adds a floor. */
 export const Sizing: Story = {
   args: {

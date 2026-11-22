@@ -409,6 +409,7 @@ describe('VGrid context menus', () => {
       'Sort ascending', 'Sort descending', 'Clear sort',
       'Pin left', 'Pin right', 'Unpin',
       'Move left', 'Move right',
+      'Fit width', 'Reset width',
       'Hide column', 'Reset columns',
     ])
     await click('Sort descending')

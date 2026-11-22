@@ -5,6 +5,7 @@ import {
   VGridSearch,
   columnPinningFeature,
   columnReorderFeature,
+  columnResizingFeature,
   columnVisibilityFeature,
   filteringFeature,
   keyboardNavigationFeature,
@@ -149,6 +150,7 @@ const columnChoices: { label: string; feature: GridFeature }[] = [
   { label: 'columnReorderFeature', feature: columnReorderFeature },
   { label: 'columnPinningFeature', feature: columnPinningFeature },
   { label: 'columnVisibilityFeature', feature: columnVisibilityFeature },
+  { label: 'columnResizingFeature', feature: columnResizingFeature },
   { label: 'menusFeature', feature: menusFeature },
 ]
 const wideColumns = betColumns().map((c) =>

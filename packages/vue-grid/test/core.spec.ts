@@ -230,6 +230,8 @@ describe('storage', () => {
     expect(a.load()).toBeNull()
     a.save({ order: ['a'], hidden: [], pinned: {} })
     expect(a.load()).toEqual({ order: ['a'], hidden: [], pinned: {} })
+    a.save({ order: ['a'], hidden: [], pinned: {}, widths: { a: '240px' } }) // resized widths persist too
+    expect(a.load()).toEqual({ order: ['a'], hidden: [], pinned: {}, widths: { a: '240px' } })
     localStorage.setItem('grid', '{nope')
     expect(a.load()).toBeNull()
     localStorage.setItem('grid', '{"order":"x"}')

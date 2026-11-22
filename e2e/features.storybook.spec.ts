@@ -80,6 +80,7 @@ test('column reorder, pinning and visibility: ignored without their features, wo
   // no features: the `hidden: true` column shows; the pinned `#` column scrolls away; dragging
   // and Alt+→ change nothing
   await expect(header(page, 'change')).toBeVisible()
+  await expect(page.locator('.vg-resize-handle')).toHaveCount(0) // no resizing feature: no handles
   const before = await keys()
   const id0 = await box('id')
   await scrollBy(400)

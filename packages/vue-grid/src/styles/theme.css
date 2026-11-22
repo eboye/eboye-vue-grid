@@ -406,6 +406,25 @@
     to { transform: translateX(250%); }
   }
 
+  /* Column resizing: a short line on hover, full height and accent while focused or dragging. */
+  .vg-resize-handle::after {
+    content: '';
+    position: absolute;
+    inset-block: 25%;
+    inset-inline-end: 3px;
+    inline-size: 2px;
+    border-radius: 1px;
+    transition: background-color var(--vg-transition), inset var(--vg-transition);
+  }
+  .vg-header-cell:hover .vg-resize-handle::after { background: var(--vg-color-border-strong); }
+  .vg-resize-handle:hover::after,
+  .vg-resize-handle:focus-visible::after,
+  .vg-is-resizing .vg-col-sized .vg-resize-handle::after {
+    inset-block: 0;
+    background: var(--vg-color-accent);
+  }
+  .vg-resize-handle:focus-visible { outline: none; }
+
   @media (prefers-reduced-motion: reduce) {
     .vg-root *,
     .vg-menu * { transition: none !important; animation-duration: 0.01ms !important; }

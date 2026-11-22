@@ -1,5 +1,6 @@
 import type {
   ColumnPinningFeature,
+  ColumnResizingFeature,
   ColumnReorderFeature,
   ColumnVisibilityFeature,
   FilteringFeature,
@@ -28,6 +29,7 @@ export interface FeatureSet {
   virtualScrolling?: VirtualScrollingFeature
   columnVisibility?: ColumnVisibilityFeature
   keyboardNavigation?: KeyboardNavigationFeature
+  columnResizing?: ColumnResizingFeature
 }
 
 /** Merges feature lists (app-wide, then per grid); a later entry with the same name wins. */

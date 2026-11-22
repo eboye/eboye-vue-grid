@@ -329,6 +329,23 @@
   }
 }
 @layer vue-grid {
+  /* Column resizing: an invisible grip on each header's end edge (the theme draws the line). */
+  .vg-resize-handle {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-end: 0;
+    z-index: 1;
+    inline-size: 8px;
+    cursor: col-resize;
+    touch-action: none;
+    user-select: none;
+  }
+  /* A resized column is narrower than its content may be: clip instead of spilling over. */
+  .vg-col-sized { min-width: 0; overflow: hidden; }
+  .vg-is-resizing,
+  .vg-is-resizing .vg-header-cell,
+  .vg-is-resizing .vg-sort { cursor: col-resize; user-select: none; }
+
   /*
    * Functional fallback: sticky header cells and pinned columns need an opaque background, or
    * scrolled content shows through them. The system `Canvas` colour follows `color-scheme`; the

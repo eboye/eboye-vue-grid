@@ -39,7 +39,25 @@ export function normalizeColumnState(
       if (known.has(k) && isPinValue(v)) pinned[k] = v
     }
   }
-  return { order, hidden, pinned }
+  const out: ColumnState = { order, hidden, pinned }
+  if (state?.widths && typeof state.widths === 'object') {
+    const widths: Record<string, string> = {}
+    for (const [k, v] of Object.entries(state.widths)) {
+      if (known.has(k) && typeof v === 'string' && v) widths[k] = v
+    }
+    if (Object.keys(widths).length) out.widths = widths
+  }
+  return out
+}
+
+/** Sets (or, with `null`, clears) a resized column width. */
+export function setColumnWidth(state: ColumnState, key: string, width: string | null): ColumnState {
+  const widths = { ...state.widths }
+  if (width) widths[key] = width
+  else delete widths[key]
+  const next: ColumnState = { ...state, widths }
+  if (!Object.keys(widths).length) delete next.widths
+  return next
 }
 
 /** Visible columns in display order: left-pinned, unpinned, right-pinned (each group keeps user order). */

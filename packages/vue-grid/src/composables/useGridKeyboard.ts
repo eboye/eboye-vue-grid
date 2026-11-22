@@ -6,7 +6,12 @@ const FOCUSABLE = 'button, a[href], input, select, textarea, summary, [tabindex]
 export interface GridKeyboardOptions {
   /** Alt+ArrowLeft/Right on a header cell. */
   moveColumn: (key: string, direction: -1 | 1) => void
+  /** Alt+Shift+ArrowLeft/Right on a header cell (column resizing feature). */
+  resizeColumn?: (key: string, delta: number) => void
 }
+
+/** Px per Alt+Shift+Arrow resize step. */
+const RESIZE_STEP = 16
 
 /**
  * Cell-level keyboard navigation. The scroll container is the single tab stop; arrow keys move a
@@ -67,6 +72,19 @@ export function useGridKeyboard(root: Ref<HTMLElement | undefined>, opts: GridKe
     }
     const ctrl = event.ctrlKey || event.metaKey
 
+    if (
+      isHeader &&
+      event.altKey &&
+      event.shiftKey &&
+      opts.resizeColumn &&
+      (event.key === 'ArrowLeft' || event.key === 'ArrowRight')
+    ) {
+      const key = cell.dataset.colKey
+      const rtl = getComputedStyle(cell).direction === 'rtl'
+      if (key) opts.resizeColumn(key, ((event.key === 'ArrowRight') !== rtl ? 1 : -1) * RESIZE_STEP)
+      event.preventDefault()
+      return
+    }
     if (isHeader && event.altKey && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
       const key = cell.dataset.colKey
       if (key) opts.moveColumn(key, event.key === 'ArrowLeft' ? -1 : 1)

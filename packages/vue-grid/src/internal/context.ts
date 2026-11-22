@@ -42,6 +42,17 @@ export interface GridContext {
   sortRows(rows: readonly any[]): any[]
   /** The sorting feature is on and the column is `sortable`. */
   sortable(col: ColumnDef): boolean
+  /** Only with the column resizing feature. */
+  resize?: {
+    /** The header edge grip component. */
+    Handle: Component
+    can(col: ColumnDef): boolean
+    start(event: PointerEvent, key: string): void
+    autosize(key: string): void
+    step(key: string, delta: number): void
+    /** Has a resized width (or is being resized): its cells clip their content. */
+    isSized(key: string): boolean
+  }
   // expansion
   treeMode: ComputedRef<boolean>
   hasDetail: ComputedRef<boolean>

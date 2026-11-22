@@ -31,6 +31,13 @@ export interface GridMenusOptions<T> {
   reorderable: (column: ColumnDef<T>) => boolean
   /** Hides a column; only with the visibility feature (no Hide item without it). */
   hideColumn?: (key: string) => void
+  /** Fit width / Reset width items; only with the resizing feature. */
+  resize?: {
+    can(column: ColumnDef<T>): boolean
+    isResized(key: string): boolean
+    fit(key: string): void
+    reset(key: string): void
+  }
   moveColumnBy: (key: string, direction: -1 | 1) => boolean
   contextMenu: () => ((ctx: CellContext<T>) => MenuItem[] | null | undefined) | undefined
   headerMenu: () => boolean | ((ctx: HeaderMenuContext<T>) => MenuItem[] | null | undefined)
@@ -151,6 +158,13 @@ export function useGridMenus<T>(opts: GridMenusOptions<T>) {
         SEPARATOR,
       )
     }
+    if (opts.resize?.can(column)) {
+      out.push(
+        { name: 'vg:fit-width', label: 'Fit width' },
+        { name: 'vg:reset-width', label: 'Reset width', disabled: !opts.resize.isResized(column.key) },
+        SEPARATOR,
+      )
+    }
     if (opts.hideColumn && column.hideable !== false) {
       out.push({ name: 'vg:hide', label: 'Hide column', disabled: visible.length <= 1 })
     }
@@ -197,6 +211,12 @@ export function useGridMenus<T>(opts: GridMenusOptions<T>) {
         break
       case 'vg:hide':
         opts.hideColumn?.(column.key)
+        break
+      case 'vg:fit-width':
+        opts.resize?.fit(column.key)
+        break
+      case 'vg:reset-width':
+        opts.resize?.reset(column.key)
         break
       case 'vg:filter':
         // After the menu has closed and handed focus back, so the popover keeps it.

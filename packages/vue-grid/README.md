@@ -102,6 +102,7 @@ an opt-in feature:
 | `virtualScrollingFeature` | `virtual: { rowHeight, overscan? }`: only the rows in view render; without it every row renders |
 | `columnVisibilityFeature` | `hidden: true` columns, `columnState.hidden`, the header menu's Hide column item; without it every column shows |
 | `keyboardNavigationFeature` | The ARIA grid pattern: one Tab stop, arrow keys / Home / End / PageUp / PageDown between cells, Enter, Space to select, →/← to expand, Alt+←/→ to move a column. Without it the grid is an ARIA `table` with its controls in the Tab order |
+| `columnResizingFeature` | Drag a header edge to resize (mouse, pen, touch), double-click it to fit the content, ←/→ on the focused edge (Alt+Shift+←/→ on a header with keyboard navigation); `minWidth` / `maxWidth` bound it, `resizable: false` opts out; widths in `columnState.widths`, persisted with `storage`; Fit width / Reset width in the header menu |
 
 ```ts
 // per grid
@@ -134,35 +135,36 @@ what you import.
 
   | File | What | gzip |
   |---|---|---|
-  | `base.css` | Structure only: grid layout, subgrid, sticky header and pins, tree indent, popover placement, virtual rows, truncation | 2.5 kB |
-  | `theme.css` | The default look on top of `base.css`: `--vg-*` tokens, colours, dark mode, densities, spacing, borders, typography, shadows, animation | 3.5 kB |
-  | `core.css` | `base.css` + `theme.css` | 5.5 kB |
+  | `base.css` | Structure only: grid layout, subgrid, sticky header and pins, tree indent, popover placement, virtual rows, truncation | 2.7 kB |
+  | `theme.css` | The default look on top of `base.css`: `--vg-*` tokens, colours, dark mode, densities, spacing, borders, typography, shadows, animation | 3.7 kB |
+  | `core.css` | `base.css` + `theme.css` | 5.8 kB |
   | `renderers.css` | Styles for the cell renderers (other than text); uses the theme's tokens | 2.7 kB |
-  | `style.css` | All of the above | 7.5 kB |
+  | `style.css` | All of the above | 7.8 kB |
 
   For a fully custom look, import only `base.css` (and `renderers.css` if you use renderers)
   and style the `.vg-*` classes yourself. See [Theming](#theming).
 
 | Import (minified / gzip, Vue excluded) | Initial chunk |
 |---|---|
-| `VGrid` (no features) | 32.6 kB / 11.6 kB |
-| `VGrid` + `sortingFeature` | 33.3 kB / 11.9 kB |
-| `VGrid` + `filteringFeature` | 36.3 kB / 12.9 kB |
-| `VGrid` + `serverDataFeature` | 33.9 kB / 12.2 kB |
-| `VGrid` + `paginationFeature` | 32.7 kB / 11.7 kB |
-| `VGrid` + `selectionFeature` | 34.6 kB / 12.3 kB |
-| `VGrid` + `subGridsFeature` | 34.3 kB / 12.3 kB |
-| `VGrid` + `menusFeature` | 41.3 kB / 14.7 kB |
-| `VGrid` + `columnReorderFeature` | 34.5 kB / 12.4 kB |
-| `VGrid` + `columnPinningFeature` | 34.7 kB / 12.5 kB |
-| `VGrid` + `virtualScrollingFeature` | 33.7 kB / 12.1 kB |
-| `VGrid` + `columnVisibilityFeature` | 32.7 kB / 11.7 kB |
-| `VGrid` + `keyboardNavigationFeature` | 34.7 kB / 12.4 kB |
-| `VGrid` + `allFeatures` + `VGridSearch` | 57.7 kB / 20.3 kB |
-| `VGrid` + `currencyRenderer` | 33.8 kB / 12.0 kB |
-| `VGrid` + `VGridPagination` + `VGridColumnMenu` | 37.0 kB / 13.2 kB |
+| `VGrid` (no features) | 33.9 kB / 12.0 kB |
+| `VGrid` + `sortingFeature` | 34.6 kB / 12.4 kB |
+| `VGrid` + `filteringFeature` | 37.7 kB / 13.3 kB |
+| `VGrid` + `serverDataFeature` | 35.3 kB / 12.7 kB |
+| `VGrid` + `paginationFeature` | 34.1 kB / 12.1 kB |
+| `VGrid` + `selectionFeature` | 35.9 kB / 12.7 kB |
+| `VGrid` + `subGridsFeature` | 35.7 kB / 12.7 kB |
+| `VGrid` + `menusFeature` | 42.9 kB / 15.1 kB |
+| `VGrid` + `columnReorderFeature` | 35.9 kB / 12.8 kB |
+| `VGrid` + `columnPinningFeature` | 36.1 kB / 13.0 kB |
+| `VGrid` + `virtualScrollingFeature` | 35.1 kB / 12.5 kB |
+| `VGrid` + `columnVisibilityFeature` | 34.1 kB / 12.1 kB |
+| `VGrid` + `keyboardNavigationFeature` | 36.3 kB / 12.9 kB |
+| `VGrid` + `columnResizingFeature` | 36.8 kB / 13.1 kB |
+| `VGrid` + `allFeatures` + `VGridSearch` | 62.4 kB / 21.8 kB |
+| `VGrid` + `currencyRenderer` | 35.2 kB / 12.4 kB |
+| `VGrid` + `VGridPagination` + `VGridColumnMenu` | 38.4 kB / 13.6 kB |
 | `sortRows` only | 0.7 kB / 0.5 kB |
-| everything | 101.4 kB / 32.6 kB |
+| everything | 106.1 kB / 34.1 kB |
 
 With `filteringFeature`, the filter popover body and the filter-row editors are **on-demand
 chunks**: they load the first time a popover opens or `filter-row` is on. With
@@ -189,7 +191,7 @@ chunks**: they load the first time a popover opens or `filter-row` is on. With
 | `noMatchText` | `string` | `'No rows match the current filters.'` | Shown, with a *Clear filters* button, when filters hide every row. |
 | `pagination` | `boolean \| { pageSizes?: number[] }` | `false` | Built-in pagination bar: slices client rows, or asks the `dataSource` for pages. Needs `paginationFeature`. |
 | `v-model:page` / `v-model:pageSize` | `number` | `1` / `25` | Reset to page 1 when sort or filters change. |
-| `v-model:columnState` | `{ order: string[]; hidden: string[]; pinned?: Record<string, "left" \| "right" \| null> }` | derived | Column order, visibility and runtime pins. |
+| `v-model:columnState` | `{ order: string[]; hidden: string[]; pinned?: Record<string, "left" \| "right" \| null>; widths?: Record<string, string> }` | derived | Column order, visibility and runtime pins. |
 | `storage` | `string \| ColumnStateStorage` | — | Persist column state (`string` = localStorage key). |
 | `v-model:expanded` | `RowKey[]` | `[]` | Expanded rows (sub-grids and detail rows). |
 | `subRows` | `(row) => T[] \| undefined` | — | Synchronous children → sub-grid. Needs `subGridsFeature` (as do the next two). |
@@ -274,7 +276,9 @@ animation — tune it with `--vg-flash-color`, `--vg-flash-up`, `--vg-flash-down
   renderer?: RendererDefinition | string | Component  // currencyRenderer (tree-shakeable), a registered name, or a component; default text
   rendererOptions?: object       // typed from the renderer
   width?: string                 // any grid track: 'auto' (default), '8rem', '1fr', 'minmax(8rem, 2fr)', 'min-content'
-  minWidth?: string              // combined into minmax(minWidth, width)
+  minWidth?: string              // combined into minmax(minWidth, width); also the resize minimum
+  maxWidth?: string              // resize maximum (columnResizingFeature)
+  resizable?: boolean            // can the user resize it (columnResizingFeature, default true)
   align?: 'start' | 'center' | 'end'
   sortable?: boolean; sortValue?: (row) => unknown; sortFn?: (a, b) => number
   pinned?: 'left' | 'right'; pinnable?: boolean   // needs columnPinningFeature; pinnable: can the header menu change it (default true)
@@ -536,7 +540,7 @@ normal Tab order.
 With `keyboardNavigationFeature` it is an ARIA `grid` (`treegrid` with sub-grids). The grid is one tab stop. Arrow keys move between cells (header, rows, sub-grid rows, detail rows),
 `Home`/`End`, `Ctrl+Home`/`Ctrl+End`, `PageUp`/`PageDown`; `ContextMenu` / `Shift+F10` opens the context menu. `Enter` sorts a header or activates the
 cell's control; `Space` toggles row selection; `→`/`←` on a tree cell expands/collapses; `Alt+←/→` on a
-header moves the column.
+header moves the column; `Alt+Shift+←/→` on a header resizes it (with `columnResizingFeature`).
 
 ## Built-in renderers
 

@@ -7,6 +7,7 @@ import {
   allFeatures,
   columnPinningFeature,
   columnReorderFeature,
+  columnResizingFeature,
   columnVisibilityFeature,
   filteringFeature,
   keyboardNavigationFeature,
@@ -182,6 +183,40 @@ describe('features are opt-in', () => {
     ;(nav.find('.vg').element as HTMLElement).focus()
     expect((document.activeElement as HTMLElement).getAttribute('role')).toBe('columnheader') // focus moves into the grid
     nav.unmount()
+  })
+
+  it('column resizing: no handles and stored widths ignored without it; resize, persist and reset with it', async () => {
+    const cols = [{ key: 'name', width: '10rem' }, { key: 'score', resizable: false }]
+    const template = (w: ReturnType<typeof mount>) => (w.find('.vg').element as HTMLElement).style.getPropertyValue('--vg-columns')
+    const stored = { order: ['name', 'score'], hidden: [], widths: { name: '300px' } }
+
+    const bare = mount(VGrid, { props: { rows, columns: cols, rowKey: 'id', columnState: stored } })
+    expect(bare.find('.vg-resize-handle').exists()).toBe(false)
+    expect(template(bare)).toBe('10rem auto') // the stored width is ignored
+
+    const w = mount(VGrid, {
+      props: { rows, columns: cols, rowKey: 'id', columnState: stored, features: [columnResizingFeature, menusFeature] },
+      attachTo: document.body,
+    })
+    expect(template(w)).toBe('300px auto')
+    expect(w.findAll('.vg-resize-handle')).toHaveLength(1) // `resizable: false` opts out
+    expect(w.find('.vg-header [data-col-key="name"]').classes()).toContain('vg-col-sized')
+
+    // keyboard on the focused handle: jsdom has no layout (width 0), so it clamps to the 40px minimum
+    await w.find('.vg-resize-handle').trigger('keydown', { key: 'ArrowRight' })
+    const states = w.emitted('update:columnState') as { widths?: Record<string, string> }[][]
+    expect(states.at(-1)![0]!.widths).toEqual({ name: '40px' })
+
+    // header menu: Reset width drops the override
+    await w.setProps({ columnState: states.at(-1)![0] })
+    await w.find('.vg-header [data-col-key="name"]').trigger('contextmenu')
+    await flushPromises()
+    const reset = [...document.querySelectorAll<HTMLElement>('.vg-menu [role="menuitem"]')].find((e) => e.textContent?.trim() === 'Reset width')!
+    expect(reset.hasAttribute('disabled')).toBe(false)
+    reset.click()
+    await flushPromises()
+    expect((w.emitted('update:columnState') as { widths?: unknown }[][]).at(-1)![0]!.widths).toBeUndefined()
+    w.unmount()
   })
 
   it('column visibility: hidden columns show without the feature; hide works with it', async () => {

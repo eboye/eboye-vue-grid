@@ -59,6 +59,8 @@ export interface ColumnState {
    * falls back to the column's `pinned` definition. Optional so older persisted state still loads.
    */
   pinned?: Record<string, PinSide | null>
+  /** Widths the user resized columns to (CSS lengths, e.g. `'240px'`). Column resizing feature. */
+  widths?: Record<string, string>
 }
 
 export interface ColumnStateStorage {
@@ -107,8 +109,12 @@ export interface ColumnDef<T = any, R extends RendererRef = RendererName> {
   rendererOptions?: RendererOptions<R>
   /** Any CSS grid track size. Defaults to `auto`. */
   width?: string
-  /** Lower bound; combined with `width` into `minmax(minWidth, width)`. */
+  /** Lower bound; combined with `width` into `minmax(minWidth, width)`, and the resize minimum. */
   minWidth?: string
+  /** Upper bound when the user resizes the column (column resizing feature). */
+  maxWidth?: string
+  /** Can the user resize this column (column resizing feature)? Default `true`. */
+  resizable?: boolean
   align?: Align
   sortable?: boolean
   sortValue?: (row: T) => unknown
@@ -353,7 +359,14 @@ export interface KeyboardNavigationFeature {
   readonly feature: 'keyboardNavigation'
   useGridKeyboard: typeof import('./composables/useGridKeyboard').useGridKeyboard
 }
+export interface ColumnResizingFeature {
+  readonly feature: 'columnResizing'
+  useColumnResize: typeof import('./composables/useColumnResize').useColumnResize
+  /** The header edge grip. */
+  Handle: Component
+}
 export type GridFeature =
+  | ColumnResizingFeature
   | KeyboardNavigationFeature
   | ColumnVisibilityFeature
   | VirtualScrollingFeature

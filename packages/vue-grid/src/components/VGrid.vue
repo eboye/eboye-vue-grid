@@ -229,6 +229,7 @@ const effectiveState = computed<ColumnState>(() => {
     ...state,
     hidden: features.columnVisibility ? state.hidden : [],
     pinned: features.columnPinning ? state.pinned : undefined,
+    widths: features.columnResizing ? state.widths : undefined,
   }
 })
 
@@ -317,7 +318,30 @@ const resolvedColumns = computed<ResolvedColumn[]>(() => {
   return list
 })
 
-const template = computed(() => gridTemplate(resolvedColumns.value.map((c) => c.def)))
+// ── Column resizing ─────────────────────────────────────────────────────────────────────────
+const resize = features.columnResizing?.useColumnResize({
+  root,
+  defOf: (key) => props.columns.find((c) => c.key === key),
+  state: () => effectiveState.value,
+  setState: setColumnState,
+})
+/** A resized width (live while dragging, else committed), overriding the column's own `width`. */
+const resizedWidth = (key: string) =>
+  resize?.live.value?.key === key ? resize.live.value.width : effectiveState.value.widths?.[key]
+const canResize = (col: ColumnDef) => !!resize && col.resizable !== false
+/**
+ * Columns as sized: resized widths applied (for the grid template and the pinned offsets). A
+ * resized track is a plain length (already clamped to `minWidth` / `maxWidth`): a `minmax()` track
+ * stays at its minimum whenever the columns overflow the grid, so it would never grow.
+ */
+const sizedColumns = computed(() =>
+  resolvedColumns.value.map((c) => {
+    const width = c.kind === 'data' ? resizedWidth(c.key) : undefined
+    return width ? { ...c, def: { ...c.def, width, minWidth: undefined } } : c
+  }),
+)
+
+const template = computed(() => gridTemplate(sizedColumns.value.map((c) => c.def)))
 
 // ── Sorting ─────────────────────────────────────────────────────────────────────────────────
 const sortable = (col: ColumnDef<T>) => !!features.sorting && !!col.sortable
@@ -463,7 +487,7 @@ const hasSelectableRows = computed(() => !!sel?.selectableKeys.value.length)
 
 // ── Pinned columns, drag & keyboard ─────────────────────────────────────────────────────────
 const pinning = features.columnPinning
-const pinOffsets = pinning?.usePinnedOffsets(root, () => resolvedColumns.value)
+const pinOffsets = pinning?.usePinnedOffsets(root, () => sizedColumns.value)
 pinning?.useScrollEdges(root, () => template.value)
 const canPin = (col: ColumnDef<T>) => !!pinning && col.pinnable !== false
 
@@ -501,6 +525,12 @@ const keyboard = features.keyboardNavigation?.useGridKeyboard(root, {
       keyboard?.focusCell(root.value?.querySelector<HTMLElement>(`.vg-header > [data-col-key="${CSS.escape(key)}"]`)),
     )
   },
+  resizeColumn: resize
+    ? (key, delta) => {
+        const col = props.columns.find((c) => c.key === key)
+        if (col && canResize(col)) resize.step(key, delta)
+      }
+    : undefined,
 })
 const onKeyDown = (event: KeyboardEvent) => keyboard?.onKeyDown(event)
 const onFocusIn = (event: FocusEvent) => keyboard?.onFocusIn(event)
@@ -521,6 +551,12 @@ const menus = features.menus?.useMenus<T>({
   hideColumn:
     features.columnVisibility &&
     ((key) => setColumnState(features.columnVisibility!.setColumnHidden(effectiveState.value, key, true))),
+  resize: resize && {
+    can: canResize,
+    isResized: (key) => !!effectiveState.value.widths?.[key],
+    fit: (key) => void resize.autosize(key),
+    reset: (key) => resize.reset(key),
+  },
   moveColumnBy,
   contextMenu: () => props.contextMenu,
   headerMenu: () => props.headerMenu,
@@ -619,6 +655,14 @@ const context: GridContext = {
   getKey,
   sortRows: prepareRows,
   sortable,
+  resize: resize && {
+    Handle: features.columnResizing!.Handle,
+    can: canResize,
+    start: (event, key) => resize.onPointerDown(event, key),
+    autosize: (key) => void resize.autosize(key),
+    step: (key, delta) => resize.step(key, delta),
+    isSized: (key) => !!effectiveState.value.widths?.[key] || resize.resizing.value === key,
+  },
   treeMode,
   hasDetail,
   canExpand,
@@ -739,7 +783,10 @@ defineExpose<VGridExposed>({
       <div v-if="isLoading" class="vg-progress" aria-hidden="true" />
       <div
         ref="root"
-        :class="['vg', { 'vg-virtual': isVirtual, 'vg-is-dragging': drag?.dragging.value }]"
+        :class="[
+          'vg',
+          { 'vg-virtual': isVirtual, 'vg-is-dragging': drag?.dragging.value, 'vg-is-resizing': resize?.resizing.value },
+        ]"
         :role="gridRole"
         tabindex="0"
         :aria-label="ariaLabel"

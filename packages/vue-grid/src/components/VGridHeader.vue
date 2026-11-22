@@ -53,6 +53,7 @@ function ariaSort(col: ResolvedColumn) {
           'vg-pin-edge': col.pinEdge,
           'vg-filtered': col.kind === 'data' && grid.filters?.isActive(col.key),
           'vg-has-filter-row': grid.filters?.filterRow.value,
+          'vg-col-sized': col.kind === 'data' && grid.resize?.isSized(col.key),
         },
         col.def.headerClass,
         grid.ui.value.headerCell,
@@ -105,6 +106,12 @@ function ariaSort(col: ResolvedColumn) {
             @open="grid.filters.open(col.key)"
           />
         </template>
+        <component
+          :is="grid.resize.Handle"
+          v-if="grid.resize?.can(col.def)"
+          :column-key="col.key"
+          :label="col.def.header ?? col.key"
+        />
       </template>
     </div>
   </div>

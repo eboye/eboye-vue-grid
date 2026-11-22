@@ -87,6 +87,7 @@ function onClick(event: MouseEvent) {
         'vg-cell-clickable': column.def.clickable,
         [`vg-pin-${column.pinned}`]: column.pinned,
         'vg-pin-edge': column.pinEdge,
+        'vg-col-sized': column.kind === 'data' && grid.resize?.isSized(column.key),
       },
       cellClass,
       grid.ui.value.cell,
