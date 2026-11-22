@@ -65,9 +65,9 @@ watchEffect(() => {
       :data-row-key="String(item.key)"
       :data-depth="depth"
       :style="depth ? { '--vg-depth': depth } : undefined"
-      :aria-level="grid.treeMode.value ? depth + 1 : undefined"
+      :aria-level="grid.keyboardNav && grid.treeMode.value ? depth + 1 : undefined"
       :aria-expanded="item.expandable ? item.expanded : undefined"
-      :aria-selected="item.selected"
+      :aria-selected="grid.keyboardNav ? item.selected : undefined"
       :aria-rowindex="ariaIndexed ? item.index + 2 : undefined"
     >
       <VGridCell
@@ -83,7 +83,7 @@ watchEffect(() => {
 
     <template v-if="item.expanded">
       <div v-if="grid.hasDetail.value" role="row" class="vg-detail-row" :data-detail-for="String(item.key)">
-        <div role="gridcell" tabindex="-1" :class="['vg-detail', grid.ui.value.detail]">
+        <div :role="grid.cellRole" :tabindex="grid.rovingTabindex" :class="['vg-detail', grid.ui.value.detail]">
           <RenderSlot :fn="grid.slots.detail" :scope="{ row: item.row, rowKey: item.key, depth }" />
         </div>
       </div>
@@ -97,14 +97,14 @@ watchEffect(() => {
         :style="{ '--vg-depth': depth + 1 }"
       >
         <div v-if="grid.subRowState(item.row)?.status === 'loading'" role="row" class="vg-status-row">
-          <div role="gridcell" tabindex="-1" class="vg-status vg-status-loading" aria-live="polite">
+          <div :role="grid.cellRole" :tabindex="grid.rovingTabindex" class="vg-status vg-status-loading" aria-live="polite">
             <span class="vg-spinner" aria-hidden="true" />
             <RenderSlot v-if="grid.slots['sub-rows-loading']" :fn="grid.slots['sub-rows-loading']" :scope="{ row: item.row }" />
             <template v-else>Loading…</template>
           </div>
         </div>
         <div v-else-if="grid.subRowState(item.row)?.status === 'error'" role="row" class="vg-status-row">
-          <div role="gridcell" tabindex="-1" class="vg-status vg-status-error">
+          <div :role="grid.cellRole" :tabindex="grid.rovingTabindex" class="vg-status vg-status-error">
             <span>Could not load rows.</span>
             <button type="button" class="vg-button" @click="grid.retrySubRows(item.row)">Retry</button>
           </div>

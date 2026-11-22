@@ -349,7 +349,12 @@ export interface ColumnVisibilityFeature {
   readonly feature: 'columnVisibility'
   setColumnHidden: typeof import('./core/columns').setColumnHidden
 }
+export interface KeyboardNavigationFeature {
+  readonly feature: 'keyboardNavigation'
+  useGridKeyboard: typeof import('./composables/useGridKeyboard').useGridKeyboard
+}
 export type GridFeature =
+  | KeyboardNavigationFeature
   | ColumnVisibilityFeature
   | VirtualScrollingFeature
   | ColumnReorderFeature

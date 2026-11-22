@@ -7,6 +7,7 @@ import {
   columnReorderFeature,
   columnVisibilityFeature,
   filteringFeature,
+  keyboardNavigationFeature,
   menusFeature,
   paginationFeature,
   selectionFeature,
@@ -36,11 +37,13 @@ const choices: { label: string; feature: GridFeature }[] = [
   { label: 'sortingFeature', feature: sortingFeature },
   { label: 'filteringFeature', feature: filteringFeature },
   { label: 'paginationFeature', feature: paginationFeature },
+  { label: 'keyboardNavigationFeature', feature: keyboardNavigationFeature },
 ]
 
 /**
  * Sorting, filtering, server data, pagination, selection, sub-grids, context menus, column
- * reordering, pinning and visibility, and virtual scrolling are **opt-in features**. A grid gets only the features you register, per grid
+ * reordering, pinning and visibility, virtual scrolling and keyboard navigation are **opt-in
+ * features**. A grid gets only the features you register, per grid
  * (`<VGrid :features="[sortingFeature]">`) or app-wide (`createVueGrid({ features: [...] })`,
  * `allFeatures` for all of them), and only those reach your bundle. Without them the matching
  * options (`sortable`, `filterable`, `data-source`, `pagination`, `selectable`, `sub-rows`,

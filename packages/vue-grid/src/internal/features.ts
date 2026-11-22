@@ -3,6 +3,7 @@ import type {
   ColumnReorderFeature,
   ColumnVisibilityFeature,
   FilteringFeature,
+  KeyboardNavigationFeature,
   GridFeature,
   MenusFeature,
   PaginationFeature,
@@ -26,6 +27,7 @@ export interface FeatureSet {
   columnPinning?: ColumnPinningFeature
   virtualScrolling?: VirtualScrollingFeature
   columnVisibility?: ColumnVisibilityFeature
+  keyboardNavigation?: KeyboardNavigationFeature
 }
 
 /** Merges feature lists (app-wide, then per grid); a later entry with the same name wins. */

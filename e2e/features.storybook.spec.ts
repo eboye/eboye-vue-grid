@@ -5,7 +5,7 @@ import { expect, test, type Page } from '@playwright/test'
 const base = process.env.STORYBOOK_URL ?? 'http://localhost:6006'
 const story = async (page: Page, id: string) => {
   await page.goto(`${base}/iframe.html?id=${id}&viewMode=story`)
-  await page.locator('#storybook-root [role="grid"]').first().waitFor()
+  await page.locator('#storybook-root .vg').first().waitFor()
 }
 const header = (page: Page, key: string) => page.locator(`.vg-header > [data-col-key="${key}"]`)
 const players = (page: Page) => page.locator('.vg-row > [data-col-key="player"]').allTextContents()
@@ -40,10 +40,10 @@ test('selection, sub-grids and menus, feature by feature', async ({ page }) => {
   await page.getByLabel('selectionFeature').check()
   const firstRow = page.locator('.vg-row').first()
   await firstRow.getByRole('checkbox', { name: 'Select row' }).click()
-  await expect(firstRow).toHaveAttribute('aria-selected', 'true')
+  await expect(firstRow).toHaveClass(/vg-row-selected/) // no aria-selected: an ARIA table has no selection
 
   await page.getByLabel('subGridsFeature').check()
-  await page.locator('#storybook-root [role="treegrid"]').waitFor()
+  await page.locator('.vg-expander').first().waitFor()
   await page.locator('.vg-expander').first().click()
   await expect(page.locator('.vg-subgrid .vg-row').first()).toBeVisible()
 
@@ -143,6 +143,39 @@ test('virtual scrolling: all rows render without the feature, a scrolling window
     return d > -10 && d < 2
   }).toBe(true)
   expect(await rows.count()).toBeLessThan(40)
+})
+
+test('keyboard navigation: a table with tabbable controls without it, an arrow-key grid with it', async ({ page }) => {
+  await story(page, 'grid-features--opt-in')
+  await page.getByLabel('sortingFeature').check()
+  const scroller = page.locator('#storybook-root .vg')
+  await expect(scroller).toHaveAttribute('role', 'table')
+  await expect(page.locator('.vg-row').first().locator('[data-col-key="player"]')).toHaveAttribute('role', 'cell')
+
+  // Tab walks through the grid's own controls; arrow keys do nothing
+  await scroller.focus()
+  await page.keyboard.press('Tab')
+  const firstSort = page.locator('.vg-header .vg-sort').first()
+  await expect(firstSort).toBeFocused()
+  await page.keyboard.press('Enter')
+  await expect(page.locator('.vg-header > [data-col-key]').first()).toHaveAttribute('aria-sort', 'ascending')
+  await page.keyboard.press('ArrowDown')
+  await expect(firstSort).toBeFocused()
+
+  await page.getByLabel('keyboardNavigationFeature').check()
+  await expect(scroller).toHaveAttribute('role', 'grid')
+  await expect(page.locator('.vg-header .vg-sort').first()).toHaveAttribute('tabindex', '-1')
+  // the grid is one tab stop: focus lands on a header cell, arrows move between cells
+  await scroller.focus()
+  const firstHeader = page.locator('.vg-header > [data-col-key]').first()
+  await expect(firstHeader).toBeFocused()
+  await page.keyboard.press('ArrowRight')
+  await expect(page.locator('.vg-header > [data-col-key]').nth(1)).toBeFocused()
+  await page.keyboard.press('ArrowDown')
+  await expect(page.locator('.vg-row').first().locator('[role="gridcell"]').nth(1)).toBeFocused()
+  await page.keyboard.press('ArrowUp')
+  await page.keyboard.press('Enter') // sorts the focused header
+  await expect(page.locator('.vg-header > [data-col-key]').nth(1)).toHaveAttribute('aria-sort', 'ascending')
 })
 
 test('opting in, feature by feature', async ({ page }) => {

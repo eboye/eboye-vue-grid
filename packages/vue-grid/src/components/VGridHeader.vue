@@ -35,7 +35,7 @@ function ariaSort(col: ResolvedColumn) {
       v-for="col in grid.columns.value"
       :key="col.key"
       role="columnheader"
-      tabindex="-1"
+      :tabindex="grid.rovingTabindex"
       :data-col-key="col.key"
       :aria-sort="ariaSort(col)"
       :title="col.def.headerTooltip"
@@ -77,7 +77,7 @@ function ariaSort(col: ResolvedColumn) {
           v-if="grid.sortable(col.def)"
           type="button"
           class="vg-sort"
-          tabindex="-1"
+          :tabindex="grid.rovingTabindex"
           @click="emit('sort', col.key)"
         >
           <span class="vg-header-label">

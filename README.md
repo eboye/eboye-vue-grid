@@ -31,13 +31,14 @@
   where a browser lacks a feature — see [Browser support](#browser-support).
 - **Small by default, everything optional.** ESM, one file per module, zero runtime dependencies.
   Sorting, filtering, server data, pagination, selection, sub-grids, menus, column reordering,
-  pinning and visibility, and virtual scrolling are opt-in **features**, and renderers are opt-in too. A
-  plain grid with text cells is **12.2 kB gzipped**, and each feature or renderer you add costs
+  pinning and visibility, virtual scrolling and keyboard navigation are opt-in **features**, and
+  renderers are opt-in too. A plain grid with text cells is **11.6 kB gzipped**, and each feature or renderer you add costs
   only itself.
 - **Typed end to end.** `<VGrid generic="T">`, typed column helpers, and renderer options checked
   against the renderer you pick.
-- **Accessible.** `grid` / `treegrid` semantics, `aria-sort`, full keyboard navigation (cells,
-  headers, menus, column reordering), focus management, screen-reader labels.
+- **Accessible.** With `keyboardNavigationFeature`: `grid` / `treegrid` semantics and full keyboard
+  navigation (cells, headers, menus, column reordering). Without it: an ARIA `table` whose controls
+  sit in the normal Tab order. Either way: `aria-sort`, focus management, screen-reader labels.
 - **Yours to style.** Everything sits in `@layer vue-grid` and reads `--vg-*` tokens, so your CSS and
   Tailwind utilities win without `!important`.
 
@@ -159,19 +160,20 @@ Measured by bundling small apps against the published build for production with 
 
 | You import | Initial chunk |
 |---|---|
-| `VGrid` (no features) | 34.2 kB / 12.2 kB |
-| `VGrid` + `sortingFeature` | 34.9 kB / 12.6 kB |
-| `VGrid` + `filteringFeature` | 37.9 kB / 13.5 kB |
-| `VGrid` + `selectionFeature` | 36.1 kB / 12.9 kB |
-| `VGrid` + `subGridsFeature` | 35.9 kB / 12.9 kB |
-| `VGrid` + `menusFeature` | 42.9 kB / 15.3 kB |
-| `VGrid` + `columnReorderFeature` | 36.1 kB / 13.0 kB |
-| `VGrid` + `columnPinningFeature` | 36.3 kB / 13.2 kB |
-| `VGrid` + `virtualScrollingFeature` | 35.3 kB / 12.7 kB |
-| `VGrid` + `columnVisibilityFeature` | 34.3 kB / 12.3 kB |
-| `VGrid` + `allFeatures` + `VGridSearch` | 57.1 kB / 20.2 kB |
-| `VGrid` + `currencyRenderer` | 35.4 kB / 12.6 kB |
-| everything | 100.7 kB / 32.5 kB |
+| `VGrid` (no features) | 32.6 kB / 11.6 kB |
+| `VGrid` + `sortingFeature` | 33.3 kB / 11.9 kB |
+| `VGrid` + `filteringFeature` | 36.3 kB / 12.9 kB |
+| `VGrid` + `selectionFeature` | 34.6 kB / 12.3 kB |
+| `VGrid` + `subGridsFeature` | 34.3 kB / 12.3 kB |
+| `VGrid` + `menusFeature` | 41.3 kB / 14.7 kB |
+| `VGrid` + `columnReorderFeature` | 34.5 kB / 12.4 kB |
+| `VGrid` + `columnPinningFeature` | 34.7 kB / 12.5 kB |
+| `VGrid` + `virtualScrollingFeature` | 33.7 kB / 12.1 kB |
+| `VGrid` + `columnVisibilityFeature` | 32.7 kB / 11.7 kB |
+| `VGrid` + `keyboardNavigationFeature` | 34.7 kB / 12.4 kB |
+| `VGrid` + `allFeatures` + `VGridSearch` | 57.7 kB / 20.3 kB |
+| `VGrid` + `currencyRenderer` | 33.8 kB / 12.0 kB |
+| everything | 101.4 kB / 32.6 kB |
 
 With `filteringFeature`, the filter popover body and the filter-row editors load on demand. With
 `paginationFeature`, the pager does too.

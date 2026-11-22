@@ -3,6 +3,7 @@ import { columnPinningFeature } from './columnPinning'
 import { columnReorderFeature } from './columnReorder'
 import { columnVisibilityFeature } from './columnVisibility'
 import { filteringFeature } from './filtering'
+import { keyboardNavigationFeature } from './keyboardNavigation'
 import { menusFeature } from './menus'
 import { paginationFeature } from './pagination'
 import { selectionFeature } from './selection'
@@ -16,6 +17,7 @@ export {
   columnReorderFeature,
   columnVisibilityFeature,
   filteringFeature,
+  keyboardNavigationFeature,
   menusFeature,
   paginationFeature,
   selectionFeature,
@@ -38,4 +40,5 @@ export const allFeatures: readonly GridFeature[] = [
   columnPinningFeature,
   virtualScrollingFeature,
   columnVisibilityFeature,
+  keyboardNavigationFeature,
 ]

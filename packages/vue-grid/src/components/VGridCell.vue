@@ -75,8 +75,8 @@ function onClick(event: MouseEvent) {
 
 <template>
   <div
-    role="gridcell"
-    tabindex="-1"
+    :role="grid.cellRole"
+    :tabindex="grid.rovingTabindex"
     :data-col-key="column.key"
     :class="[
       'vg-cell',
@@ -114,7 +114,7 @@ function onClick(event: MouseEvent) {
           v-if="expandable"
           type="button"
           class="vg-expander"
-          tabindex="-1"
+          :tabindex="grid.rovingTabindex"
           :aria-expanded="expanded"
           :aria-label="expanded ? 'Collapse row' : 'Expand row'"
           @click.stop="grid.toggleExpanded(row)"

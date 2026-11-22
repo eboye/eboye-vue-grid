@@ -113,7 +113,7 @@ you leave out the renderer styles.
 ### Choosing features
 
 Out of the box `<VGrid>` is a plain table. Sorting, filtering, server data, pagination,
-selection, sub-grids, context menus, column reordering, pinning and visibility, and virtual scrolling are
+selection, sub-grids, context menus, column reordering, pinning and visibility, virtual scrolling and keyboard navigation are
 opt-in features, and only the ones you import are bundled:
 
 ```ts
@@ -140,6 +140,7 @@ app.use(createVueGrid({ features: allFeatures })) // all of them
 | `columnPinningFeature` | `pinned` columns (sticky, with shadows), the menu's Pin items |
 | `virtualScrollingFeature` | `virtual` (render only the rows in view) |
 | `columnVisibilityFeature` | `hidden` columns, `columnState.hidden`, the menu's Hide column item |
+| `keyboardNavigationFeature` | arrow-key navigation between cells (ARIA grid); without it an ARIA table with tabbable controls |
 
 Without its feature, an option does nothing and a dev warning names the feature to add. A grid
 reads `features` once when it is created.

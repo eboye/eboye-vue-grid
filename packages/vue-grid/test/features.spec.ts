@@ -9,6 +9,7 @@ import {
   columnReorderFeature,
   columnVisibilityFeature,
   filteringFeature,
+  keyboardNavigationFeature,
   menusFeature,
   paginationFeature,
   selectionFeature,
@@ -117,7 +118,7 @@ describe('features are opt-in', () => {
     expect(hints).toContain('needs the selection feature')
     expect(hints).toContain('needs the subGrids feature')
 
-    const full = mount(VGrid, { props: { ...props, features: [selectionFeature, subGridsFeature] } })
+    const full = mount(VGrid, { props: { ...props, features: [selectionFeature, subGridsFeature, keyboardNavigationFeature] } })
     expect(full.find('[role="treegrid"]').exists()).toBe(true)
     expect(full.findAll('.vg-subgrid .vg-row')).toHaveLength(2)
     await full.find('.vg-header [type="checkbox"]').setValue(true)
@@ -152,6 +153,35 @@ describe('features are opt-in', () => {
     await flushPromises()
     expect(labels()).toEqual(expect.arrayContaining(['Pin left', 'Pin right', 'Move left', 'Move right']))
     full.unmount()
+  })
+
+  it('keyboard navigation: an ARIA table with tabbable controls without it; a roving-focus grid with it', async () => {
+    const props = { rows, columns, rowKey: 'id', selectable: true }
+    const bare = mount(VGrid, { props: { ...props, features: [selectionFeature, sortingFeature] }, attachTo: document.body })
+    expect(bare.find('.vg').attributes('role')).toBe('table')
+    expect(bare.find('.vg-row [data-col-key="name"]').attributes('role')).toBe('cell')
+    expect(bare.find('.vg-row [data-col-key="name"]').attributes('tabindex')).toBeUndefined()
+    expect(bare.find('.vg-header .vg-sort').attributes('tabindex')).toBeUndefined() // in the Tab order
+    expect(bare.find('.vg-row input[type="checkbox"]').attributes('tabindex')).toBeUndefined()
+    expect(bare.find('.vg').attributes('aria-multiselectable')).toBeUndefined()
+    expect(bare.find('.vg-row').attributes('aria-selected')).toBeUndefined()
+    // arrow keys do nothing
+    ;(bare.find('.vg').element as HTMLElement).focus()
+    await bare.find('.vg').trigger('keydown', { key: 'ArrowDown' })
+    expect(document.activeElement).toBe(bare.find('.vg').element)
+    bare.unmount()
+
+    const nav = mount(VGrid, {
+      props: { ...props, features: [selectionFeature, sortingFeature, keyboardNavigationFeature] },
+      attachTo: document.body,
+    })
+    expect(nav.find('.vg').attributes('role')).toBe('grid')
+    expect(nav.find('.vg-row [data-col-key="name"]').attributes('role')).toBe('gridcell')
+    expect(nav.find('.vg-header .vg-sort').attributes('tabindex')).toBe('-1')
+    expect(nav.find('.vg-row input[type="checkbox"]').attributes('tabindex')).toBe('-1')
+    ;(nav.find('.vg').element as HTMLElement).focus()
+    expect((document.activeElement as HTMLElement).getAttribute('role')).toBe('columnheader') // focus moves into the grid
+    nav.unmount()
   })
 
   it('column visibility: hidden columns show without the feature; hide works with it', async () => {

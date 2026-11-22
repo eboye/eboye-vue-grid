@@ -26,7 +26,6 @@ import {
 import { localStorageAdapter } from '../core/storage'
 import { getCellValue, resolveRowKey, type RowKeyGetter } from '../core/value'
 import type { RowPatches } from '../core/patch'
-import { useGridKeyboard } from '../composables/useGridKeyboard'
 import type { MenuHandle } from '../composables/useGridMenus'
 import type { DataSource, GridQuery } from '../composables/useDataSource'
 import { resolveFeatures } from '../internal/features'
@@ -494,14 +493,19 @@ function moveColumnBy(key: string, direction: -1 | 1): boolean {
   return true
 }
 
-const keyboard = useGridKeyboard(root, {
+const keyboardNav = !!features.keyboardNavigation
+const keyboard = features.keyboardNavigation?.useGridKeyboard(root, {
   moveColumn(key, direction) {
     if (!moveColumnBy(key, direction)) return
     nextTick(() =>
-      keyboard.focusCell(root.value?.querySelector<HTMLElement>(`.vg-header > [data-col-key="${CSS.escape(key)}"]`)),
+      keyboard?.focusCell(root.value?.querySelector<HTMLElement>(`.vg-header > [data-col-key="${CSS.escape(key)}"]`)),
     )
   },
 })
+const onKeyDown = (event: KeyboardEvent) => keyboard?.onKeyDown(event)
+const onFocusIn = (event: FocusEvent) => keyboard?.onFocusIn(event)
+/** ARIA grid with keyboard navigation; a plain table (and tabbable controls) without it. */
+const gridRole = computed(() => (!keyboardNav ? 'table' : treeMode.value ? 'treegrid' : 'grid'))
 
 // ── Context menus ───────────────────────────────────────────────────────────────────────────
 const menuRef = shallowRef<MenuHandle>()
@@ -606,6 +610,9 @@ if (process.env.NODE_ENV !== 'production') {
 const highlighted = computed(() => new Set(props.highlightedRows ?? []))
 
 const context: GridContext = {
+  keyboardNav,
+  cellRole: keyboardNav ? 'gridcell' : 'cell',
+  rovingTabindex: keyboardNav ? -1 : undefined,
   columns: resolvedColumns,
   slots,
   ui: computed(() => props.ui ?? {}),
@@ -733,20 +740,20 @@ defineExpose<VGridExposed>({
       <div
         ref="root"
         :class="['vg', { 'vg-virtual': isVirtual, 'vg-is-dragging': drag?.dragging.value }]"
-        :role="treeMode ? 'treegrid' : 'grid'"
+        :role="gridRole"
         tabindex="0"
         :aria-label="ariaLabel"
         :aria-busy="isLoading || undefined"
         :aria-rowcount="isVirtual ? topRows.length + 1 : undefined"
         :aria-colcount="resolvedColumns.length"
-        :aria-multiselectable="selectMode === 'multi' || undefined"
+        :aria-multiselectable="(keyboardNav && selectMode === 'multi') || undefined"
         :style="{
           '--vg-columns': template,
           '--vg-row-height': virtualOptions ? `${virtualOptions.rowHeight}px` : undefined,
         }"
         @scroll.passive="onScroll"
-        @keydown="keyboard.onKeyDown"
-        @focusin="keyboard.onFocusIn"
+        @keydown="onKeyDown"
+        @focusin="onFocusIn"
       >
         <VGridHeader
           :sort="sort"
@@ -781,7 +788,7 @@ defineExpose<VGridExposed>({
           />
         </template>
         <div v-else role="row" class="vg-empty-row">
-          <div role="gridcell" tabindex="-1" :class="['vg-empty', ui?.empty]">
+          <div :role="context.cellRole" :tabindex="context.rovingTabindex" :class="['vg-empty', ui?.empty]">
             <slot v-if="isLoading" name="loading">Loading…</slot>
             <span v-else-if="loadError" class="vg-no-match vg-load-error" role="alert">
               Couldn't load the rows.

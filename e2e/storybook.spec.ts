@@ -45,7 +45,8 @@ test('every story and docs page renders without errors', async ({ page, request 
       .catch(() => errors.push('nothing rendered'))
     if (entry.type === 'story' && entry.title.startsWith('Grid/')) {
       await expect(
-        page.locator('#storybook-root [role="grid"], #storybook-root [role="treegrid"]').first(),
+        // `table` for grids without keyboard navigation (Grid/Features)
+        page.locator('#storybook-root :is([role="grid"], [role="treegrid"], [role="table"])').first(),
       ).toBeVisible()
     }
     // Storybook's own error overlay

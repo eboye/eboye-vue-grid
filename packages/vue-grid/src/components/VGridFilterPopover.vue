@@ -14,7 +14,8 @@ const VGridFilterPanel = defineAsyncComponent(() => import('./VGridFilterPanel.v
 const props = defineProps<{ column: ResolvedColumn }>()
 
 // Rendered by the filtering feature only, so the grid always has filters here.
-const filters = useInternalGrid().filters!
+const grid = useInternalGrid()
+const filters = grid.filters!
 const anchor = anchorNameFor(`filter-${useId()}`)
 const id = computed(() => filters.idFor(props.column.key))
 const button = shallowRef<HTMLButtonElement>()
@@ -46,7 +47,7 @@ const stop = (e: Event) => e.stopPropagation()
     ref="button"
     type="button"
     :class="['vg-icon-button', 'vg-filter-button', { 'vg-filter-on': active }]"
-    tabindex="-1"
+    :tabindex="grid.rovingTabindex"
     :aria-label="active ? `Filter ${label} (active)` : `Filter ${label}`"
     aria-haspopup="dialog"
     :aria-expanded="open"

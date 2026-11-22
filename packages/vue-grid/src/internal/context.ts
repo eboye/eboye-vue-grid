@@ -29,6 +29,15 @@ export interface GridContext {
   slots: Slots
   ui: ComputedRef<Partial<Record<GridPart, ClassValue>>>
   getKey(row: any): RowKey
+  /**
+   * Keyboard navigation (ARIA grid) is on: cells are `gridcell`s and the grid's own controls are
+   * `tabindex="-1"` (reached with the arrow keys). Off: an ARIA `table` with tabbable controls.
+   */
+  keyboardNav: boolean
+  /** `gridcell` or `cell`, by `keyboardNav`. */
+  cellRole: 'gridcell' | 'cell'
+  /** Tabindex for the grid's own controls and cells: `-1` with keyboard navigation, else none. */
+  rovingTabindex: -1 | undefined
   /** Filters (client mode) and sorts one level of rows. */
   sortRows(rows: readonly any[]): any[]
   /** The sorting feature is on and the column is `sortable`. */

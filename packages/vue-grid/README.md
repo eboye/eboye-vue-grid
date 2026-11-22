@@ -78,7 +78,7 @@ const columns = [
 ## Features: everything optional
 
 Out of the box `<VGrid>` is a plain, read-only table: columns with any renderer and any width,
-saved column state (`storage`), detail rows, keyboard navigation and theming. Everything else is
+saved column state (`storage`), detail rows, tabbable controls and theming. Everything else is
 an opt-in feature:
 
 | Feature | Turns on |
@@ -94,6 +94,7 @@ an opt-in feature:
 | `columnPinningFeature` | Sticky `pinned: 'left' \| 'right'` columns with edge shadows, the header menu's Pin items; without it pins are ignored |
 | `virtualScrollingFeature` | `virtual: { rowHeight, overscan? }`: only the rows in view render; without it every row renders |
 | `columnVisibilityFeature` | `hidden: true` columns, `columnState.hidden`, the header menu's Hide column item; without it every column shows |
+| `keyboardNavigationFeature` | The ARIA grid pattern: one Tab stop, arrow keys / Home / End / PageUp / PageDown between cells, Enter, Space to select, →/← to expand, Alt+←/→ to move a column. Without it the grid is an ARIA `table` with its controls in the Tab order |
 
 ```ts
 // per grid
@@ -128,23 +129,24 @@ what you import.
 
 | Import (minified / gzip, Vue excluded) | Initial chunk |
 |---|---|
-| `VGrid` (no features) | 34.2 kB / 12.2 kB |
-| `VGrid` + `sortingFeature` | 34.9 kB / 12.6 kB |
-| `VGrid` + `filteringFeature` | 37.9 kB / 13.5 kB |
-| `VGrid` + `serverDataFeature` | 35.6 kB / 12.9 kB |
-| `VGrid` + `paginationFeature` | 34.3 kB / 12.3 kB |
-| `VGrid` + `selectionFeature` | 36.1 kB / 12.9 kB |
-| `VGrid` + `subGridsFeature` | 35.9 kB / 12.9 kB |
-| `VGrid` + `menusFeature` | 42.9 kB / 15.3 kB |
-| `VGrid` + `columnReorderFeature` | 36.1 kB / 13.0 kB |
-| `VGrid` + `columnPinningFeature` | 36.3 kB / 13.2 kB |
-| `VGrid` + `virtualScrollingFeature` | 35.3 kB / 12.7 kB |
-| `VGrid` + `columnVisibilityFeature` | 34.3 kB / 12.3 kB |
-| `VGrid` + `allFeatures` + `VGridSearch` | 57.1 kB / 20.2 kB |
-| `VGrid` + `currencyRenderer` | 35.4 kB / 12.6 kB |
-| `VGrid` + `VGridPagination` + `VGridColumnMenu` | 38.6 kB / 13.8 kB |
+| `VGrid` (no features) | 32.6 kB / 11.6 kB |
+| `VGrid` + `sortingFeature` | 33.3 kB / 11.9 kB |
+| `VGrid` + `filteringFeature` | 36.3 kB / 12.9 kB |
+| `VGrid` + `serverDataFeature` | 33.9 kB / 12.2 kB |
+| `VGrid` + `paginationFeature` | 32.7 kB / 11.7 kB |
+| `VGrid` + `selectionFeature` | 34.6 kB / 12.3 kB |
+| `VGrid` + `subGridsFeature` | 34.3 kB / 12.3 kB |
+| `VGrid` + `menusFeature` | 41.3 kB / 14.7 kB |
+| `VGrid` + `columnReorderFeature` | 34.5 kB / 12.4 kB |
+| `VGrid` + `columnPinningFeature` | 34.7 kB / 12.5 kB |
+| `VGrid` + `virtualScrollingFeature` | 33.7 kB / 12.1 kB |
+| `VGrid` + `columnVisibilityFeature` | 32.7 kB / 11.7 kB |
+| `VGrid` + `keyboardNavigationFeature` | 34.7 kB / 12.4 kB |
+| `VGrid` + `allFeatures` + `VGridSearch` | 57.7 kB / 20.3 kB |
+| `VGrid` + `currencyRenderer` | 33.8 kB / 12.0 kB |
+| `VGrid` + `VGridPagination` + `VGridColumnMenu` | 37.0 kB / 13.2 kB |
 | `sortRows` only | 0.7 kB / 0.5 kB |
-| everything | 100.7 kB / 32.5 kB |
+| everything | 101.4 kB / 32.6 kB |
 
 With `filteringFeature`, the filter popover body and the filter-row editors are **on-demand
 chunks**: they load the first time a popover opens or `filter-row` is on. With
@@ -511,7 +513,11 @@ rows are disabled in virtual mode.
 
 ## Keyboard
 
-The grid is one tab stop. Arrow keys move between cells (header, rows, sub-grid rows, detail rows),
+Without `keyboardNavigationFeature` the grid is an ARIA `table`. The scroll area is one Tab stop,
+and the grid's own controls (sort buttons, expanders, checkboxes, filter buttons) follow in the
+normal Tab order.
+
+With `keyboardNavigationFeature` it is an ARIA `grid` (`treegrid` with sub-grids). The grid is one tab stop. Arrow keys move between cells (header, rows, sub-grid rows, detail rows),
 `Home`/`End`, `Ctrl+Home`/`Ctrl+End`, `PageUp`/`PageDown`; `ContextMenu` / `Shift+F10` opens the context menu. `Enter` sorts a header or activates the
 cell's control; `Space` toggles row selection; `→`/`←` on a tree cell expands/collapses; `Alt+←/→` on a
 header moves the column.
