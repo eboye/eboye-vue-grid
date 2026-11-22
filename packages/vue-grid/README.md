@@ -123,9 +123,18 @@ what you import.
   An unregistered name renders as plain text and logs a dev warning saying how to register it.
 - **Components and helpers** (`VGridPagination`, `VGridColumnMenu`, `VGridMenu`, `sortRows`, …) are
   only bundled when imported.
-- **CSS**: `@eboye/vue-grid/style.css` has everything. To trim it, import
-  `@eboye/vue-grid/core.css` (grid, menus, pagination, column menu, text renderer) and add
-  `@eboye/vue-grid/renderers.css` only if you use other renderers.
+- **CSS**: `@eboye/vue-grid/style.css` has everything. Pick parts instead:
+
+  | File | What | gzip |
+  |---|---|---|
+  | `base.css` | Structure only: grid layout, subgrid, sticky header and pins, tree indent, popover placement, virtual rows, truncation | 2.5 kB |
+  | `theme.css` | The default look on top of `base.css`: `--vg-*` tokens, colours, dark mode, densities, spacing, borders, typography, shadows, animation | 3.5 kB |
+  | `core.css` | `base.css` + `theme.css` | 5.5 kB |
+  | `renderers.css` | Styles for the cell renderers (other than text); uses the theme's tokens | 2.7 kB |
+  | `style.css` | All of the above | 7.5 kB |
+
+  For a fully custom look, import only `base.css` (and `renderers.css` if you use renderers)
+  and style the `.vg-*` classes yourself. See [Theming](#theming).
 
 | Import (minified / gzip, Vue excluded) | Initial chunk |
 |---|---|
@@ -628,6 +637,32 @@ Override any token on `:root`, a wrapper, or the grid itself:
 Colours use `light-dark()`: set `color-scheme: light dark` on `html` to follow the OS, or
 `color-scheme: dark` to force dark. Stable class names (`.vg-header-cell`, `.vg-cell`, `.vg-row`,
 `.vg-subgrid`, `.vg-pin-left`, …) and the `ui` prop are there for anything tokens don't cover.
+
+### Bring your own theme
+
+The tokens above come from `theme.css`, which is optional. Import `base.css` instead and the grid
+keeps its structure (columns, sub-grid alignment, sticky header and pins, tree indent, anchored
+menus and popovers) with none of the default look. Then style the classes yourself:
+
+```ts
+import '@eboye/vue-grid/base.css'
+import './my-grid-theme.css'
+```
+
+```css
+/* my-grid-theme.css — unlayered, or in your own layer after `vue-grid` */
+.vg-viewport { border: 1px solid #ddd; }
+.vg-header-cell { padding: 0.5rem 0.75rem; background: #fafafa; font-weight: 600; }
+.vg-cell { padding: 0.5rem 0.75rem; border-top: 1px solid #eee; }
+.vg-row:hover > .vg-cell { background: #f5f5f5; }
+```
+
+Base only gives sticky header and pinned cells the system `Canvas` background, so content doesn't
+show through them; everything else (colours, spacing, borders, fonts, focus rings, animation) is
+yours. The structural tokens `--vg-select-column-width`, `--vg-expander-size`,
+`--vg-subgrid-indent`, `--vg-z-*` and `--vg-menu-gap` live in `base.css` and can be overridden
+the same way. `renderers.css` reads the theme's colour tokens; define them (or skip the file) when
+you drop `theme.css`.
 
 ## Browser support
 

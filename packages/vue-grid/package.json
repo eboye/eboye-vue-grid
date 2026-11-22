@@ -26,6 +26,8 @@
       "import": "./dist/index.js"
     },
     "./style.css": "./dist/vue-grid.css",
+    "./base.css": "./dist/base.css",
+    "./theme.css": "./dist/theme.css",
     "./core.css": "./dist/core.css",
     "./renderers.css": "./dist/renderers.css"
   },

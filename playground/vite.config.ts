@@ -10,6 +10,7 @@ export default defineConfig({
   resolve: {
     alias: [
       { find: '@eboye/vue-grid/style.css', replacement: r('../packages/vue-grid/src/styles/vue-grid.css') },
+      { find: '@eboye/vue-grid/base.css', replacement: r('../packages/vue-grid/src/styles/base.css') },
       { find: /^@eboye\/vue-grid$/, replacement: r('../packages/vue-grid/src/index.ts') },
       {
         find: '@eboye/vue-grid-renderer-template/style.css',

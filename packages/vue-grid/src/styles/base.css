@@ -1,0 +1,342 @@
+/*
+ * @eboye/vue-grid base — structure only, no theme.
+ *
+ * Layout (CSS grid + subgrid), sticky header and pinned columns, tree indentation, popover
+ * placement (CSS anchor positioning), virtual rows, text truncation and icon strokes. No colours,
+ * borders, spacing, fonts, shadows or animation: import `theme.css` for the default look, or style
+ * the `.vg-*` classes yourself.
+ *
+ * Everything lives in the `vue-grid` cascade layer, so any unlayered CSS (or Tailwind utilities)
+ * overrides it without !important.
+ */
+@layer vue-grid {
+  :root {
+    --vg-select-column-width: 2.75rem;
+    --vg-expander-size: 1.5rem;
+    --vg-subgrid-indent: 1.25rem;
+    --vg-z-header: 3;
+    --vg-z-pinned: 2;
+    --vg-z-pinned-header: 4;
+    --vg-menu-gap: 4px;
+  }
+  .vg-root {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    max-height: 100%;
+  }
+
+  .vg-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+  }
+
+  .vg-viewport {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .vg {
+    display: grid;
+    grid-template-columns: var(--vg-columns);
+    grid-auto-rows: min-content;
+    align-content: start;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    isolation: isolate;
+    overscroll-behavior: contain;
+  }
+
+  .vg-header,
+  .vg-row,
+  .vg-detail-row,
+  .vg-status-row,
+  .vg-empty-row {
+    display: contents;
+  }
+  .vg-header-cell {
+    position: sticky;
+    top: 0;
+    z-index: var(--vg-z-header);
+    display: flex;
+    align-items: center;
+    user-select: none;
+    white-space: nowrap;
+  }
+  .vg-header-cell.vg-reorderable { cursor: grab; }
+  .vg-is-dragging,
+  .vg-is-dragging .vg-header-cell { cursor: grabbing; }
+
+  .vg-header-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .vg-sort {
+    display: inline-flex;
+    align-items: center;
+    min-width: 0;
+    cursor: pointer;
+  }
+  .vg-sort-icon {
+    flex: none;
+    width: 0.875rem;
+    height: 0.875rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.75;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .vg-sort-icon path { opacity: 0.35; }
+  [aria-sort='ascending'] .vg-sort-up,
+  [aria-sort='descending'] .vg-sort-down { opacity: 1; }
+  .vg-cell {
+    display: flex;
+    align-items: center;
+  }
+  .vg-cell-content {
+    display: flex;
+    align-items: center;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .vg-align-center,
+  .vg-align-center > .vg-cell-content { justify-content: center; text-align: center; }
+  .vg-align-end,
+  .vg-align-end > .vg-cell-content { justify-content: flex-end; text-align: end; }
+  .vg-header-cell.vg-align-end { flex-direction: row-reverse; }
+  .vg-header-cell.vg-align-end .vg-sort { flex-direction: row-reverse; }
+  .vg-row-clickable > .vg-cell,
+  .vg-cell-clickable { cursor: pointer; }
+
+  .vg-cell-select,
+  .vg-header-select { justify-content: center; }
+  .vg-pin-left,
+  .vg-pin-right {
+    position: sticky;
+    z-index: var(--vg-z-pinned);
+  }
+  .vg-pin-left { left: var(--vg-pin-offset, 0); }
+  .vg-pin-right { right: var(--vg-pin-offset, 0); }
+  .vg-header-cell.vg-pin-left,
+  .vg-header-cell.vg-pin-right { z-index: var(--vg-z-pinned-header); }
+
+  @supports (container-type: scroll-state) {
+    .vg { container-type: scroll-state; }
+  }
+  .vg-cell-tree { --vg-depth: inherit; }
+  .vg-tree-gutter {
+    display: inline-flex;
+    flex: none;
+    justify-content: flex-end;
+    width: calc(var(--vg-expander-size) + var(--vg-depth, 0) * var(--vg-subgrid-indent));
+  }
+  .vg-expander {
+    display: inline-grid;
+    place-items: center;
+    width: var(--vg-expander-size);
+    height: var(--vg-expander-size);
+    cursor: pointer;
+  }
+  .vg-expander-icon { width: 1rem; height: 1rem; }
+  .vg-expander[aria-expanded='true'] .vg-expander-icon { transform: rotate(90deg); }
+  .vg-subgrid {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: subgrid;
+  }
+
+  .vg-detail {
+    grid-column: 1 / -1;
+  }
+
+  .vg-status,
+  .vg-empty {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+  }
+  .vg-empty {
+    justify-content: center;
+  }
+
+  .vg-spinner {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  .vg-progress {
+    position: absolute;
+    inset: 0 0 auto;
+    z-index: calc(var(--vg-z-pinned-header) + 1);
+    height: 2px;
+    overflow: hidden;
+  }
+  .vg-progress::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    width: 40%;
+  }
+  .vg-spacer { grid-column: 1 / -1; }
+  .vg-virtual .vg-row > .vg-cell {
+    box-sizing: border-box;
+    height: var(--vg-row-height);
+    overflow: hidden;
+  }
+  .vg-checkbox { display: inline-flex; cursor: pointer; }
+  .vg-checkbox input {
+    width: 1rem;
+    height: 1rem;
+    cursor: inherit;
+  }
+  .vg-checkbox input:disabled { cursor: not-allowed; }
+  .vg-button {
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+  }
+  .vg-button-icon { width: 1rem; height: 1rem; }
+
+  .vg-icon-button {
+    display: inline-grid;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    cursor: pointer;
+  }
+  .vg-icon-button svg { width: 1rem; height: 1rem; fill: currentColor; }
+
+  .vg-link-button {
+    text-align: inherit;
+    cursor: pointer;
+  }
+  .vg-menu {
+    position: fixed;
+    inset: auto;
+    margin: var(--vg-menu-gap) 0;
+    position-area: bottom span-left;
+    position-try-fallbacks: flip-block, flip-inline, flip-block flip-inline;
+    position-visibility: anchor-visible;
+    min-width: 10rem;
+    max-height: min(22rem, 70vh);
+    overflow: auto;
+  }
+  .vg-menu[data-placement='bottom-start'] { position-area: bottom span-right; }
+  .vg-menu[data-placement='point'] { position-area: bottom right; margin: 2px; }
+  .vg-menu[data-vg-anchor-hidden] { visibility: hidden; }
+  .vg-menu-point { position: fixed; width: 0; height: 0; pointer-events: none; }
+  .vg-menu-item {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    text-align: start;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  .vg-menu-item:disabled { cursor: not-allowed; }
+  .vg-menu-label { flex: 1 1 auto; }
+  .vg-menu-icon { flex: none; width: 1rem; height: 1rem; }
+  .vg-filter-button { flex: none; width: 1.5rem; height: 1.5rem; margin-inline-start: auto; }
+  .vg-filter-button svg { width: 0.875rem; height: 0.875rem; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linejoin: round; }
+  .vg-filter-button.vg-filter-on svg { fill: currentColor; }
+  .vg-header-cell.vg-has-filter-row { flex-wrap: wrap; align-content: flex-start; }
+  .vg-filter-input {
+    flex: 1 0 100%;
+    order: 10;
+  }
+  .vg-filter-input .vg-input { box-sizing: border-box; width: 100%; }
+  .vg-filter-summary { text-align: start; cursor: pointer; }
+
+  .vg-filter-popover { min-width: 15rem; max-width: min(20rem, 90vw); }
+  .vg-filter-panel { display: grid; }
+  .vg-filter-head { display: flex; align-items: center; justify-content: space-between; }
+  .vg-filter-head .vg-link-button:disabled { cursor: default; }
+  .vg-filter-fields { display: grid; }
+  .vg-filter-fields .vg-input { box-sizing: border-box; width: 100%; }
+  .vg-filter-option { display: flex; align-items: center; cursor: pointer; }
+  .vg-filter-values { max-height: 14rem; overflow: auto; }
+  .vg-filter-value-label { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .vg-search { min-width: 12rem; }
+  .vg-no-match { display: inline-flex; align-items: center; flex-wrap: wrap; justify-content: center; }
+
+  .vg-column-panel { min-width: 14rem; }
+  .vg-column-panel:popover-open { display: grid; }
+  .vg-column-list { display: grid; }
+  .vg-column-option {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+  }
+  .vg-pagination {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .vg-pagination-pages { display: flex; flex-wrap: wrap; align-items: center; margin-inline-start: auto; }
+  .vg-page {
+    min-width: 2rem;
+    height: 2rem;
+    cursor: pointer;
+  }
+  .vg-page:disabled { cursor: not-allowed; }
+  .vg-text { min-width: 0; overflow-wrap: break-word; }
+  .vg-text-ellipsis { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .vg-text-clamp {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: var(--vg-text-lines);
+    line-clamp: var(--vg-text-lines);
+    overflow: hidden;
+  }
+
+  .vg-text-pre { white-space: pre-line; }
+  .vg-text-fill {
+    display: inline-block;
+  }
+  .vg-text-adorned { display: inline-flex; align-items: center; min-width: 0; max-width: 100%; }
+  .vg-text-icon { display: inline-flex; flex: none; }
+  .vg-text-icon > svg { width: 1rem; height: 1rem; }
+  .vg-badge {
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    min-width: 1.125rem;
+    height: 1.125rem;
+  }
+
+  .vg-copy-button { flex: none; }
+
+  .vg-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+}
+@layer vue-grid {
+  /*
+   * Functional fallback: sticky header cells and pinned columns need an opaque background, or
+   * scrolled content shows through them. The system `Canvas` colour follows `color-scheme`; the
+   * theme (loaded after this file) replaces it.
+   */
+  .vg-header-cell,
+  .vg-pin-left,
+  .vg-pin-right {
+    background-color: Canvas;
+  }
+}

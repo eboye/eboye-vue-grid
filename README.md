@@ -40,7 +40,8 @@
   navigation (cells, headers, menus, column reordering). Without it: an ARIA `table` whose controls
   sit in the normal Tab order. Either way: `aria-sort`, focus management, screen-reader labels.
 - **Yours to style.** Everything sits in `@layer vue-grid` and reads `--vg-*` tokens, so your CSS and
-  Tailwind utilities win without `!important`.
+  Tailwind utilities win without `!important`. Or skip the default theme: `base.css` is the grid's
+  structure alone, ready for your own styles.
 
 ## Features
 
@@ -178,7 +179,9 @@ Measured by bundling small apps against the published build for production with 
 With `filteringFeature`, the filter popover body and the filter-row editors load on demand. With
 `paginationFeature`, the pager does too.
 
-CSS: `style.css` has everything (8.2 kB gzip); `core.css` + optional `renderers.css` let you trim it.
+CSS: `style.css` has everything (7.5 kB gzip). The default theme is optional too: `base.css`
+(2.5 kB) is the structure alone, `theme.css` (3.5 kB) the look on top of it, and `renderers.css`
+(2.7 kB) the cell renderers. Import only `base.css` to theme the grid from scratch.
 
 ## Browser support
 

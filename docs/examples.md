@@ -107,7 +107,9 @@ The examples below use names for brevity — they assume `createVueGrid({ render
 (or swap each `'name'` for its `nameRenderer` import). An unregistered name renders as plain text
 and logs a dev warning.
 
-CSS: `@eboye/vue-grid/style.css` contains everything; `core.css` + (optionally) `renderers.css` let
+CSS: `@eboye/vue-grid/style.css` contains everything. `base.css` (structure) + `theme.css` (the
+default look) + `renderers.css` are the parts; import `base.css` alone to style the grid from
+scratch (see §19). `core.css` (base + theme) + (optionally) `renderers.css` let
 you leave out the renderer styles.
 
 ### Choosing features
@@ -1601,6 +1603,30 @@ or force it (`color-scheme: dark` on `html` or on a wrapper). To set custom colo
 <VGrid density="compact" … />
 <!-- 'compact' | 'cozy' (default) | 'comfortable' -->
 ```
+
+### No default theme: base.css only
+
+The default look (`theme.css`) is optional. Import the structure alone and style it yourself:
+
+```ts
+// main.ts — instead of '@eboye/vue-grid/style.css'
+import '@eboye/vue-grid/base.css'
+import './grid.css'
+```
+
+```css
+/* grid.css */
+.vg-viewport { border: 1px solid #ddd; border-radius: 6px; }
+.vg-header-cell { padding: 0.5rem 0.75rem; background: #fafafa; font-weight: 600; }
+.vg-cell { padding: 0.5rem 0.75rem; border-top: 1px solid #eee; background: white; }
+.vg-row:hover > .vg-cell { background: #f5f5f5; }
+.vg-row-selected > .vg-cell { background: #eef2ff; }
+.vg-menu { padding: 4px; border: 1px solid #ddd; background: white; }
+```
+
+`base.css` keeps columns, sub-grid alignment, sticky header and pinned columns, the tree indent and
+anchored menus working. Colours, spacing, borders, fonts, focus rings and animation are yours.
+`playground/unstyled.html` shows the grid with `base.css` only.
 
 ### Tailwind (or any utility classes) per part
 

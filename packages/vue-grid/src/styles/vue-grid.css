@@ -1,4 +1,5 @@
-/* @eboye/vue-grid — full theme: core grid + every cell renderer. In the published package this is
- * style.css (both files inlined); import core.css + renderers.css separately to pick parts. */
-@import './core.css';
+/* @eboye/vue-grid — everything: structure, default theme and every cell renderer. In the published
+ * package this is style.css (inlined). Pick parts with base.css, theme.css and renderers.css. */
+@import './base.css';
+@import './theme.css';
 @import './renderers.css';
