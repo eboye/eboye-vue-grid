@@ -31,8 +31,8 @@
   where a browser lacks a feature — see [Browser support](#browser-support).
 - **Small by default, everything optional.** ESM, one file per module, zero runtime dependencies.
   Sorting, filtering, server data, pagination, selection, sub-grids, menus, column reordering,
-  resizing, pinning and visibility, virtual scrolling and keyboard navigation are opt-in **features**, and
-  renderers are opt-in too. A plain grid with text cells is **12.0 kB gzipped**, and each feature or renderer you add costs
+  resizing, pinning, visibility and grouping, virtual scrolling and keyboard navigation are opt-in **features**, and
+  renderers are opt-in too. A plain grid with text cells is **12.1 kB gzipped**, and each feature or renderer you add costs
   only itself.
 - **Typed end to end.** `<VGrid generic="T">`, typed column helpers, and renderer options checked
   against the renderer you pick.
@@ -50,7 +50,7 @@
 | **Data** | Plain row objects · partial updates that re-render only changed cells, with an optional change highlight · client or server (controlled) sorting · selection (multi, single, cascading) · built-in or standalone pagination · 10,000+ rows with virtual scrolling |
 | **Filtering** | Typed column filters in header popovers (text, number, date, yes / no, value list with counts, your own component) · optional filter row with shorthand (`>10`, `5..20`) · quick search · case- and accent-insensitive · tree-aware · persisted to `localStorage` |
 | **Server data** | A `dataSource(query, { signal })` function: the grid sends sort, filters and page, cancels superseded requests, and shows loading, error and retry states · or a single `query-change` event if you fetch yourself · backend-loaded value lists |
-| **Columns** | Pin left / right (also at runtime) · drag or keyboard reordering · drag-to-resize with fit-to-content · show / hide picker · any CSS grid track as width · layout persisted to `localStorage` or your own storage |
+| **Columns** | Pin left / right (also at runtime) · drag or keyboard reordering · drag-to-resize with fit-to-content · grouped headers · show / hide picker · any CSS grid track as width · layout persisted to `localStorage` or your own storage |
 | **Rows** | Nested sub-grids (sync or lazy-loaded, with retry) · detail rows with any content, including another grid · row highlighting and classes |
 | **Menus** | Right-click menus for cells and headers (sort, pin, move, hide, reset, your own items) · `⋯` actions menu · keyboard: ContextMenu / Shift+F10, arrows, typeahead |
 | **Cells** | 29 renderers (below) · slots for any cell or header · your own renderers as typed add-ons |
@@ -165,27 +165,28 @@ Measured by bundling small apps against the published build for production with 
 
 | You import | Initial chunk |
 |---|---|
-| `VGrid` (no features) | 33.9 kB / 12.0 kB |
-| `VGrid` + `sortingFeature` | 34.6 kB / 12.4 kB |
-| `VGrid` + `filteringFeature` | 37.7 kB / 13.3 kB |
-| `VGrid` + `selectionFeature` | 35.9 kB / 12.7 kB |
-| `VGrid` + `subGridsFeature` | 35.7 kB / 12.7 kB |
-| `VGrid` + `menusFeature` | 42.9 kB / 15.1 kB |
-| `VGrid` + `columnReorderFeature` | 35.9 kB / 12.8 kB |
-| `VGrid` + `columnPinningFeature` | 36.1 kB / 13.0 kB |
-| `VGrid` + `virtualScrollingFeature` | 35.1 kB / 12.5 kB |
-| `VGrid` + `columnVisibilityFeature` | 34.1 kB / 12.1 kB |
-| `VGrid` + `keyboardNavigationFeature` | 36.3 kB / 12.9 kB |
-| `VGrid` + `columnResizingFeature` | 36.8 kB / 13.1 kB |
-| `VGrid` + `allFeatures` + `VGridSearch` | 62.4 kB / 21.8 kB |
-| `VGrid` + `currencyRenderer` | 35.2 kB / 12.4 kB |
-| everything | 106.1 kB / 34.1 kB |
+| `VGrid` (no features) | 34.2 kB / 12.1 kB |
+| `VGrid` + `sortingFeature` | 34.9 kB / 12.4 kB |
+| `VGrid` + `filteringFeature` | 37.9 kB / 13.4 kB |
+| `VGrid` + `selectionFeature` | 36.2 kB / 12.8 kB |
+| `VGrid` + `subGridsFeature` | 35.9 kB / 12.8 kB |
+| `VGrid` + `menusFeature` | 43.2 kB / 15.2 kB |
+| `VGrid` + `columnReorderFeature` | 36.2 kB / 12.9 kB |
+| `VGrid` + `columnPinningFeature` | 36.4 kB / 13.0 kB |
+| `VGrid` + `virtualScrollingFeature` | 35.3 kB / 12.6 kB |
+| `VGrid` + `columnVisibilityFeature` | 34.4 kB / 12.2 kB |
+| `VGrid` + `keyboardNavigationFeature` | 36.6 kB / 13.0 kB |
+| `VGrid` + `columnResizingFeature` | 37.1 kB / 13.2 kB |
+| `VGrid` + `columnGroupsFeature` | 35.8 kB / 12.7 kB |
+| `VGrid` + `allFeatures` + `VGridSearch` | 64.3 kB / 22.4 kB |
+| `VGrid` + `currencyRenderer` | 35.4 kB / 12.5 kB |
+| everything | 108.1 kB / 34.7 kB |
 
 With `filteringFeature`, the filter popover body and the filter-row editors load on demand. With
 `paginationFeature`, the pager does too.
 
-CSS: `style.css` has everything (7.8 kB gzip). The default theme is optional too: `base.css`
-(2.7 kB) is the structure alone, `theme.css` (3.7 kB) the look on top of it, and `renderers.css`
+CSS: `style.css` has everything (8.0 kB gzip). The default theme is optional too: `base.css`
+(2.8 kB) is the structure alone, `theme.css` (3.8 kB) the look on top of it, and `renderers.css`
 (2.7 kB) the cell renderers. Import only `base.css` to theme the grid from scratch.
 
 ## Browser support

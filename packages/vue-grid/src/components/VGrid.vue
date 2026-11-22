@@ -343,6 +343,13 @@ const sizedColumns = computed(() =>
 
 const template = computed(() => gridTemplate(sizedColumns.value.map((c) => c.def)))
 
+/** A row of column group headers is shown (column groups feature, some visible column grouped). */
+const hasGroups = computed(
+  () => !!features.columnGroups && resolvedColumns.value.some((c) => c.kind === 'data' && !!c.def.group),
+)
+/** Header rows above the body (1, or 2 with column groups): offsets `aria-rowindex`. */
+const headerRows = computed(() => (hasGroups.value ? 2 : 1))
+
 // ── Sorting ─────────────────────────────────────────────────────────────────────────────────
 const sortable = (col: ColumnDef<T>) => !!features.sorting && !!col.sortable
 
@@ -629,6 +636,8 @@ if (process.env.NODE_ENV !== 'production') {
     if (!features.virtualScrolling && props.virtual) missing('virtualScrolling', '`virtual`')
     if (!features.selection && props.selectable) missing('selection', '`selectable`')
     if (!features.subGrids && (props.subRows || props.loadSubRows)) missing('subGrids', '`sub-rows` / `load-sub-rows`')
+    const groupedCol = props.columns.find((c) => c.group)?.key
+    if (!features.columnGroups && groupedCol) missing('columnGroups', `Column "${groupedCol}" has a \`group\`; that`)
     const hiddenCol = props.columns.find((c) => c.hidden)?.key ?? columnState.value?.hidden?.[0]
     if (!features.columnVisibility && hiddenCol) missing('columnVisibility', `Column "${hiddenCol}" is hidden; that`)
     const pinnedCol = props.columns.find((c) => c.pinned)?.key
@@ -663,6 +672,7 @@ const context: GridContext = {
     step: (key, delta) => resize.step(key, delta),
     isSized: (key) => !!effectiveState.value.widths?.[key] || resize.resizing.value === key,
   },
+  headerRows,
   treeMode,
   hasDetail,
   canExpand,
@@ -785,13 +795,18 @@ defineExpose<VGridExposed>({
         ref="root"
         :class="[
           'vg',
-          { 'vg-virtual': isVirtual, 'vg-is-dragging': drag?.dragging.value, 'vg-is-resizing': resize?.resizing.value },
+          {
+            'vg-virtual': isVirtual,
+            'vg-is-dragging': drag?.dragging.value,
+            'vg-is-resizing': resize?.resizing.value,
+            'vg-has-groups': hasGroups,
+          },
         ]"
         :role="gridRole"
         tabindex="0"
         :aria-label="ariaLabel"
         :aria-busy="isLoading || undefined"
-        :aria-rowcount="isVirtual ? topRows.length + 1 : undefined"
+        :aria-rowcount="isVirtual ? topRows.length + headerRows : undefined"
         :aria-colcount="resolvedColumns.length"
         :aria-multiselectable="(keyboardNav && selectMode === 'multi') || undefined"
         :style="{
@@ -802,6 +817,7 @@ defineExpose<VGridExposed>({
         @keydown="onKeyDown"
         @focusin="onFocusIn"
       >
+        <component :is="features.columnGroups.GroupRow" v-if="hasGroups && features.columnGroups" />
         <VGridHeader
           :sort="sort"
           :all-state="allState"

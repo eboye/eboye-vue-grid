@@ -340,6 +340,24 @@
     touch-action: none;
     user-select: none;
   }
+  /* Column groups: a sticky row above the column headers, which stick right below it. */
+  .vg-header-groups { display: contents; }
+  .vg-group-cell {
+    position: sticky;
+    top: 0;
+    z-index: var(--vg-z-header);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  .vg-group-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .vg-group-cell.vg-pin-left,
+  .vg-group-cell.vg-pin-right { z-index: var(--vg-z-pinned-header); }
+  .vg-has-groups .vg-header-cell { top: var(--vg-group-row-height, 0px); }
+
   /* A resized column is narrower than its content may be: clip instead of spilling over. */
   .vg-col-sized { min-width: 0; overflow: hidden; }
   .vg-is-resizing,
@@ -352,6 +370,7 @@
    * theme (loaded after this file) replaces it.
    */
   .vg-header-cell,
+  .vg-group-cell,
   .vg-pin-left,
   .vg-pin-right {
     background-color: Canvas;

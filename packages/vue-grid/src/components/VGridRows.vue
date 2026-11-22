@@ -68,7 +68,7 @@ watchEffect(() => {
       :aria-level="grid.keyboardNav && grid.treeMode.value ? depth + 1 : undefined"
       :aria-expanded="item.expandable ? item.expanded : undefined"
       :aria-selected="grid.keyboardNav ? item.selected : undefined"
-      :aria-rowindex="ariaIndexed ? item.index + 2 : undefined"
+      :aria-rowindex="ariaIndexed ? item.index + 1 + grid.headerRows.value : undefined"
     >
       <VGridCell
         v-for="column in grid.columns.value"

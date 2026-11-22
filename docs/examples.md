@@ -115,7 +115,7 @@ you leave out the renderer styles.
 ### Choosing features
 
 Out of the box `<VGrid>` is a plain table. Sorting, filtering, server data, pagination,
-selection, sub-grids, context menus, column reordering, resizing, pinning and visibility, virtual scrolling and keyboard navigation are
+selection, sub-grids, context menus, column reordering, resizing, pinning, visibility and grouping, virtual scrolling and keyboard navigation are
 opt-in features, and only the ones you import are bundled:
 
 ```ts
@@ -144,6 +144,7 @@ app.use(createVueGrid({ features: allFeatures })) // all of them
 | `columnVisibilityFeature` | `hidden` columns, `columnState.hidden`, the menu's Hide column item |
 | `keyboardNavigationFeature` | arrow-key navigation between cells (ARIA grid); without it an ARIA table with tabbable controls |
 | `columnResizingFeature` | dragging a header edge to resize, double-click to fit, `resizable`, `maxWidth`, `columnState.widths` |
+| `columnGroupsFeature` | `group` on columns: a sticky row of group headers above the column headers |
 
 Without its feature, an option does nothing and a dev warning names the feature to add. A grid
 reads `features` once when it is created.
@@ -1050,6 +1051,24 @@ const columnState = ref<ColumnState>({
   <button @click="columnState = { ...columnState, hidden: [] }">Show all</button>
 </template>
 ```
+
+### Grouped column headers
+
+```ts
+// with columnGroupsFeature
+const columns = [
+  col({ key: 'id', header: '#', pinned: 'left', group: 'Bet' }),
+  col({ key: 'player', header: 'Player', pinned: 'left', group: 'Bet' }),
+  col({ key: 'stake', header: 'Stake', group: 'Money' }),
+  col({ key: 'payout', header: 'Payout', group: 'Money' }),
+  col({ key: 'status', header: 'Status' }), // no group: an empty cell above it
+]
+```
+
+Adjacent visible columns with the same `group` share one header cell, in a sticky row above the
+column headers. Groups follow the layout: reorder a column away and its group splits, hide all
+of a group's columns and it disappears, resize a column and the group widens. A pin boundary
+always splits a group, so pinned groups stay pinned. Keyboard navigation skips the group row.
 
 ### Resizable columns
 

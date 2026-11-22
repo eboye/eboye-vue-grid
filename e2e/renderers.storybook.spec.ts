@@ -39,9 +39,14 @@ test('switch, radio and icon-toggle reflect the applied state', async ({ page })
   await sw.click()
   await expect(sw).toHaveAttribute('aria-checked', 'true')
   const thumb = sw.locator('.vg-switch-thumb')
-  const swBox = (await sw.boundingBox())!
-  const thumbBox = (await thumb.boundingBox())!
-  expect(thumbBox.x - swBox.x).toBeGreaterThan(swBox.width / 2 - thumbBox.width) // thumb moved to the end
+  // thumb moved to the end (polled: the theme animates it, and a busy machine can catch it mid-way)
+  await expect
+    .poll(async () => {
+      const swBox = (await sw.boundingBox())!
+      const thumbBox = (await thumb.boundingBox())!
+      return thumbBox.x - swBox.x - (swBox.width / 2 - thumbBox.width)
+    })
+    .toBeGreaterThan(0)
 
   await story(page, 'renderers--radio')
   await valueCell(page, 3).getByRole('radio').click()

@@ -1,4 +1,5 @@
 import type { GridFeature } from '../types'
+import { columnGroupsFeature } from './columnGroups'
 import { columnPinningFeature } from './columnPinning'
 import { columnResizingFeature } from './columnResizing'
 import { columnReorderFeature } from './columnReorder'
@@ -14,6 +15,7 @@ import { subGridsFeature } from './subGrids'
 import { virtualScrollingFeature } from './virtualScrolling'
 
 export {
+  columnGroupsFeature,
   columnPinningFeature,
   columnReorderFeature,
   columnResizingFeature,
@@ -44,4 +46,5 @@ export const allFeatures: readonly GridFeature[] = [
   columnVisibilityFeature,
   keyboardNavigationFeature,
   columnResizingFeature,
+  columnGroupsFeature,
 ]

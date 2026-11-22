@@ -406,6 +406,20 @@
     to { transform: translateX(250%); }
   }
 
+  /* Column groups: a header-styled band; a divider where one group meets another. */
+  .vg-group-cell {
+    padding: calc(var(--vg-header-padding-y) * var(--_vg-density) * 0.6) var(--vg-header-padding-x);
+    background: var(--vg-color-header-bg);
+    color: var(--vg-color-header-text);
+    border-bottom: var(--vg-row-border);
+    font-size: var(--vg-header-font-size);
+    font-weight: var(--vg-header-font-weight);
+    letter-spacing: var(--vg-header-letter-spacing);
+    text-transform: var(--vg-header-text-transform);
+  }
+  .vg-group-cell:not(.vg-group-empty) + .vg-group-cell,
+  .vg-group-cell + .vg-group-cell:not(.vg-group-empty) { border-inline-start: var(--vg-row-border); }
+
   /* Column resizing: a short line on hover, full height and accent while focused or dragging. */
   .vg-resize-handle::after {
     content: '';

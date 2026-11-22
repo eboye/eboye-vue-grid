@@ -53,6 +53,8 @@ export interface GridContext {
     /** Has a resized width (or is being resized): its cells clip their content. */
     isSized(key: string): boolean
   }
+  /** Header rows above the body (2 with column groups). */
+  headerRows: ComputedRef<number>
   // expansion
   treeMode: ComputedRef<boolean>
   hasDetail: ComputedRef<boolean>

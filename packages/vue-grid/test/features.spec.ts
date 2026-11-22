@@ -5,6 +5,7 @@ import VGridComponent from '../src/components/VGrid.vue'
 import { createVueGrid } from '../src/registry/plugin'
 import {
   allFeatures,
+  columnGroupsFeature,
   columnPinningFeature,
   columnReorderFeature,
   columnResizingFeature,
@@ -217,6 +218,37 @@ describe('features are opt-in', () => {
     await flushPromises()
     expect((w.emitted('update:columnState') as { widths?: unknown }[][]).at(-1)![0]!.widths).toBeUndefined()
     w.unmount()
+  })
+
+  it('column groups: a flat header without it; spanning group cells with it, split at pins, hidden columns drop out', async () => {
+    const cols = [
+      { key: 'id', pinned: 'left' as const, group: 'Bet' },
+      { key: 'name', group: 'Bet' },
+      { key: 'score', group: 'Odds' },
+      { key: 'extra', group: 'Odds', value: () => 1 },
+      { key: 'plain' as const, value: () => 'x' },
+    ]
+    const groups = (w: ReturnType<typeof mount>) =>
+      w.findAll('.vg-group-cell').map((c) => [c.text(), c.attributes('style')?.match(/grid-column: ([^;]+)/)?.[1]])
+
+    const bare = mount(VGrid, { props: { rows, columns: cols, rowKey: 'id' } })
+    expect(bare.find('.vg-header-groups').exists()).toBe(false)
+    expect(warn.mock.calls.map((c: unknown[]) => String(c[0])).join('\n')).toContain('needs the columnGroups feature')
+
+    const w = mount(VGrid, { props: { rows, columns: cols, rowKey: 'id', features: [columnGroupsFeature, columnPinningFeature, columnVisibilityFeature] } })
+    expect(w.find('.vg').classes()).toContain('vg-has-groups')
+    // "Bet" is split by the pin boundary; "Odds" spans two columns; "plain" gets an empty cell
+    expect(groups(w)).toEqual([
+      ['Bet', '1 / span 1'],
+      ['Bet', '2 / span 1'],
+      ['Odds', '3 / span 2'],
+      ['', '5 / span 1'],
+    ])
+    expect(w.find('.vg-group-cell.vg-pin-left').text()).toBe('Bet')
+    expect(w.findAll('.vg-group-cell')[2]!.attributes('aria-colspan')).toBe('2')
+
+    await w.setProps({ columnState: { order: cols.map((c) => c.key), hidden: ['score', 'extra'] } })
+    expect(groups(w).map(([label]) => label)).toEqual(['Bet', 'Bet', '']) // "Odds" is gone
   })
 
   it('column visibility: hidden columns show without the feature; hide works with it', async () => {

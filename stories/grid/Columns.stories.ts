@@ -141,6 +141,33 @@ export const Resizing: Story = {
   }),
 }
 
+/**
+ * With `columnGroupsFeature`, give columns a `group` and adjacent columns of the same group share a
+ * header cell above theirs. The group row is sticky, pinned groups stay pinned (a pin boundary
+ * splits a group), and groups follow reordering, hiding and resizing: drag "Payout" out of "Money"
+ * and the group splits; hide both money columns and it disappears.
+ */
+export const Groups: Story = {
+  args: {
+    columns: [
+      bet({ key: 'id', header: '#', pinned: 'left', width: '4rem', group: 'Bet', resizable: false }),
+      bet({ key: 'player', header: 'Player', field: 'player.name', pinned: 'left', width: '11rem', group: 'Bet' }),
+      bet({ key: 'city', header: 'City', field: 'player.city', width: '10rem', group: 'Customer' }),
+      bet({ key: 'verified', header: 'KYC', renderer: 'boolean', width: '6rem', group: 'Customer' }),
+      bet({ key: 'stake', header: 'Stake', renderer: 'currency', width: '9rem', group: 'Money' }),
+      bet({ key: 'payout', header: 'Payout', renderer: 'currency', width: '9rem', group: 'Money' }),
+      bet({ key: 'status', header: 'Status', renderer: 'status', rendererOptions: { tone: statusTones }, width: '9rem' }),
+      bet({ key: 'change', header: 'Δ odds', renderer: 'change', width: '8rem', group: 'Odds' }),
+      bet({ key: 'placedAt', header: 'Placed', renderer: 'date', width: '9rem', group: 'Odds' }),
+    ],
+  },
+  render: (args) => ({
+    components: { VGrid },
+    setup: () => ({ args }),
+    template: `<div class="sb-frame" style="max-width: 900px; height: 420px"><VGrid v-bind="args" style="height: 100%" /></div>`,
+  }),
+}
+
 /** `width` takes any CSS grid track: fixed, `fr`, `minmax()`, `min-content`; `minWidth` adds a floor. */
 export const Sizing: Story = {
   args: {

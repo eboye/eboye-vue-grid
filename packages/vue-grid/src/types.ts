@@ -115,6 +115,11 @@ export interface ColumnDef<T = any, R extends RendererRef = RendererName> {
   maxWidth?: string
   /** Can the user resize this column (column resizing feature)? Default `true`. */
   resizable?: boolean
+  /**
+   * Header group label (column groups feature): adjacent visible columns with the same `group`
+   * share one header cell above their own headers.
+   */
+  group?: string
   align?: Align
   sortable?: boolean
   sortValue?: (row: T) => unknown
@@ -365,7 +370,13 @@ export interface ColumnResizingFeature {
   /** The header edge grip. */
   Handle: Component
 }
+export interface ColumnGroupsFeature {
+  readonly feature: 'columnGroups'
+  /** The group header row. */
+  GroupRow: Component
+}
 export type GridFeature =
+  | ColumnGroupsFeature
   | ColumnResizingFeature
   | KeyboardNavigationFeature
   | ColumnVisibilityFeature
