@@ -17,6 +17,13 @@ feature. This README is the API reference.
 npm i @eboye/vue-grid
 ```
 
+The package is built for a bundler (Vite, webpack, Rollup, esbuild, or a framework built on one),
+like Vue's own `esm-bundler` build. Dev-only warnings are wrapped in
+`process.env.NODE_ENV !== 'production'`, which the bundler replaces, so they disappear from
+production builds. Loading the files straight in a browser (an import map or CDN `<script>`, no
+build step) throws `process is not defined`. If you must do that, define it first:
+`<script>window.process = { env: { NODE_ENV: 'production' } }</script>`.
+
 ```ts
 // main.ts
 import { createApp } from 'vue'

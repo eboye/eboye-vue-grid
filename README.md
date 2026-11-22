@@ -73,6 +73,10 @@ updates the rows. Writing your own renderer takes a component and a three-line d
 npm i @eboye/vue-grid
 ```
 
+Use it with a bundler (Vite, webpack, Rollup, esbuild): like Vue's `esm-bundler` build, it relies
+on the bundler replacing `process.env.NODE_ENV`, which also strips its dev warnings from production
+builds. See the [API reference](packages/vue-grid/README.md#install) for use without a build step.
+
 ```ts
 // main.ts
 import { createApp } from 'vue'
