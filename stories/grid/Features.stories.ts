@@ -16,7 +16,7 @@ import {
   subGridsFeature,
   virtualScrollingFeature,
   type GridFeature,
-} from '@eboye/vue-grid'
+} from '@nocopypaste/vue-grid'
 import { betColumns, makeBets, makeMarkets, marketColumns, type Market } from '../data'
 import { Grid as VGrid, type GridArgs } from '../support'
 

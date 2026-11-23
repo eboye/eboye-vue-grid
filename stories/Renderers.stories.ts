@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import { computed, defineComponent, h, ref, watch } from 'vue'
 import { fn } from 'storybook/test'
-import type { CellActionEvent, ColumnDef, RendererName } from '@eboye/vue-grid'
+import type { CellActionEvent, ColumnDef, RendererName } from '@nocopypaste/vue-grid'
 import { Grid as VGrid } from './support'
 
 /** One sample row: a description of the case, the cell value, and extra fields option functions may read. */

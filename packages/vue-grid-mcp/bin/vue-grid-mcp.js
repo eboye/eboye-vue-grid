@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // vue-grid-mcp                 run the MCP server on stdio (for Claude Code, Cursor, …)
 // vue-grid-mcp validate <file> check a grid config (JSON) and print its diagnostics; exit 1 on errors
-// vue-grid-mcp guide           print AGENTS.md of the installed @eboye/vue-grid
+// vue-grid-mcp guide           print AGENTS.md of the installed @nocopypaste/vue-grid
 import { readFileSync } from 'node:fs'
 import { loadDocs } from '../src/docs.js'
 import { serve } from '../src/server.js'

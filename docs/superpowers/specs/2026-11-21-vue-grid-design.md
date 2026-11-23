@@ -24,7 +24,7 @@ cell-renderer addons, themeable through CSS custom properties.
 npm workspaces, Node ≥ 20, Vue `^3.5` peer, TypeScript 6 strict (`vue-tsc` needs the JS compiler
 API, so not TS 7), ESLint (flat config) + Prettier, Vitest, Playwright.
 
-- `packages/vue-grid` — the library, name `@eboye/vue-grid`. Vite library mode (ESM), declarations by
+- `packages/vue-grid` — the library, name `@nocopypaste/vue-grid`. Vite library mode (ESM), declarations by
   `vue-tsc --emitDeclarationOnly`. Exports:
   - `.` — `VGrid`, `VGridPagination`, `VGridColumnMenu`, `createVueGrid`, `defineCellRenderer`,
     `createColumnHelper`, core helpers, types, and the built-in renderers (definitions + components).
@@ -32,8 +32,8 @@ API, so not TS 7), ESLint (flat config) + Prettier, Vitest, Playwright.
     the whole library), so a separate `./renderers` entry was dropped.
   - `./style.css` — the theme.
   - `sideEffects: ["**/*.css"]`.
-- `packages/cell-renderer-template` — boilerplate addon (`@eboye/vue-grid-renderer-template`),
-  standalone and publishable; `@eboye/vue-grid` is a peer dependency.
+- `packages/cell-renderer-template` — boilerplate addon (`@nocopypaste/vue-grid-renderer-template`),
+  standalone and publishable; `@nocopypaste/vue-grid` is a peer dependency.
 - `playground/` — Vite app demoing every feature; the target of Playwright browser tests.
 
 ## 3. Public API
@@ -128,7 +128,7 @@ function defineCellRenderer<O>(def: {
 }): CellRendererDefinition<O>
 
 // typing renderer names/options for consumers:
-declare module '@eboye/vue-grid' {
+declare module '@nocopypaste/vue-grid' {
   interface CellRendererRegistry { rating: { max?: number } }
 }
 ```

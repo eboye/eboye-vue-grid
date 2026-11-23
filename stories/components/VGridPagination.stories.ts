@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import { ref } from 'vue'
 import { fn } from 'storybook/test'
-import { VGridPagination } from '@eboye/vue-grid'
+import { VGridPagination } from '@nocopypaste/vue-grid'
 
 /**
  * Stand-alone pager: `v-model:page`, `v-model:page-size`, `total`. Works with any list, not only the

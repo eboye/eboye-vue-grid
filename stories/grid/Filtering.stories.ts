@@ -12,7 +12,7 @@ import {
   type ColumnFilter,
   type FilterComponentProps,
   type FilterState,
-} from '@eboye/vue-grid'
+} from '@nocopypaste/vue-grid'
 import { makeBets, makeMarkets, marketColumns, statusTones, type Bet, type Market } from '../data'
 import { Grid as VGrid, type GridArgs } from '../support'
 

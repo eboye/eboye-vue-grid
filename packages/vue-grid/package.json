@@ -1,6 +1,6 @@
 {
-  "name": "@eboye/vue-grid",
-  "version": "0.1.0",
+  "name": "@nocopypaste/vue-grid",
+  "version": "0.2.0",
   "description": "CSS-Grid based data grid for Vue 3 with opt-in features, pluggable cell renderers, sub-grids and CSS-variable theming — documented for coding agents (AGENTS.md, llms.txt, JSON Schema, validator).",
   "license": "MIT",
   "type": "module",
@@ -23,7 +23,8 @@
     "README.md",
     "AGENTS.md",
     "llms.txt",
-    "llms-full.txt"
+    "llms-full.txt",
+    "CHANGELOG.md"
   ],
   "main": "./dist/index.js",
   "module": "./dist/index.js",

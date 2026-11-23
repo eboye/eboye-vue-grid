@@ -2,7 +2,7 @@ import { Meta } from '@storybook/addon-docs/blocks'
 
 <Meta title="Introduction" />
 
-# @eboye/vue-grid
+# @nocopypaste/vue-grid
 
 A data grid for Vue 3 built on **CSS Grid**: real `subgrid` sub-rows, pinned columns, column
 reorder / visibility / pinning with persistence, selection, virtual scrolling, pagination, popover
@@ -11,14 +11,14 @@ context menus, a pluggable **cell-renderer registry** for add-ons, and a theme m
 ## Install
 
 ```sh
-npm i @eboye/vue-grid
+npm i @nocopypaste/vue-grid
 ```
 
 ```ts
 // main.ts
 import { createApp } from 'vue'
-import { createVueGrid, filteringFeature, sortingFeature } from '@eboye/vue-grid'
-import '@eboye/vue-grid/style.css'
+import { createVueGrid, filteringFeature, sortingFeature } from '@nocopypaste/vue-grid'
+import '@nocopypaste/vue-grid/style.css'
 
 createApp(App)
   // optional: defaults, and the opt-in features every grid gets (allFeatures for all of them)
@@ -30,7 +30,7 @@ createApp(App)
 
 ```vue
 <script setup lang="ts">
-import { VGrid, createColumnHelper, currencyRenderer, statusRenderer } from '@eboye/vue-grid'
+import { VGrid, createColumnHelper, currencyRenderer, statusRenderer } from '@nocopypaste/vue-grid'
 
 const col = createColumnHelper<Order>()
 const columns = [

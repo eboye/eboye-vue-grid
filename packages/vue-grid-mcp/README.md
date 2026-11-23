@@ -1,10 +1,10 @@
-# @eboye/vue-grid-mcp
+# @nocopypaste/vue-grid-mcp
 
 An [MCP](https://modelcontextprotocol.io) server that gives coding agents the exact API of
-[`@eboye/vue-grid`](../vue-grid) — so they register the right features, use real option names
+[`@nocopypaste/vue-grid`](../vue-grid) — so they register the right features, use real option names
 and check their grid config instead of guessing. No dependencies besides the grid itself.
 
-When it runs inside a project that has `@eboye/vue-grid` installed, it answers from that copy, so
+When it runs inside a project that has `@nocopypaste/vue-grid` installed, it answers from that copy, so
 the docs match the version you use.
 
 ## Add it
@@ -12,13 +12,13 @@ the docs match the version you use.
 Claude Code (or use the [plugin](../../plugins/vue-grid), which adds this server and a skill):
 
 ```sh
-claude mcp add vue-grid -- npx -y @eboye/vue-grid-mcp
+claude mcp add vue-grid -- npx -y @nocopypaste/vue-grid-mcp
 ```
 
 Any MCP client (Cursor, VS Code, Windsurf, Claude Desktop…):
 
 ```json
-{ "mcpServers": { "vue-grid": { "command": "npx", "args": ["-y", "@eboye/vue-grid-mcp"] } } }
+{ "mcpServers": { "vue-grid": { "command": "npx", "args": ["-y", "@nocopypaste/vue-grid-mcp"] } } }
 ```
 
 ## Tools
@@ -37,8 +37,8 @@ Resources: `vue-grid://AGENTS.md`, `vue-grid://api.md`, `vue-grid://README.md`,
 ## CLI
 
 ```sh
-npx @eboye/vue-grid-mcp validate grid.json   # diagnostics; exit 1 on errors ("-" reads stdin)
-npx @eboye/vue-grid-mcp guide                # print AGENTS.md
+npx @nocopypaste/vue-grid-mcp validate grid.json   # diagnostics; exit 1 on errors ("-" reads stdin)
+npx @nocopypaste/vue-grid-mcp guide                # print AGENTS.md
 ```
 
 `grid.json` is the grid as data, e.g.:

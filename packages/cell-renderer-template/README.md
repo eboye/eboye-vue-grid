@@ -1,15 +1,15 @@
-# @eboye/vue-grid-renderer-template
+# @nocopypaste/vue-grid-renderer-template
 
-Boilerplate for a **3rd-party cell renderer** for [`@eboye/vue-grid`](../vue-grid): a star `rating`
+Boilerplate for a **3rd-party cell renderer** for [`@nocopypaste/vue-grid`](../vue-grid): a star `rating`
 renderer. Copy this package, rename it, and replace `RatingCell.vue`.
 
 ## Use it
 
 ```ts
-import { createVueGrid } from '@eboye/vue-grid'
-import { ratingRenderer } from '@eboye/vue-grid-renderer-template'
-import '@eboye/vue-grid/style.css'
-import '@eboye/vue-grid-renderer-template/style.css'
+import { createVueGrid } from '@nocopypaste/vue-grid'
+import { ratingRenderer } from '@nocopypaste/vue-grid-renderer-template'
+import '@nocopypaste/vue-grid/style.css'
+import '@nocopypaste/vue-grid-renderer-template/style.css'
 
 app.use(createVueGrid({ renderers: [ratingRenderer] }))
 ```
@@ -31,7 +31,7 @@ const columns = [col({ key: 'stars', header: 'Rating', renderer: 'rating', rende
 | `src/types.ts` | The options interface. |
 | `src/index.ts` | `defineCellRenderer({ name, component, defaults, align, sortValue, format })` and the **module augmentation** that makes `renderer: 'rating'` and its `rendererOptions` type-checked. |
 | `src/rating.css` | Styles in `@layer vue-grid-addons`, built only from grid tokens (`--vg-color-*`, `--vg-radius-sm`, …) plus the addon's own `--vg-rating-*` tokens. |
-| `vite.config.ts` | Library build; `vue` and `@eboye/vue-grid` stay external (peer dependencies). |
+| `vite.config.ts` | Library build; `vue` and `@nocopypaste/vue-grid` stay external (peer dependencies). |
 | `test/rating.spec.ts` | Unit test of the component, and an integration test inside `<VGrid>` — including a `@ts-expect-error` proving the options are typed. |
 
 ## Rules of thumb

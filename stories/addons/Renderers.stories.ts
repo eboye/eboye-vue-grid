@@ -6,7 +6,7 @@ import {
   defineCellRenderer,
   type CellRendererProps,
   type CellRendererEmits,
-} from '@eboye/vue-grid'
+} from '@nocopypaste/vue-grid'
 import { makeBets, type Bet } from '../data'
 import { Grid as VGrid, type GridArgs } from '../support'
 
@@ -15,7 +15,7 @@ const sampleRows = makeBets(8)
 const onCellAction = fn()
 
 /**
- * Third-party renderers. `rating` comes from `@eboye/vue-grid-renderer-template` (the boilerplate add-on
+ * Third-party renderers. `rating` comes from `@nocopypaste/vue-grid-renderer-template` (the boilerplate add-on
  * package), registered app-wide in `.storybook/preview.ts` with `createVueGrid({ renderers: [ratingRenderer] })`.
  */
 const meta = {

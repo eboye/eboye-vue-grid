@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
-import { createColumnHelper } from '@eboye/vue-grid'
+import { createColumnHelper } from '@nocopypaste/vue-grid'
 import { betColumns, makeBets, type Bet } from '../data'
 import { Grid as VGrid, type GridArgs } from '../support'
 

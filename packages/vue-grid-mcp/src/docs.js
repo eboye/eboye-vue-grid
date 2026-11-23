@@ -1,4 +1,4 @@
-// Loads the grid's agent docs and API reference — from the project's own @eboye/vue-grid when the
+// Loads the grid's agent docs and API reference — from the project's own @nocopypaste/vue-grid when the
 // server runs inside a project that has it (so answers match the installed version), else from
 // this package's dependency.
 import { readFileSync } from 'node:fs'
@@ -10,12 +10,12 @@ function locateGrid(cwd) {
   for (const base of [join(cwd, 'package.json'), import.meta.url]) {
     try {
       const require = createRequire(base)
-      return dirname(require.resolve('@eboye/vue-grid/package.json'))
+      return dirname(require.resolve('@nocopypaste/vue-grid/package.json'))
     } catch {
       // not installed there
     }
   }
-  throw new Error('@eboye/vue-grid is not installed (it is a dependency of this server: reinstall it).')
+  throw new Error('@nocopypaste/vue-grid is not installed (it is a dependency of this server: reinstall it).')
 }
 
 /** Splits Markdown into `## ` / `### ` sections for search. */

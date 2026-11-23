@@ -52,7 +52,7 @@ test('lists five read-only tools with input schemas', async () => {
 
 test('guide returns AGENTS.md', async () => {
   const r = await call('vue_grid_guide')
-  assert.match(r.content[0].text, /^# @eboye\/vue-grid — guide for coding agents/)
+  assert.match(r.content[0].text, /^# @nocopypaste\/vue-grid — guide for coding agents/)
 })
 
 test('api: index, a section entry, a search by name, and errors as tool results', async () => {

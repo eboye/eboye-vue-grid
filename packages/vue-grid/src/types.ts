@@ -81,7 +81,7 @@ export interface ColumnStateStorage {
  * Augment this interface to register typed renderer names and their options:
  *
  * ```ts
- * declare module '@eboye/vue-grid' {
+ * declare module '@nocopypaste/vue-grid' {
  *   interface CellRendererRegistry { rating: { max?: number } }
  * }
  * ```

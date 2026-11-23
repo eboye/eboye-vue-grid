@@ -1,10 +1,10 @@
-import { defineCellRenderer } from '@eboye/vue-grid'
+import { defineCellRenderer } from '@nocopypaste/vue-grid'
 import RatingCell from './RatingCell.vue'
 import type { RatingOptions } from './types'
 
 // 1. Register the renderer name and its options with the grid's type registry, so
 //    `renderer: 'rating'` autocompletes and `rendererOptions` is type-checked.
-declare module '@eboye/vue-grid' {
+declare module '@nocopypaste/vue-grid' {
   interface CellRendererRegistry {
     rating: RatingOptions
   }

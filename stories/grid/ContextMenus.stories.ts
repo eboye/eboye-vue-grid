@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import { fn } from 'storybook/test'
-import type { CellContext, HeaderMenuContext, MenuItem } from '@eboye/vue-grid'
+import type { CellContext, HeaderMenuContext, MenuItem } from '@nocopypaste/vue-grid'
 import { betColumns, makeBets, type Bet } from '../data'
 import { Grid as VGrid, type GridArgs } from '../support'
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { createColumnHelper, VGrid, type SortState, type VGridExposed } from '@eboye/vue-grid'
+import { createColumnHelper, VGrid, type SortState, type VGridExposed } from '@nocopypaste/vue-grid'
 import { makeBets, type Bet } from '../data'
 
 const rows = makeBets(10_000, 99)

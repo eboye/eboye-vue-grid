@@ -5,7 +5,7 @@ import type {
   ConcreteComponent,
   VNodeProps,
 } from 'vue'
-import { VGrid } from '@eboye/vue-grid'
+import { VGrid } from '@nocopypaste/vue-grid'
 
 /** The props (and `on*` listeners) of `<VGrid>` for a given row type. */
 export type GridArgs<T = any> = Omit<

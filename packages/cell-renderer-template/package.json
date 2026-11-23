@@ -1,7 +1,7 @@
 {
-  "name": "@eboye/vue-grid-renderer-template",
-  "version": "0.1.0",
-  "description": "Boilerplate cell-renderer addon for @eboye/vue-grid: a star rating renderer. Copy this package to start your own.",
+  "name": "@nocopypaste/vue-grid-renderer-template",
+  "version": "0.2.0",
+  "description": "Boilerplate cell-renderer addon for @nocopypaste/vue-grid: a star rating renderer. Copy this package to start your own.",
   "license": "MIT",
   "type": "module",
   "files": [
@@ -26,11 +26,11 @@
     "typecheck": "vue-tsc -p tsconfig.json --noEmit"
   },
   "peerDependencies": {
-    "@eboye/vue-grid": "^0.1.0",
+    "@nocopypaste/vue-grid": "^0.2.0",
     "vue": "^3.5.0"
   },
   "devDependencies": {
-    "@eboye/vue-grid": "*"
+    "@nocopypaste/vue-grid": "*"
   },
   "repository": {
     "type": "git",

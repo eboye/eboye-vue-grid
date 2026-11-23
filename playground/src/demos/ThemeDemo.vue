@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { createColumnHelper, VGrid, type Density } from '@eboye/vue-grid'
+import { createColumnHelper, VGrid, type Density } from '@nocopypaste/vue-grid'
 import { makeBets, type Bet } from '../data'
 
 const rows = makeBets(5, 21)

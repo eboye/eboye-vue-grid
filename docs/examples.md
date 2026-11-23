@@ -1,4 +1,4 @@
-# @eboye/vue-grid — examples
+# @nocopypaste/vue-grid — examples
 
 A task-oriented cookbook. Every snippet is a complete `<script setup>` component you can paste into an
 app that has the plugin and stylesheet installed (step 1). For the full prop/event tables see the
@@ -56,14 +56,14 @@ export interface Order {
 ## 1. Install and set up
 
 ```sh
-npm i @eboye/vue-grid
+npm i @nocopypaste/vue-grid
 ```
 
 ```ts
 // main.ts
 import { createApp } from 'vue'
-import { createVueGrid } from '@eboye/vue-grid'
-import '@eboye/vue-grid/style.css'
+import { createVueGrid } from '@nocopypaste/vue-grid'
+import '@nocopypaste/vue-grid/style.css'
 import App from './App.vue'
 
 createApp(App)
@@ -89,7 +89,7 @@ Only the `text` renderer is built into `<VGrid>`; the rest are opt-in so your bu
 what you use. Two ways:
 
 ```ts
-import { createColumnHelper, currencyRenderer, statusRenderer } from '@eboye/vue-grid'
+import { createColumnHelper, currencyRenderer, statusRenderer } from '@nocopypaste/vue-grid'
 
 // 1. Per column — smallest bundle, options type-checked against the renderer
 const col = createColumnHelper<Order>()
@@ -107,7 +107,7 @@ The examples below use names for brevity — they assume `createVueGrid({ render
 (or swap each `'name'` for its `nameRenderer` import). An unregistered name renders as plain text
 and logs a dev warning.
 
-CSS: `@eboye/vue-grid/style.css` contains everything. `base.css` (structure) + `theme.css` (the
+CSS: `@nocopypaste/vue-grid/style.css` contains everything. `base.css` (structure) + `theme.css` (the
 default look) + `renderers.css` are the parts; import `base.css` alone to style the grid from
 scratch (see §19). `core.css` (base + theme) + (optionally) `renderers.css` let
 you leave out the renderer styles.
@@ -119,7 +119,7 @@ selection, sub-grids, context menus, column reordering, resizing, pinning, visib
 opt-in features, and only the ones you import are bundled:
 
 ```ts
-import { allFeatures, filteringFeature, sortingFeature } from '@eboye/vue-grid'
+import { allFeatures, filteringFeature, sortingFeature } from '@nocopypaste/vue-grid'
 
 // per grid
 // <VGrid :features="[sortingFeature, filteringFeature]" … />
@@ -157,7 +157,7 @@ The examples below assume `createVueGrid({ renderers: allRenderers, features: al
 
 ```vue
 <script setup lang="ts">
-import { VGrid, createColumnHelper } from '@eboye/vue-grid'
+import { VGrid, createColumnHelper } from '@nocopypaste/vue-grid'
 import type { Order } from './types'
 
 const rows: Order[] = [/* … */]
@@ -599,7 +599,7 @@ in the handler and the cell follows.
 ```vue
 <script setup lang="ts">
 import { ref } from 'vue'
-import type { CellActionEvent } from '@eboye/vue-grid'
+import type { CellActionEvent } from '@nocopypaste/vue-grid'
 
 const rows = ref<Market[]>([/* … */])
 const columns = [
@@ -720,7 +720,7 @@ a renderer (§20) for anything reused across grids.
 ```vue
 <script setup lang="ts">
 import { ref } from 'vue'
-import { VGrid, createColumnHelper, type SortState } from '@eboye/vue-grid'
+import { VGrid, createColumnHelper, type SortState } from '@nocopypaste/vue-grid'
 import type { Order } from './types'
 
 const rows: Order[] = [/* … */]
@@ -759,7 +759,7 @@ The grid only updates `sort`; you fetch the sorted data:
 ```vue
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import type { SortState } from '@eboye/vue-grid'
+import type { SortState } from '@nocopypaste/vue-grid'
 
 const sort = ref<SortState | null>(null)
 const rows = ref<Order[]>([])
@@ -787,7 +787,7 @@ watch(
 
 ```vue
 <script setup lang="ts">
-import type { CellActionEvent, CellClickEvent } from '@eboye/vue-grid'
+import type { CellActionEvent, CellClickEvent } from '@nocopypaste/vue-grid'
 
 const col = createColumnHelper<Order>()
 const columns = [
@@ -840,7 +840,7 @@ function onCellAction({ name, payload, row, rowKey, column }: CellActionEvent<Or
 ```vue
 <script setup lang="ts">
 import { ref } from 'vue'
-import type { RowKey } from '@eboye/vue-grid'
+import type { RowKey } from '@nocopypaste/vue-grid'
 
 const selected = ref<RowKey[]>([])
 </script>
@@ -876,7 +876,7 @@ columns at every depth, and inherit sorting, pinning, reordering and hiding.
 ```vue
 <script setup lang="ts">
 import { ref } from 'vue'
-import type { RowKey } from '@eboye/vue-grid'
+import type { RowKey } from '@nocopypaste/vue-grid'
 
 const expanded = ref<RowKey[]>([])
 </script>
@@ -987,7 +987,7 @@ right-click menu (§12).
 `storage` accepts a key (localStorage) or your own adapter:
 
 ```ts
-import type { ColumnStateStorage } from '@eboye/vue-grid'
+import type { ColumnStateStorage } from '@nocopypaste/vue-grid'
 
 const serverStorage: ColumnStateStorage = {
   load: () => userPrefs.value.ordersGrid ?? null,
@@ -1006,7 +1006,7 @@ appended, so changing your column list never breaks a saved layout.
 
 ```vue
 <script setup lang="ts">
-import { VGrid, VGridColumnMenu, columnVisibilityFeature } from '@eboye/vue-grid'
+import { VGrid, VGridColumnMenu, columnVisibilityFeature } from '@nocopypaste/vue-grid'
 </script>
 
 <template>
@@ -1037,7 +1037,7 @@ import { VGrid, VGridColumnMenu, columnVisibilityFeature } from '@eboye/vue-grid
 ```vue
 <script setup lang="ts">
 import { ref } from 'vue'
-import type { ColumnState } from '@eboye/vue-grid'
+import type { ColumnState } from '@nocopypaste/vue-grid'
 
 const columnState = ref<ColumnState>({
   order: ['id', 'customer', 'total'],
@@ -1109,7 +1109,7 @@ close on Esc / outside click, flip to stay on screen, and support arrow keys, Ho
 
 ```vue
 <script setup lang="ts">
-import type { CellContext, ContextActionEvent, MenuItem } from '@eboye/vue-grid'
+import type { CellContext, ContextActionEvent, MenuItem } from '@nocopypaste/vue-grid'
 
 function contextMenu({ row, column, value }: CellContext<Order>): MenuItem[] {
   if (column.key === 'url') return [] // [] or null → the browser's own menu
@@ -1190,7 +1190,7 @@ import {
   statusRenderer,
   booleanRenderer,
   type FilterState,
-} from '@eboye/vue-grid'
+} from '@nocopypaste/vue-grid'
 
 const filters = ref<FilterState | null>(null)
 const columns = [
@@ -1262,7 +1262,7 @@ also has *Filter…*, *Clear filter* and *Clear all filters*.
 ```vue
 <!-- EvenOddFilter.vue -->
 <script setup lang="ts">
-import type { ColumnFilter } from '@eboye/vue-grid'
+import type { ColumnFilter } from '@nocopypaste/vue-grid'
 
 defineProps<{ modelValue: ColumnFilter | undefined }>()
 const emit = defineEmits<{ 'update:modelValue': [ColumnFilter | undefined] }>()
@@ -1308,7 +1308,7 @@ matching parent keeps all its children. Select-all only selects the rows you can
 
 ```vue
 <script setup lang="ts">
-import { VGrid, type DataSource } from '@eboye/vue-grid'
+import { VGrid, type DataSource } from '@nocopypaste/vue-grid'
 
 const fetchBets: DataSource<Bet> = async (query, { signal }) => {
   // query = { sort: { key, dir } | null, filters: { columns, search }, page, pageSize }
@@ -1370,7 +1370,7 @@ If your data already lives in a store, keep `rows` yourself and listen to one ev
 
 ```vue
 <script setup lang="ts">
-import type { GridQuery } from '@eboye/vue-grid'
+import type { GridQuery } from '@nocopypaste/vue-grid'
 
 const rows = ref<Bet[]>([])
 const loading = ref(false)
@@ -1412,7 +1412,7 @@ or a test can apply exactly the grid's rules to the same `FilterState`.
 ```vue
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { VGrid, VGridPagination, type SortState } from '@eboye/vue-grid'
+import { VGrid, VGridPagination, type SortState } from '@nocopypaste/vue-grid'
 
 const page = ref(1)
 const pageSize = ref(25)
@@ -1534,7 +1534,7 @@ place of the empty message.
 ```vue
 <script setup lang="ts">
 import { ref } from 'vue'
-import { VGrid, type VGridExposed } from '@eboye/vue-grid'
+import { VGrid, type VGridExposed } from '@nocopypaste/vue-grid'
 
 const grid = ref<VGridExposed>()
 </script>
@@ -1569,7 +1569,7 @@ if (order) order.status = 'Paid'
 row keeps its identity, so only the patched rows re-render.
 
 ```ts
-import { patchRows } from '@eboye/vue-grid'
+import { patchRows } from '@nocopypaste/vue-grid'
 
 const rows = shallowRef<Order[]>(await api.orders())
 
@@ -1669,8 +1669,8 @@ or force it (`color-scheme: dark` on `html` or on a wrapper). To set custom colo
 The default look (`theme.css`) is optional. Import the structure alone and style it yourself:
 
 ```ts
-// main.ts — instead of '@eboye/vue-grid/style.css'
-import '@eboye/vue-grid/base.css'
+// main.ts — instead of '@nocopypaste/vue-grid/style.css'
+import '@nocopypaste/vue-grid/base.css'
 import './grid.css'
 ```
 
@@ -1726,7 +1726,7 @@ A renderer is a component plus a definition. The complete, publishable example i
 <!-- RatingCell.vue -->
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { CellRendererEmits, CellRendererProps } from '@eboye/vue-grid'
+import type { CellRendererEmits, CellRendererProps } from '@nocopypaste/vue-grid'
 import type { RatingOptions } from './types'
 
 const props = defineProps<CellRendererProps<unknown, number | null, RatingOptions>>()
@@ -1761,11 +1761,11 @@ Renderers must not use `v-html`; render text through interpolation so values are
 
 ```ts
 // index.ts
-import { defineCellRenderer } from '@eboye/vue-grid'
+import { defineCellRenderer } from '@nocopypaste/vue-grid'
 import RatingCell from './RatingCell.vue'
 import type { RatingOptions } from './types' // { max?: number; readonly?: boolean }
 
-declare module '@eboye/vue-grid' {
+declare module '@nocopypaste/vue-grid' {
   interface CellRendererRegistry {
     rating: RatingOptions // makes renderer: 'rating' autocomplete and type-checks its options
   }
@@ -1842,7 +1842,7 @@ The menu behind `actions-menu` and the context menus is exported.
 
 ```vue
 <script setup lang="ts">
-import { VGridMenu, type MenuItem } from '@eboye/vue-grid'
+import { VGridMenu, type MenuItem } from '@nocopypaste/vue-grid'
 
 const items: MenuItem[] = [
   { name: 'export-csv', label: 'Export CSV' },
@@ -1867,7 +1867,7 @@ const items: MenuItem[] = [
 ```vue
 <script setup lang="ts">
 import { ref } from 'vue'
-import { VGridMenu } from '@eboye/vue-grid'
+import { VGridMenu } from '@nocopypaste/vue-grid'
 
 const menu = ref<InstanceType<typeof VGridMenu>>()
 
@@ -1907,7 +1907,7 @@ import {
   setColumnPinned,
   pageItems, // page buttons with ellipses: pageItems(5, 20, 1)
   localStorageAdapter, // localStorageAdapter('orders-grid')
-} from '@eboye/vue-grid'
+} from '@nocopypaste/vue-grid'
 
 // client-side paging + sorting
 const pageRows = computed(() =>

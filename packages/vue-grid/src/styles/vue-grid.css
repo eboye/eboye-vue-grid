@@ -1,4 +1,4 @@
-/* @eboye/vue-grid — everything: structure, default theme and every cell renderer. In the published
+/* @nocopypaste/vue-grid — everything: structure, default theme and every cell renderer. In the published
  * package this is style.css (inlined). Pick parts with base.css, theme.css and renderers.css. */
 @import './base.css';
 @import './theme.css';

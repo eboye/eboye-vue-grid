@@ -9,7 +9,7 @@
     "typecheck": "vue-tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@eboye/vue-grid": "*",
-    "@eboye/vue-grid-renderer-template": "*"
+    "@nocopypaste/vue-grid": "*",
+    "@nocopypaste/vue-grid-renderer-template": "*"
   }
 }

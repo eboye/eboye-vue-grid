@@ -9,7 +9,7 @@ import {
   type HeaderActionEvent,
   type MenuItem,
   type SortState,
-} from '@eboye/vue-grid'
+} from '@nocopypaste/vue-grid'
 import { makeBets, type Bet } from '../data'
 
 const rows = makeBets(25)

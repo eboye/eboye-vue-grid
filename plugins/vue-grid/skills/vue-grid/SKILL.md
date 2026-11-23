@@ -1,9 +1,9 @@
 ---
 name: vue-grid
-description: Use when building, changing or debugging a data table / data grid with @eboye/vue-grid (`<VGrid>`) in a Vue 3 app — columns, cell renderers, sorting, filtering, server data, pagination, selection, sub-grids, detail rows, virtual scrolling, pinned columns or rows, totals, menus, theming — or when a VGrid option "does nothing". Gives the rules that prevent silent failures, the exact API via the vue-grid MCP tools, and a validate-then-verify workflow.
+description: Use when building, changing or debugging a data table / data grid with @nocopypaste/vue-grid (`<VGrid>`) in a Vue 3 app — columns, cell renderers, sorting, filtering, server data, pagination, selection, sub-grids, detail rows, virtual scrolling, pinned columns or rows, totals, menus, theming — or when a VGrid option "does nothing". Gives the rules that prevent silent failures, the exact API via the vue-grid MCP tools, and a validate-then-verify workflow.
 ---
 
-# Building with @eboye/vue-grid
+# Building with @nocopypaste/vue-grid
 
 `<VGrid>` keeps everything opt-in: a feature or renderer you forget to register is not an error —
 the option just **does nothing**. Most broken grids come from that, from guessing option names,
@@ -12,9 +12,9 @@ or from a grid without a bounded height. This workflow prevents all three.
 ## 1. Load the rules (once per task)
 
 - With the `vue-grid` MCP server (this plugin starts it): call **`vue_grid_guide`**.
-- Without it: read `node_modules/@eboye/vue-grid/AGENTS.md` (the same text, matching the
-  installed version). Not installed yet: `npm i @eboye/vue-grid`, and import
-  `@eboye/vue-grid/style.css` once in `main.ts`.
+- Without it: read `node_modules/@nocopypaste/vue-grid/AGENTS.md` (the same text, matching the
+  installed version). Not installed yet: `npm i @nocopypaste/vue-grid`, and import
+  `@nocopypaste/vue-grid/style.css` once in `main.ts`.
 
 Keep its **Rules** section in mind for every edit.
 
@@ -31,7 +31,7 @@ and the renderer export (`currencyRenderer`, …).
 - **`vue_grid_renderer`** `{ name }` — every `rendererOptions` key of a renderer, with types.
 - **`vue_grid_search_docs`** `{ query }` — how-to sections (server data, lazy sub-rows, theming…).
 
-Without MCP: `node_modules/@eboye/vue-grid/agent/api.md` (generated reference) and `README.md`.
+Without MCP: `node_modules/@nocopypaste/vue-grid/agent/api.md` (generated reference) and `README.md`.
 
 ## 4. Write the code
 
@@ -53,8 +53,8 @@ Call **`vue_grid_validate`** with the grid's config as data:
 
 Renderers / functions may be written as their export names or source strings. Fix every
 `error`, act on each `warning` (they're options that silently do nothing), then validate again.
-Without MCP: `npx @eboye/vue-grid-mcp validate grid.json`, or
-`validateGridConfig()` from `@eboye/vue-grid/agent` in a script.
+Without MCP: `npx @nocopypaste/vue-grid-mcp validate grid.json`, or
+`validateGridConfig()` from `@nocopypaste/vue-grid/agent` in a script.
 
 ## 6. Verify in a browser
 

@@ -1,4 +1,4 @@
-# @eboye/vue-grid
+# @nocopypaste/vue-grid
 
 A data grid for Vue 3 built on **CSS Grid** — with real `subgrid` sub-rows, pinned columns, column
 reorder/visibility with persistence, selection, virtual scrolling, pagination, a pluggable
@@ -19,7 +19,7 @@ feature. This README is the API reference.
 ## Install
 
 ```sh
-npm i @eboye/vue-grid
+npm i @nocopypaste/vue-grid
 ```
 
 The package is built for a bundler (Vite, webpack, Rollup, esbuild, or a framework built on one),
@@ -32,8 +32,8 @@ build step) throws `process is not defined`. If you must do that, define it firs
 ```ts
 // main.ts
 import { createApp } from 'vue'
-import { createVueGrid } from '@eboye/vue-grid'
-import '@eboye/vue-grid/style.css'
+import { createVueGrid } from '@nocopypaste/vue-grid'
+import '@nocopypaste/vue-grid/style.css'
 
 createApp(App)
   .use(createVueGrid({ locale: 'en-US', currency: 'EUR' })) // optional: app-wide defaults
@@ -55,7 +55,7 @@ import {
   sortingFeature,
   statusRenderer,
   type SortState,
-} from '@eboye/vue-grid'
+} from '@nocopypaste/vue-grid'
 
 interface Order { id: number; customer: { name: string }; total: number; status: 'Paid' | 'Open'; placedAt: string }
 
@@ -139,7 +139,7 @@ what you import.
   An unregistered name renders as plain text and logs a dev warning saying how to register it.
 - **Components and helpers** (`VGridPagination`, `VGridColumnMenu`, `VGridMenu`, `sortRows`, …) are
   only bundled when imported.
-- **CSS**: `@eboye/vue-grid/style.css` has everything. Pick parts instead:
+- **CSS**: `@nocopypaste/vue-grid/style.css` has everything. Pick parts instead:
 
   | File | What | gzip |
   |---|---|---|
@@ -176,7 +176,7 @@ what you import.
 | `VGrid` + `VGridPagination` + `VGridColumnMenu` | 41.6 kB / 14.7 kB |
 | `sortRows` only | 0.7 kB / 0.5 kB |
 | everything | 124.1 kB / 40.4 kB |
-| `validateGridConfig` (`@eboye/vue-grid/agent`, never in an app bundle) | 57.5 kB / 15.4 kB |
+| `validateGridConfig` (`@nocopypaste/vue-grid/agent`, never in an app bundle) | 57.5 kB / 15.4 kB |
 
 With `filteringFeature`, the filter popover body and the filter-row editors are **on-demand
 chunks**: they load the first time a popover opens or `filter-row` is on. With
@@ -410,7 +410,7 @@ The same component powers the `actions-menu` renderer and is exported for add-on
 
 ```vue
 <script setup lang="ts">
-import { VGrid, VGridSearch, filteringFeature, numberRenderer, statusRenderer, type FilterState } from '@eboye/vue-grid'
+import { VGrid, VGridSearch, filteringFeature, numberRenderer, statusRenderer, type FilterState } from '@nocopypaste/vue-grid'
 
 const filters = ref<FilterState | null>(null)
 const columns = [
@@ -500,7 +500,7 @@ itself; it shows exactly what the function returns.
 
 ```vue
 <script setup lang="ts">
-import { filteringFeature, paginationFeature, serverDataFeature, sortingFeature, type DataSource } from '@eboye/vue-grid'
+import { filteringFeature, paginationFeature, serverDataFeature, sortingFeature, type DataSource } from '@nocopypaste/vue-grid'
 
 const fetchBets: DataSource<Bet> = async (query, { signal }) => {
   // query: { sort: { key, dir } | null, filters: FilterState, page: number, pageSize: number | null }
@@ -746,12 +746,12 @@ Values option callbacks receive `(value, row)`. The component of every renderer 
 ## Writing a cell renderer (addons)
 
 A renderer is a component plus a small definition. See
-[`@eboye/vue-grid-renderer-template`](../cell-renderer-template) for a complete, publishable example.
+[`@nocopypaste/vue-grid-renderer-template`](../cell-renderer-template) for a complete, publishable example.
 
 ```vue
 <!-- RatingCell.vue -->
 <script setup lang="ts">
-import type { CellRendererEmits, CellRendererProps } from '@eboye/vue-grid'
+import type { CellRendererEmits, CellRendererProps } from '@nocopypaste/vue-grid'
 const props = defineProps<CellRendererProps<unknown, number, { max?: number }>>()
 const emit = defineEmits<CellRendererEmits>()
 </script>
@@ -761,8 +761,8 @@ const emit = defineEmits<CellRendererEmits>()
 ```
 
 ```ts
-import { defineCellRenderer } from '@eboye/vue-grid'
-declare module '@eboye/vue-grid' {
+import { defineCellRenderer } from '@nocopypaste/vue-grid'
+declare module '@nocopypaste/vue-grid' {
   interface CellRendererRegistry { rating: { max?: number } }   // typed `renderer: 'rating'`
 }
 export const ratingRenderer = defineCellRenderer<{ max?: number }>({
@@ -814,7 +814,7 @@ keeps its structure (columns, sub-grid alignment, sticky header and pins, tree i
 menus and popovers) with none of the default look. Then style the classes yourself:
 
 ```ts
-import '@eboye/vue-grid/base.css'
+import '@nocopypaste/vue-grid/base.css'
 import './my-grid-theme.css'
 ```
 
@@ -842,7 +842,7 @@ llms.txt convention. The API reference is generated from the sources into
 [JSON Schema](agent/grid-config.schema.json) of a grid config. To check a config:
 
 ```ts
-import { validateGridConfig } from '@eboye/vue-grid/agent'
+import { validateGridConfig } from '@nocopypaste/vue-grid/agent'
 
 const { ok, diagnostics } = validateGridConfig({
   rowKey: 'id',
@@ -855,8 +855,8 @@ const { ok, diagnostics } = validateGridConfig({
 // warning props.sortMode       Sortable columns, but sorting is controlled … add `sort-mode="client"`
 ```
 
-`@eboye/vue-grid/agent` is a separate entry: apps that don't import it never bundle it. The
-[`@eboye/vue-grid-mcp`](../vue-grid-mcp) MCP server serves the same to agents as tools, and the
+`@nocopypaste/vue-grid/agent` is a separate entry: apps that don't import it never bundle it. The
+[`@nocopypaste/vue-grid-mcp`](../vue-grid-mcp) MCP server serves the same to agents as tools, and the
 [Claude Code plugin](../../plugins/vue-grid) adds a skill with the full workflow.
 
 ## Browser support

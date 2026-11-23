@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { createColumnHelper, VGrid, VGridColumnMenu } from '@eboye/vue-grid'
+import { createColumnHelper, VGrid, VGridColumnMenu } from '@nocopypaste/vue-grid'
 import { makeBets, type Bet } from '../data'
 
 const rows = makeBets(40, 11)

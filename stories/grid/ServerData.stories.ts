@@ -11,7 +11,7 @@ import {
   type DataSource as GridDataSource,
   type FilterOption,
   type GridQuery,
-} from '@eboye/vue-grid'
+} from '@nocopypaste/vue-grid'
 import { makeBets, statusTones, type Bet } from '../data'
 import { Grid as VGrid, type GridArgs } from '../support'
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { createColumnHelper, VGrid, type RowKey } from '@eboye/vue-grid'
+import { createColumnHelper, VGrid, type RowKey } from '@nocopypaste/vue-grid'
 import { makeBets, type Bet } from '../data'
 
 const rows = makeBets(8, 3)

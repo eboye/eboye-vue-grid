@@ -1,9 +1,9 @@
 import type { Preview } from '@storybook/vue3-vite'
 import { setup } from '@storybook/vue3-vite'
-import { allFeatures, allRenderers, createVueGrid } from '@eboye/vue-grid'
-import { ratingRenderer } from '@eboye/vue-grid-renderer-template'
-import '@eboye/vue-grid/style.css'
-import '@eboye/vue-grid-renderer-template/style.css'
+import { allFeatures, allRenderers, createVueGrid } from '@nocopypaste/vue-grid'
+import { ratingRenderer } from '@nocopypaste/vue-grid-renderer-template'
+import '@nocopypaste/vue-grid/style.css'
+import '@nocopypaste/vue-grid-renderer-template/style.css'
 import './preview.css'
 
 // Same app-wide setup a consumer would do in main.ts: defaults + the add-on renderer.

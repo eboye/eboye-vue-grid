@@ -1,4 +1,4 @@
-import { createColumnHelper } from '@eboye/vue-grid'
+import { createColumnHelper } from '@nocopypaste/vue-grid'
 import type { Bet, Market } from '../playground/src/data'
 
 // Same deterministic sample data as the playground and the browser tests.

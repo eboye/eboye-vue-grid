@@ -1,4 +1,4 @@
-# @eboye/vue-grid — guide for coding agents
+# @nocopypaste/vue-grid — guide for coding agents
 
 `<VGrid>` is a Vue 3 data grid laid out with CSS Grid (nested rows use `subgrid`). Everything
 beyond a read-only table is an opt-in **feature**, and every cell type is an opt-in **renderer**,
@@ -6,13 +6,13 @@ so an app only bundles what it imports. This file is the shortest path to correc
 generated reference is [`agent/api.md`](agent/api.md) (also inside `llms-full.txt`), and
 [`README.md`](README.md) explains each area in depth.
 
-Machine-checkable: `validateGridConfig()` from `@eboye/vue-grid/agent` checks a grid config and
+Machine-checkable: `validateGridConfig()` from `@nocopypaste/vue-grid/agent` checks a grid config and
 says how to fix each problem; [`agent/grid-config.schema.json`](agent/grid-config.schema.json) is its
-JSON Schema. The `@eboye/vue-grid-mcp` MCP server serves all of this as tools.
+JSON Schema. The `@nocopypaste/vue-grid-mcp` MCP server serves all of this as tools.
 
 ## Rules (each one is a bug when skipped)
 
-1. **Import the CSS once**: `import '@eboye/vue-grid/style.css'` (in `main.ts`). Without it the
+1. **Import the CSS once**: `import '@nocopypaste/vue-grid/style.css'` (in `main.ts`). Without it the
    grid has no layout.
 2. **Register every feature an option needs.** `sortable`, `filterable`, `pagination`,
    `selectable`, `sub-rows`, `virtual`, `pinned`, `hidden`, `group`, `aggregate`, `totals`,
@@ -98,7 +98,7 @@ Every option is in `agent/api.md` → Renderers. Options typed `RowFn` / `RowOpt
 
 ```vue
 <script setup lang="ts">
-import { VGrid, createColumnHelper, currencyRenderer, dateRenderer, sortingFeature, statusRenderer } from '@eboye/vue-grid'
+import { VGrid, createColumnHelper, currencyRenderer, dateRenderer, sortingFeature, statusRenderer } from '@nocopypaste/vue-grid'
 
 interface Order { id: number; customer: { name: string }; total: number; status: 'Paid' | 'Open'; placedAt: string }
 defineProps<{ orders: Order[] }>()
@@ -125,7 +125,7 @@ const columns = [
 import {
   VGrid, VGridColumnMenu, VGridSearch,
   columnVisibilityFeature, filteringFeature, sortingFeature, type FilterState,
-} from '@eboye/vue-grid'
+} from '@nocopypaste/vue-grid'
 const filters = ref<FilterState | null>(null)
 // columns: add `filterable: true` (type from the renderer, or `filter: 'date'` etc.)
 </script>
@@ -146,7 +146,7 @@ const filters = ref<FilterState | null>(null)
 ### Server data with paging
 
 ```ts
-import { filteringFeature, paginationFeature, serverDataFeature, sortingFeature, type DataSource } from '@eboye/vue-grid'
+import { filteringFeature, paginationFeature, serverDataFeature, sortingFeature, type DataSource } from '@nocopypaste/vue-grid'
 
 const fetchOrders: DataSource<Order> = async (query, { signal }) => {
   // query: { sort: { key, dir } | null, filters: { columns, search }, page, pageSize }
@@ -218,7 +218,7 @@ const pinned = ref<PinnedRowsState>({ top: [42] })
 
 ```vue
 <script setup lang="ts">
-import { actionsMenuRenderer, menusFeature, type CellActionEvent, type CellContext, type MenuItem } from '@eboye/vue-grid'
+import { actionsMenuRenderer, menusFeature, type CellActionEvent, type CellContext, type MenuItem } from '@nocopypaste/vue-grid'
 const columns = [
   /* … */
   col({ key: 'actions', header: '', width: 'min-content', renderer: actionsMenuRenderer,
@@ -244,7 +244,7 @@ col({ key: 'active', renderer: switchRenderer })
 ### Your own renderer
 
 ```ts
-import { defineCellRenderer } from '@eboye/vue-grid'
+import { defineCellRenderer } from '@nocopypaste/vue-grid'
 import RatingCell from './RatingCell.vue' // props: CellRendererProps<Row, number, { max?: number }>; emit('action', 'rate', n)
 export const ratingRenderer = defineCellRenderer<{ max?: number }>({ name: 'rating', component: RatingCell, defaults: { max: 5 } })
 // column: { key: 'rating', renderer: ratingRenderer, rendererOptions: { max: 10 } }
@@ -262,7 +262,7 @@ Tokens: `--vg-*` (see README → Theming). Dark mode follows `color-scheme`. Den
 ## Check your work
 
 1. Validate the config: `validateGridConfig({ columns, rowKey: 'id', features: ['sortingFeature'], sortMode: 'client' })`
-   from `@eboye/vue-grid/agent` (or the MCP tool `vue_grid_validate`). Fix every `error`; read the
+   from `@nocopypaste/vue-grid/agent` (or the MCP tool `vue_grid_validate`). Fix every `error`; read the
    `warning`s.
 2. Run the app in dev mode and read the console: `[vue-grid]` warnings name a missing feature, an
    unknown renderer or a duplicate row key.

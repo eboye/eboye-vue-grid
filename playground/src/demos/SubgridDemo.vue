@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { createColumnHelper, VGrid, type RowKey, type VGridExposed } from '@eboye/vue-grid'
+import { createColumnHelper, VGrid, type RowKey, type VGridExposed } from '@nocopypaste/vue-grid'
 import { loadFolder, makeMarkets, rootFolders, type Folder, type Market } from '../data'
 
 const markets = makeMarkets()

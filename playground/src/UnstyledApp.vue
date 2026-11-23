@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // The grid with base.css only (no theme): structure must hold on its own. See e2e/unstyled.spec.ts.
 import { ref } from 'vue'
-import { VGrid, allFeatures, numberRenderer, type ColumnDef, type RowKey, type SortState } from '@eboye/vue-grid'
+import { VGrid, allFeatures, numberRenderer, type ColumnDef, type RowKey, type SortState } from '@nocopypaste/vue-grid'
 
 interface Row {
   id: number

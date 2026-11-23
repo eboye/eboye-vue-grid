@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://unpkg.com/@eboye/vue-grid/agent/grid-config.schema.json",
-  "title": "@eboye/vue-grid grid config",
-  "description": "A <VGrid> configuration as data: its props (camelCase), `columns` and the `features` it registers (export names, e.g. \"sortingFeature\"). Functions and components are allowed where the API takes them but are not checked. Validate fully with validateGridConfig() from @eboye/vue-grid/agent.",
+  "$id": "https://unpkg.com/@nocopypaste/vue-grid/agent/grid-config.schema.json",
+  "title": "@nocopypaste/vue-grid grid config",
+  "description": "A <VGrid> configuration as data: its props (camelCase), `columns` and the `features` it registers (export names, e.g. \"sortingFeature\"). Functions and components are allowed where the API takes them but are not checked. Validate fully with validateGridConfig() from @nocopypaste/vue-grid/agent.",
   "type": "object",
   "properties": {
     "rows": {

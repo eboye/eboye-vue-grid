@@ -1,23 +1,23 @@
-# @eboye/vue-grid
+# @nocopypaste/vue-grid
 
 > A Vue 3 data grid laid out with CSS Grid and `subgrid`. A plain grid is a read-only table (13.2 kB gzip); sorting, filtering, server data, pagination, selection, sub-grids, menus, column pinning / reordering / resizing / visibility / groups, pinned rows, totals, virtual scrolling and keyboard navigation are opt-in features, and 29 cell renderers are opt-in imports. Typed end to end, accessible, themeable with CSS variables, mobile and touch ready.
 
-Read AGENTS.md first: it lists the rules that cause silent bugs when skipped (register features, pass renderer definitions, `sort-mode="client"`, bounded height), a "which feature for what" table and copy-paste recipes. Validate a grid config with `validateGridConfig()` from `@eboye/vue-grid/agent`.
+Read AGENTS.md first: it lists the rules that cause silent bugs when skipped (register features, pass renderer definitions, `sort-mode="client"`, bounded height), a "which feature for what" table and copy-paste recipes. Validate a grid config with `validateGridConfig()` from `@nocopypaste/vue-grid/agent`.
 
 ## Docs
 
-- [AGENTS.md](https://unpkg.com/@eboye/vue-grid/AGENTS.md): rules, feature and renderer choice, recipes, pitfalls — start here
-- [API reference](https://unpkg.com/@eboye/vue-grid/agent/api.md): every prop, v-model, event, slot, method, column option, feature and renderer option (generated from the sources)
-- [README](https://unpkg.com/@eboye/vue-grid/README.md): each area in depth (filtering, server data, sub-grids, virtual scrolling, theming, browser support)
+- [AGENTS.md](https://unpkg.com/@nocopypaste/vue-grid/AGENTS.md): rules, feature and renderer choice, recipes, pitfalls — start here
+- [API reference](https://unpkg.com/@nocopypaste/vue-grid/agent/api.md): every prop, v-model, event, slot, method, column option, feature and renderer option (generated from the sources)
+- [README](https://unpkg.com/@nocopypaste/vue-grid/README.md): each area in depth (filtering, server data, sub-grids, virtual scrolling, theming, browser support)
 
 ## Machine-readable
 
-- [api.json](https://unpkg.com/@eboye/vue-grid/agent/api.json): the API reference as JSON
-- [grid-config.schema.json](https://unpkg.com/@eboye/vue-grid/agent/grid-config.schema.json): JSON Schema of a grid config (props + columns + features)
-- `import { api, validateGridConfig } from '@eboye/vue-grid/agent'`: the same, plus a validator that explains each problem and its fix
+- [api.json](https://unpkg.com/@nocopypaste/vue-grid/agent/api.json): the API reference as JSON
+- [grid-config.schema.json](https://unpkg.com/@nocopypaste/vue-grid/agent/grid-config.schema.json): JSON Schema of a grid config (props + columns + features)
+- `import { api, validateGridConfig } from '@nocopypaste/vue-grid/agent'`: the same, plus a validator that explains each problem and its fix
 
 ## Optional
 
-- [llms-full.txt](https://unpkg.com/@eboye/vue-grid/llms-full.txt): AGENTS.md + API reference + README in one file
-- MCP server: `npx -y @eboye/vue-grid-mcp` (tools: guide, API lookup, renderer details, doc search, config validation)
+- [llms-full.txt](https://unpkg.com/@nocopypaste/vue-grid/llms-full.txt): AGENTS.md + API reference + README in one file
+- MCP server: `npx -y @nocopypaste/vue-grid-mcp` (tools: guide, API lookup, renderer details, doc search, config validation)
 - Claude Code plugin (MCP server + skill): `/plugin install vue-grid --marketplace https://github.com/eboye/eboye-vue-grid`

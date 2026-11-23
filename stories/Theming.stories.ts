@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import { computed } from 'vue'
-import type { Density } from '@eboye/vue-grid'
+import type { Density } from '@nocopypaste/vue-grid'
 import { Grid as VGrid } from './support'
 import { betColumns, makeBets } from './data'
 

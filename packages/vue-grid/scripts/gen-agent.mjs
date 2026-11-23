@@ -367,7 +367,7 @@ const schema = {
   $id: `https://unpkg.com/${pkg.name}/agent/grid-config.schema.json`,
   title: `${pkg.name} grid config`,
   description:
-    'A <VGrid> configuration as data: its props (camelCase), `columns` and the `features` it registers (export names, e.g. "sortingFeature"). Functions and components are allowed where the API takes them but are not checked. Validate fully with validateGridConfig() from @eboye/vue-grid/agent.',
+    'A <VGrid> configuration as data: its props (camelCase), `columns` and the `features` it registers (export names, e.g. "sortingFeature"). Functions and components are allowed where the API takes them but are not checked. Validate fully with validateGridConfig() from @nocopypaste/vue-grid/agent.',
   type: 'object',
   properties: {
     ...objectSchema([...props, ...models]).properties,
@@ -391,7 +391,7 @@ const full = [agents.trim(), md.trim(), `# README\n\n${readme.trim()}`].join('\n
 // ── write / check ────────────────────────────────────────────────────────────────────────────
 const outputs = {
   'src/agent/api.json': JSON.stringify(api, null, 2) + '\n',
-  // the same, as a plain file in the package (`@eboye/vue-grid/agent/api.json`)
+  // the same, as a plain file in the package (`@nocopypaste/vue-grid/agent/api.json`)
   'agent/api.json': JSON.stringify(api, null, 2) + '\n',
   'agent/api.md': md + '\n',
   'agent/grid-config.schema.json': JSON.stringify(schema, null, 2) + '\n',

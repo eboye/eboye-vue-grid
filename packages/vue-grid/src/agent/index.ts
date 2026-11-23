@@ -1,9 +1,9 @@
 /**
- * `@eboye/vue-grid/agent`: the grid's API as data, and a validator for grid configs — for coding
+ * `@nocopypaste/vue-grid/agent`: the grid's API as data, and a validator for grid configs — for coding
  * agents, MCP servers and tooling. Not part of the main entry: apps never bundle it.
  *
  * ```ts
- * import { api, validateGridConfig } from '@eboye/vue-grid/agent'
+ * import { api, validateGridConfig } from '@nocopypaste/vue-grid/agent'
  * validateGridConfig({ columns, rowKey: 'id', features: ['sortingFeature'], sortMode: 'client' })
  * ```
  */

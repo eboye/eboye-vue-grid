@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
-import { createColumnHelper, createVueGrid, VGrid as VGridComponent } from '@eboye/vue-grid'
+import { createColumnHelper, createVueGrid, VGrid as VGridComponent } from '@nocopypaste/vue-grid'
 import { RatingCell, ratingRenderer } from '../src'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

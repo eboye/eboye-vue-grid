@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import { defineComponent, h, ref } from 'vue'
 import { fn } from 'storybook/test'
-import { createColumnHelper, type CellActionEvent } from '@eboye/vue-grid'
+import { createColumnHelper, type CellActionEvent } from '@nocopypaste/vue-grid'
 import { Grid as VGrid } from './support'
 
 /**

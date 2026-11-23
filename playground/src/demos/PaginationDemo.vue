@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { createColumnHelper, sortRows, VGrid, VGridPagination, type SortState } from '@eboye/vue-grid'
+import { createColumnHelper, sortRows, VGrid, VGridPagination, type SortState } from '@nocopypaste/vue-grid'
 import { makeBets, type Bet } from '../data'
 
 // Pretend server: the grid stays "controlled" — it only emits sort, we sort + slice here.

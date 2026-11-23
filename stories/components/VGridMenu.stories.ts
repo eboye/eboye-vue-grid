@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import { ref } from 'vue'
 import { fn } from 'storybook/test'
-import { VGridMenu, type MenuItem } from '@eboye/vue-grid'
+import { VGridMenu, type MenuItem } from '@nocopypaste/vue-grid'
 
 const items: MenuItem[] = [
   { name: 'csv', label: 'Export CSV', hint: 'Ctrl+E' },

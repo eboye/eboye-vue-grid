@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import { ref } from 'vue'
 import { fn } from 'storybook/test'
-import { VGridColumnMenu, type ColumnDef, type ColumnState } from '@eboye/vue-grid'
+import { VGridColumnMenu, type ColumnDef, type ColumnState } from '@nocopypaste/vue-grid'
 
 const columns: ColumnDef[] = [
   { key: 'id', header: '#', hideable: false },

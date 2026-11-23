@@ -1,4 +1,4 @@
-/* @eboye/vue-grid core — the grid's structure plus the default theme. In the published package the
+/* @nocopypaste/vue-grid core — the grid's structure plus the default theme. In the published package the
  * two files are inlined; import base.css alone to bring your own theme. */
 @import './base.css';
 @import './theme.css';

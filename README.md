@@ -1,6 +1,6 @@
 <div align="center">
 
-# @eboye/vue-grid
+# @nocopypaste/vue-grid
 
 **A fast, accessible data grid for Vue 3 — built on CSS Grid, themed with CSS variables, tree-shakeable.**
 
@@ -289,7 +289,7 @@ publishable star-rating renderer.
 ## Quick start
 
 ```sh
-npm i @eboye/vue-grid
+npm i @nocopypaste/vue-grid
 ```
 
 Use it with a bundler (Vite, webpack, Rollup, esbuild): like Vue's `esm-bundler` build, it relies
@@ -299,7 +299,7 @@ builds. See the [API reference](packages/vue-grid/README.md#install) for use wit
 ```ts
 // main.ts
 import { createApp } from 'vue'
-import '@eboye/vue-grid/style.css'
+import '@nocopypaste/vue-grid/style.css'
 import App from './App.vue'
 
 createApp(App).mount('#app')
@@ -316,7 +316,7 @@ import {
   sortingFeature,
   statusRenderer,
   type SortState,
-} from '@eboye/vue-grid'
+} from '@nocopypaste/vue-grid'
 
 interface Order { id: number; customer: string; total: number; status: 'Paid' | 'Open' }
 
@@ -457,7 +457,7 @@ Measured by bundling small apps against the published build for production with 
 | `VGrid` + `allFeatures` + `VGridSearch` | 81.0 kB / 28.1 kB |
 | `VGrid` + `currencyRenderer` | 38.5 kB / 13.6 kB |
 | everything | 124.1 kB / 40.4 kB |
-| `validateGridConfig` (`@eboye/vue-grid/agent`, never in an app bundle) | 57.5 kB / 15.4 kB |
+| `validateGridConfig` (`@nocopypaste/vue-grid/agent`, never in an app bundle) | 57.5 kB / 15.4 kB |
 
 With `filteringFeature`, the filter popover body and the filter-row editors load on demand. With
 `paginationFeature`, the pager does too.
@@ -501,10 +501,10 @@ from the sources, so it can't drift from the code:
   v-model, event, slot, method, column option, feature and renderer option, with types, docs and
   the feature each needs.
 - **[JSON Schema](packages/vue-grid/agent/grid-config.schema.json)** of a grid config, and
-  **`validateGridConfig()`** from `@eboye/vue-grid/agent`: unknown names with did-you-mean, options
+  **`validateGridConfig()`** from `@nocopypaste/vue-grid/agent`: unknown names with did-you-mean, options
   whose feature is missing, unregistered renderers, wrong types, combinations that do nothing —
   each with its fix.
-- **[MCP server](packages/vue-grid-mcp)** — `npx -y @eboye/vue-grid-mcp`: guide, API lookup,
+- **[MCP server](packages/vue-grid-mcp)** — `npx -y @nocopypaste/vue-grid-mcp`: guide, API lookup,
   renderer details, doc search and validation as tools, from the project's installed version.
 - **[Claude Code plugin](plugins/vue-grid)** — the MCP server plus a `vue-grid` skill with the
   build → validate → verify-in-a-browser workflow:
@@ -533,7 +533,7 @@ npm run screenshots      # re-shoot the renderer gallery → docs/media/renderer
 
 | Path | |
 |---|---|
-| [`packages/vue-grid`](packages/vue-grid) | The library, `@eboye/vue-grid` |
+| [`packages/vue-grid`](packages/vue-grid) | The library, `@nocopypaste/vue-grid` |
 | [`packages/cell-renderer-template`](packages/cell-renderer-template) | Boilerplate third-party renderer add-on |
 | `stories/`, `.storybook/` | Storybook |
 | `playground/` | Demo app; target of the browser tests |
@@ -547,8 +547,8 @@ npm run screenshots      # re-shoot the renderer gallery → docs/media/renderer
 
 ```sh
 npm run build
-npm publish -w @eboye/vue-grid --access public
-npm publish -w @eboye/vue-grid-renderer-template --access public
+npm publish -w @nocopypaste/vue-grid --access public
+npm publish -w @nocopypaste/vue-grid-renderer-template --access public
 ```
 
 ## License

@@ -1,6 +1,6 @@
 // A Model Context Protocol server over stdio (newline-delimited JSON-RPC 2.0), with no SDK: the
 // protocol surface a docs-and-validation server needs is small — initialize, ping, tools and
-// resources — so it ships without dependencies besides @eboye/vue-grid itself.
+// resources — so it ships without dependencies besides @nocopypaste/vue-grid itself.
 import { createInterface } from 'node:readline'
 import { loadDocs } from './docs.js'
 import { resources, tools } from './tools.js'
@@ -9,7 +9,7 @@ const SUPPORTED = ['2025-06-18', '2025-03-26', '2024-11-05']
 const NAME = 'vue-grid'
 
 const INSTRUCTIONS =
-  'Tools for @eboye/vue-grid (<VGrid>, a Vue 3 data grid). Before writing or editing grid code, call ' +
+  'Tools for @nocopypaste/vue-grid (<VGrid>, a Vue 3 data grid). Before writing or editing grid code, call ' +
   'vue_grid_guide once (rules + recipes). Look up exact props / column options / renderer options with ' +
   'vue_grid_api and vue_grid_renderer instead of guessing, and run vue_grid_validate on the grid config ' +
   'you wrote: options whose feature is not registered silently do nothing.'
@@ -29,7 +29,7 @@ export async function handle(message, docs, version) {
         return reply({
           protocolVersion: SUPPORTED.includes(requested) ? requested : SUPPORTED[0],
           capabilities: { tools: { listChanged: false }, resources: { listChanged: false } },
-          serverInfo: { name: NAME, title: '@eboye/vue-grid', version },
+          serverInfo: { name: NAME, title: '@nocopypaste/vue-grid', version },
           instructions: INSTRUCTIONS,
         })
       }
@@ -76,7 +76,7 @@ export async function handle(message, docs, version) {
 export async function serve({ input = process.stdin, output = process.stdout, cwd = process.cwd() } = {}) {
   const docs = await loadDocs(cwd)
   const version = docs.version
-  process.stderr.write(`[vue-grid-mcp] @eboye/vue-grid ${version} from ${docs.dir}\n`)
+  process.stderr.write(`[vue-grid-mcp] @nocopypaste/vue-grid ${version} from ${docs.dir}\n`)
   const lines = createInterface({ input, crlfDelay: Infinity })
   for await (const line of lines) {
     if (!line.trim()) continue

@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import { computed, ref, watch } from 'vue'
-import { sortRows, VGridPagination, type SortState } from '@eboye/vue-grid'
+import { sortRows, VGridPagination, type SortState } from '@nocopypaste/vue-grid'
 import { betColumns, makeBets, type Bet } from '../data'
 import { Grid as VGrid, type GridArgs } from '../support'
 

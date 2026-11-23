@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import { ref } from 'vue'
 import { fn } from 'storybook/test'
-import { createColumnHelper, VGridColumnMenu, type ColumnState } from '@eboye/vue-grid'
+import { createColumnHelper, VGridColumnMenu, type ColumnState } from '@nocopypaste/vue-grid'
 import { makeBets, statusTones, type Bet } from '../data'
 import { Grid as VGrid, type GridArgs } from '../support'
 

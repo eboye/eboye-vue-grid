@@ -23,16 +23,16 @@ const config: StorybookConfig = {
           // Stories use runtime `template` strings, which need Vue's template compiler.
           { find: /^vue$/, replacement: 'vue/dist/vue.esm-bundler.js' },
           {
-            find: '@eboye/vue-grid/style.css',
+            find: '@nocopypaste/vue-grid/style.css',
             replacement: r('../packages/vue-grid/src/styles/vue-grid.css'),
           },
-          { find: /^@eboye\/vue-grid$/, replacement: r('../packages/vue-grid/src/index.ts') },
+          { find: /^@nocopypaste\/vue-grid$/, replacement: r('../packages/vue-grid/src/index.ts') },
           {
-            find: '@eboye/vue-grid-renderer-template/style.css',
+            find: '@nocopypaste/vue-grid-renderer-template/style.css',
             replacement: r('../packages/cell-renderer-template/src/rating.css'),
           },
           {
-            find: /^@eboye\/vue-grid-renderer-template$/,
+            find: /^@nocopypaste\/vue-grid-renderer-template$/,
             replacement: r('../packages/cell-renderer-template/src/index.ts'),
           },
         ],

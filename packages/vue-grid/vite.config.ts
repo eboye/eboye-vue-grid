@@ -15,11 +15,11 @@ const minify = (code: string, filename: string) => transform({ filename, code: B
 
 /**
  * Ships the styles as standalone, un-hashed files (each inlined, no @import at runtime):
- * - `dist/base.css`       → `@eboye/vue-grid/base.css`      structure only, no theme
- * - `dist/theme.css`      → `@eboye/vue-grid/theme.css`     the default look (load after base)
- * - `dist/core.css`       → `@eboye/vue-grid/core.css`      base + theme
- * - `dist/renderers.css`  → `@eboye/vue-grid/renderers.css` the optional cell renderers
- * - `dist/vue-grid.css`   → `@eboye/vue-grid/style.css`     everything
+ * - `dist/base.css`       → `@nocopypaste/vue-grid/base.css`      structure only, no theme
+ * - `dist/theme.css`      → `@nocopypaste/vue-grid/theme.css`     the default look (load after base)
+ * - `dist/core.css`       → `@nocopypaste/vue-grid/core.css`      base + theme
+ * - `dist/renderers.css`  → `@nocopypaste/vue-grid/renderers.css` the optional cell renderers
+ * - `dist/vue-grid.css`   → `@nocopypaste/vue-grid/style.css`     everything
  */
 function emitTheme(): Plugin {
   return {
@@ -52,7 +52,7 @@ export default defineConfig({
     lib: {
       entry: {
         index: fileURLToPath(new URL('./src/index.ts', import.meta.url)),
-        // `@eboye/vue-grid/agent`: the API as data + validateGridConfig(), for agents and tooling.
+        // `@nocopypaste/vue-grid/agent`: the API as data + validateGridConfig(), for agents and tooling.
         'agent/index': fileURLToPath(new URL('./src/agent/index.ts', import.meta.url)),
       },
       formats: ['es'],

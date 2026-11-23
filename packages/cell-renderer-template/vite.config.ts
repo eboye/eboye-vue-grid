@@ -28,7 +28,7 @@ export default defineConfig({
     },
     rollupOptions: {
       // Never bundle the host library or Vue: the app provides them (peer dependencies).
-      external: ['vue', '@eboye/vue-grid'],
+      external: ['vue', '@nocopypaste/vue-grid'],
     },
   },
   test: {

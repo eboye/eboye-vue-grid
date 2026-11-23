@@ -1,5 +1,5 @@
 /*
- * @eboye/vue-grid — styles of the optional cell renderers (status, chip, json, controls, …).
+ * @nocopypaste/vue-grid — styles of the optional cell renderers (status, chip, json, controls, …).
  * Load after core.css (or just use style.css, which contains both).
  */
 @layer vue-grid {

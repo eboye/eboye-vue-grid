@@ -1,6 +1,6 @@
 {
-  "package": "@eboye/vue-grid",
-  "version": "0.1.0",
+  "package": "@nocopypaste/vue-grid",
+  "version": "0.2.0",
   "component": "VGrid",
   "props": [
     {

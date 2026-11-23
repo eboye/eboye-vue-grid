@@ -43,7 +43,7 @@ describe('agent API reference (generated)', () => {
     expect(schema.$defs.ColumnDef.properties.aggregate).toBeTruthy()
     expect(schema.properties.features.items.enum).toContain('sortingFeature')
     const llms = readFileSync(`${root}/llms.txt`, 'utf8')
-    expect(llms).toMatch(/^# @eboye\/vue-grid/)
+    expect(llms).toMatch(/^# @nocopypaste\/vue-grid/)
   })
 })
 

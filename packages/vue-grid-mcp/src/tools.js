@@ -40,7 +40,7 @@ export const tools = [
     name: 'vue_grid_guide',
     title: 'vue-grid: rules and recipes',
     description:
-      'Start here before writing or changing <VGrid> code. Returns AGENTS.md for the installed @eboye/vue-grid: the rules that cause silent bugs when skipped (register features, pass renderer definitions, sort-mode="client", bounded height), which feature / renderer to use for what, copy-paste recipes and pitfalls.',
+      'Start here before writing or changing <VGrid> code. Returns AGENTS.md for the installed @nocopypaste/vue-grid: the rules that cause silent bugs when skipped (register features, pass renderer definitions, sort-mode="client", bounded height), which feature / renderer to use for what, copy-paste recipes and pitfalls.',
     inputSchema: { type: 'object', properties: {}, additionalProperties: false },
     annotations: { readOnlyHint: true },
     run: (docs) => docs.files['AGENTS.md'],
@@ -101,7 +101,7 @@ export const tools = [
         const near = list.filter((x) => x.name.includes(key) || key.includes(x.name)).map((x) => x.name)
         throw new Error(`Unknown renderer "${name}".${near.length ? ` Did you mean ${near.join(', ')}?` : ''} Call without a name to list them.`)
       }
-      const example = `import { ${r.export} } from '@eboye/vue-grid'\n\ncol({ key: '…', renderer: ${r.export}${r.options[0] ? `, rendererOptions: { ${r.options[0].name}: … }` : ''} })`
+      const example = `import { ${r.export} } from '@nocopypaste/vue-grid'\n\ncol({ key: '…', renderer: ${r.export}${r.options[0] ? `, rendererOptions: { ${r.options[0].name}: … }` : ''} })`
       return `${json(r)}\n\nExample:\n${example}`
     },
   },
@@ -109,7 +109,7 @@ export const tools = [
     name: 'vue_grid_search_docs',
     title: 'vue-grid: search the docs',
     description:
-      'Full-text search over the agent guide, the generated API reference and the README of the installed @eboye/vue-grid. Returns the best matching sections in full (e.g. "lazy sub rows retry", "server data total", "theme dark mode tokens", "keyboard shortcuts").',
+      'Full-text search over the agent guide, the generated API reference and the README of the installed @nocopypaste/vue-grid. Returns the best matching sections in full (e.g. "lazy sub rows retry", "server data total", "theme dark mode tokens", "keyboard shortcuts").',
     inputSchema: {
       type: 'object',
       properties: {

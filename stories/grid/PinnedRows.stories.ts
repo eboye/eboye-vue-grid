@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import { ref } from 'vue'
-import type { CellContext, ContextActionEvent, MenuItem, PinnedRowsState } from '@eboye/vue-grid'
+import type { CellContext, ContextActionEvent, MenuItem, PinnedRowsState } from '@nocopypaste/vue-grid'
 import { betColumns, makeBets, type Bet } from '../data'
 import { Grid as VGrid, type GridArgs } from '../support'
 

@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import { ref } from 'vue'
 import { fn } from 'storybook/test'
-import { createColumnHelper, type RowKey, type VGridExposed } from '@eboye/vue-grid'
+import { createColumnHelper, type RowKey, type VGridExposed } from '@nocopypaste/vue-grid'
 import {
   loadFolder,
   makeMarkets,

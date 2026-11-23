@@ -1,14 +1,14 @@
 <!--
   Boilerplate cell renderer.
 
-  Contract (from @eboye/vue-grid):
+  Contract (from @nocopypaste/vue-grid):
   - props: CellRendererProps<Row, Value, Options> → value, row, rowKey, rowIndex, depth, column, options
   - emits: `action(name, payload)` — the grid re-emits it as `cell-action` with row + column attached
   - styling: only --vg-* tokens (plus this addon's own --vg-rating-* tokens), inside a cascade layer
 -->
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useGridContext, type CellRendererEmits, type CellRendererProps } from '@eboye/vue-grid'
+import { useGridContext, type CellRendererEmits, type CellRendererProps } from '@nocopypaste/vue-grid'
 import type { RatingOptions } from './types'
 
 const props = defineProps<CellRendererProps<unknown, number | null | undefined, RatingOptions>>()
