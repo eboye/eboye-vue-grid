@@ -271,6 +271,9 @@ not when a re-fetched row has equal values); `flash="direction"` tints numbers g
 and red when they fall. Columns override with `flash: false | true | 'direction'`. It's a CSS
 animation — tune it with `--vg-flash-color`, `--vg-flash-up`, `--vg-flash-down`,
 `--vg-flash-duration`. With `prefers-reduced-motion` the tint is held briefly instead of fading.
+The tint is a `::after` layer under the cell's content that fades with `opacity`, which browsers
+animate on the compositor (GPU): a busy live feed costs the main thread about a sixth of what a
+`background-color` animation would.
 
 ### `ColumnDef<T>`
 

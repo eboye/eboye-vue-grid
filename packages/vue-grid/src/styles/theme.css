@@ -154,10 +154,26 @@
   .vg-cell[data-vg-flash] { --_vg-flash: var(--vg-flash-color); }
   .vg-cell[data-vg-flash-dir='up'] { --_vg-flash: var(--vg-flash-up); }
   .vg-cell[data-vg-flash-dir='down'] { --_vg-flash: var(--vg-flash-down); }
-  .vg-cell[data-vg-flash='1'] { animation: vg-flash-1 var(--vg-flash-duration) ease-out; }
-  .vg-cell[data-vg-flash='2'] { animation: vg-flash-2 var(--vg-flash-duration) ease-out; }
-  @keyframes vg-flash-1 { from { background-color: var(--_vg-flash); } }
-  @keyframes vg-flash-2 { from { background-color: var(--_vg-flash); } }
+  /*
+   * The tint is a layer between the cell's background and its content that fades with `opacity`:
+   * browsers run opacity animations on the compositor (GPU), so a busy live feed doesn't repaint
+   * every flashing cell on the main thread each frame (as animating background-color would).
+   */
+  .vg-cell[data-vg-flash] { isolation: isolate; }
+  .vg-cell[data-vg-flash]:not(.vg-pin-left, .vg-pin-right) { position: relative; }
+  .vg-cell[data-vg-flash]::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: var(--_vg-flash);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .vg-cell[data-vg-flash='1']::after { animation: vg-flash-1 var(--vg-flash-duration) ease-out; }
+  .vg-cell[data-vg-flash='2']::after { animation: vg-flash-2 var(--vg-flash-duration) ease-out; }
+  @keyframes vg-flash-1 { from { opacity: 1; } }
+  @keyframes vg-flash-2 { from { opacity: 1; } }
 
   .vg-cell-select,
   .vg-header-select { padding-inline: 0; }
@@ -442,7 +458,7 @@
   @media (prefers-reduced-motion: reduce) {
     .vg-root *,
     .vg-menu * { transition: none !important; animation-duration: 0.01ms !important; }
-    .vg-root .vg-cell[data-vg-flash] {
+    .vg-root .vg-cell[data-vg-flash]::after {
       animation-duration: var(--vg-flash-duration) !important;
       animation-timing-function: steps(1, end) !important;
     }
