@@ -102,13 +102,15 @@ an opt-in feature:
 | `selectionFeature` | `selectable` (multi or single), `v-model:selected`, `selection-mode`, `is-row-selectable`, select-all, Space to select |
 | `subGridsFeature` | `sub-rows` / `load-sub-rows` / `has-sub-rows`: nested rows in a CSS `subgrid` (detail rows don't need it) |
 | `menusFeature` | The header right-click menu (`header-menu`) and body-cell menus (`context-menu`); without it the browser's menu shows. The standalone `<VGridMenu>` and the `actions-menu` renderer don't need it |
-| `columnReorderFeature` | Dragging headers to reorder (mouse, pen, touch), Alt+←/→ on a header, the header menu's Move items |
+| `columnReorderFeature` | Dragging headers to reorder (mouse and pen; on touch, hold the header first), Alt+←/→ on a header, the header menu's Move items |
 | `columnPinningFeature` | Sticky `pinned: 'left' \| 'right'` columns with edge shadows, the header menu's Pin items; without it pins are ignored |
 | `virtualScrollingFeature` | `virtual: { rowHeight, overscan?, detailHeight? }`: only the rows in view render, sub-grids and detail rows included; without it every row renders |
 | `columnVisibilityFeature` | `hidden: true` columns, `columnState.hidden`, the header menu's Hide column item; without it every column shows |
 | `keyboardNavigationFeature` | The ARIA grid pattern: one Tab stop, arrow keys / Home / End / PageUp / PageDown between cells, Enter, Space to select, →/← to expand, Alt+←/→ to move a column. Without it the grid is an ARIA `table` with its controls in the Tab order |
 | `columnResizingFeature` | Drag a header edge to resize (mouse, pen, touch), double-click it to fit the content, ←/→ on the focused edge (Alt+Shift+←/→ on a header with keyboard navigation); `minWidth` / `maxWidth` bound it, `resizable: false` opts out; widths in `columnState.widths`, persisted with `storage`; Fit width / Reset width in the header menu |
 | `columnGroupsFeature` | Grouped column headers: columns with the same `group` share a header cell in a sticky row above theirs; groups follow reordering, hiding, resizing and pinning (a pin boundary splits a group) |
+| `rowPinningFeature` | `v-model:pinned-rows` / `pinRow()`: rows that stay in view above or below the body, plus `pinned-top-rows` / `pinned-bottom-rows` for rows that aren't in the data |
+| `aggregationFeature` | Column `aggregate` (`sum`, `avg`, `min`, `max`, `count`, a function) and `totals`: a sticky totals row over the filtered rows |
 
 ```ts
 // per grid
@@ -141,37 +143,40 @@ what you import.
 
   | File | What | gzip |
   |---|---|---|
-  | `base.css` | Structure only: grid layout, subgrid, sticky header and pins, tree indent, popover placement, virtual rows, truncation | 2.0 kB |
-  | `theme.css` | The default look on top of `base.css`: `--vg-*` tokens, colours, dark mode, densities, spacing, borders, typography, shadows, animation | 3.1 kB |
-  | `core.css` | `base.css` + `theme.css` | 4.7 kB |
+  | `base.css` | Structure only: grid layout, subgrid, sticky header and pins, tree indent, popover placement, virtual rows, pinned rows, truncation | 2.2 kB |
+  | `theme.css` | The default look on top of `base.css`: `--vg-*` tokens, colours, dark mode, densities, spacing, borders, typography, shadows, animation | 3.2 kB |
+  | `core.css` | `base.css` + `theme.css` | 5.0 kB |
   | `renderers.css` | Styles for the cell renderers (other than text); uses the theme's tokens | 2.2 kB |
-  | `style.css` | All of the above | 6.2 kB |
+  | `style.css` | All of the above | 6.5 kB |
 
   For a fully custom look, import only `base.css` (and `renderers.css` if you use renderers)
   and style the `.vg-*` classes yourself. See [Theming](#theming).
 
 | Import (minified / gzip, Vue excluded) | Initial chunk |
 |---|---|
-| `VGrid` (no features) | 35.2 kB / 12.6 kB |
-| `VGrid` + `sortingFeature` | 35.9 kB / 12.9 kB |
-| `VGrid` + `filteringFeature` | 38.8 kB / 13.9 kB |
-| `VGrid` + `serverDataFeature` | 36.5 kB / 13.2 kB |
-| `VGrid` + `paginationFeature` | 35.3 kB / 12.6 kB |
-| `VGrid` + `selectionFeature` | 37.5 kB / 13.4 kB |
-| `VGrid` + `subGridsFeature` | 37.4 kB / 13.4 kB |
-| `VGrid` + `menusFeature` | 43.9 kB / 15.7 kB |
-| `VGrid` + `columnReorderFeature` | 37.1 kB / 13.3 kB |
-| `VGrid` + `columnPinningFeature` | 37.4 kB / 13.5 kB |
-| `VGrid` + `virtualScrollingFeature` | 39.9 kB / 14.6 kB |
-| `VGrid` + `columnVisibilityFeature` | 35.3 kB / 12.6 kB |
-| `VGrid` + `keyboardNavigationFeature` | 37.5 kB / 13.4 kB |
-| `VGrid` + `columnResizingFeature` | 38.1 kB / 13.7 kB |
-| `VGrid` + `columnGroupsFeature` | 36.7 kB / 13.1 kB |
-| `VGrid` + `allFeatures` + `VGridSearch` | 69.3 kB / 24.6 kB |
-| `VGrid` + `currencyRenderer` | 36.4 kB / 12.9 kB |
-| `VGrid` + `VGridPagination` + `VGridColumnMenu` | 39.5 kB / 14.1 kB |
+| `VGrid` (no features) | 37.2 kB / 13.2 kB |
+| `VGrid` + `sortingFeature` | 38.0 kB / 13.5 kB |
+| `VGrid` + `filteringFeature` | 40.9 kB / 14.5 kB |
+| `VGrid` + `serverDataFeature` | 38.6 kB / 13.8 kB |
+| `VGrid` + `paginationFeature` | 37.4 kB / 13.2 kB |
+| `VGrid` + `selectionFeature` | 39.6 kB / 14.0 kB |
+| `VGrid` + `subGridsFeature` | 39.5 kB / 14.0 kB |
+| `VGrid` + `menusFeature` | 47.7 kB / 16.8 kB |
+| `VGrid` + `columnReorderFeature` | 40.9 kB / 14.5 kB |
+| `VGrid` + `columnPinningFeature` | 39.5 kB / 14.1 kB |
+| `VGrid` + `virtualScrollingFeature` | 43.0 kB / 15.5 kB |
+| `VGrid` + `columnVisibilityFeature` | 37.4 kB / 13.2 kB |
+| `VGrid` + `keyboardNavigationFeature` | 39.6 kB / 14.0 kB |
+| `VGrid` + `columnResizingFeature` | 40.1 kB / 14.3 kB |
+| `VGrid` + `columnGroupsFeature` | 38.8 kB / 13.8 kB |
+| `VGrid` + `rowPinningFeature` | 42.4 kB / 14.7 kB |
+| `VGrid` + `aggregationFeature` | 42.7 kB / 14.8 kB |
+| `VGrid` + `allFeatures` + `VGridSearch` | 81.0 kB / 28.1 kB |
+| `VGrid` + `currencyRenderer` | 38.5 kB / 13.6 kB |
+| `VGrid` + `VGridPagination` + `VGridColumnMenu` | 41.6 kB / 14.7 kB |
 | `sortRows` only | 0.7 kB / 0.5 kB |
-| everything | 112.4 kB / 36.7 kB |
+| everything | 124.1 kB / 40.4 kB |
+| `validateGridConfig` (`@eboye/vue-grid/agent`, never in an app bundle) | 57.5 kB / 15.4 kB |
 
 With `filteringFeature`, the filter popover body and the filter-row editors are **on-demand
 chunks**: they load the first time a popover opens or `filter-row` is on. With
@@ -210,6 +215,11 @@ chunks**: they load the first time a popover opens or `filter-row` is on. With
 | `selectionMode` | `'cascade' \| 'independent'` | `'cascade'` | Whether selecting a parent selects its children. |
 | `isRowSelectable` | `(row) => boolean` | — | |
 | `virtual` | `{ rowHeight: number; overscan?: number; detailHeight?: number } \| false` | `false` | Virtual scrolling (fixed-height rows; sub-grids and measured detail rows included). Needs `virtualScrollingFeature`. |
+| `v-model:pinnedRows` | `{ top?: RowKey[]; bottom?: RowKey[] } \| null` | `null` | Top-level rows pinned above / below the body. Needs `rowPinningFeature` (as do the next two). See [Pinned rows and totals](#pinned-rows-and-totals). |
+| `pinnedTopRows` / `pinnedBottomRows` | `T[]` | — | Extra pinned rows that aren't part of `rows` (a target, last year's figures). |
+| `totals` | `boolean \| 'top' \| 'bottom'` | `false` | A totals row with each column's `aggregate`; `true` = `'bottom'`. Needs `aggregationFeature` (as do the next two). |
+| `totalsLabel` | `string` | `'Total'` | Shown in the totals row's first column (unless that column has an aggregate). |
+| `aggregates` | `Record<string, unknown>` | — | Totals by column key, used instead of computing them (e.g. from a server). |
 | `rowClickable` | `boolean` | `false` | Pointer cursor; `row-click` is always emitted. |
 | `rowClass` | `(row, index) => ClassValue` | — | |
 | `highlightedRows` | `RowKey[]` | — | |
@@ -237,7 +247,7 @@ Clicks on links, buttons and inputs inside a cell never trigger `row-click`.
 ### Slots
 
 `cell-<key>` (`{ row, value, rowKey, rowIndex, depth, column }`) · `header-<key>` (`{ column }`) ·
-`detail` (`{ row, rowKey, depth }`) ·
+`total-<key>` (`{ value, column }`, a cell of the totals row) · `detail` (`{ row, rowKey, depth }`) ·
 `toolbar` (`{ columns, columnState, setColumnState, filters, setFilters, clearFilters, activeFilterCount }`) ·
 `empty` · `loading` · `sub-rows-loading` (`{ row }`).
 
@@ -250,6 +260,7 @@ grid.value?.patchLoadedRows([{ id: 'c2', city: 'Niš' }]) // field updates for l
 grid.value?.setFilters({ columns: { city: { type: 'text', op: 'contains', value: 'nis' } } })
 grid.value?.clearFilters() / openFilter('city') / reload() // reload: re-run the dataSource query
 grid.value?.reloadSubRows('c2') // forget lazily loaded children (of one row, or all): they load again
+grid.value?.pinRow(42, 'top') // pin a row above the body ('bottom' below it, null to unpin): rowPinningFeature
 ```
 
 `reload()` also forgets lazily loaded children, as does passing a different `load-sub-rows`
@@ -309,6 +320,7 @@ animate on the compositor (GPU): a busy live feed costs the main thread about a 
   filterFn?: (row, filter) => boolean            // replaces the built-in matching for this column
   filterComponent?: Component    // custom popover body: props { modelValue, column }, emits update:modelValue
   searchable?: boolean           // included in the quick search (default true for visible columns)
+  aggregate?: 'sum' | 'avg' | 'min' | 'max' | 'count' | ((values, rows) => unknown)  // totals row (aggregationFeature)
   cellClass?: ClassValue | ((row) => ClassValue); headerClass?: ClassValue
 }
 ```
@@ -338,7 +350,7 @@ Need children with a **different** set of columns? Put another `<VGrid>` in the 
 </VGrid>
 ```
 
-With `columnReorderFeature`, drag a header to move it (pointer events: mouse, pen, touch), or focus a header and press
+With `columnReorderFeature`, drag a header to move it (mouse or pen; on a touch screen hold it for half a second first, see [Touch](#touch-phones-and-tablets)), or focus a header and press
 **Alt+←/→**. Pinned columns only move within their pin group. Stored state is reconciled with the
 current column definitions (unknown keys dropped, new columns appended).
 
@@ -541,6 +553,50 @@ Or place the standalone component yourself and feed the grid one page at a time:
 <VGridPagination v-model:page="page" v-model:page-size="pageSize" :total="total" :page-sizes="[10, 25, 50]" />
 ```
 
+## Pinned rows and totals
+
+Rows that stay in view while the body scrolls: a totals row (`aggregationFeature`) and rows pinned
+above or below the body (`rowPinningFeature`).
+
+```vue
+<script setup lang="ts">
+const columns = [
+  col({ key: 'player', aggregate: 'count' }),
+  col({ key: 'stake', renderer: currencyRenderer, aggregate: 'sum' }),
+  col({ key: 'odds', renderer: numberRenderer, aggregate: 'avg' }),
+  col({ key: 'placedAt', renderer: dateRenderer, aggregate: 'max' }),
+]
+const pinned = ref<PinnedRowsState>({ top: [42] })
+</script>
+
+<template>
+  <VGrid :rows="bets" :columns="columns" row-key="id" totals v-model:pinned-rows="pinned" />
+</template>
+```
+
+- **Totals.** `totals` (or `totals="bottom"`) adds a totals row at the bottom; `totals="top"`
+  puts it under the header. Each column with an `aggregate` shows it with the column's own
+  renderer (so a currency column sums to a currency), `count` as a plain number; the first column
+  shows `totals-label` (`'Total'`) unless it has an aggregate. `sum` / `avg` skip values that
+  aren't numbers, `min` / `max` compare numbers, dates and strings, and a function gets the
+  column's values and the rows. The totals cover the top-level rows that pass the filters, on
+  every page (child rows aren't counted), and follow live data. With server data the grid only
+  has the current page: pass the server's totals as `aggregates` (`{ stake: 125000 }`), which
+  wins over computed values. The `total-<key>` slot renders a cell of the row yourself.
+- **Pinned rows.** `v-model:pinned-rows` (`{ top, bottom }`, row keys, in display order) or
+  `grid.pinRow(key, 'top' | 'bottom' | null)` pins top-level rows. They leave the body, stay put
+  while it scrolls, and aren't filtered, sorted or paged; selection, row clicks and context menus
+  still work on them. Pin from your own context menu: `@context-action` → `pinRow(rowKey, …)`.
+- **Extra rows.** `pinned-top-rows` / `pinned-bottom-rows` show rows that aren't part of `rows`
+  (a target, last year's figures) — no checkbox, not counted in the totals.
+
+Each section is one sticky `subgrid` container, so its rows share the grid's columns, follow
+resizing, reordering and pinned columns, and need no measuring of their own. Keyboard navigation
+moves through them like any row, and a focused row scrolls clear of them (`scroll-padding`).
+With virtual scrolling, `aria-rowindex` / `aria-rowcount` count them. Style them with
+`.vg-pinned-top`, `.vg-pinned-bottom`, `.vg-row-pinned`, `.vg-row-total` and the
+`--vg-total-row-bg` / `--vg-total-row-font-weight` tokens.
+
 ## Virtual scrolling
 
 ```vue
@@ -619,6 +675,23 @@ With `keyboardNavigationFeature` it is an ARIA `grid` (`treegrid` with sub-grids
 `Home`/`End`, `Ctrl+Home`/`Ctrl+End`, `PageUp`/`PageDown`; `ContextMenu` / `Shift+F10` opens the context menu. `Enter` sorts a header or activates the
 cell's control; `Space` toggles row selection; `→`/`←` on a tree cell expands/collapses; `Alt+←/→` on a
 header moves the column; `Alt+Shift+←/→` on a header resizes it (with `columnResizingFeature`).
+
+## Touch, phones and tablets
+
+- **Layout.** The grid scrolls its columns inside its own frame at any width; it doesn't widen
+  the page, also inside flex and grid layouts (`.vg-root` has `min-width: 0`). If you wrap it in
+  your own element inside a flex or grid layout, give that element `min-width: 0` too, or it
+  grows to the columns' width. The toolbar wraps, and on narrow screens the pager drops its
+  « / » buttons (page 1 and the last page stay).
+- **Swipes scroll** the grid, also when they start on a header (except on a column's narrow
+  resize edge).
+- **Hold a header** (about half a second) to pick the column up, then drag it to reorder
+  (`columnReorderFeature`). Release it without moving to open the header menu (`menusFeature`).
+- **Hold a body cell**, then release, to open its `context-menu`. This works on iOS, which fires no
+  `contextmenu` event; the browser's own long-press menu is suppressed while the grid's menu
+  takes over.
+- Inputs (filters, search, pager) are 16 px on touch screens so iOS Safari doesn't zoom in, and
+  row hover tints only apply where there is a real hover (a tapped row doesn't stay tinted).
 
 ## Built-in renderers
 
@@ -759,6 +832,32 @@ yours. The structural tokens `--vg-select-column-width`, `--vg-expander-size`,
 `--vg-subgrid-indent`, `--vg-z-*` and `--vg-menu-gap` live in `base.css` and can be overridden
 the same way. `renderers.css` reads the theme's colour tokens; define them (or skip the file) when
 you drop `theme.css`.
+
+## For coding agents
+
+[`AGENTS.md`](AGENTS.md) is the short guide for AI coding agents (rules, which feature and
+renderer for what, recipes, pitfalls); [`llms.txt`](llms.txt) and `llms-full.txt` follow the
+llms.txt convention. The API reference is generated from the sources into
+[`agent/api.md`](agent/api.md) and `agent/api.json`, with a
+[JSON Schema](agent/grid-config.schema.json) of a grid config. To check a config:
+
+```ts
+import { validateGridConfig } from '@eboye/vue-grid/agent'
+
+const { ok, diagnostics } = validateGridConfig({
+  rowKey: 'id',
+  features: ['sortingFeature'],   // export names (or the feature objects); 'allFeatures' for all
+  renderers: [],                  // registered renderer names / definitions
+  columns: [{ key: 'total', renderer: 'currency', sortable: true, widht: '8rem' }],
+})
+// error   columns[0].widht     Columns have no option `widht`. Did you mean `width`?
+// warning columns[0].renderer  Renderer name `currency` isn't registered … pass `renderer: currencyRenderer`
+// warning props.sortMode       Sortable columns, but sorting is controlled … add `sort-mode="client"`
+```
+
+`@eboye/vue-grid/agent` is a separate entry: apps that don't import it never bundle it. The
+[`@eboye/vue-grid-mcp`](../vue-grid-mcp) MCP server serves the same to agents as tools, and the
+[Claude Code plugin](../../plugins/vue-grid) adds a skill with the full workflow.
 
 ## Browser support
 

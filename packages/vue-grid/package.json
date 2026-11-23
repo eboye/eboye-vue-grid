@@ -1,7 +1,7 @@
 {
   "name": "@eboye/vue-grid",
   "version": "0.1.0",
-  "description": "CSS-Grid based data grid for Vue 3 with pluggable cell renderers, sub-grids and CSS-variable theming.",
+  "description": "CSS-Grid based data grid for Vue 3 with opt-in features, pluggable cell renderers, sub-grids and CSS-variable theming — documented for coding agents (AGENTS.md, llms.txt, JSON Schema, validator).",
   "license": "MIT",
   "type": "module",
   "keywords": [
@@ -11,11 +11,19 @@
     "table",
     "data-grid",
     "css-grid",
-    "subgrid"
+    "subgrid",
+    "ai",
+    "llm",
+    "agents",
+    "mcp"
   ],
   "files": [
     "dist",
-    "README.md"
+    "agent",
+    "README.md",
+    "AGENTS.md",
+    "llms.txt",
+    "llms-full.txt"
   ],
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -29,16 +37,27 @@
     "./base.css": "./dist/base.css",
     "./theme.css": "./dist/theme.css",
     "./core.css": "./dist/core.css",
-    "./renderers.css": "./dist/renderers.css"
+    "./renderers.css": "./dist/renderers.css",
+    "./agent": {
+      "types": "./dist/types/agent/index.d.ts",
+      "import": "./dist/agent/index.js"
+    },
+    "./agent/api.json": "./agent/api.json",
+    "./agent/grid-config.schema.json": "./agent/grid-config.schema.json",
+    "./AGENTS.md": "./AGENTS.md",
+    "./llms.txt": "./llms.txt",
+    "./llms-full.txt": "./llms-full.txt",
+    "./package.json": "./package.json"
   },
   "sideEffects": [
     "**/*.css"
   ],
   "scripts": {
-    "build": "vite build && vue-tsc -p tsconfig.build.json",
+    "build": "node scripts/gen-agent.mjs && vite build && vue-tsc -p tsconfig.build.json",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "vue-tsc -p tsconfig.json --noEmit"
+    "typecheck": "vue-tsc -p tsconfig.json --noEmit",
+    "gen:agent": "node scripts/gen-agent.mjs"
   },
   "peerDependencies": {
     "vue": "^3.5.0"

@@ -4,6 +4,7 @@
   "type": "module",
   "workspaces": [
     "packages/vue-grid",
+    "packages/vue-grid-mcp",
     "packages/cell-renderer-template",
     "playground"
   ],
@@ -13,7 +14,7 @@
   "scripts": {
     "build": "npm run build -w @eboye/vue-grid && npm run build -w @eboye/vue-grid-renderer-template",
     "dev": "npm run dev -w playground",
-    "test": "npm run test -w @eboye/vue-grid && npm run test -w @eboye/vue-grid-renderer-template",
+    "test": "npm run test -w @eboye/vue-grid && npm run test -w @eboye/vue-grid-renderer-template && npm run test -w @eboye/vue-grid-mcp",
     "typecheck": "npm run typecheck --workspaces --if-present && vue-tsc --noEmit -p stories",
     "lint": "eslint .",
     "format": "prettier --write .",

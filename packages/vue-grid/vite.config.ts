@@ -50,7 +50,11 @@ export default defineConfig({
     target: 'es2022',
     sourcemap: true,
     lib: {
-      entry: fileURLToPath(new URL('./src/index.ts', import.meta.url)),
+      entry: {
+        index: fileURLToPath(new URL('./src/index.ts', import.meta.url)),
+        // `@eboye/vue-grid/agent`: the API as data + validateGridConfig(), for agents and tooling.
+        'agent/index': fileURLToPath(new URL('./src/agent/index.ts', import.meta.url)),
+      },
       formats: ['es'],
       fileName: 'index',
     },

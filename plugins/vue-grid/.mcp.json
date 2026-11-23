@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "vue-grid": {
+      "command": "npx",
+      "args": ["-y", "@eboye/vue-grid-mcp"]
+    }
+  }
+}

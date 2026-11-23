@@ -1,0 +1,36 @@
+{
+  "name": "@eboye/vue-grid-mcp",
+  "version": "0.1.0",
+  "description": "MCP server for @eboye/vue-grid: the grid's rules, API reference, renderer catalogue, doc search and a grid-config validator, as tools for coding agents. Zero dependencies besides the grid itself.",
+  "license": "MIT",
+  "type": "module",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "vue-grid",
+    "vue",
+    "data-grid",
+    "agents",
+    "claude"
+  ],
+  "bin": {
+    "vue-grid-mcp": "./bin/vue-grid-mcp.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "README.md"
+  ],
+  "exports": {
+    ".": "./src/server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@eboye/vue-grid": "^0.1.0"
+  }
+}

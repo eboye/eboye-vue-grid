@@ -1,0 +1,11 @@
+{
+  "name": "vue-grid",
+  "version": "0.1.0",
+  "description": "Build and fix <VGrid> data grids with @eboye/vue-grid: the grid's rules and workflow as a skill, and an MCP server for exact API lookup, renderer details, doc search and config validation.",
+  "author": {
+    "name": "eboye"
+  },
+  "repository": "https://gitea.rutuj.me/eboye/eboye-vue-grid",
+  "license": "MIT",
+  "keywords": ["vue", "vue3", "data-grid", "table", "vue-grid", "mcp"]
+}

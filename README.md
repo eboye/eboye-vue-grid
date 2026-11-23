@@ -31,13 +31,20 @@
   where a browser lacks a feature — see [Browser support](#browser-support).
 - **Small by default, everything optional.** ESM, one file per module, zero runtime dependencies.
   Sorting, filtering, server data, pagination, selection, sub-grids, menus, column reordering,
-  resizing, pinning, visibility and grouping, virtual scrolling and keyboard navigation are opt-in **features**, and
-  renderers are opt-in too. A plain grid with text cells is **12.6 kB gzipped**, and each feature or renderer you add costs
+  resizing, pinning, visibility and grouping, pinned rows, totals, virtual scrolling and keyboard navigation are opt-in **features**, and
+  renderers are opt-in too. A plain grid with text cells is **13.2 kB gzipped**, and each feature or renderer you add costs
   only itself.
 - **Fast where it counts.** Virtual scrolling renders a screenful out of tens of thousands of rows,
   expanded sub-grids and detail rows included. Data changes re-render only the cells that changed,
   and the change highlight animates on the GPU. Filtering, sorting and value lists are built for
   big data. See [Performance](#performance).
+- **Phones, tablets and touch.** The grid scrolls inside its own frame at any width (it never
+  pushes the page sideways), swipes scroll it, holding a header picks the column up to drag it,
+  and holding a header or cell opens its menu (iOS included, which has no right click). Inputs
+  are 16 px on touch screens so iOS doesn't zoom, and tapped rows don't stay tinted. Checked in
+  Chromium, Firefox and WebKit at phone and tablet sizes.
+- **Built for coding agents.** `AGENTS.md`, `llms.txt`, a generated API reference, a JSON Schema,
+  a config validator, an MCP server and a Claude Code plugin — see [For coding agents](#for-coding-agents).
 - **Typed end to end.** `<VGrid generic="T">`, typed column helpers, and renderer options checked
   against the renderer you pick.
 - **Accessible.** With `keyboardNavigationFeature`: `grid` / `treegrid` semantics and full keyboard
@@ -59,7 +66,7 @@
 | **Filtering** | Typed column filters in header popovers (text, number, date, yes / no, value list with counts, your own component) · optional filter row with shorthand (`>10`, `5..20`, `-5..-1`, `100..`, `1,5`) · quick search · case- and accent-insensitive · date-only values are calendar days in every time zone · tree-aware · persisted to `localStorage` |
 | **Server data** | A `dataSource(query, { signal })` function: the grid sends sort, filters and page, cancels superseded requests, and shows loading, error and retry states · or a single `query-change` event if you fetch yourself · backend-loaded value lists |
 | **Columns** | Pin left / right (also at runtime) · drag or keyboard reordering · drag-to-resize with fit-to-content · grouped headers · show / hide picker · any CSS grid track as width · layout persisted to `localStorage` or your own storage |
-| **Rows** | Nested sub-grids (sync or lazy-loaded, with retry; `reloadSubRows()`) · detail rows with any content, including another grid · cascading selection that follows lazily loaded children · row highlighting and classes |
+| **Rows** | Nested sub-grids (sync or lazy-loaded, with retry; `reloadSubRows()`) · detail rows with any content, including another grid · cascading selection that follows lazily loaded children · pinned rows that stay above or below the body · a sticky totals row (sum, avg, min, max, count or your own aggregate) · row highlighting and classes |
 | **Menus** | Right-click menus for cells and headers (sort, pin, move, hide, reset, your own items) · `⋯` actions menu · keyboard: ContextMenu / Shift+F10, arrows, typeahead |
 | **Cells** | 29 renderers (below) · slots for any cell or header · your own renderers as typed add-ons |
 | **Theming** | CSS variables for colours, spacing, radii, typography · dark mode · three densities · `ui` prop for utility classes |
@@ -432,28 +439,31 @@ Measured by bundling small apps against the published build for production with 
 
 | You import | Initial chunk |
 |---|---|
-| `VGrid` (no features) | 35.2 kB / 12.6 kB |
-| `VGrid` + `sortingFeature` | 35.9 kB / 12.9 kB |
-| `VGrid` + `filteringFeature` | 38.8 kB / 13.9 kB |
-| `VGrid` + `selectionFeature` | 37.5 kB / 13.4 kB |
-| `VGrid` + `subGridsFeature` | 37.4 kB / 13.4 kB |
-| `VGrid` + `menusFeature` | 43.9 kB / 15.7 kB |
-| `VGrid` + `columnReorderFeature` | 37.1 kB / 13.3 kB |
-| `VGrid` + `columnPinningFeature` | 37.4 kB / 13.5 kB |
-| `VGrid` + `virtualScrollingFeature` | 39.9 kB / 14.6 kB |
-| `VGrid` + `columnVisibilityFeature` | 35.3 kB / 12.6 kB |
-| `VGrid` + `keyboardNavigationFeature` | 37.5 kB / 13.4 kB |
-| `VGrid` + `columnResizingFeature` | 38.1 kB / 13.7 kB |
-| `VGrid` + `columnGroupsFeature` | 36.7 kB / 13.1 kB |
-| `VGrid` + `allFeatures` + `VGridSearch` | 69.3 kB / 24.6 kB |
-| `VGrid` + `currencyRenderer` | 36.4 kB / 12.9 kB |
-| everything | 112.4 kB / 36.7 kB |
+| `VGrid` (no features) | 37.2 kB / 13.2 kB |
+| `VGrid` + `sortingFeature` | 38.0 kB / 13.5 kB |
+| `VGrid` + `filteringFeature` | 40.9 kB / 14.5 kB |
+| `VGrid` + `selectionFeature` | 39.6 kB / 14.0 kB |
+| `VGrid` + `subGridsFeature` | 39.5 kB / 14.0 kB |
+| `VGrid` + `menusFeature` | 47.7 kB / 16.8 kB |
+| `VGrid` + `columnReorderFeature` | 40.9 kB / 14.5 kB |
+| `VGrid` + `columnPinningFeature` | 39.5 kB / 14.1 kB |
+| `VGrid` + `virtualScrollingFeature` | 43.0 kB / 15.5 kB |
+| `VGrid` + `columnVisibilityFeature` | 37.4 kB / 13.2 kB |
+| `VGrid` + `keyboardNavigationFeature` | 39.6 kB / 14.0 kB |
+| `VGrid` + `columnResizingFeature` | 40.1 kB / 14.3 kB |
+| `VGrid` + `columnGroupsFeature` | 38.8 kB / 13.8 kB |
+| `VGrid` + `rowPinningFeature` | 42.4 kB / 14.7 kB |
+| `VGrid` + `aggregationFeature` | 42.7 kB / 14.8 kB |
+| `VGrid` + `allFeatures` + `VGridSearch` | 81.0 kB / 28.1 kB |
+| `VGrid` + `currencyRenderer` | 38.5 kB / 13.6 kB |
+| everything | 124.1 kB / 40.4 kB |
+| `validateGridConfig` (`@eboye/vue-grid/agent`, never in an app bundle) | 57.5 kB / 15.4 kB |
 
 With `filteringFeature`, the filter popover body and the filter-row editors load on demand. With
 `paginationFeature`, the pager does too.
 
-CSS (minified with Lightning CSS): `style.css` has everything (6.2 kB gzip). The default theme is optional too: `base.css`
-(2.0 kB) is the structure alone, `theme.css` (3.1 kB) the look on top of it, and `renderers.css`
+CSS (minified with Lightning CSS): `style.css` has everything (6.5 kB gzip). The default theme is optional too: `base.css`
+(2.2 kB) is the structure alone, `theme.css` (3.2 kB) the look on top of it, and `renderers.css`
 (2.2 kB) the cell renderers. Import only `base.css` to theme the grid from scratch.
 
 ## Browser support
@@ -474,6 +484,34 @@ matrix is in the [API reference](packages/vue-grid/README.md#browser-support).
 | **Storybook** — `npm run storybook` | A story per feature and per renderer, live controls, generated prop tables, dark mode |
 | **Playground** — `npm run dev` | Every feature on one page |
 | [Add-on template](packages/cell-renderer-template) | A publishable third-party renderer (star rating) to copy |
+| [AGENTS.md](packages/vue-grid/AGENTS.md) | The guide for coding agents: rules, feature / renderer choice, recipes, pitfalls |
+
+## For coding agents
+
+The grid is built to be used correctly by AI coding agents (Claude Code, Cursor, Copilot…), not
+only by people reading docs. Everything an agent needs ships in the package and is generated
+from the sources, so it can't drift from the code:
+
+- **[`AGENTS.md`](packages/vue-grid/AGENTS.md)** — the rules whose omission causes silent bugs
+  (register features, pass renderer definitions, `sort-mode="client"`, a bounded height), which
+  feature and renderer to use for what, recipes and pitfalls.
+- **[`llms.txt`](packages/vue-grid/llms.txt) / `llms-full.txt`** — the [llms.txt](https://llmstxt.org)
+  index, and the guide + API reference + README in one file.
+- **[API reference](packages/vue-grid/agent/api.md)** and **`agent/api.json`** — every prop,
+  v-model, event, slot, method, column option, feature and renderer option, with types, docs and
+  the feature each needs.
+- **[JSON Schema](packages/vue-grid/agent/grid-config.schema.json)** of a grid config, and
+  **`validateGridConfig()`** from `@eboye/vue-grid/agent`: unknown names with did-you-mean, options
+  whose feature is missing, unregistered renderers, wrong types, combinations that do nothing —
+  each with its fix.
+- **[MCP server](packages/vue-grid-mcp)** — `npx -y @eboye/vue-grid-mcp`: guide, API lookup,
+  renderer details, doc search and validation as tools, from the project's installed version.
+- **[Claude Code plugin](plugins/vue-grid)** — the MCP server plus a `vue-grid` skill with the
+  build → validate → verify-in-a-browser workflow:
+
+  ```
+  /plugin install vue-grid --marketplace https://gitea.rutuj.me/eboye/eboye-vue-grid.git
+  ```
 
 ## Development
 

@@ -1,0 +1,2336 @@
+{
+  "package": "@eboye/vue-grid",
+  "version": "0.1.0",
+  "component": "VGrid",
+  "props": [
+    {
+      "name": "rows",
+      "type": "readonly T[]",
+      "required": false,
+      "default": "[]",
+      "description": "The rows (client data), used as-is and never mutated. Omit when using `dataSource`."
+    },
+    {
+      "name": "columns",
+      "type": "readonly ColumnDef<T>[]",
+      "required": true,
+      "description": "Column definitions, in default display order (see `ColumnDef`)."
+    },
+    {
+      "name": "rowKey",
+      "type": "RowKeyGetter<T>",
+      "required": true,
+      "description": "Stable unique id of a row: a property name or `(row) => string | number`. All row state is keyed by it."
+    },
+    {
+      "name": "features",
+      "type": "readonly GridFeature[]",
+      "required": false,
+      "description": "Opt-in features for this grid (added to the app-wide `createVueGrid({ features })`): `sortingFeature`, `filteringFeature`, `serverDataFeature`, `paginationFeature`, or `allFeatures`. Read once, when the grid is created."
+    },
+    {
+      "name": "dataSource",
+      "type": "DataSource<T>",
+      "required": false,
+      "description": "Server data: called with the current query (sort, filters, search, page) whenever it changes. The grid cancels superseded requests, shows loading and errors, and sorts / filters / pages nothing itself.",
+      "feature": "serverData"
+    },
+    {
+      "name": "pagination",
+      "type": "boolean | { pageSizes?: number[] }",
+      "required": false,
+      "default": "false",
+      "description": "Built-in pagination under the grid (server-side with `dataSource`, client-side otherwise).",
+      "feature": "pagination"
+    },
+    {
+      "name": "sortMode",
+      "type": "'controlled' | 'client'",
+      "required": false,
+      "default": "'controlled'",
+      "description": "`controlled` (default): a header click only updates `v-model:sort` (sort on the server or in your own code). `client`: the grid sorts the rows itself. Ignored with `dataSource`."
+    },
+    {
+      "name": "filterMode",
+      "type": "'client' | 'controlled'",
+      "required": false,
+      "default": "'client'",
+      "description": "`client` (default): the grid filters its rows. `controlled`: it only emits `update:filters`.",
+      "feature": "filtering"
+    },
+    {
+      "name": "filterRow",
+      "type": "boolean",
+      "required": false,
+      "default": "false",
+      "description": "Show the filter row: an input under each filterable column's header.",
+      "feature": "filtering"
+    },
+    {
+      "name": "filterStorage",
+      "type": "FilterStateStorage | string",
+      "required": false,
+      "description": "Persist the filter model (`string` = localStorage key).",
+      "feature": "filtering"
+    },
+    {
+      "name": "noMatchText",
+      "type": "string",
+      "required": false,
+      "default": "'No rows match the current filters.'",
+      "description": "Shown when filters hide every row.",
+      "feature": "filtering"
+    },
+    {
+      "name": "selectable",
+      "type": "boolean | 'single'",
+      "required": false,
+      "default": "false",
+      "description": "A selection column: `true` = multi-select (with select-all), `'single'` = one row.",
+      "feature": "selection"
+    },
+    {
+      "name": "selectionMode",
+      "type": "'cascade' | 'independent'",
+      "required": false,
+      "default": "'cascade'",
+      "description": "`cascade` (default): selecting a parent selects its children. `independent`: rows alone.",
+      "feature": "selection"
+    },
+    {
+      "name": "isRowSelectable",
+      "type": "(row: T) => boolean",
+      "required": false,
+      "description": "Rows that can't be selected get a disabled checkbox.",
+      "feature": "selection"
+    },
+    {
+      "name": "subRows",
+      "type": "(row: T) => T[] | undefined | null",
+      "required": false,
+      "description": "Synchronous child rows of a row: shown in a nested sub-grid when expanded.",
+      "feature": "subGrids"
+    },
+    {
+      "name": "loadSubRows",
+      "type": "(row: T) => Promise<T[]>",
+      "required": false,
+      "description": "Lazy child rows, loaded on first expand (cached, with loading / error / retry).",
+      "feature": "subGrids"
+    },
+    {
+      "name": "hasSubRows",
+      "type": "(row: T) => boolean",
+      "required": false,
+      "description": "With `loadSubRows`: which rows get an expander (default: every row).",
+      "feature": "subGrids"
+    },
+    {
+      "name": "rowExpandable",
+      "type": "(row: T) => boolean",
+      "required": false,
+      "description": "With a `#detail` slot: which rows can expand to show it (default: every row)."
+    },
+    {
+      "name": "rowClickable",
+      "type": "boolean",
+      "required": false,
+      "default": "false",
+      "description": "Pointer cursor on rows (`row-click` is emitted either way)."
+    },
+    {
+      "name": "rowClass",
+      "type": "(row: T, index: number) => ClassValue",
+      "required": false,
+      "description": "Extra classes for a row."
+    },
+    {
+      "name": "highlightedRows",
+      "type": "readonly RowKey[]",
+      "required": false,
+      "description": "Keys of rows to highlight (e.g. the row being edited)."
+    },
+    {
+      "name": "flash",
+      "type": "FlashMode",
+      "required": false,
+      "description": "Briefly highlight cells whose value changes (live data, enrichment). Columns can override."
+    },
+    {
+      "name": "virtual",
+      "type": "VirtualOptions | false",
+      "required": false,
+      "default": "false",
+      "description": "Virtual scrolling: only the rows in view render. Rows share one height (`rowHeight`, px) and the grid needs a bounded height. Needs the virtual scrolling feature.",
+      "feature": "virtualScrolling"
+    },
+    {
+      "name": "storage",
+      "type": "ColumnStateStorage | string",
+      "required": false,
+      "description": "Persist column state (order, hidden, pins, widths): a localStorage key or your own storage."
+    },
+    {
+      "name": "renderers",
+      "type": "CellRendererDefinition[]",
+      "required": false,
+      "description": "Renderers usable by name in this grid (merged over the app-wide ones)."
+    },
+    {
+      "name": "locale",
+      "type": "string",
+      "required": false,
+      "description": "Locale for number / date renderers (default: the plugin's, else the browser's)."
+    },
+    {
+      "name": "currency",
+      "type": "string",
+      "required": false,
+      "description": "Default ISO 4217 currency for currency renderers."
+    },
+    {
+      "name": "timeZone",
+      "type": "string",
+      "required": false,
+      "description": "IANA time zone for date renderers and date filters."
+    },
+    {
+      "name": "density",
+      "type": "Density",
+      "required": false,
+      "description": "Cell padding scale."
+    },
+    {
+      "name": "loading",
+      "type": "boolean",
+      "required": false,
+      "default": "false",
+      "description": "Shows a progress bar and sets `aria-busy` (server data sets it by itself)."
+    },
+    {
+      "name": "emptyText",
+      "type": "string",
+      "required": false,
+      "default": "'No data to show.'",
+      "description": "Shown when there are no rows."
+    },
+    {
+      "name": "ariaLabel",
+      "type": "string",
+      "required": false,
+      "description": "Accessible name of the grid."
+    },
+    {
+      "name": "ui",
+      "type": "Partial<Record<GridPart, ClassValue>>",
+      "required": false,
+      "description": "Extra classes per part (`root`, `header`, `headerCell`, `row`, `cell`, `subgrid`, `detail`, `empty`), e.g. Tailwind utilities."
+    },
+    {
+      "name": "contextMenu",
+      "type": "(ctx: CellContext<T>) => MenuItem[] | null | undefined",
+      "required": false,
+      "description": "Right-click menu items for a body cell. Return `null`/`[]` to keep the browser's menu.",
+      "feature": "menus"
+    },
+    {
+      "name": "headerMenu",
+      "type": "boolean | ((ctx: HeaderMenuContext<T>) => MenuItem[] | null | undefined)",
+      "required": false,
+      "default": "true",
+      "description": "Header right-click menu: `true` = built-in items (sort, pin, move, hide, reset), `false` = off, or a function that receives the built-in items and returns the items to show.",
+      "feature": "menus"
+    },
+    {
+      "name": "pinnedTopRows",
+      "type": "readonly T[]",
+      "required": false,
+      "description": "Extra rows above the body, not part of the data (row pinning feature).",
+      "feature": "rowPinning"
+    },
+    {
+      "name": "pinnedBottomRows",
+      "type": "readonly T[]",
+      "required": false,
+      "description": "Extra rows below the body, not part of the data (row pinning feature).",
+      "feature": "rowPinning"
+    },
+    {
+      "name": "totals",
+      "type": "boolean | 'top' | 'bottom'",
+      "required": false,
+      "default": "false",
+      "description": "A totals row with each column's `aggregate` (aggregation feature): `true` / `'bottom'` sticks it to the bottom, `'top'` under the header.",
+      "feature": "aggregation"
+    },
+    {
+      "name": "totalsLabel",
+      "type": "string",
+      "required": false,
+      "default": "'Total'",
+      "description": "The totals row's label, in its first column (unless that column has an aggregate).",
+      "feature": "aggregation"
+    },
+    {
+      "name": "aggregates",
+      "type": "Record<string, unknown>",
+      "required": false,
+      "description": "Totals row values by column key, instead of computing them (e.g. totals from a server).",
+      "feature": "aggregation"
+    }
+  ],
+  "models": [
+    {
+      "name": "sort",
+      "type": "SortState | null",
+      "default": "null",
+      "description": "Sort state: a header click cycles asc → desc → none. Header UI needs the sorting feature."
+    },
+    {
+      "name": "columnState",
+      "type": "ColumnState | undefined",
+      "default": "undefined",
+      "description": "Column order, hidden columns, runtime pins and resized widths (persisted with `storage`)."
+    },
+    {
+      "name": "expanded",
+      "type": "RowKey[]",
+      "default": "[]",
+      "description": "Keys of expanded rows (sub-grids and detail rows)."
+    },
+    {
+      "name": "selected",
+      "type": "RowKey[]",
+      "default": "[]",
+      "description": "Keys of selected rows. Needs the selection feature.",
+      "feature": "selection"
+    },
+    {
+      "name": "filters",
+      "type": "FilterState | null",
+      "default": "null",
+      "description": "Column filters and quick search: `{ columns: Record<key, ColumnFilter>, search }`. Needs the filtering feature.",
+      "feature": "filtering"
+    },
+    {
+      "name": "page",
+      "type": "number",
+      "default": "1",
+      "description": "Current page (1-based); resets to 1 when sort or filters change. Needs the pagination feature.",
+      "feature": "pagination"
+    },
+    {
+      "name": "pageSize",
+      "type": "number",
+      "default": "25",
+      "description": "Rows per page. Needs the pagination feature.",
+      "feature": "pagination"
+    },
+    {
+      "name": "pinnedRows",
+      "type": "PinnedRowsState | null",
+      "default": "null",
+      "description": "Top-level rows pinned above / below the body, by key: `{ top, bottom }`. Needs the row pinning feature.",
+      "feature": "rowPinning"
+    }
+  ],
+  "events": [
+    {
+      "name": "query-change",
+      "payload": "[query: GridQuery]",
+      "description": "The combined query (sort, filters, search, page) — on mount and whenever it changes."
+    },
+    {
+      "name": "load-error",
+      "payload": "[error: unknown]",
+      "description": "A `dataSource` call failed (the grid shows an error with Retry)."
+    },
+    {
+      "name": "row-click",
+      "payload": "[row: T, event: MouseEvent | KeyboardEvent]",
+      "description": "A row was clicked (not on a link, button or input inside it, nor a `clickable` column)."
+    },
+    {
+      "name": "cell-click",
+      "payload": "[event: CellClickEvent<T>]",
+      "description": "A cell of a `clickable: true` column was clicked."
+    },
+    {
+      "name": "cell-action",
+      "payload": "[event: CellActionEvent<T>]",
+      "description": "A renderer emitted an action (buttons, toggles, menus, edit, copy)."
+    },
+    {
+      "name": "sub-rows-error",
+      "payload": "[event: { row: T; error: unknown }]",
+      "description": "`loadSubRows` rejected for a row."
+    },
+    {
+      "name": "context-action",
+      "payload": "[event: ContextActionEvent<T>]",
+      "description": "An item of the body-cell context menu was chosen."
+    },
+    {
+      "name": "header-action",
+      "payload": "[event: HeaderActionEvent<T>]",
+      "description": "A custom item of the header menu was chosen (built-in items act by themselves)."
+    }
+  ],
+  "slots": [
+    {
+      "name": "cell-<key>",
+      "scope": "{ row: T; value: unknown; rowKey: RowKey; rowIndex: number; depth: number; column: ColumnDef<T> }",
+      "description": "A column's body cell, replacing its renderer: `#cell-<key>`."
+    },
+    {
+      "name": "header-<key>",
+      "scope": "{ column: ColumnDef<T> }",
+      "description": "A column's header content: `#header-<key>`."
+    },
+    {
+      "name": "total-<key>",
+      "scope": "{ value: unknown; column: ColumnDef<T> }",
+      "description": "A column's cell in the totals row (aggregation feature)."
+    },
+    {
+      "name": "detail",
+      "scope": "{ row: T; rowKey: RowKey; depth: number }",
+      "description": "Expandable detail row under a row: any content, even another grid."
+    },
+    {
+      "name": "empty",
+      "scope": null,
+      "description": "Shown when there are no rows."
+    },
+    {
+      "name": "loading",
+      "scope": null,
+      "description": "Shown while loading with no rows yet."
+    },
+    {
+      "name": "sub-rows-loading",
+      "scope": "{ row: T }",
+      "description": "Shown while a row's lazy children load."
+    },
+    {
+      "name": "toolbar",
+      "scope": "{ columns: readonly ColumnDef<T>[]; columnState: ColumnState; setColumnState: (state: ColumnState) => void; filters: FilterState; setFilters: (state: FilterState) => void; clearFilters: () => void; activeFilterCount: number }",
+      "description": "Above the grid: put a search box, column menu or filter summary here."
+    }
+  ],
+  "methods": [
+    {
+      "name": "scrollToTop",
+      "type": "void",
+      "required": true,
+      "description": "Scrolls the grid back to its first row."
+    },
+    {
+      "name": "scrollToRow",
+      "type": "void",
+      "required": true,
+      "description": "Scrolls a row (top-level or nested, also in virtual mode) into view."
+    },
+    {
+      "name": "expandAll",
+      "type": "void",
+      "required": true,
+      "description": "Expands every expandable row (sub-grids and detail rows) that passes the filters."
+    },
+    {
+      "name": "collapseAll",
+      "type": "void",
+      "required": true,
+      "description": "Collapses every row."
+    },
+    {
+      "name": "setColumnState",
+      "type": "void",
+      "required": true,
+      "description": "Replaces the column state (order, hidden, pins, widths), and saves it with `storage`."
+    },
+    {
+      "name": "patchLoadedRows",
+      "type": "number",
+      "required": true,
+      "description": "Applies field patches to lazily loaded child rows (`loadSubRows`), which the grid caches and the; app can't reach. Top-level and synchronous `subRows` data belong to the app: update them there (assign fields on reactive rows, or use `patchRows`). Returns the number of rows patched."
+    },
+    {
+      "name": "setFilters",
+      "type": "void",
+      "required": true,
+      "description": "Replaces the filter model (also persisted with `filter-storage`).",
+      "feature": "filtering"
+    },
+    {
+      "name": "clearFilters",
+      "type": "void",
+      "required": true,
+      "description": "Removes every column filter and the search.",
+      "feature": "filtering"
+    },
+    {
+      "name": "openFilter",
+      "type": "void",
+      "required": true,
+      "description": "Opens a column's filter popover.",
+      "feature": "filtering"
+    },
+    {
+      "name": "reload",
+      "type": "Promise<void>",
+      "required": true,
+      "description": "Re-runs the `dataSource` with the current query; lazily loaded child rows load again too.",
+      "feature": "serverData"
+    },
+    {
+      "name": "reloadSubRows",
+      "type": "void",
+      "required": true,
+      "description": "Forgets lazily loaded child rows (one row's, or all): expanded rows load them again."
+    },
+    {
+      "name": "pinRow",
+      "type": "void",
+      "required": true,
+      "description": "Pins a top-level row above or below the body, or unpins it (`null`). Row pinning feature.",
+      "feature": "rowPinning"
+    }
+  ],
+  "column": [
+    {
+      "name": "key",
+      "type": "string",
+      "required": true,
+      "description": "Unique, stable column id. Also used for sort state, column state and slot names."
+    },
+    {
+      "name": "header",
+      "type": "string",
+      "required": false,
+      "description": "Header text (default: the key)."
+    },
+    {
+      "name": "headerTooltip",
+      "type": "string",
+      "required": false,
+      "description": "Tooltip on the header cell."
+    },
+    {
+      "name": "field",
+      "type": "string",
+      "required": false,
+      "description": "Dot path into the row, e.g. `user.address.city`. Defaults to `key`."
+    },
+    {
+      "name": "value",
+      "type": "(row: T) => unknown",
+      "required": false,
+      "description": "Computes the cell value; wins over `field`."
+    },
+    {
+      "name": "renderer",
+      "type": "R | Component",
+      "required": false,
+      "description": "A renderer definition (`currencyRenderer`), a registered renderer name, or a component. Defaults to `text`."
+    },
+    {
+      "name": "rendererOptions",
+      "type": "RendererOptions<R>",
+      "required": false,
+      "description": "Options of the column's renderer, typed against it (merged over the renderer's defaults)."
+    },
+    {
+      "name": "width",
+      "type": "string",
+      "required": false,
+      "description": "Any CSS grid track size. Defaults to `auto`."
+    },
+    {
+      "name": "minWidth",
+      "type": "string",
+      "required": false,
+      "description": "Lower bound; combined with `width` into `minmax(minWidth, width)`, and the resize minimum."
+    },
+    {
+      "name": "maxWidth",
+      "type": "string",
+      "required": false,
+      "description": "Upper bound when the user resizes the column (column resizing feature).",
+      "feature": "columnResizing"
+    },
+    {
+      "name": "resizable",
+      "type": "boolean",
+      "required": false,
+      "description": "Can the user resize this column (column resizing feature)? Default `true`.",
+      "feature": "columnResizing"
+    },
+    {
+      "name": "group",
+      "type": "string",
+      "required": false,
+      "description": "Header group label (column groups feature): adjacent visible columns with the same `group`; share one header cell above their own headers.",
+      "feature": "columnGroups"
+    },
+    {
+      "name": "align",
+      "type": "Align",
+      "required": false,
+      "description": "Cell and header alignment (default: the renderer's, e.g. `end` for numbers, else `start`)."
+    },
+    {
+      "name": "sortable",
+      "type": "boolean",
+      "required": false,
+      "description": "A sort button in the header (sorting feature). Client sorting needs `sort-mode=\"client\"`.",
+      "feature": "sorting"
+    },
+    {
+      "name": "sortValue",
+      "type": "(row: T) => unknown",
+      "required": false,
+      "description": "The value client sorting compares (default: the renderer's sort value, else the cell value).",
+      "feature": "sorting"
+    },
+    {
+      "name": "sortFn",
+      "type": "(a: T, b: T) => number",
+      "required": false,
+      "description": "A full comparator for client sorting; wins over `sortValue`.",
+      "feature": "sorting"
+    },
+    {
+      "name": "pinned",
+      "type": "PinSide",
+      "required": false,
+      "description": "Initial pin side (the header menu can change it at runtime unless `pinnable: false`).",
+      "feature": "columnPinning"
+    },
+    {
+      "name": "pinnable",
+      "type": "boolean",
+      "required": false,
+      "description": "Can the user pin/unpin it from the header menu? Default `true`.",
+      "feature": "columnPinning"
+    },
+    {
+      "name": "hidden",
+      "type": "boolean",
+      "required": false,
+      "description": "Initial visibility (column state wins once it exists).",
+      "feature": "columnVisibility"
+    },
+    {
+      "name": "hideable",
+      "type": "boolean",
+      "required": false,
+      "description": "Can the user hide it from the column menu? Default `true`.",
+      "feature": "columnVisibility"
+    },
+    {
+      "name": "reorderable",
+      "type": "boolean",
+      "required": false,
+      "description": "Can the user move it? Default `true`.",
+      "feature": "columnReorder"
+    },
+    {
+      "name": "clickable",
+      "type": "boolean",
+      "required": false,
+      "description": "Cell click emits `cell-click` instead of `row-click`."
+    },
+    {
+      "name": "filterable",
+      "type": "boolean",
+      "required": false,
+      "description": "Show a filter for this column (funnel in the header, and an input in the filter row).",
+      "feature": "filtering"
+    },
+    {
+      "name": "filter",
+      "type": "FilterType | ColumnFilterOptions",
+      "required": false,
+      "description": "Filter type — default from the renderer (number, date, boolean, set for status/chip, else text) — or options.",
+      "feature": "filtering"
+    },
+    {
+      "name": "filterValue",
+      "type": "(row: T) => unknown",
+      "required": false,
+      "description": "Value used for filtering (default: the cell value).",
+      "feature": "filtering"
+    },
+    {
+      "name": "filterFn",
+      "type": "(row: T, filter: ColumnFilter, value: unknown) => boolean",
+      "required": false,
+      "description": "Custom predicate; replaces the built-in matching for this column.",
+      "feature": "filtering"
+    },
+    {
+      "name": "filterComponent",
+      "type": "Component",
+      "required": false,
+      "description": "Custom filter UI (popover), receives `modelValue` / emits `update:modelValue` with a filter.",
+      "feature": "filtering"
+    },
+    {
+      "name": "searchable",
+      "type": "boolean",
+      "required": false,
+      "description": "Include in the quick search. Default `true` for visible columns.",
+      "feature": "filtering"
+    },
+    {
+      "name": "flash",
+      "type": "FlashMode",
+      "required": false,
+      "description": "Briefly highlight the cell when its value changes (overrides the grid's `flash` prop). `'direction'`: green when a number goes up, red when it goes down."
+    },
+    {
+      "name": "aggregate",
+      "type": "AggregateName | AggregateFn<T>",
+      "required": false,
+      "description": "The column's value in the totals row (aggregation feature): `'sum' | 'avg' | 'min' | 'max'`; over the cell values (empty values skipped), `'count'` of rows, or a function of the values and; the rows. Shown with the column's renderer (`count` as a plain number).",
+      "feature": "aggregation"
+    },
+    {
+      "name": "cellClass",
+      "type": "ClassValue | ((row: T) => ClassValue)",
+      "required": false,
+      "description": "Extra classes for the column's body cells (or a function of the row)."
+    },
+    {
+      "name": "headerClass",
+      "type": "ClassValue",
+      "required": false,
+      "description": "Extra classes for the column's header cell."
+    }
+  ],
+  "features": [
+    {
+      "id": "aggregation",
+      "export": "aggregationFeature",
+      "description": "Aggregates and the totals row: columns with an `aggregate` (`sum`, `avg`, `min`, `max`, `count` or a function) and `totals` (`true` / `'bottom'` or `'top'`) show a sticky totals row over the rows that pass the filters, on every page. `aggregates` supplies the values instead (e.g. from a server). Without it, `aggregate` and `totals` are ignored.",
+      "props": [
+        "totals",
+        "totalsLabel",
+        "aggregates"
+      ],
+      "columnOptions": [
+        "aggregate"
+      ]
+    },
+    {
+      "id": "columnGroups",
+      "export": "columnGroupsFeature",
+      "description": "Grouped column headers: give columns a `group` and adjacent visible columns of the same group get one header cell spanning them, in a sticky row above the column headers. Groups follow reordering, hiding and pinning (a pin boundary splits a group). Without it, `group` is ignored.",
+      "props": [],
+      "columnOptions": [
+        "group"
+      ]
+    },
+    {
+      "id": "columnPinning",
+      "export": "columnPinningFeature",
+      "description": "Pinned columns: `pinned: 'left' | 'right'` columns stay put (sticky) while the grid scrolls sideways, with edge shadows; runtime pins from the header menu (Pin left / Pin right / Unpin) are kept in `v-model:column-state` and persisted with `storage`. Without it, pins are ignored.",
+      "props": [],
+      "columnOptions": [
+        "pinned",
+        "pinnable"
+      ]
+    },
+    {
+      "id": "columnReorder",
+      "export": "columnReorderFeature",
+      "description": "Column reordering: drag a header (mouse, pen, touch), Alt+←/→ on a focused header, and the header menu's Move left / Move right. Columns opt out with `reorderable: false`. The order is part of `v-model:column-state` and persisted with `storage`; `<VGridColumnMenu>` works without it.",
+      "props": [],
+      "columnOptions": [
+        "reorderable"
+      ]
+    },
+    {
+      "id": "columnResizing",
+      "export": "columnResizingFeature",
+      "description": "Column resizing: drag a header's edge (mouse, pen, touch), use ←/→ on the focused edge (Alt+Shift+←/→ on a header with keyboard navigation), or double-click the edge to fit the content. `minWidth` / `maxWidth` bound it; columns opt out with `resizable: false`. Widths are kept in `columnState.widths` and persisted with `storage`. The header menu gains Fit width / Reset width.",
+      "props": [],
+      "columnOptions": [
+        "maxWidth",
+        "resizable"
+      ]
+    },
+    {
+      "id": "columnVisibility",
+      "export": "columnVisibilityFeature",
+      "description": "Column visibility: `hidden: true` columns, `columnState.hidden` (persisted with `storage`), the header menu's Hide column item and `<VGridColumnMenu>`'s checkboxes. Columns opt out with `hideable: false`. Without it, every column shows.",
+      "props": [],
+      "columnOptions": [
+        "hidden",
+        "hideable"
+      ]
+    },
+    {
+      "id": "filtering",
+      "export": "filteringFeature",
+      "description": "Filtering: header funnels with typed filter popovers on `filterable` columns, the filter row, `<VGridSearch>`, the filter items of the header menu, `v-model:filters` and filter persistence. The popover body and the filter-row editors load on demand (own chunks).",
+      "props": [
+        "filterMode",
+        "filterRow",
+        "filterStorage",
+        "noMatchText",
+        "filters"
+      ],
+      "columnOptions": [
+        "filterable",
+        "filter",
+        "filterValue",
+        "filterFn",
+        "filterComponent",
+        "searchable"
+      ]
+    },
+    {
+      "id": "keyboardNavigation",
+      "export": "keyboardNavigationFeature",
+      "description": "Keyboard navigation (the ARIA grid pattern): the grid is one tab stop, arrow keys / Home / End / PageUp / PageDown move between cells, Enter activates a cell's control, Space selects a row, →/← expand and collapse, Alt+←/→ move a column, ContextMenu / Shift+F10 open the cell menu. Without it the grid is an ARIA `table`: its own controls (sort buttons, expanders, checkboxes, filter buttons) sit in the normal Tab order instead.",
+      "props": [],
+      "columnOptions": []
+    },
+    {
+      "id": "menus",
+      "export": "menusFeature",
+      "description": "Context menus: the built-in header menu (sort, filter, pin, move, hide, reset, your own items via `header-menu`) and body-cell menus (`context-menu`), opened by right-click, the ContextMenu key or Shift+F10. Without it the browser's own menu shows. The standalone `<VGridMenu>` and the `actions-menu` renderer don't need it.",
+      "props": [
+        "contextMenu",
+        "headerMenu"
+      ],
+      "columnOptions": []
+    },
+    {
+      "id": "pagination",
+      "export": "paginationFeature",
+      "description": "Built-in pagination: the `pagination` prop and `v-model:page` / `v-model:page-size`. Pages the client rows, or asks the `dataSource` for pages. The pager loads on demand (own chunk). Not needed for the standalone `<VGridPagination>` component.",
+      "props": [
+        "pagination",
+        "page",
+        "pageSize"
+      ],
+      "columnOptions": []
+    },
+    {
+      "id": "rowPinning",
+      "export": "rowPinningFeature",
+      "description": "Pinned rows: `v-model:pinned-rows` (`{ top, bottom }` row keys), `pinned-top-rows` / `pinned-bottom-rows` (extra rows that aren't in the data) and the `pinRow()` method. Pinned rows stay in view (sticky) under the header or at the bottom while the body scrolls, and aren't filtered, sorted or paged. Without it, those options are ignored.",
+      "props": [
+        "pinnedTopRows",
+        "pinnedBottomRows",
+        "pinnedRows"
+      ],
+      "columnOptions": []
+    },
+    {
+      "id": "selection",
+      "export": "selectionFeature",
+      "description": "Row selection: the `selectable` prop (multi or single), `v-model:selected`, `selection-mode` (cascade through sub-grids), `is-row-selectable`, Space on a row and the select-all checkbox.",
+      "props": [
+        "selectable",
+        "selectionMode",
+        "isRowSelectable",
+        "selected"
+      ],
+      "columnOptions": []
+    },
+    {
+      "id": "serverData",
+      "export": "serverDataFeature",
+      "description": "Server data: the `dataSource` prop. The grid sends sort, filters and page to your function, cancels superseded requests, and shows loading, error and retry states.",
+      "props": [
+        "dataSource"
+      ],
+      "columnOptions": []
+    },
+    {
+      "id": "sorting",
+      "export": "sortingFeature",
+      "description": "Sorting: the sort button on `sortable` column headers, the sort items of the header menu and, with `sort-mode=\"client\"`, sorting the rows in the browser.",
+      "props": [],
+      "columnOptions": [
+        "sortable",
+        "sortValue",
+        "sortFn"
+      ]
+    },
+    {
+      "id": "subGrids",
+      "export": "subGridsFeature",
+      "description": "Sub-grids: nested child rows in a CSS `subgrid`, from `sub-rows` (synchronous) or `load-sub-rows` (lazy, cached, with loading / error / retry). Detail rows (`#detail` slot) don't need it.",
+      "props": [
+        "subRows",
+        "loadSubRows",
+        "hasSubRows"
+      ],
+      "columnOptions": []
+    },
+    {
+      "id": "virtualScrolling",
+      "export": "virtualScrollingFeature",
+      "description": "Virtual scrolling: `:virtual=\"{ rowHeight, overscan?, detailHeight? }\"` renders only the rows in view (plus `overscan`), so tens of thousands of rows stay fast — sub-grids and detail rows included, inside the same CSS grid / subgrid layout. Without it, `virtual` is ignored and every row renders.",
+      "props": [
+        "virtual"
+      ],
+      "columnOptions": []
+    }
+  ],
+  "renderers": [
+    {
+      "name": "text",
+      "export": "textRenderer",
+      "description": "Text, the default renderer (the only one `<VGrid>` bundles): ellipsis, line clamp, tone, badge, icon, secondary text, copy button.",
+      "align": "start",
+      "filterType": "text",
+      "options": [
+        {
+          "name": "ellipsis",
+          "type": "boolean",
+          "required": false,
+          "description": "Single line with ellipsis (full text in a tooltip)."
+        },
+        {
+          "name": "lines",
+          "type": "number",
+          "required": false,
+          "description": "Clamp to N lines."
+        },
+        {
+          "name": "maxWidth",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "preserveNewlines",
+          "type": "boolean",
+          "required": false,
+          "description": "Keep line breaks in the value (`white-space: pre-line`)."
+        },
+        {
+          "name": "tooltip",
+          "type": "boolean | RowFn<string | undefined>",
+          "required": false,
+          "description": "`true` = value as tooltip; a function computes it."
+        },
+        {
+          "name": "placeholder",
+          "type": "string",
+          "required": false,
+          "description": "Shown when the value is empty."
+        },
+        {
+          "name": "tone",
+          "type": "RowOption<Tone | undefined>",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "toneMode",
+          "type": "'text' | 'fill'",
+          "required": false,
+          "description": "`text` (default) colours the text; `fill` colours the badge-like background."
+        },
+        {
+          "name": "bold",
+          "type": "RowOption<boolean>",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "secondary",
+          "type": "RowFn<string | null | undefined>",
+          "required": false,
+          "description": "Muted text after the value, e.g. a half-time score: `2:1 (1:0)`."
+        },
+        {
+          "name": "badge",
+          "type": "RowFn<BadgeSpec | string | null | undefined>",
+          "required": false,
+          "description": "Badge before (default) or after the value."
+        },
+        {
+          "name": "badgePosition",
+          "type": "'start' | 'end'",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "icon",
+          "type": "RowFn<IconSpec | null | undefined>",
+          "required": false,
+          "description": "Icon before the value, e.g. `{ icon: BellIcon, tone: 'warning', label: 'Notify' }`."
+        },
+        {
+          "name": "copyable",
+          "type": "boolean",
+          "required": false,
+          "description": "Adds a copy-to-clipboard button; emits `copy` with the copied text."
+        },
+        {
+          "name": "copyValue",
+          "type": "RowFn<string>",
+          "required": false,
+          "description": "What gets copied (default: the displayed text)."
+        }
+      ]
+    },
+    {
+      "name": "toggle-text",
+      "export": "toggleTextRenderer",
+      "description": "Text that toggles a highlight when clicked. Emits `toggle` (with `clickable`).",
+      "align": "start",
+      "filterType": "text",
+      "options": [
+        {
+          "name": "clickable",
+          "type": "boolean | RowFn<boolean>",
+          "required": false,
+          "description": "When true, the text is a button that emits action `toggle`."
+        },
+        {
+          "name": "highlighted",
+          "type": "boolean | RowFn<boolean>",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "placeholder",
+          "type": "string",
+          "required": false,
+          "description": "Shown when the value is empty."
+        }
+      ]
+    },
+    {
+      "name": "number",
+      "export": "numberRenderer",
+      "description": "Locale-formatted numbers. With `clickable`, a link-style button that emits `click`.",
+      "align": "end",
+      "filterType": "number",
+      "options": [
+        {
+          "name": "format",
+          "type": "Intl.NumberFormatOptions",
+          "required": false,
+          "description": "`Intl.NumberFormat` options, e.g. `{ maximumFractionDigits: 0 }` or `{ style: 'percent' }`."
+        },
+        {
+          "name": "placeholder",
+          "type": "string",
+          "required": false,
+          "description": "Shown when the value is empty."
+        },
+        {
+          "name": "clickable",
+          "type": "RowOption<boolean>",
+          "required": false,
+          "description": "Renders the number as a link-style button that emits `click` (drill-down)."
+        }
+      ]
+    },
+    {
+      "name": "signed-number",
+      "export": "signedNumberRenderer",
+      "description": "Numbers that always show their sign (+ / −). With `clickable`, emits `click`.",
+      "align": "end",
+      "filterType": "number",
+      "defaults": "{ signed: true }",
+      "options": [
+        {
+          "name": "format",
+          "type": "Intl.NumberFormatOptions",
+          "required": false,
+          "description": "`Intl.NumberFormat` options, e.g. `{ maximumFractionDigits: 0 }` or `{ style: 'percent' }`."
+        },
+        {
+          "name": "placeholder",
+          "type": "string",
+          "required": false,
+          "description": "Shown when the value is empty."
+        },
+        {
+          "name": "clickable",
+          "type": "RowOption<boolean>",
+          "required": false,
+          "description": "Renders the number as a link-style button that emits `click` (drill-down)."
+        },
+        {
+          "name": "signed",
+          "type": "boolean",
+          "required": false,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "currency",
+      "export": "currencyRenderer",
+      "description": "Money in a fixed or per-row currency (default: the grid's `currency`). With `clickable`, emits `click`.",
+      "align": "end",
+      "filterType": "number",
+      "options": [
+        {
+          "name": "currency",
+          "type": "string | RowFn<string | undefined>",
+          "required": false,
+          "description": "ISO 4217 code, or derived from the row. Defaults to the grid context currency."
+        },
+        {
+          "name": "format",
+          "type": "Intl.NumberFormatOptions",
+          "required": false,
+          "description": "`Intl.NumberFormat` options, e.g. `{ maximumFractionDigits: 0 }` or `{ style: 'percent' }`."
+        },
+        {
+          "name": "placeholder",
+          "type": "string",
+          "required": false,
+          "description": "Shown when the value is empty."
+        },
+        {
+          "name": "clickable",
+          "type": "RowOption<boolean>",
+          "required": false,
+          "description": "Renders the number as a link-style button that emits `click` (drill-down)."
+        }
+      ]
+    },
+    {
+      "name": "change",
+      "export": "changeRenderer",
+      "description": "A rise or fall: the value with an up / down arrow, green or red.",
+      "align": "end",
+      "filterType": "number",
+      "options": [
+        {
+          "name": "direction",
+          "type": "RowFn<'up' | 'down' | 'equal' | undefined>",
+          "required": false,
+          "description": "Defaults to the sign of a numeric value, or `true` / `false` (also as strings) → up / down."
+        },
+        {
+          "name": "currency",
+          "type": "boolean | string",
+          "required": false,
+          "description": "Format as currency (`true` = context currency)."
+        },
+        {
+          "name": "iconOnly",
+          "type": "boolean",
+          "required": false,
+          "description": "Only the arrow (the value becomes its accessible label)."
+        },
+        {
+          "name": "format",
+          "type": "Intl.NumberFormatOptions",
+          "required": false,
+          "description": "`Intl.NumberFormat` options, e.g. `{ maximumFractionDigits: 0 }` or `{ style: 'percent' }`."
+        },
+        {
+          "name": "placeholder",
+          "type": "string",
+          "required": false,
+          "description": "Shown when the value is empty."
+        },
+        {
+          "name": "clickable",
+          "type": "RowOption<boolean>",
+          "required": false,
+          "description": "Renders the number as a link-style button that emits `click` (drill-down)."
+        }
+      ]
+    },
+    {
+      "name": "date",
+      "export": "dateRenderer",
+      "description": "A calendar day, in the grid's locale and time zone (date-only strings never shift a day).",
+      "align": "start",
+      "filterType": "date",
+      "options": [
+        {
+          "name": "format",
+          "type": "Intl.DateTimeFormatOptions",
+          "required": false,
+          "description": "`Intl.DateTimeFormat` options, e.g. `{ dateStyle: 'medium' }`."
+        },
+        {
+          "name": "placeholder",
+          "type": "string",
+          "required": false,
+          "description": "Shown when the value is empty."
+        }
+      ]
+    },
+    {
+      "name": "datetime",
+      "export": "dateTimeRenderer",
+      "description": "Date and time, on two lines by default.",
+      "align": "start",
+      "filterType": "date",
+      "options": [
+        {
+          "name": "milliseconds",
+          "type": "boolean",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "twoLines",
+          "type": "boolean",
+          "required": false,
+          "description": "Date and time on two lines (default true)."
+        },
+        {
+          "name": "format",
+          "type": "Intl.DateTimeFormatOptions",
+          "required": false,
+          "description": "`Intl.DateTimeFormat` options, e.g. `{ dateStyle: 'medium' }`."
+        },
+        {
+          "name": "placeholder",
+          "type": "string",
+          "required": false,
+          "description": "Shown when the value is empty."
+        }
+      ]
+    },
+    {
+      "name": "boolean",
+      "export": "booleanRenderer",
+      "description": "Yes / no as text labels or icons.",
+      "align": "start",
+      "filterType": "boolean",
+      "options": [
+        {
+          "name": "trueLabel",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "falseLabel",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "nullLabel",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "display",
+          "type": "'text' | 'icon'",
+          "required": false,
+          "description": "`text` (default): labels. `icon`: a check for true, nothing (or a cross) for false."
+        },
+        {
+          "name": "falseIcon",
+          "type": "boolean",
+          "required": false,
+          "description": "In icon mode, show a cross for false (default: nothing)."
+        }
+      ]
+    },
+    {
+      "name": "status",
+      "export": "statusRenderer",
+      "description": "A coloured status badge (tone from a map, a function or a constant). With `clickable`, emits `click`.",
+      "align": "start",
+      "filterType": "set",
+      "options": [
+        {
+          "name": "tone",
+          "type": "ToneOption",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "label",
+          "type": "RowFn<string> | Record<string, string>",
+          "required": false,
+          "description": "Label from a function, or a value → label map."
+        },
+        {
+          "name": "dot",
+          "type": "boolean",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "variant",
+          "type": "'soft' | 'solid' | 'outline'",
+          "required": false,
+          "description": "`soft` (default, tinted), `solid` (filled) or `outline`."
+        },
+        {
+          "name": "placeholder",
+          "type": "string",
+          "required": false,
+          "description": "Shown when the value is empty."
+        },
+        {
+          "name": "clickable",
+          "type": "RowOption<boolean>",
+          "required": false,
+          "description": "Badge becomes a button that emits `click`."
+        }
+      ]
+    },
+    {
+      "name": "link",
+      "export": "linkRenderer",
+      "description": "A safe link (http(s), mailto, tel only), or a `<RouterLink>` with `to` when vue-router is installed.",
+      "align": "start",
+      "filterType": "text",
+      "options": [
+        {
+          "name": "href",
+          "type": "RowFn<string | undefined>",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "to",
+          "type": "RowFn<RouteTarget | null | undefined>",
+          "required": false,
+          "description": "Router location; rendered with `<RouterLink>` when vue-router is installed, else as an href."
+        },
+        {
+          "name": "label",
+          "type": "RowFn<string>",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "target",
+          "type": "'_self' | '_blank'",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "tooltip",
+          "type": "RowFn<string | undefined>",
+          "required": false,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "icon",
+      "export": "iconRenderer",
+      "description": "An icon component, fixed or picked per row.",
+      "align": "center",
+      "filterType": "text",
+      "options": [
+        {
+          "name": "icon",
+          "type": "Component",
+          "required": false,
+          "description": "Static icon component."
+        },
+        {
+          "name": "iconFor",
+          "type": "RowFn<Component | undefined>",
+          "required": false,
+          "description": "Picks the icon per row (wins over `icon`). Kept separate because functional components are functions too."
+        },
+        {
+          "name": "show",
+          "type": "RowFn<boolean>",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "label",
+          "type": "string | RowFn<string>",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "tone",
+          "type": "Tone | RowFn<Tone | undefined>",
+          "required": false,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "json",
+      "export": "jsonRenderer",
+      "description": "A button that opens the value as escaped JSON in a dialog.",
+      "align": "start",
+      "filterType": "text",
+      "options": [
+        {
+          "name": "label",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "dialogTitle",
+          "type": "string | RowFn<string>",
+          "required": false,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "json-tree",
+      "export": "jsonTreeRenderer",
+      "description": "A collapsible tree of nested data.",
+      "align": "start",
+      "filterType": "text",
+      "options": [
+        {
+          "name": "collapseAt",
+          "type": "number",
+          "required": false,
+          "description": "Nodes deeper than this start collapsed. Default 1."
+        },
+        {
+          "name": "maxDepth",
+          "type": "number",
+          "required": false,
+          "description": "Deeper nodes are summarised (“3 items”) instead of expanded. Default unlimited."
+        },
+        {
+          "name": "parseNested",
+          "type": "boolean",
+          "required": false,
+          "description": "String values that contain JSON are shown as nested trees."
+        },
+        {
+          "name": "collapsed",
+          "type": "boolean",
+          "required": false,
+          "description": "Starts hidden behind a toggle button (labelled `toggleLabel`, default “More info”)."
+        },
+        {
+          "name": "toggleLabel",
+          "type": "string",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "emptyText",
+          "type": "string",
+          "required": false,
+          "description": "Shown for null / empty values. Default: nothing."
+        }
+      ]
+    },
+    {
+      "name": "actions-menu",
+      "export": "actionsMenuRenderer",
+      "description": "A `⋯` button with a keyboard-friendly menu. Emits the chosen item's `name`.",
+      "align": "center",
+      "filterType": "text",
+      "options": [
+        {
+          "name": "actions",
+          "type": "MenuItem[] | ((row: any) => MenuItem[])",
+          "required": false,
+          "description": "Menu items (actions and `{ separator: true }`), or a function of the row."
+        },
+        {
+          "name": "label",
+          "type": "string",
+          "required": false,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "action-button",
+      "export": "actionButtonRenderer",
+      "description": "One button per row. Emits its `action` (default `click`).",
+      "align": "start",
+      "filterType": "text",
+      "options": [
+        {
+          "name": "label",
+          "type": "string | RowFn<string>",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "action",
+          "type": "string",
+          "required": false,
+          "description": "Action name emitted on click. Default `click`."
+        },
+        {
+          "name": "icon",
+          "type": "Component",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "tone",
+          "type": "Tone",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "disabled",
+          "type": "RowFn<boolean>",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "visible",
+          "type": "RowFn<boolean>",
+          "required": false,
+          "description": "Hide the button for some rows."
+        },
+        {
+          "name": "variant",
+          "type": "ButtonVariant",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "iconOnly",
+          "type": "boolean",
+          "required": false,
+          "description": "Only the icon; the label becomes its accessible name and tooltip."
+        }
+      ]
+    },
+    {
+      "name": "multi-line",
+      "export": "multiLineRenderer",
+      "description": "Stacked lines, each with its own style, link, badge, trend or action.",
+      "align": "start",
+      "filterType": "text",
+      "options": [
+        {
+          "name": "lines",
+          "type": "RowFn<LineInput[] | null | undefined>",
+          "required": false,
+          "description": "Builds the lines; default: the value itself when it's an array."
+        },
+        {
+          "name": "boldLines",
+          "type": "number[]",
+          "required": false,
+          "description": "Indexes of lines to show in bold."
+        },
+        {
+          "name": "ellipsis",
+          "type": "boolean",
+          "required": false,
+          "description": "Each line on one row with ellipsis (default true)."
+        },
+        {
+          "name": "target",
+          "type": "'_self' | '_blank'",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "placeholder",
+          "type": "string",
+          "required": false,
+          "description": "Shown when the value is empty."
+        }
+      ]
+    },
+    {
+      "name": "copy",
+      "export": "copyRenderer",
+      "description": "A value with a copy-to-clipboard button. Emits `copy` / `copy-error`.",
+      "align": "start",
+      "filterType": "text",
+      "options": [
+        {
+          "name": "copyValue",
+          "type": "RowFn<string>",
+          "required": false,
+          "description": "What gets copied (default: the displayed text)."
+        },
+        {
+          "name": "iconOnly",
+          "type": "boolean",
+          "required": false,
+          "description": "Only the copy button; the value becomes its tooltip."
+        },
+        {
+          "name": "label",
+          "type": "string",
+          "required": false,
+          "description": "Accessible name of the button. Default “Copy”."
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "required": false,
+          "description": "Shown before the value in the tooltip, e.g. “Serial number”."
+        },
+        {
+          "name": "placeholder",
+          "type": "string",
+          "required": false,
+          "description": "Shown when the value is empty."
+        }
+      ]
+    },
+    {
+      "name": "chip",
+      "export": "chipRenderer",
+      "description": "A chip in any colour (readable text picked by contrast), square, circle or pill.",
+      "align": "start",
+      "filterType": "set",
+      "options": [
+        {
+          "name": "color",
+          "type": "RowOption<string | null | undefined>",
+          "required": false,
+          "description": "Any CSS colour (e.g. from an API); text colour is picked for contrast."
+        },
+        {
+          "name": "tone",
+          "type": "ToneOption",
+          "required": false,
+          "description": "Named tone instead of a raw colour."
+        },
+        {
+          "name": "label",
+          "type": "RowFn<string>",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "tooltip",
+          "type": "RowFn<string | null | undefined>",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "shape",
+          "type": "'square' | 'circle' | 'pill'",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "size",
+          "type": "string",
+          "required": false,
+          "description": "Box size for square/circle. Default `1.75rem`."
+        },
+        {
+          "name": "placeholder",
+          "type": "string",
+          "required": false,
+          "description": "Shown when the value is empty."
+        }
+      ]
+    },
+    {
+      "name": "checkbox",
+      "export": "checkboxRenderer",
+      "description": "A controlled checkbox, with a tooltip when disabled. Emits `change` with the requested state.",
+      "align": "center",
+      "filterType": "boolean",
+      "options": [
+        {
+          "name": "checked",
+          "type": "RowFn<boolean>",
+          "required": false,
+          "description": "Default: the value is truthy."
+        },
+        {
+          "name": "disabled",
+          "type": "RowOption<boolean>",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "disabledReason",
+          "type": "RowFn<string | null | undefined>",
+          "required": false,
+          "description": "Tooltip explaining why it's disabled."
+        },
+        {
+          "name": "label",
+          "type": "RowOption<string>",
+          "required": false,
+          "description": "Accessible name. Default: the column header."
+        }
+      ]
+    },
+    {
+      "name": "switch",
+      "export": "switchRenderer",
+      "description": "A controlled on / off switch. Emits `change` with the requested state.",
+      "align": "center",
+      "filterType": "boolean",
+      "options": [
+        {
+          "name": "checked",
+          "type": "RowFn<boolean>",
+          "required": false,
+          "description": "Default: the value is truthy."
+        },
+        {
+          "name": "disabled",
+          "type": "RowOption<boolean>",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "disabledReason",
+          "type": "RowFn<string | null | undefined>",
+          "required": false,
+          "description": "Tooltip explaining why it's disabled."
+        },
+        {
+          "name": "label",
+          "type": "RowOption<string>",
+          "required": false,
+          "description": "Accessible name. Default: the column header."
+        }
+      ]
+    },
+    {
+      "name": "radio",
+      "export": "radioRenderer",
+      "description": "One selected row across the column (controlled). Emits `select`.",
+      "align": "center",
+      "filterType": "boolean",
+      "options": [
+        {
+          "name": "name",
+          "type": "string",
+          "required": false,
+          "description": "Radio group name. Default: the column key."
+        },
+        {
+          "name": "checked",
+          "type": "RowFn<boolean>",
+          "required": false,
+          "description": "Default: the value is truthy."
+        },
+        {
+          "name": "disabled",
+          "type": "RowOption<boolean>",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "disabledReason",
+          "type": "RowFn<string | null | undefined>",
+          "required": false,
+          "description": "Tooltip explaining why it's disabled."
+        },
+        {
+          "name": "label",
+          "type": "RowOption<string>",
+          "required": false,
+          "description": "Accessible name. Default: the column header."
+        }
+      ]
+    },
+    {
+      "name": "edit",
+      "export": "editRenderer",
+      "description": "A value with an edit button, for opening your own editor. Emits `edit`.",
+      "align": "start",
+      "filterType": "text",
+      "options": [
+        {
+          "name": "format",
+          "type": "RowFn<string>",
+          "required": false,
+          "description": "Text shown next to the edit button (default: the value)."
+        },
+        {
+          "name": "placeholder",
+          "type": "string",
+          "required": false,
+          "description": "Shown when the value is empty."
+        },
+        {
+          "name": "label",
+          "type": "string",
+          "required": false,
+          "description": "Accessible name of the button. Default “Edit”."
+        },
+        {
+          "name": "disabled",
+          "type": "RowOption<boolean>",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "bold",
+          "type": "boolean",
+          "required": false,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "image",
+      "export": "imageRenderer",
+      "description": "A thumbnail, with a placeholder when empty or broken.",
+      "align": "center",
+      "filterType": "text",
+      "options": [
+        {
+          "name": "src",
+          "type": "RowFn<string | null | undefined>",
+          "required": false,
+          "description": "Default: the value."
+        },
+        {
+          "name": "baseUrl",
+          "type": "string",
+          "required": false,
+          "description": "Prefixed to relative paths (e.g. a CDN)."
+        },
+        {
+          "name": "alt",
+          "type": "RowOption<string>",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "size",
+          "type": "string",
+          "required": false,
+          "description": "Default `2.5rem`."
+        },
+        {
+          "name": "fit",
+          "type": "'contain' | 'cover'",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "shape",
+          "type": "'rounded' | 'circle' | 'square'",
+          "required": false,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "code",
+      "export": "codeRenderer",
+      "description": "Monospaced code, with JSON pretty-printing and highlighting.",
+      "align": "start",
+      "filterType": "text",
+      "options": [
+        {
+          "name": "language",
+          "type": "'auto' | 'json' | 'text'",
+          "required": false,
+          "description": "`auto` (default): JSON for objects and JSON strings, plain text otherwise."
+        },
+        {
+          "name": "lines",
+          "type": "number",
+          "required": false,
+          "description": "Clamp to N lines (full text in a tooltip)."
+        },
+        {
+          "name": "indent",
+          "type": "number",
+          "required": false,
+          "description": "JSON indent. Default 2."
+        },
+        {
+          "name": "highlight",
+          "type": "boolean",
+          "required": false,
+          "description": "Colour JSON tokens. Default true."
+        }
+      ]
+    },
+    {
+      "name": "button-group",
+      "export": "buttonGroupRenderer",
+      "description": "Several buttons, fixed or per row. Emits the clicked button's `name`.",
+      "align": "start",
+      "filterType": "text",
+      "options": [
+        {
+          "name": "buttons",
+          "type": "ButtonSpec[] | ((row: any) => ButtonSpec[])",
+          "required": false,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "icon-toggle",
+      "export": "iconToggleRenderer",
+      "description": "A star / flag style on-off button (controlled). Emits `toggle`.",
+      "align": "center",
+      "filterType": "boolean",
+      "options": [
+        {
+          "name": "active",
+          "type": "RowFn<boolean>",
+          "required": false,
+          "description": "Default: the value is truthy."
+        },
+        {
+          "name": "icon",
+          "type": "Component",
+          "required": false,
+          "description": "Default: an outlined star."
+        },
+        {
+          "name": "activeIcon",
+          "type": "Component",
+          "required": false,
+          "description": "Default: a filled star (or `icon`)."
+        },
+        {
+          "name": "label",
+          "type": "RowOption<string>",
+          "required": false,
+          "description": "Accessible name. Default “Toggle”."
+        },
+        {
+          "name": "activeTone",
+          "type": "Tone",
+          "required": false,
+          "description": "Tone when active. Default `warning`."
+        },
+        {
+          "name": "disabled",
+          "type": "RowOption<boolean>",
+          "required": false,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "name": "details",
+      "export": "detailsRenderer",
+      "description": "A status badge plus an info button with an anchored popover of label / value rows.",
+      "align": "start",
+      "filterType": "text",
+      "options": [
+        {
+          "name": "tone",
+          "type": "ToneOption",
+          "required": false,
+          "description": "Summary badge tone, like `status`."
+        },
+        {
+          "name": "label",
+          "type": "RowFn<string>",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "items",
+          "type": "RowFn<DetailItem[] | null | undefined>",
+          "required": false,
+          "description": "Popover rows. Empty → no info button."
+        },
+        {
+          "name": "title",
+          "type": "RowOption<string>",
+          "required": false,
+          "description": "Popover heading. Default: the column header."
+        },
+        {
+          "name": "triggerLabel",
+          "type": "string",
+          "required": false,
+          "description": "Accessible name of the info button. Default “Details”."
+        }
+      ]
+    },
+    {
+      "name": "list",
+      "export": "listRenderer",
+      "description": "The first items of a list, with a “+N more” toggle. Emits `expand`.",
+      "align": "start",
+      "filterType": "text",
+      "options": [
+        {
+          "name": "items",
+          "type": "RowFn<unknown[] | null | undefined>",
+          "required": false,
+          "description": "Default: the value when it's an array."
+        },
+        {
+          "name": "itemLabel",
+          "type": "RowFn<string>",
+          "required": false,
+          "description": ""
+        },
+        {
+          "name": "max",
+          "type": "number",
+          "required": false,
+          "description": "Items shown before “+N more”. Default 1."
+        },
+        {
+          "name": "placeholder",
+          "type": "string",
+          "required": false,
+          "description": "Shown when the value is empty."
+        }
+      ]
+    }
+  ],
+  "types": {
+    "VirtualOptions": [
+      {
+        "name": "rowHeight",
+        "type": "number",
+        "required": true,
+        "description": "Fixed row height in px."
+      },
+      {
+        "name": "overscan",
+        "type": "number",
+        "required": false,
+        "description": "Extra rows rendered above/below the viewport. Default 6."
+      },
+      {
+        "name": "detailHeight",
+        "type": "number",
+        "required": false,
+        "description": "Estimated height in px of a detail row (`#detail` slot) until it has been rendered and; measured. Default 4 × `rowHeight`. Data rows always have `rowHeight`."
+      }
+    ],
+    "PinnedRowsState": [
+      {
+        "name": "top",
+        "type": "RowKey[]",
+        "required": false,
+        "description": ""
+      },
+      {
+        "name": "bottom",
+        "type": "RowKey[]",
+        "required": false,
+        "description": ""
+      }
+    ],
+    "ColumnState": [
+      {
+        "name": "order",
+        "type": "string[]",
+        "required": true,
+        "description": "Column keys in display order (all known columns, visible or not)."
+      },
+      {
+        "name": "hidden",
+        "type": "string[]",
+        "required": true,
+        "description": "Keys of hidden columns."
+      },
+      {
+        "name": "pinned",
+        "type": "Record<string, PinSide | null>",
+        "required": false,
+        "description": "Runtime pin overrides (e.g. from the header menu). `null` = explicitly unpinned; a missing key; falls back to the column's `pinned` definition. Optional so older persisted state still loads."
+      },
+      {
+        "name": "widths",
+        "type": "Record<string, string>",
+        "required": false,
+        "description": "Widths the user resized columns to (CSS lengths, e.g. `'240px'`). Column resizing feature."
+      }
+    ],
+    "SortState": [
+      {
+        "name": "key",
+        "type": "string",
+        "required": true,
+        "description": ""
+      },
+      {
+        "name": "dir",
+        "type": "SortDir",
+        "required": true,
+        "description": ""
+      }
+    ],
+    "ColumnFilterOptions": [
+      {
+        "name": "type",
+        "type": "FilterType",
+        "required": false,
+        "description": ""
+      },
+      {
+        "name": "options",
+        "type": "readonly FilterOption[] | FilterOptionsLoader",
+        "required": false,
+        "description": "Choices for a `set` filter: a list, or a loader called with the search text (e.g. from a; backend — honour `signal`). Default: distinct values from the rows."
+      },
+      {
+        "name": "placeholder",
+        "type": "string",
+        "required": false,
+        "description": "Placeholder of the filter-row input."
+      }
+    ],
+    "FilterOption": [
+      {
+        "name": "value",
+        "type": "unknown",
+        "required": true,
+        "description": ""
+      },
+      {
+        "name": "label",
+        "type": "string",
+        "required": false,
+        "description": ""
+      },
+      {
+        "name": "count",
+        "type": "number",
+        "required": false,
+        "description": "Shown next to the option (e.g. number of rows)."
+      }
+    ],
+    "MenuAction": [
+      {
+        "name": "name",
+        "type": "string",
+        "required": true,
+        "description": "Emitted as the action name."
+      },
+      {
+        "name": "label",
+        "type": "string",
+        "required": true,
+        "description": ""
+      },
+      {
+        "name": "disabled",
+        "type": "boolean",
+        "required": false,
+        "description": ""
+      },
+      {
+        "name": "tone",
+        "type": "MenuTone",
+        "required": false,
+        "description": ""
+      },
+      {
+        "name": "icon",
+        "type": "Component",
+        "required": false,
+        "description": ""
+      },
+      {
+        "name": "hint",
+        "type": "string",
+        "required": false,
+        "description": "Shown right-aligned, e.g. a shortcut hint."
+      }
+    ],
+    "CellContext": [
+      {
+        "name": "row",
+        "type": "T",
+        "required": true,
+        "description": ""
+      },
+      {
+        "name": "rowKey",
+        "type": "RowKey",
+        "required": true,
+        "description": ""
+      },
+      {
+        "name": "column",
+        "type": "ColumnDef<T>",
+        "required": true,
+        "description": ""
+      },
+      {
+        "name": "value",
+        "type": "unknown",
+        "required": true,
+        "description": ""
+      }
+    ],
+    "CellActionEvent": [
+      {
+        "name": "name",
+        "type": "string",
+        "required": true,
+        "description": ""
+      },
+      {
+        "name": "payload",
+        "type": "unknown",
+        "required": true,
+        "description": ""
+      },
+      {
+        "name": "row",
+        "type": "T",
+        "required": true,
+        "description": ""
+      },
+      {
+        "name": "rowKey",
+        "type": "RowKey",
+        "required": true,
+        "description": ""
+      },
+      {
+        "name": "column",
+        "type": "ColumnDef<T>",
+        "required": true,
+        "description": ""
+      }
+    ],
+    "CellClickEvent": [
+      {
+        "name": "row",
+        "type": "T",
+        "required": true,
+        "description": ""
+      },
+      {
+        "name": "rowKey",
+        "type": "RowKey",
+        "required": true,
+        "description": ""
+      },
+      {
+        "name": "column",
+        "type": "ColumnDef<T>",
+        "required": true,
+        "description": ""
+      },
+      {
+        "name": "value",
+        "type": "unknown",
+        "required": true,
+        "description": ""
+      },
+      {
+        "name": "event",
+        "type": "MouseEvent | KeyboardEvent",
+        "required": true,
+        "description": ""
+      }
+    ],
+    "ContextActionEvent": [
+      {
+        "name": "name",
+        "type": "string",
+        "required": true,
+        "description": ""
+      },
+      {
+        "name": "item",
+        "type": "MenuAction",
+        "required": true,
+        "description": ""
+      },
+      {
+        "name": "row",
+        "type": "T",
+        "required": true,
+        "description": ""
+      },
+      {
+        "name": "rowKey",
+        "type": "RowKey",
+        "required": true,
+        "description": ""
+      },
+      {
+        "name": "column",
+        "type": "ColumnDef<T>",
+        "required": true,
+        "description": ""
+      },
+      {
+        "name": "value",
+        "type": "unknown",
+        "required": true,
+        "description": ""
+      }
+    ],
+    "HeaderActionEvent": [
+      {
+        "name": "name",
+        "type": "string",
+        "required": true,
+        "description": ""
+      },
+      {
+        "name": "item",
+        "type": "MenuAction",
+        "required": true,
+        "description": ""
+      },
+      {
+        "name": "column",
+        "type": "ColumnDef<T>",
+        "required": true,
+        "description": ""
+      }
+    ],
+    "VueGridConfig": [
+      {
+        "name": "renderers",
+        "type": "CellRendererDefinition[]",
+        "required": false,
+        "description": ""
+      },
+      {
+        "name": "features",
+        "type": "readonly GridFeature[]",
+        "required": false,
+        "description": "Features every grid in the app gets (`allFeatures` for all of them)."
+      },
+      {
+        "name": "locale",
+        "type": "string",
+        "required": false,
+        "description": ""
+      },
+      {
+        "name": "currency",
+        "type": "string",
+        "required": false,
+        "description": ""
+      },
+      {
+        "name": "timeZone",
+        "type": "string",
+        "required": false,
+        "description": ""
+      },
+      {
+        "name": "density",
+        "type": "Density",
+        "required": false,
+        "description": ""
+      }
+    ]
+  }
+}

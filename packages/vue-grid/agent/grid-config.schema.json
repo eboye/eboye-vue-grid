@@ -1,0 +1,609 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://unpkg.com/@eboye/vue-grid/agent/grid-config.schema.json",
+  "title": "@eboye/vue-grid grid config",
+  "description": "A <VGrid> configuration as data: its props (camelCase), `columns` and the `features` it registers (export names, e.g. \"sortingFeature\"). Functions and components are allowed where the API takes them but are not checked. Validate fully with validateGridConfig() from @eboye/vue-grid/agent.",
+  "type": "object",
+  "properties": {
+    "rows": {
+      "type": "array",
+      "items": {},
+      "description": "The rows (client data), used as-is and never mutated. Omit when using `dataSource`."
+    },
+    "columns": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/ColumnDef"
+      },
+      "description": "Column definitions."
+    },
+    "rowKey": {
+      "description": "Stable unique id of a row: a property name or `(row) => string | number`. All row state is keyed by it."
+    },
+    "features": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "allFeatures",
+          "aggregationFeature",
+          "columnGroupsFeature",
+          "columnPinningFeature",
+          "columnReorderFeature",
+          "columnResizingFeature",
+          "columnVisibilityFeature",
+          "filteringFeature",
+          "keyboardNavigationFeature",
+          "menusFeature",
+          "paginationFeature",
+          "rowPinningFeature",
+          "selectionFeature",
+          "serverDataFeature",
+          "sortingFeature",
+          "subGridsFeature",
+          "virtualScrollingFeature"
+        ]
+      },
+      "description": "Registered features by export name (per grid and app-wide together)."
+    },
+    "dataSource": {
+      "description": "Server data: called with the current query (sort, filters, search, page) whenever it changes. The grid cancels superseded requests, shows loading and errors, and sorts / filters / pages nothing itself."
+    },
+    "pagination": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "object"
+        }
+      ],
+      "description": "Built-in pagination under the grid (server-side with `dataSource`, client-side otherwise)."
+    },
+    "sortMode": {
+      "enum": [
+        "controlled",
+        "client"
+      ],
+      "description": "`controlled` (default): a header click only updates `v-model:sort` (sort on the server or in your own code). `client`: the grid sorts the rows itself. Ignored with `dataSource`."
+    },
+    "filterMode": {
+      "enum": [
+        "client",
+        "controlled"
+      ],
+      "description": "`client` (default): the grid filters its rows. `controlled`: it only emits `update:filters`."
+    },
+    "filterRow": {
+      "type": "boolean",
+      "description": "Show the filter row: an input under each filterable column's header."
+    },
+    "filterStorage": {
+      "description": "Persist the filter model (`string` = localStorage key)."
+    },
+    "noMatchText": {
+      "type": "string",
+      "description": "Shown when filters hide every row."
+    },
+    "selectable": {
+      "anyOf": [
+        {
+          "enum": [
+            "single"
+          ]
+        },
+        {
+          "type": "boolean"
+        }
+      ],
+      "description": "A selection column: `true` = multi-select (with select-all), `'single'` = one row."
+    },
+    "selectionMode": {
+      "enum": [
+        "cascade",
+        "independent"
+      ],
+      "description": "`cascade` (default): selecting a parent selects its children. `independent`: rows alone."
+    },
+    "isRowSelectable": {
+      "description": "Rows that can't be selected get a disabled checkbox."
+    },
+    "subRows": {
+      "description": "Synchronous child rows of a row: shown in a nested sub-grid when expanded."
+    },
+    "loadSubRows": {
+      "description": "Lazy child rows, loaded on first expand (cached, with loading / error / retry)."
+    },
+    "hasSubRows": {
+      "description": "With `loadSubRows`: which rows get an expander (default: every row)."
+    },
+    "rowExpandable": {
+      "description": "With a `#detail` slot: which rows can expand to show it (default: every row)."
+    },
+    "rowClickable": {
+      "type": "boolean",
+      "description": "Pointer cursor on rows (`row-click` is emitted either way)."
+    },
+    "rowClass": {
+      "description": "Extra classes for a row."
+    },
+    "highlightedRows": {
+      "type": "array",
+      "items": {
+        "type": [
+          "string",
+          "number"
+        ]
+      },
+      "description": "Keys of rows to highlight (e.g. the row being edited)."
+    },
+    "flash": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "const": "direction"
+        }
+      ],
+      "description": "Briefly highlight cells whose value changes (live data, enrichment). Columns can override."
+    },
+    "virtual": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "rowHeight": {
+              "type": "number",
+              "description": "Fixed row height in px."
+            },
+            "overscan": {
+              "type": "number",
+              "description": "Extra rows rendered above/below the viewport. Default 6."
+            },
+            "detailHeight": {
+              "type": "number",
+              "description": "Estimated height in px of a detail row (`#detail` slot) until it has been rendered and; measured. Default 4 × `rowHeight`. Data rows always have `rowHeight`."
+            }
+          },
+          "required": [
+            "rowHeight"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "const": false
+        }
+      ],
+      "description": "Virtual scrolling: only the rows in view render. Rows share one height (`rowHeight`, px) and the grid needs a bounded height. Needs the virtual scrolling feature."
+    },
+    "storage": {
+      "description": "Persist column state (order, hidden, pins, widths): a localStorage key or your own storage."
+    },
+    "renderers": {
+      "type": "array",
+      "items": {},
+      "description": "Renderers usable by name in this grid (merged over the app-wide ones)."
+    },
+    "locale": {
+      "type": "string",
+      "description": "Locale for number / date renderers (default: the plugin's, else the browser's)."
+    },
+    "currency": {
+      "type": "string",
+      "description": "Default ISO 4217 currency for currency renderers."
+    },
+    "timeZone": {
+      "type": "string",
+      "description": "IANA time zone for date renderers and date filters."
+    },
+    "density": {
+      "enum": [
+        "compact",
+        "cozy",
+        "comfortable"
+      ],
+      "description": "Cell padding scale."
+    },
+    "loading": {
+      "type": "boolean",
+      "description": "Shows a progress bar and sets `aria-busy` (server data sets it by itself)."
+    },
+    "emptyText": {
+      "type": "string",
+      "description": "Shown when there are no rows."
+    },
+    "ariaLabel": {
+      "type": "string",
+      "description": "Accessible name of the grid."
+    },
+    "ui": {
+      "type": "object",
+      "description": "Extra classes per part (`root`, `header`, `headerCell`, `row`, `cell`, `subgrid`, `detail`, `empty`), e.g. Tailwind utilities."
+    },
+    "contextMenu": {
+      "description": "Right-click menu items for a body cell. Return `null`/`[]` to keep the browser's menu."
+    },
+    "headerMenu": {
+      "description": "Header right-click menu: `true` = built-in items (sort, pin, move, hide, reset), `false` = off, or a function that receives the built-in items and returns the items to show."
+    },
+    "pinnedTopRows": {
+      "type": "array",
+      "items": {},
+      "description": "Extra rows above the body, not part of the data (row pinning feature)."
+    },
+    "pinnedBottomRows": {
+      "type": "array",
+      "items": {},
+      "description": "Extra rows below the body, not part of the data (row pinning feature)."
+    },
+    "totals": {
+      "anyOf": [
+        {
+          "enum": [
+            "top",
+            "bottom"
+          ]
+        },
+        {
+          "type": "boolean"
+        }
+      ],
+      "description": "A totals row with each column's `aggregate` (aggregation feature): `true` / `'bottom'` sticks it to the bottom, `'top'` under the header."
+    },
+    "totalsLabel": {
+      "type": "string",
+      "description": "The totals row's label, in its first column (unless that column has an aggregate)."
+    },
+    "aggregates": {
+      "type": "object",
+      "description": "Totals row values by column key, instead of computing them (e.g. totals from a server)."
+    },
+    "sort": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "key": {
+              "type": "string"
+            },
+            "dir": {}
+          },
+          "required": [
+            "key",
+            "dir"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Sort state: a header click cycles asc → desc → none. Header UI needs the sorting feature."
+    },
+    "columnState": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "order": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Column keys in display order (all known columns, visible or not)."
+            },
+            "hidden": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Keys of hidden columns."
+            },
+            "pinned": {
+              "type": "object",
+              "description": "Runtime pin overrides (e.g. from the header menu). `null` = explicitly unpinned; a missing key; falls back to the column's `pinned` definition. Optional so older persisted state still loads."
+            },
+            "widths": {
+              "type": "object",
+              "description": "Widths the user resized columns to (CSS lengths, e.g. `'240px'`). Column resizing feature."
+            }
+          },
+          "required": [
+            "order",
+            "hidden"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Column order, hidden columns, runtime pins and resized widths (persisted with `storage`)."
+    },
+    "expanded": {
+      "type": "array",
+      "items": {
+        "type": [
+          "string",
+          "number"
+        ]
+      },
+      "description": "Keys of expanded rows (sub-grids and detail rows)."
+    },
+    "selected": {
+      "type": "array",
+      "items": {
+        "type": [
+          "string",
+          "number"
+        ]
+      },
+      "description": "Keys of selected rows. Needs the selection feature."
+    },
+    "filters": {
+      "description": "Column filters and quick search: `{ columns: Record<key, ColumnFilter>, search }`. Needs the filtering feature."
+    },
+    "page": {
+      "type": "number",
+      "description": "Current page (1-based); resets to 1 when sort or filters change. Needs the pagination feature."
+    },
+    "pageSize": {
+      "type": "number",
+      "description": "Rows per page. Needs the pagination feature."
+    },
+    "pinnedRows": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "top": {
+              "type": "array",
+              "items": {
+                "type": [
+                  "string",
+                  "number"
+                ]
+              }
+            },
+            "bottom": {
+              "type": "array",
+              "items": {
+                "type": [
+                  "string",
+                  "number"
+                ]
+              }
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Top-level rows pinned above / below the body, by key: `{ top, bottom }`. Needs the row pinning feature."
+    }
+  },
+  "required": [
+    "columns",
+    "rowKey"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "ColumnDef": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "type": "string",
+          "description": "Unique, stable column id. Also used for sort state, column state and slot names."
+        },
+        "header": {
+          "type": "string",
+          "description": "Header text (default: the key)."
+        },
+        "headerTooltip": {
+          "type": "string",
+          "description": "Tooltip on the header cell."
+        },
+        "field": {
+          "type": "string",
+          "description": "Dot path into the row, e.g. `user.address.city`. Defaults to `key`."
+        },
+        "value": {
+          "description": "Computes the cell value; wins over `field`."
+        },
+        "renderer": {
+          "description": "A renderer definition (`currencyRenderer`), a registered renderer name, or a component. Defaults to `text`. Built-in names: text, toggle-text, number, signed-number, currency, change, date, datetime, boolean, status, link, icon, json, json-tree, actions-menu, action-button, multi-line, copy, chip, checkbox, switch, radio, edit, image, code, button-group, icon-toggle, details, list.",
+          "anyOf": [
+            {
+              "enum": [
+                "text",
+                "toggle-text",
+                "number",
+                "signed-number",
+                "currency",
+                "change",
+                "date",
+                "datetime",
+                "boolean",
+                "status",
+                "link",
+                "icon",
+                "json",
+                "json-tree",
+                "actions-menu",
+                "action-button",
+                "multi-line",
+                "copy",
+                "chip",
+                "checkbox",
+                "switch",
+                "radio",
+                "edit",
+                "image",
+                "code",
+                "button-group",
+                "icon-toggle",
+                "details",
+                "list"
+              ]
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "object"
+            }
+          ]
+        },
+        "rendererOptions": {
+          "description": "Options of the column's renderer, typed against it (merged over the renderer's defaults)."
+        },
+        "width": {
+          "type": "string",
+          "description": "Any CSS grid track size. Defaults to `auto`."
+        },
+        "minWidth": {
+          "type": "string",
+          "description": "Lower bound; combined with `width` into `minmax(minWidth, width)`, and the resize minimum."
+        },
+        "maxWidth": {
+          "type": "string",
+          "description": "Upper bound when the user resizes the column (column resizing feature)."
+        },
+        "resizable": {
+          "type": "boolean",
+          "description": "Can the user resize this column (column resizing feature)? Default `true`."
+        },
+        "group": {
+          "type": "string",
+          "description": "Header group label (column groups feature): adjacent visible columns with the same `group`; share one header cell above their own headers."
+        },
+        "align": {
+          "enum": [
+            "start",
+            "center",
+            "end"
+          ],
+          "description": "Cell and header alignment (default: the renderer's, e.g. `end` for numbers, else `start`)."
+        },
+        "sortable": {
+          "type": "boolean",
+          "description": "A sort button in the header (sorting feature). Client sorting needs `sort-mode=\"client\"`."
+        },
+        "sortValue": {
+          "description": "The value client sorting compares (default: the renderer's sort value, else the cell value)."
+        },
+        "sortFn": {
+          "description": "A full comparator for client sorting; wins over `sortValue`."
+        },
+        "pinned": {
+          "enum": [
+            "left",
+            "right"
+          ],
+          "description": "Initial pin side (the header menu can change it at runtime unless `pinnable: false`)."
+        },
+        "pinnable": {
+          "type": "boolean",
+          "description": "Can the user pin/unpin it from the header menu? Default `true`."
+        },
+        "hidden": {
+          "type": "boolean",
+          "description": "Initial visibility (column state wins once it exists)."
+        },
+        "hideable": {
+          "type": "boolean",
+          "description": "Can the user hide it from the column menu? Default `true`."
+        },
+        "reorderable": {
+          "type": "boolean",
+          "description": "Can the user move it? Default `true`."
+        },
+        "clickable": {
+          "type": "boolean",
+          "description": "Cell click emits `cell-click` instead of `row-click`."
+        },
+        "filterable": {
+          "type": "boolean",
+          "description": "Show a filter for this column (funnel in the header, and an input in the filter row)."
+        },
+        "filter": {
+          "anyOf": [
+            {
+              "enum": [
+                "text",
+                "number",
+                "date",
+                "boolean",
+                "set"
+              ]
+            },
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "enum": [
+                    "text",
+                    "number",
+                    "date",
+                    "boolean",
+                    "set"
+                  ]
+                },
+                "options": {
+                  "description": "Choices for a `set` filter: a list, or a loader called with the search text (e.g. from a; backend — honour `signal`). Default: distinct values from the rows."
+                },
+                "placeholder": {
+                  "type": "string",
+                  "description": "Placeholder of the filter-row input."
+                }
+              },
+              "required": [],
+              "additionalProperties": false
+            }
+          ],
+          "description": "Filter type — default from the renderer (number, date, boolean, set for status/chip, else text) — or options."
+        },
+        "filterValue": {
+          "description": "Value used for filtering (default: the cell value)."
+        },
+        "filterFn": {
+          "description": "Custom predicate; replaces the built-in matching for this column."
+        },
+        "filterComponent": {
+          "description": "Custom filter UI (popover), receives `modelValue` / emits `update:modelValue` with a filter."
+        },
+        "searchable": {
+          "type": "boolean",
+          "description": "Include in the quick search. Default `true` for visible columns."
+        },
+        "flash": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "const": "direction"
+            }
+          ],
+          "description": "Briefly highlight the cell when its value changes (overrides the grid's `flash` prop). `'direction'`: green when a number goes up, red when it goes down."
+        },
+        "aggregate": {
+          "description": "The column's value in the totals row (aggregation feature): `'sum' | 'avg' | 'min' | 'max'`; over the cell values (empty values skipped), `'count'` of rows, or a function of the values and; the rows. Shown with the column's renderer (`count` as a plain number)."
+        },
+        "cellClass": {
+          "description": "Extra classes for the column's body cells (or a function of the row)."
+        },
+        "headerClass": {
+          "description": "Extra classes for the column's header cell."
+        }
+      },
+      "required": [
+        "key"
+      ],
+      "additionalProperties": false
+    }
+  }
+}
