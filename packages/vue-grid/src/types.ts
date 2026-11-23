@@ -234,6 +234,11 @@ export interface VirtualOptions {
   rowHeight: number
   /** Extra rows rendered above/below the viewport. Default 6. */
   overscan?: number
+  /**
+   * Estimated height in px of a detail row (`#detail` slot) until it has been rendered and
+   * measured. Default 4 × `rowHeight`. Data rows always have `rowHeight`.
+   */
+  detailHeight?: number
 }
 
 export type MenuTone = 'success' | 'danger' | 'warning' | 'info' | 'neutral' | 'accent'

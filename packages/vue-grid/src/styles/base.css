@@ -186,7 +186,13 @@
     inset: 0;
     width: 40%;
   }
+  /* Virtual mode: spacers stand in for rows out of view; never a scroll anchor (rows are). */
   .vg-spacer { grid-column: 1 / -1; }
+  /*
+   * Virtual grids hold the view steady themselves (rows above changing height); the browser's own
+   * scroll anchoring would act on the same change a second time (Chromium) or not at all (Firefox).
+   */
+  .vg-virtual { overflow-anchor: none; }
   .vg-virtual .vg-row > .vg-cell {
     box-sizing: border-box;
     height: var(--vg-row-height);

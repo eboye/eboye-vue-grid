@@ -357,6 +357,44 @@ describe('VGrid virtual mode', () => {
     expect(rendered[0]!.attributes('aria-rowindex')).toBe('2')
     expect(w.find('.vg').attributes('aria-rowcount')).toBe('10001')
   })
+
+  it('keeps sub-grids in their subgrid container, windowed at every level', () => {
+    // 2,000 parents with 50 children each; the first parent is expanded (50 children > one screen)
+    const tree = Array.from({ length: 2000 }, (_, p) => ({
+      id: `p${p}`,
+      name: `Parent ${p}`,
+      kids: Array.from({ length: 50 }, (_, c) => ({ id: `p${p}c${c}`, name: `Child ${p}.${c}` })),
+    }))
+    const w = mount(VGrid, {
+      props: {
+        rows: tree,
+        columns: [{ key: 'name' }],
+        rowKey: 'id',
+        virtual: { rowHeight: 40, overscan: 2 },
+        subRows: (r: { kids?: unknown[] }) => r.kids,
+        expanded: ['p0'],
+      },
+    })
+    expect(w.find('.vg').attributes('aria-rowcount')).toBe(String(2000 + 50 + 1))
+    const sub = w.find('[data-subgrid-for="p0"]')
+    expect(sub.exists()).toBe(true)
+    const kids = sub.findAll('.vg-row')
+    expect(kids.length).toBeGreaterThan(5)
+    expect(kids.length).toBeLessThan(50) // the child level is windowed too…
+    expect(sub.findAll(':scope > .vg-spacer').length).toBe(1) // …with a spacer for the rest
+    expect(kids[0]!.attributes('aria-rowindex')).toBe('3') // header, p0, then its first child
+    expect(w.findAll('.vg > .vg-row').length).toBeLessThan(5) // p1… are below the window
+  })
+
+  it('renders detail rows in virtual mode', () => {
+    const rows = Array.from({ length: 1000 }, (_, i) => ({ id: i, name: `Row ${i}` }))
+    const w = mount(VGrid, {
+      props: { rows, columns: [{ key: 'name' }], rowKey: 'id', virtual: { rowHeight: 40 }, expanded: [1] },
+      slots: { detail: '<template #detail="{ row }"><p class="d">Detail {{ row.id }}</p></template>' },
+    })
+    expect(w.find('[data-detail-for="1"] .d').text()).toBe('Detail 1')
+    expect(w.find('.vg').attributes('aria-rowcount')).toBe(String(1000 + 1 + 1))
+  })
 })
 
 describe('VGrid context menus', () => {

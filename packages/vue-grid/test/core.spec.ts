@@ -13,7 +13,7 @@ import {
 } from '../src/core/columns'
 import { compareValues, nextSort, sortRows } from '../src/core/sort'
 import { selectionState, toggleRowSelection } from '../src/core/selection'
-import { computeVirtualWindow } from '../src/core/virtual'
+import { buildLayout, locateRow, visibleSpan, type LayoutInput } from '../src/core/virtual'
 import { pageItems } from '../src/core/pagination'
 import { localStorageAdapter } from '../src/core/storage'
 import type { ColumnDef } from '../src/types'
@@ -197,19 +197,58 @@ describe('selection', () => {
 })
 
 describe('virtual', () => {
-  it('computes a window with overscan, clamped to bounds', () => {
-    expect(
-      computeVirtualWindow({ scrollTop: 0, viewportHeight: 100, rowHeight: 20, rowCount: 1000, overscan: 2 }),
-    ).toEqual({ start: 0, end: 7, padTop: 0, padBottom: (1000 - 7) * 20 })
-    expect(
-      computeVirtualWindow({ scrollTop: 1000, viewportHeight: 100, rowHeight: 20, rowCount: 1000, overscan: 2 }),
-    ).toEqual({ start: 48, end: 57, padTop: 48 * 20, padBottom: (1000 - 57) * 20 })
-    expect(
-      computeVirtualWindow({ scrollTop: 99999, viewportHeight: 100, rowHeight: 20, rowCount: 10, overscan: 2 }),
-    ).toEqual({ start: 3, end: 10, padTop: 60, padBottom: 0 })
-    expect(
-      computeVirtualWindow({ scrollTop: 0, viewportHeight: 100, rowHeight: 20, rowCount: 0, overscan: 2 }),
-    ).toEqual({ start: 0, end: 0, padTop: 0, padBottom: 0 })
+  interface Node {
+    id: number
+    kids?: Node[]
+  }
+  const node = (id: number, kids?: Node[]): Node => ({ id, kids })
+  const layoutOf = (rows: Node[], expanded: number[], extra: Partial<LayoutInput<Node>> = {}) =>
+    buildLayout<Node>({
+      rows,
+      getKey: (r) => r.id,
+      rowHeight: 20,
+      prepare: (r) => r,
+      isExpanded: (r) => expanded.includes(r.id),
+      detailHeight: () => 0,
+      subRows: (r) => (r.kids ? { children: r.kids } : undefined),
+      statusHeight: () => 30,
+      subgridChrome: { top: 0, bottom: 1 },
+      ...extra,
+    })
+
+  it('flat rows: fixed-height blocks, binary-searched span', () => {
+    const rows = Array.from({ length: 1000 }, (_, i) => node(i))
+    const l = layoutOf(rows, [])
+    expect(l.height).toBe(20_000)
+    expect(l.rowCount).toBe(1000)
+    expect(visibleSpan(l, 0, 100)).toEqual({ start: 0, end: 5 })
+    expect(visibleSpan(l, 1000, 1100)).toEqual({ start: 50, end: 55 })
+    expect(visibleSpan(l, 1010, 1100)).toEqual({ start: 50, end: 55 }) // partly visible block counts
+    expect(visibleSpan(l, -500, 10)).toEqual({ start: 0, end: 1 })
+    expect(visibleSpan(l, 99_999, 100_100)).toEqual({ start: 0, end: 0 })
+    expect(visibleSpan(layoutOf([], []), 0, 100)).toEqual({ start: 0, end: 0 })
+  })
+
+  it('expanded rows add detail rows, sub-grid containers and their children', () => {
+    const rows = [node(1, [node(11), node(12, [node(121)])]), node(2), node(3, [node(31)])]
+    const l = layoutOf(rows, [1, 12, 2], { detailHeight: (r) => (r.id === 2 ? 50 : 0) })
+    // 1: row 20 + container (1 + [11: 20, 12: 20 + container (1 + 121: 20)]) = 20 + 1 + 61 = 82
+    expect(Array.from(l.tops)).toEqual([0, 82, 82 + 20 + 50, 82 + 70 + 20])
+    expect(l.sub.get(1)?.kind).toBe('rows')
+    expect(l.sub.has(3)).toBe(false) // not expanded
+    // rendered rows: 1, 11, 12, 121, 2, detail of 2, 3
+    expect(l.rowCount).toBe(7)
+    expect(Array.from(l.rowsBefore)).toEqual([0, 4, 6, 7])
+    expect(locateRow(l, 121, (r) => r.id, 20, 0)).toEqual({ top: 20 + 20 + 20, index: 3 })
+    expect(locateRow(l, 3, (r) => r.id, 20, 0)).toEqual({ top: 152, index: 6 })
+    expect(l.height).toBe(172)
+    expect(locateRow(l, 999, (r) => r.id, 20, 0)).toBeNull()
+  })
+
+  it('a loading or failed sub-grid is one status row', () => {
+    const l = layoutOf([node(1, [node(11)]), node(2)], [1], { subRows: () => ({ status: 'loading' }) })
+    expect(l.sub.get(1)).toEqual({ kind: 'status', status: 'loading', height: 30 })
+    expect(Array.from(l.tops)).toEqual([0, 20 + 1 + 30, 20 + 31 + 20])
   })
 })
 

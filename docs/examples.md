@@ -1480,10 +1480,33 @@ For thousands of rows, render only what's visible (needs `virtualScrollingFeatur
 />
 ```
 
-- Every row must have the same height (`rowHeight`, in px). Keep content to one line
+- Every data row has the same height (`rowHeight`, in px). Keep content to one line
   (e.g. `rendererOptions: { ellipsis: true }`).
 - The grid needs a fixed height.
-- Sub-rows and detail rows are disabled in virtual mode.
+- Sub-grids and detail rows work in virtual mode as well:
+
+```vue
+<VGrid
+  ref="grid"
+  :rows="orders"
+  :columns="columns"
+  row-key="id"
+  :features="[virtualScrollingFeature, subGridsFeature]"
+  :virtual="{ rowHeight: 40, detailHeight: 120 }"
+  :sub-rows="(order) => order.lines"
+  style="height: 600px"
+>
+  <template #detail="{ row }"><OrderNotes :order="row" /></template>
+</VGrid>
+<button @click="grid?.expandAll()">Expand all</button>
+```
+
+- Children stay inside their parent's CSS `subgrid`, lined up with its columns, and every level
+  renders only what's in view: *Expand all* on thousands of rows still keeps about a screenful in
+  the DOM.
+- Detail rows can be any height. They're measured as they render (`detailHeight` is the estimate
+  until then), and the view doesn't jump while they settle.
+- With `load-sub-rows`, only expanded rows in view request their children, once scrolling settles.
 
 ---
 

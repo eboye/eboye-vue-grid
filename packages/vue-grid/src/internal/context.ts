@@ -5,6 +5,7 @@ import type { ColumnFilter, FilterState, FilterType } from '../core/filter'
 import type { SelectionSummary } from '../core/selection'
 import type { SubRowEntry } from '../composables/useSubRows'
 import type { DistinctValue } from '../composables/useGridFilters'
+import type { VirtualRowsContext } from '../composables/useVirtualRows'
 
 export const SELECT_COLUMN_KEY = '__vg_select'
 
@@ -97,6 +98,8 @@ export interface GridContext {
     open(key: string): void
   }
   virtual: ComputedRef<boolean>
+  /** With the virtual scrolling feature: windowing of each level of rows, and measuring. */
+  virtualRows?: VirtualRowsContext
   pinStyle(key: string): Record<string, string> | undefined
   onRowClick(row: any, key: RowKey, event: MouseEvent | KeyboardEvent): void
   onCellClick(row: any, key: RowKey, column: ResolvedColumn, event: MouseEvent | KeyboardEvent): void

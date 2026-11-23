@@ -1,4 +1,4 @@
-import { shallowReactive } from 'vue'
+import { shallowReactive, toRaw } from 'vue'
 import { patchRows, type RowPatches } from '../core/patch'
 import type { RowKey } from '../types'
 
@@ -113,5 +113,42 @@ export function useSubRows<T>(opts: SubRowsOptions<T>) {
     }
   }
 
-  return { children, mayHaveChildren, ensure, retry: load, state, patchLoaded, clear }
+  /**
+   * `children` / `mayHaveChildren` / `state` over plain values, for a pass over many rows (the
+   * virtual layout): the props and the cache are read once, with one dependency on the whole cache.
+   */
+  function snapshot(keyOf: (row: T) => RowKey = opts.getKey) {
+    // Keys come from the raw row: reading them through a reactive row would track each one.
+    const getKey = (row: T) => keyOf(toRaw(row))
+    void cache.size // any change to the cache re-runs the caller
+    const raw = toRaw(cache)
+    const subRows = opts.subRows()
+    const hasLoader = !!opts.loadSubRows()
+    const hint = opts.hasSubRows()
+    const sync = (row: T): T[] | undefined => {
+      const result = subRows?.(row)
+      return Array.isArray(result) ? result : undefined
+    }
+    return {
+      children(row: T): T[] | undefined {
+        const s = sync(row)
+        if (s) return s
+        const entry = raw.get(getKey(row))
+        return entry?.status === 'loaded' ? (entry.rows as T[]) : undefined
+      },
+      mayHaveChildren(row: T): boolean {
+        const s = sync(row)
+        if (s) return s.length > 0
+        if (!hasLoader) return false
+        const entry = raw.get(getKey(row))
+        if (entry?.status === 'loaded') return entry.rows.length > 0
+        return hint ? hint(row) : true
+      },
+      state(row: T): SubRowEntry | undefined {
+        return sync(row) ? undefined : raw.get(getKey(row))
+      },
+    }
+  }
+
+  return { children, mayHaveChildren, ensure, retry: load, state, patchLoaded, clear, snapshot }
 }

@@ -353,12 +353,14 @@ const headerRows = computed(() => (hasGroups.value ? 2 : 1))
 // ── Sorting ─────────────────────────────────────────────────────────────────────────────────
 const sortable = (col: ColumnDef<T>) => !!features.sorting && !!col.sortable
 
-function sortRowsFn(rows: readonly T[]): T[] {
+const unsorted = (rows: readonly T[]) => rows as T[]
+/** The client-side sort as a function, with its reactive inputs read once (for many levels). */
+function makeSorter(): (rows: readonly T[]) => T[] {
   const state = sort.value
   const sorting = features.sorting
-  if (!sorting || !clientSort.value || !state) return rows as T[]
+  if (!sorting || !clientSort.value || !state) return unsorted
   const col = props.columns.find((c) => c.key === state.key)
-  if (!col) return rows as T[]
+  if (!col) return unsorted
   // Resolved from the column itself, not from the visible columns: sorting by a hidden column still
   // uses its renderer's sort value, and resizing or reordering columns doesn't re-sort every row.
   const { definition, fallback } = resolveRenderer(col)
@@ -368,7 +370,11 @@ function sortRowsFn(rows: readonly T[]): T[] {
     (definition?.sortValue
       ? (row: T) => definition.sortValue!(getCellValue(row, col), options)
       : (row: T) => getCellValue(row, col))
-  return sorting.sortRows(rows, state.dir, getter, col.sortFn)
+  return (rows) => sorting.sortRows(rows, state.dir, getter, col.sortFn)
+}
+
+function sortRowsFn(rows: readonly T[]): T[] {
+  return makeSorter()(rows)
 }
 
 function onSort(key: string) {
@@ -400,8 +406,8 @@ watch(
   () => sub?.clear(),
 )
 
-const treeMode = computed(() => !!sub && !isVirtual.value && !!(props.subRows || props.loadSubRows))
-const hasDetail = computed(() => !isVirtual.value && !!slots.detail)
+const treeMode = computed(() => !!sub && !!(props.subRows || props.loadSubRows))
+const hasDetail = computed(() => !!slots.detail)
 const expandedSet = computed(() => new Set(expanded.value))
 /** Known child rows (sub-grids only). */
 const childrenOf = (row: T) => (treeMode.value ? sub?.children(row) : undefined)
@@ -616,17 +622,33 @@ const menus = features.menus?.useMenus<T>({
 
 // ── Virtualisation ──────────────────────────────────────────────────────────────────────────
 const topRows = computed(() => prepareRows(sourceRows.value))
-const virt = features.virtualScrolling?.useVirtualRows({
+/** Reads `row-key` once, for passes over many rows. */
+const keyReader = () => {
+  const rowKey = props.rowKey
+  return (row: T) => resolveRowKey(row, rowKey)
+}
+const virt = features.virtualScrolling?.useVirtualRows<T>({
   root,
   options: () => virtualOptions.value,
-  rowCount: () => topRows.value.length,
+  rows: () => topRows.value,
+  keyOf: keyReader,
+  expanded: () => expandedSet.value,
+  subRows: () => (treeMode.value && sub ? sub.snapshot : null),
+  hasDetail: () => hasDetail.value,
+  rowExpandable: () => props.rowExpandable,
+  preparer: () => {
+    const visible = filt?.visibleKeys.value ?? null
+    const sorter = makeSorter()
+    const key = keyReader()
+    return (rows) => sorter(visible ? rows.filter((row) => visible.has(key(toRaw(row)))) : rows)
+  },
 })
-const virtualWindow = computed(() => virt?.window.value ?? null)
 const onScroll = () => virt?.onScroll()
+/** Virtual mode: positions of every visible row, detail row and sub-grid. */
+const virtualLayout = computed(() => virt?.layout.value ?? null)
 /** Rows on all pages: the server's total, or the filtered client rows. */
 const totalRows = computed(() => (serverMode.value ? (ds?.total.value ?? sourceRows.value.length) : topRows.value.length))
 const windowRows = computed(() => {
-  if (virtualWindow.value) return topRows.value.slice(virtualWindow.value.start, virtualWindow.value.end)
   if (paginated.value && !serverMode.value) {
     const start = (currentPage.value - 1) * currentPageSize.value
     return topRows.value.slice(start, start + currentPageSize.value)
@@ -649,9 +671,6 @@ watch(
 
 if (process.env.NODE_ENV !== 'production') {
   watchEffect(() => {
-    if (isVirtual.value && (props.subRows || props.loadSubRows || slots.detail)) {
-      warnOnce('virtual-expand', 'Sub-rows and detail rows are disabled in virtual mode.')
-    }
     const seen = new Set<RowKey>()
     for (const row of sourceRows.value) {
       const key = getKey(row)
@@ -748,6 +767,7 @@ const context: GridContext = {
     open: openFilter,
   },
   virtual: isVirtual,
+  virtualRows: virt?.context,
   pinStyle: (key) => {
     const offset = pinOffsets?.value[key]
     return offset === undefined ? undefined : { '--vg-pin-offset': offset }
@@ -769,11 +789,7 @@ function scrollToTop() {
 }
 
 function scrollToRow(key: RowKey) {
-  if (virt && isVirtual.value) {
-    const index = topRows.value.findIndex((r) => getKey(r) === key)
-    if (index >= 0) virt.scrollToIndex(index)
-    return
-  }
+  if (virt?.scrollToKey(key)) return
   const cell = root.value?.querySelector<HTMLElement>(`[data-row-key="${CSS.escape(String(key))}"] > .vg-cell`)
   cell?.scrollIntoView({ block: 'nearest' })
 }
@@ -847,7 +863,7 @@ defineExpose<VGridExposed>({
         tabindex="0"
         :aria-label="ariaLabel"
         :aria-busy="isLoading || undefined"
-        :aria-rowcount="isVirtual ? topRows.length + headerRows : undefined"
+        :aria-rowcount="virtualLayout ? virtualLayout.rowCount + headerRows : undefined"
         :aria-colcount="resolvedColumns.length"
         :aria-multiselectable="(keyboardNav && selectMode === 'multi') || undefined"
         :style="{
@@ -872,24 +888,7 @@ defineExpose<VGridExposed>({
           @header-click="(event: MouseEvent) => drag?.consumeClick(event)"
         />
         <template v-if="windowRows.length">
-          <div
-            v-if="virtualWindow"
-            class="vg-spacer"
-            aria-hidden="true"
-            :style="{ height: `${virtualWindow.padTop}px` }"
-          />
-          <VGridRows
-            :rows="windowRows"
-            presorted
-            :index-offset="virtualWindow?.start ?? 0"
-            :aria-indexed="isVirtual"
-          />
-          <div
-            v-if="virtualWindow"
-            class="vg-spacer"
-            aria-hidden="true"
-            :style="{ height: `${virtualWindow.padBottom}px` }"
-          />
+          <VGridRows :rows="windowRows" presorted :layout="virtualLayout ?? undefined" />
         </template>
         <div v-else role="row" class="vg-empty-row">
           <div :role="context.cellRole" :tabindex="context.rovingTabindex" :class="['vg-empty', ui?.empty]">
