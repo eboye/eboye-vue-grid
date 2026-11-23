@@ -6,7 +6,12 @@ reorder/visibility with persistence, selection, virtual scrolling, pagination, a
 
 - Vue `^3.5` peer dependency, zero runtime dependencies, fully typed (`<VGrid generic="T">`).
 - Plain CSS in `@layer vue-grid` — your CSS / Tailwind utilities override it without `!important`.
-- No `v-html` / `innerHTML` anywhere; link renderer drops `javascript:` URLs.
+  Published minified (Lightning CSS, no transpiling).
+- Built for big data: virtual scrolling with sub-grids and detail rows, cell-level partial updates,
+  a GPU-animated change highlight — see [Performance](#performance).
+- Safe with untrusted row data: no `v-html` / `innerHTML` anywhere. Link renderers allow only
+  http(s), mailto and tel, and URLs are checked after the cleanup browsers apply (so `java\tscript:`
+  is caught). Value maps ignore inherited keys, and saved state is validated.
 
 **New here? Start with the [examples cookbook](../../docs/examples.md)** — runnable snippets for every
 feature. This README is the API reference.
@@ -99,7 +104,7 @@ an opt-in feature:
 | `menusFeature` | The header right-click menu (`header-menu`) and body-cell menus (`context-menu`); without it the browser's menu shows. The standalone `<VGridMenu>` and the `actions-menu` renderer don't need it |
 | `columnReorderFeature` | Dragging headers to reorder (mouse, pen, touch), Alt+←/→ on a header, the header menu's Move items |
 | `columnPinningFeature` | Sticky `pinned: 'left' \| 'right'` columns with edge shadows, the header menu's Pin items; without it pins are ignored |
-| `virtualScrollingFeature` | `virtual: { rowHeight, overscan? }`: only the rows in view render; without it every row renders |
+| `virtualScrollingFeature` | `virtual: { rowHeight, overscan?, detailHeight? }`: only the rows in view render, sub-grids and detail rows included; without it every row renders |
 | `columnVisibilityFeature` | `hidden: true` columns, `columnState.hidden`, the header menu's Hide column item; without it every column shows |
 | `keyboardNavigationFeature` | The ARIA grid pattern: one Tab stop, arrow keys / Home / End / PageUp / PageDown between cells, Enter, Space to select, →/← to expand, Alt+←/→ to move a column. Without it the grid is an ARIA `table` with its controls in the Tab order |
 | `columnResizingFeature` | Drag a header edge to resize (mouse, pen, touch), double-click it to fit the content, ←/→ on the focused edge (Alt+Shift+←/→ on a header with keyboard navigation); `minWidth` / `maxWidth` bound it, `resizable: false` opts out; widths in `columnState.widths`, persisted with `storage`; Fit width / Reset width in the header menu |
@@ -136,37 +141,37 @@ what you import.
 
   | File | What | gzip |
   |---|---|---|
-  | `base.css` | Structure only: grid layout, subgrid, sticky header and pins, tree indent, popover placement, virtual rows, truncation | 2.8 kB |
-  | `theme.css` | The default look on top of `base.css`: `--vg-*` tokens, colours, dark mode, densities, spacing, borders, typography, shadows, animation | 3.8 kB |
-  | `core.css` | `base.css` + `theme.css` | 6.0 kB |
-  | `renderers.css` | Styles for the cell renderers (other than text); uses the theme's tokens | 2.7 kB |
-  | `style.css` | All of the above | 8.0 kB |
+  | `base.css` | Structure only: grid layout, subgrid, sticky header and pins, tree indent, popover placement, virtual rows, truncation | 2.0 kB |
+  | `theme.css` | The default look on top of `base.css`: `--vg-*` tokens, colours, dark mode, densities, spacing, borders, typography, shadows, animation | 3.1 kB |
+  | `core.css` | `base.css` + `theme.css` | 4.7 kB |
+  | `renderers.css` | Styles for the cell renderers (other than text); uses the theme's tokens | 2.2 kB |
+  | `style.css` | All of the above | 6.2 kB |
 
   For a fully custom look, import only `base.css` (and `renderers.css` if you use renderers)
   and style the `.vg-*` classes yourself. See [Theming](#theming).
 
 | Import (minified / gzip, Vue excluded) | Initial chunk |
 |---|---|
-| `VGrid` (no features) | 34.2 kB / 12.1 kB |
-| `VGrid` + `sortingFeature` | 34.9 kB / 12.4 kB |
-| `VGrid` + `filteringFeature` | 37.9 kB / 13.4 kB |
-| `VGrid` + `serverDataFeature` | 35.6 kB / 12.8 kB |
-| `VGrid` + `paginationFeature` | 34.3 kB / 12.2 kB |
-| `VGrid` + `selectionFeature` | 36.2 kB / 12.8 kB |
-| `VGrid` + `subGridsFeature` | 35.9 kB / 12.8 kB |
-| `VGrid` + `menusFeature` | 43.2 kB / 15.2 kB |
-| `VGrid` + `columnReorderFeature` | 36.2 kB / 12.9 kB |
-| `VGrid` + `columnPinningFeature` | 36.4 kB / 13.0 kB |
-| `VGrid` + `virtualScrollingFeature` | 35.3 kB / 12.6 kB |
-| `VGrid` + `columnVisibilityFeature` | 34.4 kB / 12.2 kB |
-| `VGrid` + `keyboardNavigationFeature` | 36.6 kB / 13.0 kB |
-| `VGrid` + `columnResizingFeature` | 37.1 kB / 13.2 kB |
-| `VGrid` + `columnGroupsFeature` | 35.8 kB / 12.7 kB |
-| `VGrid` + `allFeatures` + `VGridSearch` | 64.3 kB / 22.4 kB |
-| `VGrid` + `currencyRenderer` | 35.4 kB / 12.5 kB |
-| `VGrid` + `VGridPagination` + `VGridColumnMenu` | 38.6 kB / 13.7 kB |
+| `VGrid` (no features) | 35.2 kB / 12.6 kB |
+| `VGrid` + `sortingFeature` | 35.9 kB / 12.9 kB |
+| `VGrid` + `filteringFeature` | 38.8 kB / 13.9 kB |
+| `VGrid` + `serverDataFeature` | 36.5 kB / 13.2 kB |
+| `VGrid` + `paginationFeature` | 35.3 kB / 12.6 kB |
+| `VGrid` + `selectionFeature` | 37.5 kB / 13.4 kB |
+| `VGrid` + `subGridsFeature` | 37.4 kB / 13.4 kB |
+| `VGrid` + `menusFeature` | 43.9 kB / 15.7 kB |
+| `VGrid` + `columnReorderFeature` | 37.1 kB / 13.3 kB |
+| `VGrid` + `columnPinningFeature` | 37.4 kB / 13.5 kB |
+| `VGrid` + `virtualScrollingFeature` | 39.9 kB / 14.6 kB |
+| `VGrid` + `columnVisibilityFeature` | 35.3 kB / 12.6 kB |
+| `VGrid` + `keyboardNavigationFeature` | 37.5 kB / 13.4 kB |
+| `VGrid` + `columnResizingFeature` | 38.1 kB / 13.7 kB |
+| `VGrid` + `columnGroupsFeature` | 36.7 kB / 13.1 kB |
+| `VGrid` + `allFeatures` + `VGridSearch` | 69.3 kB / 24.6 kB |
+| `VGrid` + `currencyRenderer` | 36.4 kB / 12.9 kB |
+| `VGrid` + `VGridPagination` + `VGridColumnMenu` | 39.5 kB / 14.1 kB |
 | `sortRows` only | 0.7 kB / 0.5 kB |
-| everything | 108.1 kB / 34.7 kB |
+| everything | 112.4 kB / 36.7 kB |
 
 With `filteringFeature`, the filter popover body and the filter-row editors are **on-demand
 chunks**: they load the first time a popover opens or `filter-row` is on. With
@@ -204,7 +209,7 @@ chunks**: they load the first time a popover opens or `filter-row` is on. With
 | `v-model:selected` | `RowKey[]` | `[]` | |
 | `selectionMode` | `'cascade' \| 'independent'` | `'cascade'` | Whether selecting a parent selects its children. |
 | `isRowSelectable` | `(row) => boolean` | — | |
-| `virtual` | `{ rowHeight: number; overscan?: number } \| false` | `false` | Fixed-height virtual scrolling. Needs `virtualScrollingFeature`. |
+| `virtual` | `{ rowHeight: number; overscan?: number; detailHeight?: number } \| false` | `false` | Virtual scrolling (fixed-height rows; sub-grids and measured detail rows included). Needs `virtualScrollingFeature`. |
 | `rowClickable` | `boolean` | `false` | Pointer cursor; `row-click` is always emitted. |
 | `rowClass` | `(row, index) => ClassValue` | — | |
 | `highlightedRows` | `RowKey[]` | — | |
@@ -543,8 +548,66 @@ Or place the standalone component yourself and feed the grid one page at a time:
        :virtual="{ rowHeight: 40 }" style="height: 600px" />
 ```
 
-Rows have a fixed height; only the visible window plus `overscan` is rendered. Sub-rows and detail
-rows are disabled in virtual mode.
+Rows have a fixed height; only the visible window plus `overscan` is rendered.
+
+Sub-grids and detail rows work in virtual mode too. The DOM keeps the same CSS grid / `subgrid`
+structure as without it: expanded children stay inside their parent's `subgrid` container (lined up
+with its columns), and at every level the rows out of view are replaced by spacers, so an expanded
+tree of tens of thousands of rows still renders about a screenful.
+
+- **Data rows** (children too) have `rowHeight`.
+- **Detail rows** can be any height. They're measured once rendered; until then
+  `virtual.detailHeight` is the estimate (default 4 × `rowHeight`).
+- **Lazy children** (`load-sub-rows`) are requested only for expanded rows in view, once a scroll
+  has settled, so flying past expanded rows doesn't fire their requests.
+- **The view holds still** when rows above it change height (a detail row measured, children
+  loaded): the grid keeps the first row in view where it was. It does this itself, the same in every
+  browser, so virtual grids set `overflow-anchor: none` (browser scroll anchoring doesn't work
+  reliably in a CSS grid like this one — Firefox doesn't anchor in it at all).
+- `scrollToRow(key)` reaches child rows too; `aria-rowcount` / `aria-rowindex` count every
+  rendered row (data, detail and loading / error rows).
+
+## Performance
+
+What the grid does for you, and what helps on your side. The repository README lists the
+measurements.
+
+**Many rows.** Above a few hundred rows, turn on `virtualScrollingFeature` and give the grid a
+fixed height. Without it, every row is in the DOM, and restyling or relayout (resizing the window,
+switching density) touches every cell. Tips:
+
+- Keep `rowHeight` exact and cell content to one line (e.g. `rendererOptions: { ellipsis: true }`).
+- Set `detailHeight` close to your typical detail row: rows that render near their estimate settle
+  without visible correction.
+- Raise `overscan` (default 6) only if fast scrolling shows blank rows on slow devices.
+
+**Changing data.** Re-render only what changed:
+
+- Reactive rows: assign the field (`row.status = 'Won'`); only that cell re-renders.
+- Large immutable lists (`shallowRef`): `patchRows(rows, patches, rowKey)` replaces just the patched
+  rows, and a batch that changes nothing returns the same array.
+- Lazily loaded children live in the grid: use `grid.patchLoadedRows(patches)`.
+- For a live feed, batch patches per animation frame rather than per message.
+
+**Filtering and sorting** are built for large client-side data:
+
+- Filtering is one pass over the tree. Date filters reuse one formatter per time zone, and text
+  matching has an ASCII fast path.
+- Value lists are counted once per column, and long lists render 300 values with a search to
+  narrow them.
+- Sorting computes each row's value once, with a shared collator.
+- For much larger data, or data that lives on a server, use `data-source` (server mode).
+
+**Lazy children** (`load-sub-rows`) are requested when an expanded row renders. Without virtual
+scrolling that is every expanded row. With it, only expanded rows on screen, and only once a scroll
+settles, so `expandAll()` on thousands of lazy rows sends a screenful of requests, not thousands.
+
+**Motion** stays on the compositor: the change highlight (`flash`) fades an `opacity` layer, the
+resize handle grows with `transform`, and spinners and progress bars use `transform`. Row
+highlights appear instantly and fade out over `--vg-transition`.
+
+**Bundle.** Import only the features and renderers you use. Everything else is tree-shaken, and
+the filter popover, filter-row editors and pager are separate chunks loaded on first use.
 
 ## Keyboard
 
@@ -659,6 +722,10 @@ Override any token on `:root`, a wrapper, or the grid itself:
 | Sub-grid | `--vg-subgrid-bg` `--vg-subgrid-indent` `--vg-subgrid-border` `--vg-subgrid-radius` |
 | Elevation | `--vg-shadow-pinned` `--vg-shadow-popover` `--vg-z-header` `--vg-z-pinned` `--vg-z-pinned-header` `--vg-transition` `--vg-menu-gap` |
 | Change highlight | `--vg-flash-color` `--vg-flash-up` `--vg-flash-down` `--vg-flash-duration` |
+
+Motion stays on the compositor (`transform`, `opacity`) wherever layout would otherwise animate.
+Row highlights (hover, selection) appear at once and fade out over `--vg-transition`, so the grid
+responds the moment the pointer arrives.
 
 Colours use `light-dark()`: set `color-scheme: light dark` on `html` to follow the OS, or
 `color-scheme: dark` to force dark. Stable class names (`.vg-header-cell`, `.vg-cell`, `.vg-row`,

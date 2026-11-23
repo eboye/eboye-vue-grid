@@ -148,9 +148,13 @@
     outline-offset: -2px;
   }
 
-  .vg-row:hover > .vg-cell { background: var(--vg-color-row-hover); }
-  .vg-row-highlighted > .vg-cell { background: var(--vg-color-row-highlight); }
-  .vg-row-selected > .vg-cell { background: var(--vg-color-row-selected); }
+  /*
+   * Highlights appear at once and only fade out: no transition starts on the row the pointer
+   * enters, so it responds instantly (and scrolling under a still pointer starts half as many).
+   */
+  .vg-row:hover > .vg-cell { background: var(--vg-color-row-hover); transition-duration: 0s; }
+  .vg-row-highlighted > .vg-cell { background: var(--vg-color-row-highlight); transition-duration: 0s; }
+  .vg-row-selected > .vg-cell { background: var(--vg-color-row-selected); transition-duration: 0s; }
   .vg-cell[data-vg-flash] { --_vg-flash: var(--vg-flash-color); }
   .vg-cell[data-vg-flash-dir='up'] { --_vg-flash: var(--vg-flash-up); }
   .vg-cell[data-vg-flash-dir='down'] { --_vg-flash: var(--vg-flash-down); }
@@ -436,21 +440,25 @@
   .vg-group-cell:not(.vg-group-empty) + .vg-group-cell,
   .vg-group-cell + .vg-group-cell:not(.vg-group-empty) { border-inline-start: var(--vg-row-border); }
 
-  /* Column resizing: a short line on hover, full height and accent while focused or dragging. */
+  /*
+   * Column resizing: a short line on hover, full height and accent while focused or dragging. It
+   * grows with `transform` (compositor), not by animating `inset` (layout).
+   */
   .vg-resize-handle::after {
     content: '';
     position: absolute;
-    inset-block: 25%;
+    inset-block: 0;
     inset-inline-end: 3px;
     inline-size: 2px;
     border-radius: 1px;
-    transition: background-color var(--vg-transition), inset var(--vg-transition);
+    transform: scaleY(0.5);
+    transition: background-color var(--vg-transition), transform var(--vg-transition);
   }
   .vg-header-cell:hover .vg-resize-handle::after { background: var(--vg-color-border-strong); }
   .vg-resize-handle:hover::after,
   .vg-resize-handle:focus-visible::after,
   .vg-is-resizing .vg-col-sized .vg-resize-handle::after {
-    inset-block: 0;
+    transform: none;
     background: var(--vg-color-accent);
   }
   .vg-resize-handle:focus-visible { outline: none; }
