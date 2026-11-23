@@ -4,7 +4,7 @@ Makes Claude Code build `<VGrid>` data grids with [`@eboye/vue-grid`](../../pack
 correctly the first time.
 
 ```
-/plugin install vue-grid --marketplace https://gitea.rutuj.me/eboye/eboye-vue-grid.git
+/plugin install vue-grid --marketplace https://github.com/eboye/eboye-vue-grid
 ```
 
 It adds:

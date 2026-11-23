@@ -5,7 +5,7 @@
   "author": {
     "name": "eboye"
   },
-  "repository": "https://gitea.rutuj.me/eboye/eboye-vue-grid",
+  "repository": "https://github.com/eboye/eboye-vue-grid",
   "license": "MIT",
   "keywords": ["vue", "vue3", "data-grid", "table", "vue-grid", "mcp"]
 }

@@ -4,7 +4,10 @@
   "description": "Boilerplate cell-renderer addon for @eboye/vue-grid: a star rating renderer. Copy this package to start your own.",
   "license": "MIT",
   "type": "module",
-  "files": ["dist", "README.md"],
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "main": "./dist/index.js",
   "types": "./dist/types/index.d.ts",
   "exports": {
@@ -14,7 +17,9 @@
     },
     "./style.css": "./dist/rating.css"
   },
-  "sideEffects": ["**/*.css"],
+  "sideEffects": [
+    "**/*.css"
+  ],
   "scripts": {
     "build": "vite build && vue-tsc -p tsconfig.build.json",
     "test": "vitest run",
@@ -26,5 +31,15 @@
   },
   "devDependencies": {
     "@eboye/vue-grid": "*"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eboye/eboye-vue-grid.git",
+    "directory": "packages/cell-renderer-template"
+  },
+  "homepage": "https://github.com/eboye/eboye-vue-grid/tree/main/packages/cell-renderer-template#readme",
+  "bugs": {
+    "url": "https://github.com/eboye/eboye-vue-grid/issues"
+  },
+  "author": "eboye"
 }

@@ -32,5 +32,15 @@
   },
   "dependencies": {
     "@eboye/vue-grid": "^0.1.0"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eboye/eboye-vue-grid.git",
+    "directory": "packages/vue-grid-mcp"
+  },
+  "homepage": "https://github.com/eboye/eboye-vue-grid/tree/main/packages/vue-grid-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/eboye/eboye-vue-grid/issues"
+  },
+  "author": "eboye"
 }

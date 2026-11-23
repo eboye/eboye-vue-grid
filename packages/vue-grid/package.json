@@ -61,5 +61,15 @@
   },
   "peerDependencies": {
     "vue": "^3.5.0"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eboye/eboye-vue-grid.git",
+    "directory": "packages/vue-grid"
+  },
+  "homepage": "https://github.com/eboye/eboye-vue-grid/tree/main/packages/vue-grid#readme",
+  "bugs": {
+    "url": "https://github.com/eboye/eboye-vue-grid/issues"
+  },
+  "author": "eboye"
 }

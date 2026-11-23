@@ -510,7 +510,7 @@ from the sources, so it can't drift from the code:
   build → validate → verify-in-a-browser workflow:
 
   ```
-  /plugin install vue-grid --marketplace https://gitea.rutuj.me/eboye/eboye-vue-grid.git
+  /plugin install vue-grid --marketplace https://github.com/eboye/eboye-vue-grid
   ```
 
 ## Development

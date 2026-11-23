@@ -20,4 +20,4 @@ Read AGENTS.md first: it lists the rules that cause silent bugs when skipped (re
 
 - [llms-full.txt](https://unpkg.com/@eboye/vue-grid/llms-full.txt): AGENTS.md + API reference + README in one file
 - MCP server: `npx -y @eboye/vue-grid-mcp` (tools: guide, API lookup, renderer details, doc search, config validation)
-- Claude Code plugin (MCP server + skill): `/plugin install vue-grid --marketplace https://gitea.rutuj.me/eboye/eboye-vue-grid.git`
+- Claude Code plugin (MCP server + skill): `/plugin install vue-grid --marketplace https://github.com/eboye/eboye-vue-grid`
