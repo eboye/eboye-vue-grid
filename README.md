@@ -66,14 +66,218 @@
 
 ### 29 cell renderers
 
-`text` · `number` · `signed-number` · `currency` · `change` · `date` · `datetime` · `boolean` ·
-`status` · `chip` · `icon` · `image` · `link` (incl. router links) · `multi-line` · `list` · `code` ·
-`json` · `json-tree` · `details` (badge + popover) · `copy` · `toggle-text` · `edit` ·
-`action-button` · `button-group` · `actions-menu` · `icon-toggle` · `checkbox` · `switch` · `radio`
+Set a column's `renderer` (the definition, e.g. `currencyRenderer`, or a registered name) and
+its `rendererOptions`. Options are typed against the renderer, and most also accept a
+`(value, row) => …` function. Each screenshot is that renderer's Storybook story. The
+[API reference](packages/vue-grid/README.md#built-in-renderers) lists every option.
 
-Editable controls are *controlled*: they show your data and emit the requested change, your app
-updates the rows. Writing your own renderer takes a component and a three-line definition — see the
-[add-on template](packages/cell-renderer-template).
+```ts
+col({ key: 'total', renderer: currencyRenderer, rendererOptions: { currency: 'EUR', clickable: true } })
+```
+
+#### Text and numbers
+
+<table>
+<tr>
+<td width="50%" valign="top">
+<img src="docs/media/renderers/text.png" alt="text renderer: secondary text, leading badge, leading icon" width="400"><br>
+<b><code>text</code></b> (default): text with optional extras.<br>
+<sub><code>ellipsis</code> · <code>lines</code> · <code>tone</code> / <code>toneMode</code> · <code>bold</code> · <code>secondary</code> · <code>badge</code> · <code>icon</code> · <code>copyable</code> · <code>tooltip</code> · <code>placeholder</code></sub>
+</td>
+<td width="50%" valign="top">
+<img src="docs/media/renderers/toggle-text.png" alt="toggle-text renderer" width="400"><br>
+<b><code>toggle-text</code></b>: text that toggles a highlight when clicked.<br>
+<sub><code>clickable</code> · <code>highlighted</code> → emits <code>toggle</code></sub>
+</td>
+</tr>
+<tr>
+<td valign="top">
+<img src="docs/media/renderers/number.png" alt="number renderer" width="400"><br>
+<b><code>number</code></b>: locale-formatted numbers.<br>
+<sub><code>format</code> (<code>Intl.NumberFormatOptions</code>) · <code>placeholder</code> · <code>clickable</code></sub>
+</td>
+<td valign="top">
+<img src="docs/media/renderers/signed-number.png" alt="signed-number renderer" width="400"><br>
+<b><code>signed-number</code></b>: always shows the sign.<br>
+<sub><code>format</code> · <code>placeholder</code> · <code>clickable</code></sub>
+</td>
+</tr>
+<tr>
+<td valign="top">
+<img src="docs/media/renderers/currency.png" alt="currency renderer" width="400"><br>
+<b><code>currency</code></b>: money in a fixed or per-row currency.<br>
+<sub><code>currency</code> (code or <code>(value, row) =&gt; code</code>) · <code>format</code> · <code>placeholder</code> · <code>clickable</code></sub>
+</td>
+<td valign="top">
+<img src="docs/media/renderers/change.png" alt="change renderer: up and down arrows" width="400"><br>
+<b><code>change</code></b>: a rise or fall, with arrow and colour.<br>
+<sub><code>direction</code> · <code>currency</code> · <code>format</code> · <code>iconOnly</code></sub>
+</td>
+</tr>
+</table>
+
+#### Dates, state and labels
+
+<table>
+<tr>
+<td width="50%" valign="top">
+<img src="docs/media/renderers/date.png" alt="date renderer" width="400"><br>
+<b><code>date</code></b>: a calendar day, in the grid's locale and time zone.<br>
+<sub><code>format</code> (<code>Intl.DateTimeFormatOptions</code>) · <code>placeholder</code></sub>
+</td>
+<td width="50%" valign="top">
+<img src="docs/media/renderers/datetime.png" alt="datetime renderer on two lines" width="400"><br>
+<b><code>datetime</code></b>: date and time, on two lines by default.<br>
+<sub><code>twoLines</code> · <code>milliseconds</code> · <code>format</code> · <code>placeholder</code></sub>
+</td>
+</tr>
+<tr>
+<td valign="top">
+<img src="docs/media/renderers/boolean.png" alt="boolean renderer" width="400"><br>
+<b><code>boolean</code></b>: yes / no as text or icons.<br>
+<sub><code>trueLabel</code> · <code>falseLabel</code> · <code>nullLabel</code> · <code>display</code> (<code>text</code> / <code>icon</code>) · <code>falseIcon</code></sub>
+</td>
+<td valign="top">
+<img src="docs/media/renderers/status.png" alt="status renderer: soft, solid and outline badges" width="400"><br>
+<b><code>status</code></b>: a coloured status badge.<br>
+<sub><code>tone</code> (map / fn / constant) · <code>label</code> · <code>dot</code> · <code>variant</code> (<code>soft</code> / <code>solid</code> / <code>outline</code>) · <code>clickable</code></sub>
+</td>
+</tr>
+<tr>
+<td valign="top">
+<img src="docs/media/renderers/chip.png" alt="chip renderer with API colours" width="400"><br>
+<b><code>chip</code></b>: a chip in any colour, with readable text picked in CSS.<br>
+<sub><code>color</code> · <code>tone</code> · <code>label</code> · <code>tooltip</code> · <code>shape</code> (<code>square</code> / <code>circle</code> / <code>pill</code>) · <code>size</code></sub>
+</td>
+<td valign="top">
+<img src="docs/media/renderers/icon.png" alt="icon renderer" width="400"><br>
+<b><code>icon</code></b>: an icon from the value or a fixed one.<br>
+<sub><code>icon</code> / <code>iconFor</code> · <code>show</code> · <code>label</code> · <code>tone</code></sub>
+</td>
+</tr>
+</table>
+
+#### Rich content
+
+<table>
+<tr>
+<td width="50%" valign="top">
+<img src="docs/media/renderers/link.png" alt="link renderer" width="400"><br>
+<b><code>link</code></b>: safe links, or <code>&lt;RouterLink&gt;</code> with vue-router.<br>
+<sub><code>href</code> · <code>to</code> · <code>label</code> · <code>target</code> · <code>tooltip</code></sub>
+</td>
+<td width="50%" valign="top">
+<img src="docs/media/renderers/multi-line.png" alt="multi-line renderer" width="400"><br>
+<b><code>multi-line</code></b>: stacked lines, each with its own style, link, badge or trend.<br>
+<sub><code>lines</code> · <code>boldLines</code> · <code>ellipsis</code> · <code>target</code>; per line: <code>text</code>, <code>href</code> / <code>to</code>, <code>tone</code>, <code>badge</code>, <code>trend</code>, <code>action</code></sub>
+</td>
+</tr>
+<tr>
+<td valign="top">
+<img src="docs/media/renderers/list.png" alt="list renderer with +N more" width="400"><br>
+<b><code>list</code></b>: the first items, with a “+N more” toggle.<br>
+<sub><code>items</code> · <code>itemLabel</code> · <code>max</code> · <code>placeholder</code> → emits <code>expand</code></sub>
+</td>
+<td valign="top">
+<img src="docs/media/renderers/image.png" alt="image renderer with placeholders" width="400"><br>
+<b><code>image</code></b>: thumbnails with a placeholder when empty or broken.<br>
+<sub><code>src</code> · <code>baseUrl</code> · <code>alt</code> · <code>size</code> · <code>fit</code> · <code>shape</code></sub>
+</td>
+</tr>
+<tr>
+<td valign="top">
+<img src="docs/media/renderers/code.png" alt="code renderer" width="400"><br>
+<b><code>code</code></b>: monospaced code, with JSON highlighting.<br>
+<sub><code>language</code> (<code>auto</code> / <code>json</code> / <code>text</code>) · <code>lines</code> · <code>indent</code> · <code>highlight</code></sub>
+</td>
+<td valign="top">
+<img src="docs/media/renderers/json.png" alt="json renderer button" width="400"><br>
+<b><code>json</code></b>: a button that opens the JSON, escaped, in a dialog.<br>
+<sub><code>label</code> · <code>dialogTitle</code></sub>
+</td>
+</tr>
+<tr>
+<td valign="top">
+<img src="docs/media/renderers/json-tree.png" alt="json-tree renderer" width="400"><br>
+<b><code>json-tree</code></b>: a collapsible tree of nested data.<br>
+<sub><code>collapseAt</code> · <code>maxDepth</code> · <code>parseNested</code> · <code>collapsed</code> · <code>toggleLabel</code> · <code>emptyText</code></sub>
+</td>
+<td valign="top">
+<img src="docs/media/renderers/details.png" alt="details renderer with its popover open" width="400"><br>
+<b><code>details</code></b>: a status badge plus an anchored info popover.<br>
+<sub><code>tone</code> · <code>label</code> · <code>items</code> (<code>{ label, value, tone, detail }[]</code>) · <code>title</code> · <code>triggerLabel</code></sub>
+</td>
+</tr>
+</table>
+
+#### Actions and editing
+
+Editable controls are *controlled*: they show your data and emit the requested change through
+`@cell-action`, and your app updates the row.
+
+<table>
+<tr>
+<td width="50%" valign="top">
+<img src="docs/media/renderers/action-button.png" alt="action-button renderer variants" width="400"><br>
+<b><code>action-button</code></b>: one button per row.<br>
+<sub><code>label</code> · <code>action</code> · <code>icon</code> · <code>tone</code> · <code>variant</code> (<code>outline</code> / <code>solid</code> / <code>ghost</code>) · <code>iconOnly</code> · <code>disabled</code> · <code>visible</code></sub>
+</td>
+<td width="50%" valign="top">
+<img src="docs/media/renderers/button-group.png" alt="button-group renderer" width="400"><br>
+<b><code>button-group</code></b>: several buttons, fixed or per row.<br>
+<sub><code>buttons</code> (<code>{ name, label, tone, variant, icon, disabled, hidden }[]</code>) → emits the button's <code>name</code></sub>
+</td>
+</tr>
+<tr>
+<td valign="top">
+<img src="docs/media/renderers/actions-menu.png" alt="actions-menu renderer with its menu open" width="400"><br>
+<b><code>actions-menu</code></b>: a <code>⋯</code> menu, keyboard-friendly, anchored to its button.<br>
+<sub><code>actions</code> (<code>MenuItem[]</code> or <code>(row) =&gt; MenuItem[]</code>) · <code>label</code> → emits the item's <code>name</code></sub>
+</td>
+<td valign="top">
+<img src="docs/media/renderers/copy.png" alt="copy renderer" width="400"><br>
+<b><code>copy</code></b>: a value with a copy-to-clipboard button.<br>
+<sub><code>copyValue</code> · <code>iconOnly</code> · <code>title</code> · <code>label</code> → emits <code>copy</code> / <code>copy-error</code></sub>
+</td>
+</tr>
+<tr>
+<td valign="top">
+<img src="docs/media/renderers/edit.png" alt="edit renderer" width="400"><br>
+<b><code>edit</code></b>: a value with an edit button, so your app can open its editor.<br>
+<sub><code>format</code> · <code>label</code> · <code>disabled</code> · <code>bold</code> · <code>placeholder</code> → emits <code>edit</code></sub>
+</td>
+<td valign="top">
+<img src="docs/media/renderers/icon-toggle.png" alt="icon-toggle renderer" width="400"><br>
+<b><code>icon-toggle</code></b>: a star or flag style on / off button.<br>
+<sub><code>active</code> · <code>icon</code> · <code>activeIcon</code> · <code>activeTone</code> · <code>label</code> · <code>disabled</code> → emits <code>toggle</code></sub>
+</td>
+</tr>
+<tr>
+<td valign="top">
+<img src="docs/media/renderers/checkbox.png" alt="checkbox renderer" width="400"><br>
+<b><code>checkbox</code></b>: a checkbox, with a reason shown when disabled.<br>
+<sub><code>checked</code> · <code>disabled</code> · <code>disabledReason</code> · <code>label</code> → emits <code>change</code></sub>
+</td>
+<td valign="top">
+<img src="docs/media/renderers/switch.png" alt="switch renderer" width="400"><br>
+<b><code>switch</code></b>: an on / off switch.<br>
+<sub><code>checked</code> · <code>disabled</code> · <code>disabledReason</code> · <code>label</code> → emits <code>change</code></sub>
+</td>
+</tr>
+<tr>
+<td valign="top">
+<img src="docs/media/renderers/radio.png" alt="radio renderer" width="400"><br>
+<b><code>radio</code></b>: one selected row across the column.<br>
+<sub><code>checked</code> · <code>disabled</code> · <code>disabledReason</code> · <code>label</code> · <code>name</code> → emits <code>select</code></sub>
+</td>
+<td valign="top">
+<b>Your own renderer</b><br>
+A component plus a three-line definition, with typed options and an optional sort value and
+filter type. Copy the <a href="packages/cell-renderer-template">add-on template</a>, a
+publishable star-rating renderer.
+</td>
+</tr>
+</table>
 
 ## Quick start
 
@@ -283,6 +487,7 @@ npm run build            # both packages → dist/
 npm run e2e              # browser tests, Chromium + Firefox (first time: npx playwright install chromium firefox)
 npm run e2e:storybook    # every story renders without errors; interactive renderers with real input
 npm run showcase         # re-record docs/media/showcase.* (needs dev + Storybook running, and ffmpeg)
+npm run screenshots      # re-shoot the renderer gallery → docs/media/renderers (needs Storybook running)
 ```
 
 <details>
@@ -295,8 +500,8 @@ npm run showcase         # re-record docs/media/showcase.* (needs dev + Storyboo
 | `stories/`, `.storybook/` | Storybook |
 | `playground/` | Demo app; target of the browser tests |
 | `e2e/` | Playwright tests driving the playground and Storybook with real mouse and keyboard |
-| `docs/` | Examples cookbook, showcase media, design notes |
-| `scripts/` | Showcase recorder |
+| `docs/` | Examples cookbook, showcase media, renderer screenshots, design notes |
+| `scripts/` | Showcase recorder, renderer gallery screenshots |
 
 </details>
 

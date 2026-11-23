@@ -622,6 +622,9 @@ header moves the column; `Alt+Shift+←/→` on a header resizes it (with `colum
 
 ## Built-in renderers
 
+Screenshots of every renderer are in the repository README's
+[renderer gallery](../../README.md#29-cell-renderers).
+
 **Display**
 
 | Name | Options |
