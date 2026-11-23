@@ -89,29 +89,67 @@ export function activeFilterCount(state: FilterState | null | undefined): number
 }
 
 const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v)
+/** One number in the filter row: an optional minus, digits, an optional `.` or `,` decimal part. */
+const NUM = '-?\\d+(?:[.,]\\d+)?'
+const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/
 const isBlank = (v: unknown) => v === null || v === undefined || v === '' || (Array.isArray(v) && !v.length)
 
 /** Lower-cased, accent-free text for forgiving matching (`"nis"` finds `"Niš"`). */
 export function foldText(value: unknown): string {
   if (isBlank(value)) return ''
-  const text = typeof value === 'object' ? JSON.stringify(value) : String(value)
+  const text = typeof value === 'object' ? safeStringify(value) : String(value)
+  // ASCII has no diacritics: skip the (much slower) Unicode normalisation.
+  if (/^[\x00-\x7f]*$/.test(text)) return text.toLowerCase()
   return text
     .normalize('NFD')
     .replace(/\p{Diacritic}/gu, '')
     .toLocaleLowerCase()
 }
 
+function safeStringify(value: unknown): string {
+  try {
+    return JSON.stringify(value) ?? String(value)
+  } catch {
+    return String(value) // cyclic or BigInt inside
+  }
+}
+
+// The same filter object is matched against every row: fold its query and build its value
+// set once, not once per row.
+const foldedQueries = new WeakMap<TextFilter, string>()
+const foldedQuery = (filter: TextFilter) => {
+  let q = foldedQueries.get(filter)
+  if (q === undefined) foldedQueries.set(filter, (q = foldText(filter.value)))
+  return q
+}
+const valueSets = new WeakMap<string[], Set<string>>()
+const valueSet = (values: string[]) => {
+  let set = valueSets.get(values)
+  if (!set) valueSets.set(values, (set = new Set(values)))
+  return set
+}
+
 /** The value-list key of a cell value: its string form, `''` for blanks. */
 export function setKey(value: unknown): string {
   if (isBlank(value)) return ''
-  return typeof value === 'object' ? JSON.stringify(value) : String(value)
+  return typeof value === 'object' ? safeStringify(value) : String(value)
 }
 
-/** `YYYY-MM-DD` of a date-ish value in the given time zone (default: local). */
+const dayFormats = new Map<string, Intl.DateTimeFormat>()
+const pad = (n: number) => String(n).padStart(2, '0')
+
+/**
+ * `YYYY-MM-DD` of a date-ish value in the given time zone (default: local). A date-only string
+ * (`2026-01-05`) is a calendar day, not an instant, so it is returned as is in every time zone.
+ */
 export function dayKey(value: unknown, timeZone?: string): string | null {
+  if (typeof value === 'string' && DATE_ONLY.test(value.trim())) return toDate(value) ? value.trim() : null
   const d = toDate(value)
   if (!d) return null
-  const parts = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit', timeZone }).formatToParts(d)
+  if (!timeZone) return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+  let f = dayFormats.get(timeZone)
+  if (!f) dayFormats.set(timeZone, (f = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit', timeZone })))
+  const parts = f.formatToParts(d)
   const get = (t: string) => parts.find((p) => p.type === t)?.value ?? ''
   return `${get('year')}-${get('month')}-${get('day')}`
 }
@@ -124,7 +162,7 @@ export function matchesFilter(value: unknown, filter: ColumnFilter, opts: { time
       if (filter.op === 'empty') return isBlank(value)
       if (filter.op === 'notEmpty') return !isBlank(value)
       const text = foldText(value)
-      const q = foldText(filter.value)
+      const q = foldedQuery(filter)
       switch (filter.op) {
         case 'contains':
           return text.includes(q)
@@ -186,7 +224,7 @@ export function matchesFilter(value: unknown, filter: ColumnFilter, opts: { time
     case 'boolean':
       return filter.value === null ? isBlank(value) : !isBlank(value) && !!value === filter.value
     case 'set':
-      return filter.values.includes(setKey(value))
+      return valueSet(filter.values).has(setKey(value))
     case 'custom':
       return true
   }
@@ -194,23 +232,26 @@ export function matchesFilter(value: unknown, filter: ColumnFilter, opts: { time
 
 /**
  * Parses the filter row's shorthand into a filter: text → contains; numbers accept `>10`, `<=5`,
- * `!=3`, `10..20` / `10-20`, or a plain number; dates accept `>2026-01-01`, `<…`, `a..b` or a day.
- * Returns `undefined` for empty input (= no filter).
+ * `!=3`, `10..20` / `10-20` / `-5..-1`, open ranges `5..` / `..5`, a decimal comma (`1,5`) or a
+ * plain number; dates accept `>2026-01-01`, `<…`, `a..b`, `a..`, `..b` or a day.
+ * Returns `undefined` for empty or unparseable input (= no filter).
  */
 export function parseQuickFilter(type: FilterType, input: string): ColumnFilter | undefined {
   const s = input.trim()
-  if (!s) return undefined
+  if (!s || (type !== 'text' && s.length > 64)) return undefined
   if (type === 'number') {
-    const range = /^(-?[\d.]+)\s*(?:\.\.|–|—|-(?=\s*-?\d))\s*(-?[\d.]+)$/.exec(s)
-    if (range) return { type: 'number', op: 'between', value: Number(range[1]), to: Number(range[2]) }
-    const m = /^(>=|<=|!=|<>|=|>|<)?\s*(-?\d+(?:\.\d+)?)$/.exec(s)
+    const num = (t: string | undefined) => (t === undefined ? null : Number(t.replace(',', '.')))
+    const range = new RegExp(`^(${NUM})?\\s*(?:\\.\\.|–|—|(?<=\\d)\\s*-(?=\\s*-?\\d))\\s*(${NUM})?$`).exec(s)
+    if (range && (range[1] !== undefined || range[2] !== undefined))
+      return { type: 'number', op: 'between', value: num(range[1]), to: num(range[2]) }
+    const m = new RegExp(`^(>=|<=|!=|<>|=|>|<)?\\s*(${NUM})$`).exec(s)
     if (!m) return undefined
     const op = ({ '>=': 'gte', '<=': 'lte', '!=': 'ne', '<>': 'ne', '=': 'eq', '>': 'gt', '<': 'lt' } as const)[m[1] as '>'] ?? 'eq'
-    return { type: 'number', op, value: Number(m[2]) }
+    return { type: 'number', op, value: num(m[2]) }
   }
   if (type === 'date') {
-    const range = /^(\d{4}-\d{2}-\d{2})\s*\.\.\s*(\d{4}-\d{2}-\d{2})$/.exec(s)
-    if (range) return { type: 'date', op: 'between', value: range[1], to: range[2] }
+    const range = /^(\d{4}-\d{2}-\d{2})?\s*\.\.\s*(\d{4}-\d{2}-\d{2})?$/.exec(s)
+    if (range && (range[1] || range[2])) return { type: 'date', op: 'between', value: range[1], to: range[2] }
     const m = /^(>|<)?\s*(\d{4}-\d{2}-\d{2})$/.exec(s)
     if (!m) return undefined
     return { type: 'date', op: m[1] === '>' ? 'after' : m[1] === '<' ? 'before' : 'on', value: m[2] }

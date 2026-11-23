@@ -18,6 +18,8 @@ interface RendererArgs {
   /** Passed to the column as `rendererOptions`; edit it live in Controls. */
   rendererOptions: Record<string, unknown>
   samples: Sample[]
+  /** The grid's `time-zone` (Storybook's default is UTC). */
+  timeZone?: string
   onCellAction?: (...args: unknown[]) => void
 }
 
@@ -73,7 +75,7 @@ const meta = {
       }
       return { args, columns, rows, onCellAction }
     },
-    template: `<VGrid :rows="rows" :columns="columns" row-key="id" aria-label="Renderer samples" @cell-action="onCellAction" />`,
+    template: `<VGrid :rows="rows" :columns="columns" row-key="id" aria-label="Renderer samples" :time-zone="args.timeZone" @cell-action="onCellAction" />`,
   }),
 } satisfies Meta<RendererArgs>
 
@@ -218,6 +220,7 @@ export const ChangeAsMoney: Story = {
 
 const dates = samples(
   ['ISO string', '2026-11-21T14:30:15.250Z'],
+  ['date-only string (a calendar day in every time zone)', '2026-01-05'],
   ['timestamp (ms)', Date.UTC(2026, 0, 1, 9, 5)],
   ['Date object', new Date(Date.UTC(2025, 6, 4, 18, 0))],
   ['invalid', 'not a date'],
@@ -228,6 +231,20 @@ const dates = samples(
 export const Date_: Story = {
   name: 'Date',
   args: { renderer: 'date', rendererOptions: { placeholder: '—' }, samples: dates },
+}
+
+/**
+ * In a time zone west of UTC (`time-zone="America/New_York"`), instants shift to the local day,
+ * while a date-only string (`2026-01-05`) stays that calendar day.
+ */
+export const DateInTimeZone: Story = {
+  name: 'Date · New York time',
+  args: {
+    renderer: 'date',
+    rendererOptions: { placeholder: '—' },
+    samples: dates,
+    timeZone: 'America/New_York',
+  },
 }
 
 export const DateLong: Story = {

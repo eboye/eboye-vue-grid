@@ -37,10 +37,12 @@ export function useVirtualRows(opts: VirtualRowsOptions) {
     cancelAnimationFrame(scrollFrame)
   })
 
-  const window = computed<VirtualWindow | null>(() => {
+  // Most scroll frames stay inside the same rows: keep the previous object then, so the rows
+  // (and everything computed from the window) don't re-render for nothing.
+  const window = computed<VirtualWindow | null>((prev) => {
     const v = opts.options()
     if (!v) return null
-    return computeVirtualWindow({
+    const next = computeVirtualWindow({
       scrollTop: scrollTop.value,
       // Before the first measurement, render one screen's worth rather than nothing.
       viewportHeight: viewportHeight.value || 800,
@@ -48,6 +50,13 @@ export function useVirtualRows(opts: VirtualRowsOptions) {
       rowCount: opts.rowCount(),
       overscan: v.overscan ?? 6,
     })
+    return prev &&
+      prev.start === next.start &&
+      prev.end === next.end &&
+      prev.padTop === next.padTop &&
+      prev.padBottom === next.padBottom
+      ? prev
+      : next
   })
 
   /** Scrolls so the row at `index` is at the top. */

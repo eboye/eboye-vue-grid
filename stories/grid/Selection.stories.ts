@@ -2,7 +2,16 @@ import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import { ref } from 'vue'
 import { fn } from 'storybook/test'
 import type { RowKey } from '@eboye/vue-grid'
-import { betColumns, makeBets, makeMarkets, marketColumns, type Bet } from '../data'
+import {
+  betColumns,
+  loadFolder,
+  makeBets,
+  makeMarkets,
+  marketColumns,
+  rootFolders,
+  type Bet,
+  type Folder,
+} from '../data'
 import { Grid as VGrid, type GridArgs } from '../support'
 
 /**
@@ -65,6 +74,28 @@ export const WithSubRows: Story = {
     setup: () => ({ args, selected: ref<RowKey[]>([]), expanded: ref<RowKey[]>(['fb', 'fb-1x2']) }),
     template: `
       <p class="sb-note">selected = [{{ selected.join(', ') }}]</p>
+      <VGrid v-bind="args" v-model:selected="selected" v-model:expanded="expanded" />`,
+  }),
+}
+
+/**
+ * Cascading selection with lazily loaded children (`load-sub-rows`): tick a collapsed folder, then
+ * expand it — its children arrive selected.
+ */
+export const WithLazySubRows: Story = {
+  args: {
+    rows: rootFolders as never,
+    columns: [{ key: 'name', header: 'Name', width: 'minmax(16rem, 1fr)' }] as never,
+    loadSubRows: loadFolder as never,
+    hasSubRows: ((row: Folder) => row.hasChildren) as never,
+    selectionMode: 'cascade',
+    ariaLabel: 'Files',
+  },
+  render: (args) => ({
+    components: { VGrid },
+    setup: () => ({ args, selected: ref<RowKey[]>([]), expanded: ref<RowKey[]>([]) }),
+    template: `
+      <p class="sb-note" data-testid="selected">selected = [{{ selected.join(', ') }}]</p>
       <VGrid v-bind="args" v-model:selected="selected" v-model:expanded="expanded" />`,
   }),
 }

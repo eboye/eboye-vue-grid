@@ -58,7 +58,9 @@ export function formatDate(value: unknown, ctx: FormatContext, options: Intl.Dat
   const d = toDate(value)
   if (!d) return ''
   const opts: Intl.DateTimeFormatOptions = { ...options }
-  if (ctx.timeZone && !opts.timeZone) opts.timeZone = ctx.timeZone
+  // `2026-01-05` parses as UTC midnight: show it in UTC, or it reads as the 4th west of Greenwich.
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value.trim())) opts.timeZone = 'UTC'
+  else if (ctx.timeZone && !opts.timeZone) opts.timeZone = ctx.timeZone
   return dateFormat(ctx.locale, opts).format(d)
 }
 
@@ -67,11 +69,14 @@ export const TIME_DEFAULT: Intl.DateTimeFormatOptions = { hour: '2-digit', minut
 
 /** Only http(s), mailto, tel and relative URLs are rendered as links (blocks `javascript:` etc.). */
 export function safeHref(href: unknown): string | undefined {
-  if (typeof href !== 'string' || !href.trim()) return undefined
-  const trimmed = href.trim()
-  const scheme = /^([a-z][a-z0-9+.-]*):/i.exec(trimmed)?.[1]?.toLowerCase()
-  if (!scheme) return trimmed
-  return ['http', 'https', 'mailto', 'tel'].includes(scheme) ? trimmed : undefined
+  if (typeof href !== 'string') return undefined
+  // Clean the URL the way browsers do before parsing it (WHATWG URL): drop leading/trailing C0
+  // controls and spaces, and every tab or newline — otherwise `java\tscript:` slips past the check.
+  const cleaned = href.replace(/^[\u0000- ]+|[\u0000- ]+$/g, '').replace(/[\t\n\r]/g, '')
+  if (!cleaned) return undefined
+  const scheme = /^([a-z][a-z0-9+.-]*):/i.exec(cleaned)?.[1]?.toLowerCase()
+  if (!scheme) return cleaned
+  return ['http', 'https', 'mailto', 'tel'].includes(scheme) ? cleaned : undefined
 }
 
 /** Parses JSON strings; other values are returned as-is. */

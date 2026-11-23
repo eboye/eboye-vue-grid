@@ -1,4 +1,4 @@
-import { computed, shallowRef, watch, type Ref } from 'vue'
+import { computed, shallowRef, watch, type ComputedRef, type Ref } from 'vue'
 import {
   activeFilterCount,
   emptyFilters,
@@ -14,6 +14,8 @@ import {
 } from '../core/filter'
 import { getCellValue } from '../core/value'
 import type { CellRendererDefinition, ColumnDef, ColumnFilterOptions, FilterOption, RowKey } from '../types'
+
+const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' })
 
 export interface DistinctValue {
   key: string
@@ -63,7 +65,11 @@ export function useGridFilters<T>(opts: GridFiltersOptions<T>) {
 
   const state = computed<FilterState>(() => {
     const s = opts.model.value ?? stored.value
-    return s ? { columns: s.columns ?? {}, search: s.search ?? '' } : emptyFilters()
+    if (!s) return emptyFilters()
+    // Filters saved for columns that no longer exist are ignored (not counted, not sent to a server).
+    const known = new Set(opts.columns().map((c) => c.key))
+    const columns = Object.fromEntries(Object.entries(s.columns ?? {}).filter(([key]) => known.has(key)))
+    return { columns, search: s.search ?? '' }
   })
 
   function setFilters(next: FilterState) {
@@ -157,10 +163,24 @@ export function useGridFilters<T>(opts: GridFiltersOptions<T>) {
       }
     }
     visit(opts.rows())
-    const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' })
     return [...counts]
       .map(([key, count]) => ({ key, label: key || '(Blanks)', count }))
       .sort((a, b) => (a.key === '' ? 1 : b.key === '' ? -1 : collator.compare(a.label, b.label)))
+  }
+
+  // Memoised per column: depends on the rows only, so ticking values in the open list (which
+  // changes the filter state) doesn't recount every row.
+  const distinctByKey = new Map<string, ComputedRef<DistinctValue[]>>()
+  function distinct(key: string): DistinctValue[] {
+    let values = distinctByKey.get(key)
+    if (!values) {
+      values = computed(() => {
+        const col = opts.columns().find((c) => c.key === key)
+        return col ? distinctValues(col) : []
+      })
+      distinctByKey.set(key, values)
+    }
+    return values.value
   }
 
   const typeOf = (col: ColumnDef<T>) => filterTypeOf(col, opts.definitionOf(col))
@@ -177,6 +197,7 @@ export function useGridFilters<T>(opts: GridFiltersOptions<T>) {
     isVisible,
     visibleKeys,
     distinctValues,
+    distinct,
     typeOf,
   }
 }

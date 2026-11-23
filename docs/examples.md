@@ -1218,8 +1218,8 @@ const columns = [
 
 - Hover a header to show its funnel. Click it to open a popover with the editor for the column's
   type. Changes apply right away, and **Clear** removes the filter.
-- The filter row takes shorthand: type `>100`, `10..50` or `!=0` into *Stake*, or `>2026-01-01`
-  into *Placed*.
+- The filter row takes shorthand: type `>100`, `10..50`, `100..` or `!=0` into *Stake*, or
+  `>2026-01-01` into *Placed*.
 - Matching ignores case and accents, so `nis` finds *Niš*.
 - `filters` is plain JSON, so you can save it, put it in the URL or send it to a backend:
 
@@ -1343,7 +1343,8 @@ const fetchBets: DataSource<Bet> = async (query, { signal }) => {
 - New sorts and filters go back to page 1.
 - The grid shows a progress bar while a request runs, and *Couldn't load the rows.* with a
   *Retry* button when one fails.
-- After a mutation, call `grid.value?.reload()`. Live field updates go through
+- After a mutation, call `grid.value?.reload()`, which also reloads expanded lazy children
+  (`grid.value?.reloadSubRows(key)` reloads just one row's). Live field updates go through
   `grid.value?.patchLoadedRows([{ id, status: 'Won' }])`.
 
 **Value lists from the backend.** A `set` filter can load its options, with search:

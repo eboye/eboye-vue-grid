@@ -12,6 +12,8 @@ export interface GridSelectionOptions<T> {
   /** All rows of the grid (top level). */
   rows: () => readonly T[]
   children: (row: T) => readonly T[] | undefined
+  /** Known children that pass the filters. */
+  visibleChildren: (row: T) => readonly T[]
   /** Pre-order walk over the visible rows and their known children. */
   walk: (rows: readonly T[], visit: (row: T) => void) => void
 }
@@ -29,8 +31,43 @@ export function useGridSelection<T>(opts: GridSelectionOptions<T>) {
     return keys
   }
 
+  /**
+   * Cascade mode: every row's check state in one bottom-up pass over the tree, instead of walking
+   * each row's subtree for each checkbox on every render.
+   */
+  const cascadeStates = computed(() => {
+    if (!opts.mode() || !opts.cascade()) return null
+    const sel = selectedSet.value
+    const states = new Map<RowKey, SelectionSummary>()
+    /** [selected, total] selectable descendants of `row`. */
+    const visit = (row: T): [number, number] => {
+      let picked = 0
+      let total = 0
+      for (const kid of opts.visibleChildren(row)) {
+        const [kidPicked, kidTotal] = visit(kid)
+        picked += kidPicked
+        total += kidTotal
+        if (isRowSelectable(kid)) {
+          total++
+          if (sel.has(opts.getKey(kid))) picked++
+        }
+      }
+      const key = opts.getKey(row)
+      if (!total) states.set(key, sel.has(key) ? 'all' : 'none')
+      else {
+        const count = picked + (sel.has(key) ? 1 : 0)
+        states.set(key, count === 0 ? 'none' : count === total + 1 ? 'all' : 'some')
+      }
+      return [picked, total]
+    }
+    for (const row of opts.rows()) visit(row)
+    return states
+  })
+
   function rowCheckState(row: T): SelectionSummary {
     const key = opts.getKey(row)
+    const known = cascadeStates.value?.get(key)
+    if (known) return known
     if (opts.cascade()) {
       const desc = descendantKeys(row)
       if (desc.length) return selectionState([key, ...desc], selectedSet.value)

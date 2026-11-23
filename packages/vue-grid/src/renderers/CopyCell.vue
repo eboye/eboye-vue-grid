@@ -10,7 +10,12 @@ const emit = defineEmits<CellRendererEmits>()
 const isEmpty = computed(() => props.value === null || props.value === undefined || props.value === '')
 const text = computed(() => {
   if (isEmpty.value) return ''
-  return typeof props.value === 'object' ? JSON.stringify(props.value) : String(props.value)
+  if (typeof props.value !== 'object') return String(props.value)
+  try {
+    return JSON.stringify(props.value) ?? String(props.value)
+  } catch {
+    return String(props.value) // cyclic or BigInt inside
+  }
 })
 const copyValue = computed(() => props.options.copyValue?.(props.value, props.row) ?? text.value)
 const tooltip = computed(() => (props.options.title ? `${props.options.title}: ${copyValue.value}` : copyValue.value))

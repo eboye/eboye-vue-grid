@@ -12,7 +12,10 @@ export function effectivePin(col: Pick<ColumnDef, 'key' | 'pinned'>, state?: Pic
 const pinGroup = (col: Pick<ColumnDef, 'key' | 'pinned'> | undefined, state?: ColumnState): PinGroup =>
   (col && effectivePin(col, state)) ?? 'none'
 
-const isPinValue = (v: unknown): v is PinSide | null => v === 'left' || v === 'right' || v === null
+/** A plausible grid track (`240px`, `12rem`, `minmax(…)`) — not junk from storage that breaks the template. */
+const isTrack = (v: unknown): v is string => typeof v === 'string' && v.length <= 64 && /^[\w\s.,%()+\-*/]+$/.test(v)
+
+const isPinValue =(v: unknown): v is PinSide | null => v === 'left' || v === 'right' || v === null
 
 /**
  * Reconciles (possibly stale or persisted) column state with the current column definitions:
@@ -29,8 +32,16 @@ export function normalizeColumnState(
   const seen = new Set(order)
   for (const col of columns) if (!seen.has(col.key)) order.push(col.key)
 
+  // Stored visibility covers the columns the state knew about (its `order`); columns added since
+  // then still take their own `hidden` default.
+  const storedKnown = new Set(storedOrder)
   const hidden = Array.isArray(state?.hidden)
-    ? state.hidden.filter((k) => known.has(k))
+    ? [
+        ...new Set([
+          ...state.hidden.filter((k) => known.has(k)),
+          ...(Array.isArray(state?.order) ? columns.filter((c) => c.hidden && !storedKnown.has(c.key)).map((c) => c.key) : []),
+        ]),
+      ]
     : columns.filter((c) => c.hidden).map((c) => c.key)
 
   const pinned: Record<string, PinSide | null> = {}
@@ -43,7 +54,7 @@ export function normalizeColumnState(
   if (state?.widths && typeof state.widths === 'object') {
     const widths: Record<string, string> = {}
     for (const [k, v] of Object.entries(state.widths)) {
-      if (known.has(k) && typeof v === 'string' && v) widths[k] = v
+      if (known.has(k) && isTrack(v)) widths[k] = v
     }
     if (Object.keys(widths).length) out.widths = widths
   }

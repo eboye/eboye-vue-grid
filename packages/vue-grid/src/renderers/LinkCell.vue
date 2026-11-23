@@ -30,6 +30,7 @@ const tooltip = computed(() => props.options.tooltip?.(props.value, props.row))
     class="vg-link"
     :to="to"
     :target="options.target"
+    :rel="external ? 'noopener noreferrer' : undefined"
     :title="tooltip"
     @click="emit('action', 'click', value)"
     >{{ label }}</component

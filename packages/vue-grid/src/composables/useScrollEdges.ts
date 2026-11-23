@@ -22,9 +22,21 @@ export function useScrollEdges(root: Ref<HTMLElement | undefined>, layoutKey: ()
     if (el.dataset.vgScrollable !== value) el.dataset.vgScrollable = value
   }
 
+  // Scroll events can fire several times per frame; reading the layout once per frame is enough.
+  let frame = 0
+  let lastLeft: number | undefined
+  function onScroll() {
+    if (!el || el.scrollLeft === lastLeft) return // vertical scrolling doesn't move the edges
+    lastLeft = el.scrollLeft
+    cancelAnimationFrame(frame)
+    frame = requestAnimationFrame(update)
+  }
+
   function stop() {
     observer?.disconnect()
-    el?.removeEventListener('scroll', update)
+    cancelAnimationFrame(frame)
+    lastLeft = undefined
+    el?.removeEventListener('scroll', onScroll)
     if (el) delete el.dataset.vgScrollable
     el = undefined
   }
@@ -35,7 +47,7 @@ export function useScrollEdges(root: Ref<HTMLElement | undefined>, layoutKey: ()
       stop()
       if (!next || supportsScrollState()) return
       el = next
-      el.addEventListener('scroll', update, { passive: true })
+      el.addEventListener('scroll', onScroll, { passive: true })
       if (typeof ResizeObserver !== 'undefined') {
         observer ??= new ResizeObserver(update)
         observer.observe(el)

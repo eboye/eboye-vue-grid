@@ -8,7 +8,11 @@ export function nextSort(current: SortState | null | undefined, key: string): So
 
 const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' })
 
-const isNil = (v: unknown) => v === null || v === undefined || (typeof v === 'number' && Number.isNaN(v))
+const isNil = (v: unknown) =>
+  v === null ||
+  v === undefined ||
+  (typeof v === 'number' && Number.isNaN(v)) ||
+  (v instanceof Date && Number.isNaN(v.getTime()))
 
 /** Compares two non-nil values: numbers, bigints, dates, booleans, then numeric-aware strings. */
 export function compareValues(a: unknown, b: unknown): number {
@@ -20,7 +24,7 @@ export function compareValues(a: unknown, b: unknown): number {
 }
 
 /**
- * Stable sort that never mutates its input. Nil values (null/undefined/NaN) always go last,
+ * Stable sort that never mutates its input. Nil values (null/undefined/NaN/invalid Date) always go last,
  * regardless of direction. `compare`, when given, replaces value comparison entirely.
  */
 export function sortRows<T>(

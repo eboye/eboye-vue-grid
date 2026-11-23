@@ -359,12 +359,14 @@ function sortRowsFn(rows: readonly T[]): T[] {
   if (!sorting || !clientSort.value || !state) return rows as T[]
   const col = props.columns.find((c) => c.key === state.key)
   if (!col) return rows as T[]
-  const resolved = resolvedColumns.value.find((c) => c.key === col.key)
-  const definition = resolved?.definition
+  // Resolved from the column itself, not from the visible columns: sorting by a hidden column still
+  // uses its renderer's sort value, and resizing or reordering columns doesn't re-sort every row.
+  const { definition, fallback } = resolveRenderer(col)
+  const options = fallback ? {} : { ...(definition?.defaults as object), ...(col.rendererOptions as object) }
   const getter =
     col.sortValue ??
     (definition?.sortValue
-      ? (row: T) => definition.sortValue!(getCellValue(row, col), resolved!.options)
+      ? (row: T) => definition.sortValue!(getCellValue(row, col), options)
       : (row: T) => getCellValue(row, col))
   return sorting.sortRows(rows, state.dir, getter, col.sortFn)
 }
@@ -382,7 +384,21 @@ const sub = features.subGrids?.useSubRows<T>({
   loadSubRows: () => props.loadSubRows,
   hasSubRows: () => props.hasSubRows,
   onError: (row, error) => emit('sub-rows-error', { row, error }),
+  // Cascading selection: children loaded under a selected parent arrive selected.
+  onLoaded: (row, rows) => {
+    if (!sel || !cascadeSelection.value || !selected.value.includes(getKey(row))) return
+    const next = new Set(selected.value)
+    walk(rows, (child) => {
+      if (sel.isRowSelectable(child)) next.add(getKey(child))
+    })
+    if (next.size !== selected.value.length) selected.value = [...next]
+  },
 })
+// A different loader means different children: forget the cached ones.
+watch(
+  () => props.loadSubRows,
+  () => sub?.clear(),
+)
 
 const treeMode = computed(() => !!sub && !isVirtual.value && !!(props.subRows || props.loadSubRows))
 const hasDetail = computed(() => !isVirtual.value && !!slots.detail)
@@ -405,12 +421,18 @@ function toggleExpanded(row: T) {
 
 // ── Filtering ───────────────────────────────────────────────────────────────────────────────
 const gridId = useId()
+// The quick search covers the visible columns. Kept stable while only widths, pins or order change,
+// so resizing a column doesn't re-run the search over every row.
+const searchColumns = computed<ColumnDef<T>[]>((prev) => {
+  const next = resolvedColumns.value.filter((c) => c.kind === 'data').map((c) => c.def as ColumnDef<T>)
+  return prev && prev.length === next.length && next.every((c) => prev.includes(c)) ? prev : next
+})
 const filt = features.filtering?.useFilters<T>({
   model: filters,
   storage: () => props.filterStorage,
   mode: () => (serverMode.value ? 'controlled' : props.filterMode),
   columns: () => props.columns,
-  visibleColumns: () => resolvedColumns.value.filter((c) => c.kind === 'data').map((c) => c.def as ColumnDef<T>),
+  visibleColumns: () => searchColumns.value,
   definitionOf: (col) => resolveRenderer(col).definition,
   rows: (): readonly T[] => sourceRows.value,
   childrenOf,
@@ -433,11 +455,21 @@ const serverMode = computed(() => !!features.serverData && !!props.dataSource)
 const clientSort = computed(() => !serverMode.value && props.sortMode === 'client')
 const paginated = computed(() => !!features.pagination && !!props.pagination && !isVirtual.value)
 
+// `page` / `page-size` come from the app: never slice or query with 0, negative or NaN values.
+const currentPageSize = computed(() => {
+  const n = Math.floor(pageSize.value)
+  return Number.isFinite(n) && n >= 1 ? n : 25
+})
+const currentPage = computed(() => {
+  const n = Math.floor(page.value)
+  return Number.isFinite(n) && n >= 1 ? n : 1
+})
+
 const query = computed<GridQuery>(() => ({
   sort: sort.value,
   filters: filterState.value,
-  page: paginated.value ? page.value : 1,
-  pageSize: paginated.value ? pageSize.value : null,
+  page: paginated.value ? currentPage.value : 1,
+  pageSize: paginated.value ? currentPageSize.value : null,
 }))
 
 const ds = features.serverData?.useDataSource<T>({
@@ -451,8 +483,10 @@ const sourceRows = computed<readonly T[]>(() => (serverMode.value && ds ? ds.row
 const isLoading = computed(() => props.loading || !!ds?.loading.value)
 const loadError = computed(() => (serverMode.value ? ds?.error.value : undefined))
 const reload = async () => {
+  sub?.clear()
   await ds?.reload()
 }
+const reloadSubRows = (key?: RowKey) => sub?.clear(key)
 
 // A new sort or filter starts again at page 1.
 watch(
@@ -479,14 +513,16 @@ function walk(rows: readonly T[], visit: (row: T) => void) {
 }
 
 // ── Selection ───────────────────────────────────────────────────────────────────────────────
-const sel = features.selection?.useSelection<T>({
+const cascadeSelection = computed(() => selectMode.value === 'multi' && props.selectionMode === 'cascade' && treeMode.value)
+const sel =features.selection?.useSelection<T>({
   selected,
   mode: () => selectMode.value,
-  cascade: () => selectMode.value === 'multi' && props.selectionMode === 'cascade' && treeMode.value,
+  cascade: () => cascadeSelection.value,
   isRowSelectable: () => props.isRowSelectable,
   getKey,
   rows: (): readonly T[] => sourceRows.value,
   children: childrenOf,
+  visibleChildren: (row) => (childrenOf(row) ?? []).filter((kid) => !filt || filt.isVisible(kid)),
   walk,
 })
 const allState = computed(() => sel?.allState.value ?? 'none')
@@ -592,17 +628,24 @@ const totalRows = computed(() => (serverMode.value ? (ds?.total.value ?? sourceR
 const windowRows = computed(() => {
   if (virtualWindow.value) return topRows.value.slice(virtualWindow.value.start, virtualWindow.value.end)
   if (paginated.value && !serverMode.value) {
-    const start = (page.value - 1) * pageSize.value
-    return topRows.value.slice(start, start + pageSize.value)
+    const start = (currentPage.value - 1) * currentPageSize.value
+    return topRows.value.slice(start, start + currentPageSize.value)
   }
   return topRows.value
 })
-// Client pagination: stay on a page that exists when filters shrink the rows.
-watch(totalRows, (total) => {
-  if (!paginated.value || serverMode.value) return
-  const last = Math.max(1, Math.ceil(total / pageSize.value))
-  if (page.value > last) page.value = last
-})
+// Stay on a page that exists — when filters shrink the rows, the page size grows, the app sets an
+// out-of-range page, or the server's total shrinks — and write it back, so the pager and the rows
+// agree. (Server mode: once a response has said how many rows there are.)
+watch(
+  [paginated, totalRows, currentPageSize, currentPage, () => page.value, () => !serverMode.value || ds?.total.value !== undefined],
+  ([on, total, size, current, raw, totalKnown]) => {
+    if (!on) return
+    const last = totalKnown && Number.isFinite(total) ? Math.max(1, Math.ceil(total / size)) : Number.POSITIVE_INFINITY
+    const next = Math.min(current, last)
+    if (raw !== next) page.value = next
+  },
+  { immediate: true },
+)
 
 if (process.env.NODE_ENV !== 'production') {
   watchEffect(() => {
@@ -700,10 +743,7 @@ const context: GridContext = {
     isActive: filt.isActive,
     typeOf: (col) => filt.typeOf(col as ColumnDef<T>),
     filterRow: computed(() => props.filterRow),
-    distinct: (key) => {
-      const col = props.columns.find((c) => c.key === key)
-      return col ? filt.distinctValues(col) : []
-    },
+    distinct: filt.distinct,
     idFor: filterIdFor,
     open: openFilter,
   },
@@ -772,6 +812,7 @@ defineExpose<VGridExposed>({
   clearFilters,
   openFilter,
   reload,
+  reloadSubRows,
 })
 </script>
 

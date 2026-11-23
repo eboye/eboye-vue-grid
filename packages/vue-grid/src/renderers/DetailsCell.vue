@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, shallowRef, useId } from 'vue'
 import { anchorNameFor, trackAnchor } from '../internal/anchor'
 import type { CellRendererProps } from '../types'
-import { resolveOption, resolveTone, type DetailsOptions } from './options'
+import { resolveOption, resolveTone, safeTone, type DetailsOptions } from './options'
 import { CrossIcon, InfoIcon } from './parts/icons'
 
 const props = defineProps<CellRendererProps<unknown, unknown, DetailsOptions>>()
@@ -75,7 +75,7 @@ function onToggle(event: Event) {
               {{ item.label }}
               <span v-if="item.detail" class="vg-details-detail">{{ item.detail }}</span>
             </span>
-            <span v-if="item.value" :class="['vg-status-badge', 'vg-status-soft', `vg-tone-${item.tone ?? 'neutral'}`]">{{
+            <span v-if="item.value" :class="['vg-status-badge', 'vg-status-soft', `vg-tone-${safeTone(item.tone) ?? 'neutral'}`]">{{
               item.value
             }}</span>
           </li>

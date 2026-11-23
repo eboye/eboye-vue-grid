@@ -299,8 +299,10 @@ export interface VGridExposed {
   clearFilters(): void
   /** Opens a column's filter popover. */
   openFilter(key: string): void
-  /** Re-runs the `dataSource` with the current query. */
+  /** Re-runs the `dataSource` with the current query; lazily loaded child rows load again too. */
   reload(): Promise<void>
+  /** Forgets lazily loaded child rows (one row's, or all): expanded rows load them again. */
+  reloadSubRows(key?: RowKey): void
 }
 
 // ── Features (opt-in, tree-shakeable) ─────────────────────────────────────────────────────────

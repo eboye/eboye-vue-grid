@@ -127,6 +127,11 @@ const shownValues = computed(() => {
   const q = foldText(search.value)
   return q ? options.value.filter((v) => foldText(v.label).includes(q)) : options.value
 })
+// Thousands of distinct values (ids, names) would mount thousands of checkboxes: render the first
+// few hundred and ask for a search to narrow the rest. "All" still covers every match.
+const MAX_RENDERED_VALUES = 300
+const renderedValues = computed(() => shownValues.value.slice(0, MAX_RENDERED_VALUES))
+const hiddenValueCount = computed(() => shownValues.value.length - renderedValues.value.length)
 const selected = computed(() =>
   props.modelValue?.type === 'set' ? new Set(props.modelValue.values) : new Set(options.value.map((v) => v.key)),
 )
@@ -239,12 +244,15 @@ const customComponent = computed(() => props.column.filterComponent && toRaw(pro
         {{ search ? 'All shown' : 'All' }}
       </label>
       <ul class="vg-filter-values">
-        <li v-for="v in shownValues" :key="v.key">
+        <li v-for="v in renderedValues" :key="v.key">
           <label class="vg-filter-option">
             <input type="checkbox" :checked="selected.has(v.key)" @change="toggleValue(v.key)" />
             <span class="vg-filter-value-label" :class="{ 'vg-text-muted': !v.key }">{{ v.label }}</span>
             <span v-if="v.count" class="vg-filter-count">{{ v.count }}</span>
           </label>
+        </li>
+        <li v-if="hiddenValueCount > 0" class="vg-text-muted vg-filter-none">
+          {{ hiddenValueCount }} more — search to narrow the list
         </li>
         <li v-if="loadingValues" class="vg-text-muted vg-filter-none" aria-live="polite">Loading…</li>
         <li v-else-if="!shownValues.length" class="vg-text-muted vg-filter-none">No matching values</li>

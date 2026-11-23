@@ -68,7 +68,7 @@ describe('columns', () => {
       }),
     ).toEqual({
       order: ['e', 'a', 'b', 'c', 'd'],
-      hidden: ['a'],
+      hidden: ['a', 'c'], // `c` wasn't in the stored order: it keeps its `hidden` default
       pinned: { a: 'right', b: null },
     })
   })

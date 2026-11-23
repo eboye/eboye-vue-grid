@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import type { CellRendererEmits, CellRendererProps } from '../types'
 import { safeHref } from './format'
-import type { LineInput, LineSpec, MultiLineOptions } from './options'
+import { safeTone, type LineInput, type LineSpec, type MultiLineOptions } from './options'
 import ValueBadge from './parts/ValueBadge.vue'
 import { useRouterLink } from './parts/routerLink'
 
@@ -29,6 +29,7 @@ const lines = computed(() => {
           : 'text'
     return {
       ...spec,
+      tone: safeTone(spec.tone),
       index,
       text,
       kind,
@@ -67,7 +68,7 @@ const external = computed(() => props.options.target === '_blank')
         <path v-if="line.trend === 'up'" d="M5 1.5 9 7.5H1z" />
         <path v-else d="M5 8.5 1 2.5h8z" />
       </svg>
-      <component :is="RouterLink" v-if="line.kind === 'router'" class="vg-link" :to="line.to" :target="options.target">{{
+      <component :is="RouterLink" v-if="line.kind === 'router'" class="vg-link" :to="line.to" :target="options.target" :rel="external ? 'noopener noreferrer' : undefined">{{
         line.text
       }}</component>
       <a

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { CellRendererEmits, CellRendererProps } from '../types'
-import { resolveOption, resolveTone, type StatusOptions } from './options'
+import { lookup, resolveOption, resolveTone, type StatusOptions } from './options'
 
 const props = defineProps<CellRendererProps<unknown, unknown, StatusOptions>>()
 const emit = defineEmits<CellRendererEmits>()
@@ -11,7 +11,7 @@ const label = computed(() => {
   const l = props.options.label
   if (typeof l === 'function') return l(props.value, props.row)
   const raw = props.value === null || props.value === undefined ? '' : String(props.value)
-  return (l && l[raw]) ?? raw
+  return (l && lookup(l, raw)) ?? raw
 })
 const clickable = computed(() => !!resolveOption(props.options.clickable, props.value, props.row))
 const classes = computed(() => ['vg-status-badge', `vg-tone-${tone.value}`, `vg-status-${props.options.variant ?? 'soft'}`])

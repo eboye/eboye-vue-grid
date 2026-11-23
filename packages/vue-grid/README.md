@@ -244,7 +244,12 @@ grid.value?.scrollToTop() / scrollToRow(key) / expandAll() / collapseAll() / set
 grid.value?.patchLoadedRows([{ id: 'c2', city: 'Niš' }]) // field updates for lazy children and dataSource rows
 grid.value?.setFilters({ columns: { city: { type: 'text', op: 'contains', value: 'nis' } } })
 grid.value?.clearFilters() / openFilter('city') / reload() // reload: re-run the dataSource query
+grid.value?.reloadSubRows('c2') // forget lazily loaded children (of one row, or all): they load again
 ```
+
+`reload()` also forgets lazily loaded children, as does passing a different `load-sub-rows`
+function. With `selection-mode="cascade"`, children that load under a selected parent arrive
+selected.
 
 ### Partial updates
 
@@ -425,14 +430,18 @@ const columns = [
   date, datetime → `date`; boolean, checkbox, switch → `boolean`; status, chip → `set`), else
   `text`.
 - **Filter row** (`filter-row`). An inline input under each header that accepts shorthand:
-  `>10`, `>=10`, `5..20`, `!=3` and `>2026-01-01` for numbers and dates, plain text for text
-  columns. Boolean columns get a select; value-list and custom columns get a button that opens the
-  popover.
+  `>10`, `>=10`, `5..20`, `-5..-1`, open ranges `5..` / `..20`, `!=3`, a decimal comma (`1,5`),
+  and `>2026-01-01` or `2026-01-01..2026-03-31` for dates; plain text for text columns. Input that
+  doesn't parse sets no filter. Boolean columns get a select; value-list and custom columns get a
+  button that opens the popover.
 - **Quick search.** `<VGridSearch>` inside the `#toolbar` slot drives that grid's search. Anywhere
   else, bind it with `v-model` to `filters.search`. The search matches any visible column that is
   not marked `searchable: false`.
 - **Matching** is case- and accent-insensitive (`nis` finds *Niš*). Dates compare by calendar day
-  in the grid's `timeZone`. Column filters combine with AND, and then the search must match too.
+  in the grid's `timeZone`; a date-only string (`2026-01-05`) is that calendar day in every time
+  zone, for filtering and for the `date` renderer. Column filters combine with AND, and then the
+  search must match too. Saved filters for columns that no longer exist are ignored.
+- **Long value lists** render their first 300 values; a search narrows the rest.
 - **Trees.** A row shows when it matches, when a descendant matches (so the path stays visible), or
   when an ancestor matched (so a matching group keeps its children). Select-all and cascade only
   touch rows that are visible.

@@ -48,12 +48,16 @@ export function useColumnResize(opts: ColumnResizeOptions) {
     return px > 0 ? px : undefined
   }
 
-  function clamp(key: string, px: number): number {
+  /** The column's limits in px. Measuring forces a layout, so a drag resolves them once, up front. */
+  function limits(key: string) {
     const def = opts.defOf(key)
     const min = toPx(def?.minWidth) ?? DEFAULT_MIN
     const max = toPx(def?.maxWidth) ?? Number.POSITIVE_INFINITY
-    return Math.round(Math.min(Math.max(px, min), Math.max(min, max)))
+    return { min, max: Math.max(min, max) }
   }
+  const clampTo = ({ min, max }: { min: number; max: number }, px: number) =>
+    Math.round(Math.min(Math.max(Number.isFinite(px) ? px : min, min), max))
+  const clamp = (key: string, px: number) => clampTo(limits(key), px)
 
   const currentWidth = (key: string) => headerCell(key)?.getBoundingClientRect().width ?? 0
 
@@ -65,6 +69,7 @@ export function useColumnResize(opts: ColumnResizeOptions) {
     const start = currentWidth(key)
     const startX = event.clientX
     const rtl = opts.root.value ? getComputedStyle(opts.root.value).direction === 'rtl' : false
+    const bounds = limits(key)
     let width = start
     let moved = false
     resizing.value = key
@@ -74,7 +79,7 @@ export function useColumnResize(opts: ColumnResizeOptions) {
       const dx = (e.clientX - startX) * (rtl ? -1 : 1)
       if (!moved && Math.abs(dx) < 2) return
       moved = true
-      width = clamp(key, start + dx)
+      width = clampTo(bounds, start + dx)
       cancelAnimationFrame(frame)
       frame = requestAnimationFrame(() => (live.value = { key, width: `${width}px` }))
     }

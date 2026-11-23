@@ -10,7 +10,7 @@ const ctx = useGridContext()
 
 const date = computed(() => toDate(props.value))
 const text = computed(() =>
-  date.value ? formatDate(date.value, ctx.value, props.options.format ?? DATE_DEFAULT) : (props.options.placeholder ?? ''),
+  date.value ? formatDate(props.value, ctx.value, props.options.format ?? DATE_DEFAULT) : (props.options.placeholder ?? ''),
 )
 </script>
 

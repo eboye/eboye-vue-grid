@@ -18,7 +18,9 @@ export function localStorageAdapter(key: string): ColumnStateStorage {
         if (!isStringArray(order) || (hidden !== undefined && !isStringArray(hidden))) return null
         // Pin and width entries are validated per key by normalizeColumnState; only the shape here.
         const isRecord = (v: unknown): v is Record<string, never> => !!v && typeof v === 'object' && !Array.isArray(v)
-        const state: Partial<ColumnState> = { order, hidden: hidden ?? [], pinned: isRecord(pinned) ? pinned : {} }
+        // A missing `hidden` stays missing, so columns keep their own `hidden` defaults.
+        const state: Partial<ColumnState> = { order, pinned: isRecord(pinned) ? pinned : {} }
+        if (hidden) state.hidden = hidden
         if (isRecord(widths)) state.widths = widths
         return state
       } catch {

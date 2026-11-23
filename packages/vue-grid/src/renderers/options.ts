@@ -359,6 +359,17 @@ export function resolveOption<R>(opt: R | RowFn<R> | undefined, value: unknown, 
 /** Resolves a {@link ToneOption}. */
 export function resolveTone(opt: ToneOption | undefined, value: unknown, row: unknown): Tone | undefined {
   if (typeof opt === 'function') return opt(value, row)
-  if (opt && typeof opt === 'object') return opt[String(value)]
+  if (opt && typeof opt === 'object') return lookup(opt, value)
   return opt
+}
+
+/** Own-key lookup in an app-supplied map, so data like `"constructor"` doesn't hit `Object.prototype`. */
+export function lookup<V>(map: Record<string, V>, key: unknown): V | undefined {
+  const k = String(key)
+  return Object.hasOwn(map, k) ? map[k] : undefined
+}
+
+/** A tone name is safe to put in a class (data-driven tones could otherwise add arbitrary classes). */
+export function safeTone(tone: unknown): string | undefined {
+  return typeof tone === 'string' && /^[a-z][a-z0-9-]*$/i.test(tone) ? tone : undefined
 }

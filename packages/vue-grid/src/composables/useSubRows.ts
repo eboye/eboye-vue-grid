@@ -13,6 +13,8 @@ export interface SubRowsOptions<T> {
   loadSubRows: () => ((row: T) => Promise<T[]>) | undefined
   hasSubRows: () => ((row: T) => boolean) | undefined
   onError: (row: T, error: unknown) => void
+  /** A row's lazy children arrived. */
+  onLoaded?: (row: T, rows: T[]) => void
 }
 
 /**
@@ -57,7 +59,9 @@ export function useSubRows<T>(opts: SubRowsOptions<T>) {
       .then(() => loader(row))
       .then(
         (rows) => {
-          if (requestIds.get(key) === id) cache.set(key, { status: 'loaded', rows: rows ?? [] })
+          if (requestIds.get(key) !== id) return
+          cache.set(key, { status: 'loaded', rows: rows ?? [] })
+          opts.onLoaded?.(row, rows ?? [])
         },
         (error: unknown) => {
           if (requestIds.get(key) !== id) return
@@ -95,5 +99,19 @@ export function useSubRows<T>(opts: SubRowsOptions<T>) {
     return count
   }
 
-  return { children, mayHaveChildren, ensure, retry: load, state, patchLoaded }
+  /**
+   * Forgets loaded children (of one row, or all), so expanded rows load them again. Requests still
+   * in flight for them are ignored when they land.
+   */
+  function clear(key?: RowKey) {
+    if (key === undefined) {
+      cache.clear()
+      requestIds.clear()
+    } else {
+      cache.delete(key)
+      requestIds.delete(key)
+    }
+  }
+
+  return { children, mayHaveChildren, ensure, retry: load, state, patchLoaded, clear }
 }

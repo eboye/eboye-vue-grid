@@ -135,6 +135,22 @@ export const CustomFilter: Story = {
   },
 }
 
+/**
+ * A value list with a thousand distinct values: the panel renders the first 300 and asks for a search
+ * to narrow the rest (“All” still covers every match). Ticking values doesn't recount the rows.
+ */
+export const ManyValues: Story = {
+  args: {
+    rows: makeBets(1000, 5),
+    filterRow: false,
+    columns: [
+      bet({ key: 'id', header: '#', width: 'min-content', filterable: true, filter: 'set' }),
+      bet({ key: 'player', header: 'Player', field: 'player.name', width: 'minmax(10rem, 1fr)' }),
+      bet({ key: 'stake', header: 'Stake', renderer: currencyRenderer }),
+    ],
+  },
+}
+
 const market = createColumnHelper<Market>()
 
 /**
