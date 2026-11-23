@@ -52,7 +52,7 @@ function onSizeChange(event: Event) {
       </select>
     </label>
     <div class="vg-pagination-pages">
-      <button type="button" class="vg-page vg-page-nav" :disabled="current <= 1" aria-label="First page" @click="go(1)">«</button>
+      <button type="button" class="vg-page vg-page-nav vg-page-first" :disabled="current <= 1" aria-label="First page" @click="go(1)">«</button>
       <button type="button" class="vg-page vg-page-nav" :disabled="current <= 1" aria-label="Previous page" @click="go(current - 1)">‹</button>
       <template v-for="(item, i) in items" :key="item === 'ellipsis' ? `e${i}` : item">
         <span v-if="item === 'ellipsis'" class="vg-page-ellipsis" aria-hidden="true">…</span>
@@ -68,7 +68,7 @@ function onSizeChange(event: Event) {
         </button>
       </template>
       <button type="button" class="vg-page vg-page-nav" :disabled="current >= pageCount" aria-label="Next page" @click="go(current + 1)">›</button>
-      <button type="button" class="vg-page vg-page-nav" :disabled="current >= pageCount" aria-label="Last page" @click="go(pageCount)">»</button>
+      <button type="button" class="vg-page vg-page-nav vg-page-last" :disabled="current >= pageCount" aria-label="Last page" @click="go(pageCount)">»</button>
     </div>
   </nav>
 </template>

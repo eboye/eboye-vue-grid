@@ -6,13 +6,20 @@ import { useInternalGrid, type ResolvedColumn } from '../internal/context'
 import type { FlashMode, RowKey } from '../types'
 import { RenderSlot } from '../internal/RenderSlot'
 
-const props = defineProps<{
-  row: unknown
-  rowKey: RowKey
-  rowIndex: number
-  depth: number
-  column: ResolvedColumn
-}>()
+const props = withDefaults(
+  defineProps<{
+    row: unknown
+    rowKey: RowKey
+    rowIndex: number
+    depth: number
+    column: ResolvedColumn
+    /** A cell of a pinned row: no expander. */
+    pinned?: boolean
+    /** Pinned rows: show the selection checkbox. */
+    selectable?: boolean
+  }>(),
+  { pinned: false, selectable: true },
+)
 
 const grid = useInternalGrid()
 
@@ -50,7 +57,7 @@ const cellClass = computed(() => {
   return typeof c === 'function' ? c(props.row) : c
 })
 
-const expandable = computed(() => props.column.isTree && grid.canExpand(props.row))
+const expandable = computed(() => !props.pinned && props.column.isTree && grid.canExpand(props.row))
 const expanded = computed(() => grid.isExpanded(props.rowKey))
 const slotName = computed(() => `cell-${props.column.key}`)
 
@@ -61,6 +68,11 @@ function onAction(name: string, payload?: unknown) {
 function onContextMenu(event: MouseEvent) {
   if (props.column.kind !== 'data') return
   grid.onCellContextMenu(props.row, props.rowKey, props.column, event, event.currentTarget as HTMLElement)
+}
+
+function onPointerDown(event: PointerEvent) {
+  if (props.column.kind !== 'data' || event.pointerType !== 'touch') return
+  grid.onCellPointerDown?.(props.row, props.rowKey, props.column, event, event.currentTarget as HTMLElement)
 }
 
 function onClick(event: MouseEvent) {
@@ -97,10 +109,12 @@ function onClick(event: MouseEvent) {
     :data-vg-flash-dir="flash?.dir"
     @click="onClick"
     @contextmenu="onContextMenu"
+    @pointerdown="onPointerDown"
   >
     <template v-if="column.kind === 'select'">
       <component
         :is="grid.Checkbox"
+        v-if="selectable"
         :type="grid.selectMode.value === 'single' ? 'radio' : 'checkbox'"
         :checked="grid.rowCheckState(row) === 'all'"
         :indeterminate="grid.rowCheckState(row) === 'some'"

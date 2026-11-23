@@ -1,4 +1,5 @@
 import type { GridFeature } from '../types'
+import { aggregationFeature } from './aggregation'
 import { columnGroupsFeature } from './columnGroups'
 import { columnPinningFeature } from './columnPinning'
 import { columnResizingFeature } from './columnResizing'
@@ -8,6 +9,7 @@ import { filteringFeature } from './filtering'
 import { keyboardNavigationFeature } from './keyboardNavigation'
 import { menusFeature } from './menus'
 import { paginationFeature } from './pagination'
+import { rowPinningFeature } from './rowPinning'
 import { selectionFeature } from './selection'
 import { serverDataFeature } from './serverData'
 import { sortingFeature } from './sorting'
@@ -15,6 +17,7 @@ import { subGridsFeature } from './subGrids'
 import { virtualScrollingFeature } from './virtualScrolling'
 
 export {
+  aggregationFeature,
   columnGroupsFeature,
   columnPinningFeature,
   columnReorderFeature,
@@ -24,6 +27,7 @@ export {
   keyboardNavigationFeature,
   menusFeature,
   paginationFeature,
+  rowPinningFeature,
   selectionFeature,
   serverDataFeature,
   sortingFeature,
@@ -47,4 +51,6 @@ export const allFeatures: readonly GridFeature[] = [
   keyboardNavigationFeature,
   columnResizingFeature,
   columnGroupsFeature,
+  rowPinningFeature,
+  aggregationFeature,
 ]

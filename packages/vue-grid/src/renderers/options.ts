@@ -44,6 +44,7 @@ export interface TextOptions {
   preserveNewlines?: boolean
   /** `true` = value as tooltip; a function computes it. */
   tooltip?: boolean | RowFn<string | undefined>
+  /** Shown when the value is empty. */
   placeholder?: string
   tone?: RowOption<Tone | undefined>
   /** `text` (default) colours the text; `fill` colours the badge-like background. */
@@ -69,7 +70,9 @@ export interface ToggleTextOptions extends Pick<TextOptions, 'placeholder'> {
 }
 
 export interface NumberOptions {
+  /** `Intl.NumberFormat` options, e.g. `{ maximumFractionDigits: 0 }` or `{ style: 'percent' }`. */
   format?: Intl.NumberFormatOptions
+  /** Shown when the value is empty. */
   placeholder?: string
   /** Renders the number as a link-style button that emits `click` (drill-down). */
   clickable?: RowOption<boolean>
@@ -90,7 +93,9 @@ export interface ChangeOptions extends NumberOptions {
 }
 
 export interface DateOptions {
+  /** `Intl.DateTimeFormat` options, e.g. `{ dateStyle: 'medium' }`. */
   format?: Intl.DateTimeFormatOptions
+  /** Shown when the value is empty. */
   placeholder?: string
 }
 
@@ -213,6 +218,7 @@ export interface MultiLineOptions {
   /** Each line on one row with ellipsis (default true). */
   ellipsis?: boolean
   target?: '_self' | '_blank'
+  /** Shown when the value is empty. */
   placeholder?: string
 }
 
@@ -225,6 +231,7 @@ export interface CopyOptions {
   label?: string
   /** Shown before the value in the tooltip, e.g. “Serial number”. */
   title?: string
+  /** Shown when the value is empty. */
   placeholder?: string
 }
 
@@ -238,6 +245,7 @@ export interface ChipOptions {
   shape?: 'square' | 'circle' | 'pill'
   /** Box size for square/circle. Default `1.75rem`. */
   size?: string
+  /** Shown when the value is empty. */
   placeholder?: string
 }
 
@@ -261,6 +269,7 @@ export interface RadioOptions extends CheckboxOptions {
 export interface EditOptions {
   /** Text shown next to the edit button (default: the value). */
   format?: RowFn<string>
+  /** Shown when the value is empty. */
   placeholder?: string
   /** Accessible name of the button. Default “Edit”. */
   label?: string
@@ -348,6 +357,7 @@ export interface ListOptions {
   itemLabel?: RowFn<string>
   /** Items shown before “+N more”. Default 1. */
   max?: number
+  /** Shown when the value is empty. */
   placeholder?: string
 }
 

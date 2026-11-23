@@ -99,7 +99,9 @@ const numericSort = (value: unknown) => toNumber(value)
 const dateSort = (value: unknown) => toDate(value)?.getTime() ?? null
 
 export { textRenderer }
+/** Text that toggles a highlight when clicked. Emits `toggle` (with `clickable`). */
 export const toggleTextRenderer = /*#__PURE__*/ defineCellRenderer<ToggleTextOptions>({ name: 'toggle-text', component: ToggleTextCell })
+/** Locale-formatted numbers. With `clickable`, a link-style button that emits `click`. */
 export const numberRenderer = /*#__PURE__*/ defineCellRenderer<NumberOptions>({
   name: 'number',
   filterType: 'number',
@@ -107,6 +109,7 @@ export const numberRenderer = /*#__PURE__*/ defineCellRenderer<NumberOptions>({
   align: 'end',
   sortValue: numericSort,
 })
+/** Numbers that always show their sign (+ / −). With `clickable`, emits `click`. */
 export const signedNumberRenderer = /*#__PURE__*/ defineCellRenderer<NumberOptions & { signed?: boolean }>({
   name: 'signed-number',
   filterType: 'number',
@@ -115,6 +118,7 @@ export const signedNumberRenderer = /*#__PURE__*/ defineCellRenderer<NumberOptio
   align: 'end',
   sortValue: numericSort,
 })
+/** Money in a fixed or per-row currency (default: the grid's `currency`). With `clickable`, emits `click`. */
 export const currencyRenderer = /*#__PURE__*/ defineCellRenderer<CurrencyOptions>({
   name: 'currency',
   filterType: 'number',
@@ -122,6 +126,7 @@ export const currencyRenderer = /*#__PURE__*/ defineCellRenderer<CurrencyOptions
   align: 'end',
   sortValue: numericSort,
 })
+/** A rise or fall: the value with an up / down arrow, green or red. */
 export const changeRenderer = /*#__PURE__*/ defineCellRenderer<ChangeOptions>({
   name: 'change',
   filterType: 'number',
@@ -129,30 +134,43 @@ export const changeRenderer = /*#__PURE__*/ defineCellRenderer<ChangeOptions>({
   align: 'end',
   sortValue: numericSort,
 })
+/** A calendar day, in the grid's locale and time zone (date-only strings never shift a day). */
 export const dateRenderer = /*#__PURE__*/ defineCellRenderer<DateOptions>({ name: 'date', component: DateCell, sortValue: dateSort, filterType: 'date' })
+/** Date and time, on two lines by default. */
 export const dateTimeRenderer = /*#__PURE__*/ defineCellRenderer<DateTimeOptions>({
   name: 'datetime',
   filterType: 'date',
   component: DateTimeCell,
   sortValue: dateSort,
 })
+/** Yes / no as text labels or icons. */
 export const booleanRenderer = /*#__PURE__*/ defineCellRenderer<BooleanOptions>({ name: 'boolean', component: BooleanCell, filterType: 'boolean' })
+/** A coloured status badge (tone from a map, a function or a constant). With `clickable`, emits `click`. */
 export const statusRenderer = /*#__PURE__*/ defineCellRenderer<StatusOptions>({ name: 'status', component: StatusCell, filterType: 'set' })
+/** A safe link (http(s), mailto, tel only), or a `<RouterLink>` with `to` when vue-router is installed. */
 export const linkRenderer = /*#__PURE__*/ defineCellRenderer<LinkOptions>({ name: 'link', component: LinkCell })
+/** An icon component, fixed or picked per row. */
 export const iconRenderer = /*#__PURE__*/ defineCellRenderer<IconOptions>({ name: 'icon', component: IconCell, align: 'center' })
+/** A button that opens the value as escaped JSON in a dialog. */
 export const jsonRenderer = /*#__PURE__*/ defineCellRenderer<JsonOptions>({ name: 'json', component: JsonCell })
+/** A collapsible tree of nested data. */
 export const jsonTreeRenderer = /*#__PURE__*/ defineCellRenderer<JsonTreeOptions>({ name: 'json-tree', component: JsonTreeCell })
+/** A `⋯` button with a keyboard-friendly menu. Emits the chosen item's `name`. */
 export const actionsMenuRenderer = /*#__PURE__*/ defineCellRenderer<ActionsMenuOptions>({
   name: 'actions-menu',
   component: ActionsMenuCell,
   align: 'center',
 })
+/** One button per row. Emits its `action` (default `click`). */
 export const actionButtonRenderer = /*#__PURE__*/ defineCellRenderer<ActionButtonOptions>({
   name: 'action-button',
   component: ActionButtonCell,
 })
+/** Stacked lines, each with its own style, link, badge, trend or action. */
 export const multiLineRenderer = /*#__PURE__*/ defineCellRenderer<MultiLineOptions>({ name: 'multi-line', component: MultiLineCell })
+/** A value with a copy-to-clipboard button. Emits `copy` / `copy-error`. */
 export const copyRenderer = /*#__PURE__*/ defineCellRenderer<CopyOptions>({ name: 'copy', component: CopyCell })
+/** A chip in any colour (readable text picked by contrast), square, circle or pill. */
 export const chipRenderer = /*#__PURE__*/ defineCellRenderer<ChipOptions>({
   name: 'chip',
   filterType: 'set',
@@ -163,6 +181,7 @@ export const chipRenderer = /*#__PURE__*/ defineCellRenderer<ChipOptions>({
       : value,
 })
 const booleanSort = (value: unknown) => (value === null || value === undefined ? null : value ? 1 : 0)
+/** A controlled checkbox, with a tooltip when disabled. Emits `change` with the requested state. */
 export const checkboxRenderer = /*#__PURE__*/ defineCellRenderer<CheckboxOptions>({
   name: 'checkbox',
   filterType: 'boolean',
@@ -170,6 +189,7 @@ export const checkboxRenderer = /*#__PURE__*/ defineCellRenderer<CheckboxOptions
   align: 'center',
   sortValue: booleanSort,
 })
+/** A controlled on / off switch. Emits `change` with the requested state. */
 export const switchRenderer = /*#__PURE__*/ defineCellRenderer<SwitchOptions>({
   name: 'switch',
   filterType: 'boolean',
@@ -177,6 +197,7 @@ export const switchRenderer = /*#__PURE__*/ defineCellRenderer<SwitchOptions>({
   align: 'center',
   sortValue: booleanSort,
 })
+/** One selected row across the column (controlled). Emits `select`. */
 export const radioRenderer = /*#__PURE__*/ defineCellRenderer<RadioOptions>({
   name: 'radio',
   filterType: 'boolean',
@@ -184,10 +205,15 @@ export const radioRenderer = /*#__PURE__*/ defineCellRenderer<RadioOptions>({
   align: 'center',
   sortValue: booleanSort,
 })
+/** A value with an edit button, for opening your own editor. Emits `edit`. */
 export const editRenderer = /*#__PURE__*/ defineCellRenderer<EditOptions>({ name: 'edit', component: EditCell })
+/** A thumbnail, with a placeholder when empty or broken. */
 export const imageRenderer = /*#__PURE__*/ defineCellRenderer<ImageOptions>({ name: 'image', component: ImageCell, align: 'center' })
+/** Monospaced code, with JSON pretty-printing and highlighting. */
 export const codeRenderer = /*#__PURE__*/ defineCellRenderer<CodeOptions>({ name: 'code', component: CodeCell })
+/** Several buttons, fixed or per row. Emits the clicked button's `name`. */
 export const buttonGroupRenderer = /*#__PURE__*/ defineCellRenderer<ButtonGroupOptions>({ name: 'button-group', component: ButtonGroupCell })
+/** A star / flag style on-off button (controlled). Emits `toggle`. */
 export const iconToggleRenderer = /*#__PURE__*/ defineCellRenderer<IconToggleOptions>({
   name: 'icon-toggle',
   filterType: 'boolean',
@@ -195,7 +221,9 @@ export const iconToggleRenderer = /*#__PURE__*/ defineCellRenderer<IconToggleOpt
   align: 'center',
   sortValue: booleanSort,
 })
+/** A status badge plus an info button with an anchored popover of label / value rows. */
 export const detailsRenderer = /*#__PURE__*/ defineCellRenderer<DetailsOptions>({ name: 'details', component: DetailsCell })
+/** The first items of a list, with a “+N more” toggle. Emits `expand`. */
 export const listRenderer = /*#__PURE__*/ defineCellRenderer<ListOptions>({
   name: 'list',
   component: ListCell,

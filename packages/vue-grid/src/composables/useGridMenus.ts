@@ -1,6 +1,7 @@
 import { nextTick, shallowRef, type Ref } from 'vue'
 import { effectivePin, normalizeColumnState, setColumnPinned, visibleColumns } from '../core/columns'
 import type { AnchorTarget } from '../internal/anchor'
+import { holdEvent, isHoldEvent, touchHold } from '../internal/touchHold'
 import type {
   CellContext,
   ColumnDef,
@@ -91,9 +92,13 @@ export function useGridMenus<T>(opts: GridMenusOptions<T>) {
   const label = shallowRef('Row actions')
   let target: { kind: 'cell'; ctx: CellContext<T> } | { kind: 'header'; column: ColumnDef<T> } | null = null
 
-  /** Pointer right-click → menu at the pointer; keyboard (ContextMenu key, Shift+F10) → at the cell. */
+  /**
+   * Pointer right-click or touch hold → menu at the pointer; keyboard (ContextMenu key,
+   * Shift+F10) → at the cell.
+   */
   function anchorFor(event: MouseEvent, el: HTMLElement): AnchorTarget {
-    const fromPointer = event.isTrusted && event.button === 2 && (event.clientX !== 0 || event.clientY !== 0)
+    const fromPointer =
+      (event.isTrusted || isHoldEvent(event)) && event.button === 2 && (event.clientX !== 0 || event.clientY !== 0)
     return fromPointer ? { x: event.clientX, y: event.clientY } : el
   }
 
@@ -116,6 +121,29 @@ export function useGridMenus<T>(opts: GridMenusOptions<T>) {
     if (!next.length) return // keep the browser's native menu
     target = { kind: 'cell', ctx }
     void show(event, el, next, 'Row actions')
+  }
+
+  /** Touch screens: hold, then release without moving → the menu, at the finger. */
+  function holdToOpen(event: PointerEvent, el: HTMLElement, open: (event: MouseEvent) => void) {
+    touchHold(event, (x, y) => {
+      el.setAttribute('data-vg-held', '')
+      return {
+        end(e, moved) {
+          el.removeAttribute('data-vg-held')
+          if (e && !moved) open(holdEvent(x, y))
+        },
+      }
+    })
+  }
+  /** A touch `pointerdown` on a body cell: hold for its menu (when the grid has one). */
+  function holdCell(ctx: CellContext<T>, event: PointerEvent, el: HTMLElement) {
+    if (event.pointerType !== 'touch' || !opts.contextMenu()) return
+    holdToOpen(event, el, (e) => openCellMenu(ctx, e, el))
+  }
+  /** A touch `pointerdown` on a header: hold for its menu. */
+  function holdHeader(column: ColumnDef<T>, event: PointerEvent, el: HTMLElement) {
+    if (event.pointerType !== 'touch' || opts.headerMenu() === false) return
+    holdToOpen(event, el, (e) => openHeaderMenu(column, e, el))
   }
 
   function builtinHeaderItems(column: ColumnDef<T>): MenuItem[] {
@@ -247,5 +275,10 @@ export function useGridMenus<T>(opts: GridMenusOptions<T>) {
     }
   }
 
-  return { items, label, openCellMenu, openHeaderMenu, onSelect }
+  /** Opens a header's menu at a viewport point (a header held on a touch screen). */
+  function openHeaderMenuAt(column: ColumnDef<T>, x: number, y: number, el: HTMLElement) {
+    openHeaderMenu(column, holdEvent(x, y), el)
+  }
+
+  return { items, label, openCellMenu, openHeaderMenu, openHeaderMenuAt, holdCell, holdHeader, onSelect }
 }

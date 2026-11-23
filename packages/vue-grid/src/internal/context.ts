@@ -56,6 +56,13 @@ export interface GridContext {
   }
   /** Header rows above the body (2 with column groups). */
   headerRows: ComputedRef<number>
+  /** Pinned rows (and a totals row) above the body: offsets the body's `aria-rowindex`. */
+  pinnedTopCount: ComputedRef<number>
+  /** Aggregation feature with a totals row: the values by column key, and the row's label. */
+  totals?: {
+    values: ComputedRef<Record<string, unknown>>
+    label: ComputedRef<string>
+  }
   // expansion
   treeMode: ComputedRef<boolean>
   hasDetail: ComputedRef<boolean>
@@ -106,6 +113,19 @@ export interface GridContext {
   onCellAction(row: any, key: RowKey, column: ResolvedColumn, name: string, payload: unknown): void
   onCellContextMenu(row: any, key: RowKey, column: ResolvedColumn, event: MouseEvent, el: HTMLElement): void
   onHeaderContextMenu(column: ResolvedColumn, event: MouseEvent, el: HTMLElement): void
+  /** Menus feature: a `pointerdown` on a body cell (touch: hold for its menu). */
+  onCellPointerDown?(row: any, key: RowKey, column: ResolvedColumn, event: PointerEvent, el: HTMLElement): void
+}
+
+/** A row in a pinned section: a pinned data row, or the totals row. */
+export interface PinnedRowItem {
+  /** Unique within the grid's pinned rows. */
+  id: string
+  kind: 'row' | 'total'
+  row: any
+  key: RowKey
+  /** Shows the selection checkbox (pinned rows of the data, not the app's extra rows). */
+  selectable: boolean
 }
 
 export const GRID_CONTEXT_KEY: InjectionKey<GridContext> = Symbol('vue-grid:context')

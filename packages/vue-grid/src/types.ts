@@ -1,6 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- `any` defaults (ColumnDef<T = any>, renderer props) let untyped columns and renderers accept any row; createColumnHelper<T>() gives the strict form. */
 import type { Component } from 'vue'
 import type { ColumnFilter, FilterState, FilterType } from './core/filter'
+import type { AggregateFn, AggregateName } from './core/aggregate'
+
+export type { AggregateFn, AggregateName } from './core/aggregate'
 
 export type RowKey = string | number
 
@@ -17,6 +20,12 @@ export interface SortState {
 }
 
 export type PinSide = 'left' | 'right'
+
+/** Rows pinned above / below the body, by row key (row pinning feature). */
+export interface PinnedRowsState {
+  top?: RowKey[]
+  bottom?: RowKey[]
+}
 
 export type { ColumnFilter, FilterState, FilterStateStorage, FilterType } from './core/filter'
 
@@ -98,7 +107,9 @@ export type RendererOptions<R> =
 export interface ColumnDef<T = any, R extends RendererRef = RendererName> {
   /** Unique, stable column id. Also used for sort state, column state and slot names. */
   key: string
+  /** Header text (default: the key). */
   header?: string
+  /** Tooltip on the header cell. */
   headerTooltip?: string
   /** Dot path into the row, e.g. `user.address.city`. Defaults to `key`. */
   field?: string
@@ -106,6 +117,7 @@ export interface ColumnDef<T = any, R extends RendererRef = RendererName> {
   value?: (row: T) => unknown
   /** A renderer definition (`currencyRenderer`), a registered renderer name, or a component. Defaults to `text`. */
   renderer?: R | Component
+  /** Options of the column's renderer, typed against it (merged over the renderer's defaults). */
   rendererOptions?: RendererOptions<R>
   /** Any CSS grid track size. Defaults to `auto`. */
   width?: string
@@ -120,9 +132,13 @@ export interface ColumnDef<T = any, R extends RendererRef = RendererName> {
    * share one header cell above their own headers.
    */
   group?: string
+  /** Cell and header alignment (default: the renderer's, e.g. `end` for numbers, else `start`). */
   align?: Align
+  /** A sort button in the header (sorting feature). Client sorting needs `sort-mode="client"`. */
   sortable?: boolean
+  /** The value client sorting compares (default: the renderer's sort value, else the cell value). */
   sortValue?: (row: T) => unknown
+  /** A full comparator for client sorting; wins over `sortValue`. */
   sortFn?: (a: T, b: T) => number
   /** Initial pin side (the header menu can change it at runtime unless `pinnable: false`). */
   pinned?: PinSide
@@ -153,7 +169,15 @@ export interface ColumnDef<T = any, R extends RendererRef = RendererName> {
    * `'direction'`: green when a number goes up, red when it goes down.
    */
   flash?: FlashMode
+  /**
+   * The column's value in the totals row (aggregation feature): `'sum' | 'avg' | 'min' | 'max'`
+   * over the cell values (empty values skipped), `'count'` of rows, or a function of the values and
+   * the rows. Shown with the column's renderer (`count` as a plain number).
+   */
+  aggregate?: AggregateName | AggregateFn<T>
+  /** Extra classes for the column's body cells (or a function of the row). */
   cellClass?: ClassValue | ((row: T) => ClassValue)
+  /** Extra classes for the column's header cell. */
   headerClass?: ClassValue
 }
 
@@ -287,10 +311,15 @@ export interface HeaderActionEvent<T = any> {
 
 /** Methods exposed on a `<VGrid>` template ref: `const grid = ref<VGridExposed>()`. */
 export interface VGridExposed {
+  /** Scrolls the grid back to its first row. */
   scrollToTop(): void
+  /** Scrolls a row (top-level or nested, also in virtual mode) into view. */
   scrollToRow(key: RowKey): void
+  /** Expands every expandable row (sub-grids and detail rows) that passes the filters. */
   expandAll(): void
+  /** Collapses every row. */
   collapseAll(): void
+  /** Replaces the column state (order, hidden, pins, widths), and saves it with `storage`. */
   setColumnState(state: ColumnState): void
   /**
    * Applies field patches to lazily loaded child rows (`loadSubRows`), which the grid caches and the
@@ -308,6 +337,8 @@ export interface VGridExposed {
   reload(): Promise<void>
   /** Forgets lazily loaded child rows (one row's, or all): expanded rows load them again. */
   reloadSubRows(key?: RowKey): void
+  /** Pins a top-level row above or below the body, or unpins it (`null`). Row pinning feature. */
+  pinRow(key: RowKey, side: 'top' | 'bottom' | null): void
 }
 
 // ── Features (opt-in, tree-shakeable) ─────────────────────────────────────────────────────────
@@ -382,7 +413,21 @@ export interface ColumnGroupsFeature {
   /** The group header row. */
   GroupRow: Component
 }
+export interface RowPinningFeature {
+  readonly feature: 'rowPinning'
+  usePinnedRows: typeof import('./composables/usePinnedRows').usePinnedRows
+  /** The sticky pinned-rows section. */
+  PinnedRows: Component
+}
+export interface AggregationFeature {
+  readonly feature: 'aggregation'
+  useTotals: typeof import('./composables/useTotals').useTotals
+  /** The sticky section the totals row renders in. */
+  PinnedRows: Component
+}
 export type GridFeature =
+  | AggregationFeature
+  | RowPinningFeature
   | ColumnGroupsFeature
   | ColumnResizingFeature
   | KeyboardNavigationFeature

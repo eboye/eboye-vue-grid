@@ -27,7 +27,10 @@ export function useGridKeyboard(root: Ref<HTMLElement | undefined>, opts: GridKe
 
   function focusCell(cell: HTMLElement | undefined | null) {
     if (!cell) return
-    cell.focus({ preventScroll: false })
+    // Scrolled explicitly: Firefox's focus scrolling ignores `scroll-padding`, so a row would land
+    // under the sticky pinned / totals rows; `scrollIntoView` honours it in every engine.
+    cell.focus({ preventScroll: true })
+    cell.scrollIntoView?.({ block: 'nearest', inline: 'nearest' })
     lastCell = cell
   }
 

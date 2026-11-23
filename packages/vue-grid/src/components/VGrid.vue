@@ -31,7 +31,13 @@ import type { DataSource, GridQuery } from '../composables/useDataSource'
 import { resolveFeatures } from '../internal/features'
 import { warnOnce } from '../internal/dev'
 import { supportsHas } from '../internal/supports'
-import { GRID_CONTEXT_KEY, SELECT_COLUMN_KEY, type GridContext, type ResolvedColumn } from '../internal/context'
+import {
+  GRID_CONTEXT_KEY,
+  SELECT_COLUMN_KEY,
+  type GridContext,
+  type PinnedRowItem,
+  type ResolvedColumn,
+} from '../internal/context'
 import { FORMAT_CONTEXT_KEY, GRID_CONFIG_KEY, resolveFormatContext } from '../registry/plugin'
 import { createRendererRegistry, isRendererDefinition } from '../registry/registry'
 import { textRenderer } from '../renderers/text'
@@ -54,6 +60,7 @@ import type {
   HeaderActionEvent,
   HeaderMenuContext,
   MenuItem,
+  PinnedRowsState,
   RowKey,
   SortState,
   VGridExposed,
@@ -66,9 +73,11 @@ const NO_FILTERS: FilterState = Object.freeze({ columns: Object.freeze({}), sear
 
 const props = withDefaults(
   defineProps<{
-    /** The rows (client data). Omit when using `dataSource`. */
+    /** The rows (client data), used as-is and never mutated. Omit when using `dataSource`. */
     rows?: readonly T[]
+    /** Column definitions, in default display order (see `ColumnDef`). */
     columns: readonly ColumnDef<T>[]
+    /** Stable unique id of a row: a property name or `(row) => string | number`. All row state is keyed by it. */
     rowKey: RowKeyGetter<T>
     /**
      * Opt-in features for this grid (added to the app-wide `createVueGrid({ features })`):
@@ -84,6 +93,10 @@ const props = withDefaults(
     dataSource?: DataSource<T>
     /** Built-in pagination under the grid (server-side with `dataSource`, client-side otherwise). */
     pagination?: boolean | { pageSizes?: number[] }
+    /**
+     * `controlled` (default): a header click only updates `v-model:sort` (sort on the server or in
+     * your own code). `client`: the grid sorts the rows itself. Ignored with `dataSource`.
+     */
     sortMode?: 'controlled' | 'client'
     /** `client` (default): the grid filters its rows. `controlled`: it only emits `update:filters`. */
     filterMode?: 'client' | 'controlled'
@@ -93,28 +106,52 @@ const props = withDefaults(
     filterStorage?: FilterStateStorage | string
     /** Shown when filters hide every row. */
     noMatchText?: string
+    /** A selection column: `true` = multi-select (with select-all), `'single'` = one row. */
     selectable?: boolean | 'single'
+    /** `cascade` (default): selecting a parent selects its children. `independent`: rows alone. */
     selectionMode?: 'cascade' | 'independent'
+    /** Rows that can't be selected get a disabled checkbox. */
     isRowSelectable?: (row: T) => boolean
+    /** Synchronous child rows of a row: shown in a nested sub-grid when expanded. */
     subRows?: (row: T) => T[] | undefined | null
+    /** Lazy child rows, loaded on first expand (cached, with loading / error / retry). */
     loadSubRows?: (row: T) => Promise<T[]>
+    /** With `loadSubRows`: which rows get an expander (default: every row). */
     hasSubRows?: (row: T) => boolean
+    /** With a `#detail` slot: which rows can expand to show it (default: every row). */
     rowExpandable?: (row: T) => boolean
+    /** Pointer cursor on rows (`row-click` is emitted either way). */
     rowClickable?: boolean
+    /** Extra classes for a row. */
     rowClass?: (row: T, index: number) => ClassValue
+    /** Keys of rows to highlight (e.g. the row being edited). */
     highlightedRows?: readonly RowKey[]
     /** Briefly highlight cells whose value changes (live data, enrichment). Columns can override. */
     flash?: FlashMode
+    /**
+     * Virtual scrolling: only the rows in view render. Rows share one height (`rowHeight`, px) and
+     * the grid needs a bounded height. Needs the virtual scrolling feature.
+     */
     virtual?: VirtualOptions | false
+    /** Persist column state (order, hidden, pins, widths): a localStorage key or your own storage. */
     storage?: ColumnStateStorage | string
+    /** Renderers usable by name in this grid (merged over the app-wide ones). */
     renderers?: CellRendererDefinition[]
+    /** Locale for number / date renderers (default: the plugin's, else the browser's). */
     locale?: string
+    /** Default ISO 4217 currency for currency renderers. */
     currency?: string
+    /** IANA time zone for date renderers and date filters. */
     timeZone?: string
+    /** Cell padding scale. */
     density?: Density
+    /** Shows a progress bar and sets `aria-busy` (server data sets it by itself). */
     loading?: boolean
+    /** Shown when there are no rows. */
     emptyText?: string
+    /** Accessible name of the grid. */
     ariaLabel?: string
+    /** Extra classes per part (`root`, `header`, `headerCell`, `row`, `cell`, `subgrid`, `detail`, `empty`), e.g. Tailwind utilities. */
     ui?: Partial<Record<GridPart, ClassValue>>
     /** Right-click menu items for a body cell. Return `null`/`[]` to keep the browser's menu. */
     contextMenu?: (ctx: CellContext<T>) => MenuItem[] | null | undefined
@@ -123,6 +160,19 @@ const props = withDefaults(
      * or a function that receives the built-in items and returns the items to show.
      */
     headerMenu?: boolean | ((ctx: HeaderMenuContext<T>) => MenuItem[] | null | undefined)
+    /** Extra rows above the body, not part of the data (row pinning feature). */
+    pinnedTopRows?: readonly T[]
+    /** Extra rows below the body, not part of the data (row pinning feature). */
+    pinnedBottomRows?: readonly T[]
+    /**
+     * A totals row with each column's `aggregate` (aggregation feature): `true` / `'bottom'` sticks
+     * it to the bottom, `'top'` under the header.
+     */
+    totals?: boolean | 'top' | 'bottom'
+    /** The totals row's label, in its first column (unless that column has an aggregate). */
+    totalsLabel?: string
+    /** Totals row values by column key, instead of computing them (e.g. totals from a server). */
+    aggregates?: Record<string, unknown>
   }>(),
   {
     rows: () => [],
@@ -138,30 +188,49 @@ const props = withDefaults(
     virtual: false,
     loading: false,
     emptyText: 'No data to show.',
+    totals: false,
+    totalsLabel: 'Total',
   },
 )
 
+/** Sort state: a header click cycles asc → desc → none. Header UI needs the sorting feature. */
 const sort = defineModel<SortState | null>('sort', { default: null })
+/** Column order, hidden columns, runtime pins and resized widths (persisted with `storage`). */
 const columnState = defineModel<ColumnState | undefined>('columnState', { default: undefined })
+/** Keys of expanded rows (sub-grids and detail rows). */
 const expanded = defineModel<RowKey[]>('expanded', { default: () => [] })
+/** Keys of selected rows. Needs the selection feature. */
 const selected = defineModel<RowKey[]>('selected', { default: () => [] })
+/** Column filters and quick search: `{ columns: Record<key, ColumnFilter>, search }`. Needs the filtering feature. */
 const filters = defineModel<FilterState | null>('filters', { default: null })
+/** Current page (1-based); resets to 1 when sort or filters change. Needs the pagination feature. */
 const page = defineModel<number>('page', { default: 1 })
+/** Rows per page. Needs the pagination feature. */
 const pageSize = defineModel<number>('pageSize', { default: 25 })
+/** Top-level rows pinned above / below the body, by key: `{ top, bottom }`. Needs the row pinning feature. */
+const pinnedRows = defineModel<PinnedRowsState | null>('pinnedRows', { default: null })
 
 const emit = defineEmits<{
   /** The combined query (sort, filters, search, page) — on mount and whenever it changes. */
   'query-change': [query: GridQuery]
+  /** A `dataSource` call failed (the grid shows an error with Retry). */
   'load-error': [error: unknown]
+  /** A row was clicked (not on a link, button or input inside it, nor a `clickable` column). */
   'row-click': [row: T, event: MouseEvent | KeyboardEvent]
+  /** A cell of a `clickable: true` column was clicked. */
   'cell-click': [event: CellClickEvent<T>]
+  /** A renderer emitted an action (buttons, toggles, menus, edit, copy). */
   'cell-action': [event: CellActionEvent<T>]
+  /** `loadSubRows` rejected for a row. */
   'sub-rows-error': [event: { row: T; error: unknown }]
+  /** An item of the body-cell context menu was chosen. */
   'context-action': [event: ContextActionEvent<T>]
+  /** A custom item of the header menu was chosen (built-in items act by themselves). */
   'header-action': [event: HeaderActionEvent<T>]
 }>()
 
 defineSlots<{
+  /** A column's body cell, replacing its renderer: `#cell-<key>`. */
   [key: `cell-${string}`]: (scope: {
     row: T
     value: unknown
@@ -170,11 +239,19 @@ defineSlots<{
     depth: number
     column: ColumnDef<T>
   }) => unknown
+  /** A column's header content: `#header-<key>`. */
   [key: `header-${string}`]: (scope: { column: ColumnDef<T> }) => unknown
+  /** A column's cell in the totals row (aggregation feature). */
+  [key: `total-${string}`]: (scope: { value: unknown; column: ColumnDef<T> }) => unknown
+  /** Expandable detail row under a row: any content, even another grid. */
   detail?: (scope: { row: T; rowKey: RowKey; depth: number }) => unknown
+  /** Shown when there are no rows. */
   empty?: () => unknown
+  /** Shown while loading with no rows yet. */
   loading?: () => unknown
+  /** Shown while a row's lazy children load. */
   'sub-rows-loading'?: (scope: { row: T }) => unknown
+  /** Above the grid: put a search box, column menu or filter summary here. */
   toolbar?: (scope: {
     columns: readonly ColumnDef<T>[]
     columnState: ColumnState
@@ -552,7 +629,18 @@ const drag = reorder?.useColumnDrag({
     const next = reorder.moveColumnRelative(layoutColumns.value, effectiveState.value, from, to, side)
     if (next !== effectiveState.value) setColumnState(next)
   },
+  // Touch: a header held and released in place opens its menu (`menus` is set up below).
+  onHold: (key, el, x, y) => {
+    const col = props.columns.find((c) => c.key === key)
+    if (col) menus?.openHeaderMenuAt(col, x, y, el)
+  },
 })
+/** A header `pointerdown`: drag to reorder (and, on touch, hold for the menu). */
+function onHeaderPointerDown(event: PointerEvent, key: string) {
+  if (drag) return drag.onPointerDown(event, key)
+  const col = props.columns.find((c) => c.key === key)
+  if (col) menus?.holdHeader(col, event, event.currentTarget as HTMLElement)
+}
 
 /** Swaps a column with its visible neighbour (keyboard Alt+←/→ and the header menu). */
 function moveColumnBy(key: string, direction: -1 | 1): boolean {
@@ -620,13 +708,58 @@ const menus = features.menus?.useMenus<T>({
   },
 })
 
-// ── Virtualisation ──────────────────────────────────────────────────────────────────────────
-const topRows = computed(() => prepareRows(sourceRows.value))
+// ── Pinned rows & totals ────────────────────────────────────────────────────────────────────
 /** Reads `row-key` once, for passes over many rows. */
 const keyReader = () => {
   const rowKey = props.rowKey
   return (row: T) => resolveRowKey(row, rowKey)
 }
+const PinnedRows = features.rowPinning?.PinnedRows ?? features.aggregation?.PinnedRows
+
+/** Top-level rows that pass the filters (every page): what the totals cover. */
+const filteredTopRows = computed(() => (filt ? filt.apply(sourceRows.value) : sourceRows.value))
+
+const pins = features.rowPinning?.usePinnedRows<T>({
+  model: pinnedRows,
+  rows: () => sourceRows.value,
+  keyOf: keyReader,
+  extraTop: () => props.pinnedTopRows,
+  extraBottom: () => props.pinnedBottomRows,
+})
+const totals = features.aggregation?.useTotals<T>({
+  totals: () => props.totals,
+  given: () => props.aggregates,
+  rows: () => filteredTopRows.value,
+  columns: () => props.columns,
+})
+const NO_PINNED: readonly PinnedRowItem[] = []
+/** The sticky sections' rows: the totals (top or bottom) around the pinned rows. */
+const pinnedItems = computed(() => {
+  if (!pins && !totals) return { top: NO_PINNED, bottom: NO_PINNED }
+  const at = totals?.at.value
+  const total = at ? [totals.item.value] : []
+  return {
+    top: [...(at === 'top' ? total : []), ...(pins?.items.value.top ?? [])],
+    bottom: [...(pins?.items.value.bottom ?? []), ...(at === 'bottom' ? total : [])],
+  }
+})
+const pinnedTopCount = computed(() => pinnedItems.value.top.length)
+
+/** Pins a top-level row above or below the body (`null` unpins it). */
+function pinRow(key: RowKey, side: 'top' | 'bottom' | null) {
+  if (pins) pins.pinRow(key, side)
+  else if (process.env.NODE_ENV !== 'production') warnOnce('feature:rowPinning', 'pinRow() needs the row pinning feature (rowPinningFeature).')
+}
+
+// ── Virtualisation ──────────────────────────────────────────────────────────────────────────
+/** The body's top-level rows: filtered and sorted, without the pinned ones. */
+const topRows = computed(() => {
+  const all = sortRowsFn(filteredTopRows.value)
+  const pinned = pins?.keys.value
+  if (!pinned?.size) return all
+  const key = keyReader()
+  return all.filter((row) => !pinned.has(key(row)))
+})
 const virt = features.virtualScrolling?.useVirtualRows<T>({
   root,
   options: () => virtualOptions.value,
@@ -706,6 +839,9 @@ if (process.env.NODE_ENV !== 'production') {
     if (!features.columnPinning && pinnedCol) missing('columnPinning', `Column "${pinnedCol}" is pinned; that`)
     if (!features.menus && (props.contextMenu || typeof props.headerMenu === 'function'))
       missing('menus', '`context-menu` / a `header-menu` function')
+    if (!features.rowPinning && (pinnedRows.value || props.pinnedTopRows || props.pinnedBottomRows))
+      missing('rowPinning', '`pinned-rows` / `pinned-top-rows` / `pinned-bottom-rows`')
+    if (!features.aggregation && props.totals) missing('aggregation', '`totals`')
   })
   watch(
     () => props.features,
@@ -735,6 +871,11 @@ const context: GridContext = {
     isSized: (key) => !!effectiveState.value.widths?.[key] || resize.resizing.value === key,
   },
   headerRows,
+  pinnedTopCount,
+  totals: totals && {
+    values: totals.values,
+    label: computed(() => props.totalsLabel),
+  },
   treeMode,
   hasDetail,
   canExpand,
@@ -780,6 +921,10 @@ const context: GridContext = {
   onCellContextMenu: (row, rowKey, column, event, el) =>
     menus?.openCellMenu({ row, rowKey, column: column.def, value: getCellValue(row, column.def) }, event, el),
   onHeaderContextMenu: (column, event, el) => menus?.openHeaderMenu(column.def, event, el),
+  onCellPointerDown: menus
+    ? (row, rowKey, column, event, el) =>
+        menus.holdCell({ row, rowKey, column: column.def, value: getCellValue(row, column.def) }, event, el)
+    : undefined,
 }
 provide(GRID_CONTEXT_KEY, context)
 
@@ -829,6 +974,7 @@ defineExpose<VGridExposed>({
   openFilter,
   reload,
   reloadSubRows,
+  pinRow,
 })
 </script>
 
@@ -857,13 +1003,19 @@ defineExpose<VGridExposed>({
             'vg-is-dragging': drag?.dragging.value,
             'vg-is-resizing': resize?.resizing.value,
             'vg-has-groups': hasGroups,
+            'vg-has-pinned-rows': pinnedItems.top.length || pinnedItems.bottom.length,
+            'vg-has-cell-menu': !!menus && !!contextMenu,
           },
         ]"
         :role="gridRole"
         tabindex="0"
         :aria-label="ariaLabel"
         :aria-busy="isLoading || undefined"
-        :aria-rowcount="virtualLayout ? virtualLayout.rowCount + headerRows : undefined"
+        :aria-rowcount="
+          virtualLayout
+            ? virtualLayout.rowCount + headerRows + pinnedItems.top.length + pinnedItems.bottom.length
+            : undefined
+        "
         :aria-colcount="resolvedColumns.length"
         :aria-multiselectable="(keyboardNav && selectMode === 'multi') || undefined"
         :style="{
@@ -884,8 +1036,15 @@ defineExpose<VGridExposed>({
           :can-reorder="canReorder"
           @sort="onSort"
           @toggle-all="sel?.toggleAll()"
-          @drag-start="(event: PointerEvent, key: string) => drag?.onPointerDown(event, key)"
+          @drag-start="onHeaderPointerDown"
           @header-click="(event: MouseEvent) => drag?.consumeClick(event)"
+        />
+        <component
+          :is="PinnedRows"
+          v-if="PinnedRows && pinnedItems.top.length"
+          position="top"
+          :items="pinnedItems.top"
+          :aria-start="virtualLayout ? headerRows + 1 : undefined"
         />
         <template v-if="windowRows.length">
           <VGridRows :rows="windowRows" presorted :layout="virtualLayout ?? undefined" />
@@ -904,6 +1063,13 @@ defineExpose<VGridExposed>({
             <slot v-else name="empty">{{ emptyText }}</slot>
           </div>
         </div>
+        <component
+          :is="PinnedRows"
+          v-if="PinnedRows && pinnedItems.bottom.length"
+          position="bottom"
+          :items="pinnedItems.bottom"
+          :aria-start="virtualLayout ? headerRows + pinnedItems.top.length + virtualLayout.rowCount + 1 : undefined"
+        />
       </div>
     </div>
     <component

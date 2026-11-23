@@ -19,15 +19,22 @@
     --vg-z-pinned-header: 4;
     --vg-menu-gap: 4px;
   }
+  /*
+   * `min-width: 0`: inside a flex or grid layout the grid would otherwise grow to its columns'
+   * width (pushing the page sideways on a phone) instead of scrolling them in its own frame.
+   */
   .vg-root {
     display: flex;
     flex-direction: column;
+    min-width: 0;
     min-height: 0;
     max-height: 100%;
   }
 
+  /* Wraps on narrow screens instead of widening the grid. */
   .vg-toolbar {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: flex-end;
   }
@@ -37,6 +44,7 @@
     display: flex;
     flex-direction: column;
     flex: 1 1 auto;
+    min-width: 0;
     min-height: 0;
     overflow: hidden;
   }
@@ -295,6 +303,11 @@
     cursor: pointer;
   }
   .vg-page:disabled { cursor: not-allowed; }
+  /* Phones: the pager drops its first / last buttons (page 1 and the last page stay) to fit one line. */
+  @media (width < 30rem) {
+    .vg-page-first,
+    .vg-page-last { display: none; }
+  }
   .vg-text { min-width: 0; overflow-wrap: break-word; }
   .vg-text-ellipsis { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
   .vg-text-clamp {
@@ -363,6 +376,37 @@
   .vg-group-cell.vg-pin-left,
   .vg-group-cell.vg-pin-right { z-index: var(--vg-z-pinned-header); }
   .vg-has-groups .vg-header-cell { top: var(--vg-group-row-height, 0px); }
+
+  /*
+   * Pinned rows (and the totals row): one sticky `subgrid` section above the body, right under the
+   * header, and one at the bottom. Focused rows scroll clear of them (`scroll-padding`).
+   */
+  .vg-pinned-rows {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: subgrid;
+    position: sticky;
+    z-index: var(--vg-z-header);
+  }
+  .vg-pinned-top { top: calc(var(--vg-group-row-height, 0px) + var(--vg-header-height, 0px)); }
+  .vg-pinned-bottom { bottom: 0; }
+  .vg-has-pinned-rows {
+    scroll-padding-block: calc(var(--vg-group-row-height, 0px) + var(--vg-header-height, 0px) + var(--vg-pinned-top-height, 0px))
+      var(--vg-pinned-bottom-height, 0px);
+  }
+
+  /*
+   * Touch: holding a header (reorder, menu) or a body cell with a menu is the grid's gesture, so
+   * the browser's own long-press callout and text selection stay out of it.
+   */
+  @media (pointer: coarse) {
+    .vg-header-cell,
+    .vg-has-cell-menu .vg-cell {
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+  }
 
   /* A resized column is narrower than its content may be: clip instead of spilling over. */
   .vg-col-sized { min-width: 0; overflow: hidden; }

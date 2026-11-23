@@ -66,6 +66,8 @@
     --vg-flash-up: color-mix(in srgb, var(--vg-color-success) 24%, transparent);
     --vg-flash-down: color-mix(in srgb, var(--vg-color-danger) 22%, transparent);
     --vg-flash-duration: 1.2s;
+    --vg-total-row-bg: var(--vg-color-header-bg);
+    --vg-total-row-font-weight: 600;
   }
   .vg-root {
     --_vg-density: 1;
@@ -151,8 +153,11 @@
   /*
    * Highlights appear at once and only fade out: no transition starts on the row the pointer
    * enters, so it responds instantly (and scrolling under a still pointer starts half as many).
+   * Only where there's a real hover: on touch screens a tapped row would otherwise stay tinted.
    */
-  .vg-row:hover > .vg-cell { background: var(--vg-color-row-hover); transition-duration: 0s; }
+  @media (hover: hover) {
+    .vg-row:hover > .vg-cell { background: var(--vg-color-row-hover); transition-duration: 0s; }
+  }
   .vg-row-highlighted > .vg-cell { background: var(--vg-color-row-highlight); transition-duration: 0s; }
   .vg-row-selected > .vg-cell { background: var(--vg-color-row-selected); transition-duration: 0s; }
   .vg-cell[data-vg-flash] { --_vg-flash: var(--vg-flash-color); }
@@ -215,7 +220,9 @@
   }
   .vg-subgrid > .vg-row > .vg-cell,
   .vg-subgrid > .vg-status-row > .vg-status { background: var(--vg-subgrid-bg); }
-  .vg-subgrid > .vg-row:hover > .vg-cell { background: var(--vg-color-row-hover); }
+  @media (hover: hover) {
+    .vg-subgrid > .vg-row:hover > .vg-cell { background: var(--vg-color-row-hover); }
+  }
   .vg-subgrid > .vg-row-selected > .vg-cell { background: var(--vg-color-row-selected); }
   .vg-subgrid > .vg-row:last-child > .vg-cell { border-bottom: 0; }
 
@@ -441,6 +448,20 @@
   .vg-group-cell + .vg-group-cell:not(.vg-group-empty) { border-inline-start: var(--vg-row-border); }
 
   /*
+   * Pinned rows: a strong rule between them and the body. The totals row is bold on the header's
+   * background, and doesn't take the row hover.
+   */
+  .vg-pinned-top > .vg-row:last-child > .vg-cell { border-bottom: var(--vg-header-border); }
+  .vg-pinned-bottom > .vg-row:first-child > .vg-cell { border-top: var(--vg-header-border); }
+  .vg-pinned-bottom > .vg-row:last-child > .vg-cell { border-bottom: 0; }
+  .vg-pinned-rows > .vg-row-total > .vg-cell,
+  .vg-pinned-rows > .vg-row-total:hover > .vg-cell {
+    background: var(--vg-total-row-bg);
+    font-weight: var(--vg-total-row-font-weight);
+  }
+  .vg-total-label { color: var(--vg-color-header-text); }
+
+  /*
    * Column resizing: a short line on hover, full height and accent while focused or dragging. It
    * grows with `transform` (compositor), not by animating `inset` (layout).
    */
@@ -462,6 +483,19 @@
     background: var(--vg-color-accent);
   }
   .vg-resize-handle:focus-visible { outline: none; }
+
+  /* A header or cell held on a touch screen (reorder / menu on release). */
+  .vg-header-cell[data-vg-held],
+  .vg-cell[data-vg-held] { background: var(--vg-color-row-selected); }
+  /*
+   * Touch screens (coarse pointers): text inputs at 16px, below which iOS Safari zooms the page
+   * on focus. (The resize grip stays narrow: a swipe that starts on it can't scroll the grid.)
+   */
+  @media (pointer: coarse) {
+    .vg-input,
+    .vg-select,
+    .vg-filter-input .vg-input { font-size: max(1rem, 16px); }
+  }
 
   @media (prefers-reduced-motion: reduce) {
     .vg-root *,

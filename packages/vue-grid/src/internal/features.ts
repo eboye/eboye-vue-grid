@@ -1,4 +1,6 @@
 import type {
+  AggregationFeature,
+  RowPinningFeature,
   ColumnGroupsFeature,
   ColumnPinningFeature,
   ColumnResizingFeature,
@@ -32,6 +34,8 @@ export interface FeatureSet {
   keyboardNavigation?: KeyboardNavigationFeature
   columnResizing?: ColumnResizingFeature
   columnGroups?: ColumnGroupsFeature
+  rowPinning?: RowPinningFeature
+  aggregation?: AggregationFeature
 }
 
 /** Merges feature lists (app-wide, then per grid); a later entry with the same name wins. */

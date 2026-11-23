@@ -24,6 +24,7 @@ export {
   effectivePin,
 } from './core/columns'
 export { nextSort, sortRows, compareValues } from './core/sort'
+export { aggregateRows, aggregateValues } from './core/aggregate'
 export { patchRows, type RowPatches, type PatchRowsOptions } from './core/patch'
 export type { DataSource, DataSourceResult, GridQuery } from './composables/useDataSource'
 export {
