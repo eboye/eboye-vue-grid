@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.7.0 — 2026-11-24
+
+**Text and parts are configurable.** `messages` (`GridMessages`) replaces any built-in text: menus,
+filters, the pager, the status bar, notices, screen-reader labels and renderer buttons, 112
+keys, functions where a value goes in (`groupBy(column)`, `rowCount(shown, total)`…). `parts`
+(`GridParts`) leaves out pieces a feature adds: the progress bar, the load-error notice, Retry
+buttons, the no-match Clear button, the select-all checkbox and banner, filter funnels, resize
+grips, header dragging, Ctrl/⌘+C and group counts. Both are app-wide in `createVueGrid` or per
+grid, the grid's own winning. New slots replace parts: `#load-error`, `#no-match`,
+`#select-all-banner`. `pagination` takes `{ siblings, summary, firstLast }` too (`PaginationOptions`;
+`<VGridPagination first-last>`), and the status bar `{ rows, selected, filters, clear }` flags.
+`empty-text`, `no-match-text` and `totals-label` now default to `messages`, then English; the
+standalone components' label props to `messages` too. New exported types `GridMessages`,
+`GridParts`, `PaginationOptions`.
+
+**Printing** (export feature): `grid.print()` prints the rows as a table from a hidden frame,
+through the browser's print dialog: every row that passes the filters, sorted, on every page (a
+virtual grid included, which only has the rows in view on screen), as the cells show them. The
+header repeats on each printed page, numbers are right-aligned as in the grid, and the totals
+print once, in bold, after the last row. Options: the export ones (`rows`, `columns`, `header`,
+`totals`, `children`) plus `title` and `landscape`. It resolves when printing is over. The
+printing code loads on first use (1.1 kB gzip); the export feature grows by 0.2 kB gzip. New
+exported type `PrintOptions`.
+
 ## 0.6.0 — 2026-11-24
 
 **Excel export** (export feature): `grid.exportXlsx()` downloads the rows as an `.xlsx` workbook

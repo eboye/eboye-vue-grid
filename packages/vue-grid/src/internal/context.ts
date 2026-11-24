@@ -6,7 +6,9 @@ import type {
   ClassValue,
   ColumnDef,
   FlashMode,
+  GridMessages,
   GridPart,
+  GridParts,
   RowKey,
 } from '../types'
 import type { ColumnFilter, FilterState, FilterType } from '../core/filter'
@@ -36,6 +38,10 @@ export interface ResolvedColumn {
 export interface GridContext {
   columns: ComputedRef<ResolvedColumn[]>
   slots: Slots
+  /** Built-in text (the grid's over the app's); each use keeps its English default. */
+  messages: ComputedRef<GridMessages>
+  /** Built-in parts; a part is on unless `false`. */
+  parts: ComputedRef<GridParts>
   ui: ComputedRef<Partial<Record<GridPart, ClassValue>>>
   getKey(row: any): RowKey
   /**

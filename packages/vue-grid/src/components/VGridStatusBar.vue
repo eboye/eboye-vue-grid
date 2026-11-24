@@ -3,6 +3,7 @@ import { computed, inject } from 'vue'
 import type { StatusBarState } from '../composables/useStatusBar'
 import { FORMAT_CONTEXT_KEY } from '../registry/plugin'
 import { formatNumber } from '../renderers/format'
+import { useMessages } from '../internal/messages'
 import type { StatusBarAggregate, StatusBarScope } from '../types'
 
 /**
@@ -23,45 +24,57 @@ const format = inject(FORMAT_CONTEXT_KEY, undefined)
 const n = (v: number) => (format ? formatNumber(v, format.value) : String(v))
 const plural = (count: number, one: string, many: string) =>
   `${n(count)} ${count === 1 ? one : many}`
+const m = useMessages()
 
 const rowsText = computed(() => {
   const { rowCount, totalRowCount } = scope.value
-  return totalRowCount !== undefined && totalRowCount !== rowCount
+  const filtered = totalRowCount !== undefined && totalRowCount !== rowCount
+  if (m.value.rowCount)
+    return m.value.rowCount(n(rowCount), filtered ? n(totalRowCount) : undefined, rowCount)
+  return filtered
     ? `${n(rowCount)} of ${plural(totalRowCount, 'row', 'rows')}`
     : plural(rowCount, 'row', 'rows')
 })
-const LABELS: Record<StatusBarAggregate, string> = {
-  sum: 'Sum',
-  avg: 'Average',
-  min: 'Min',
-  max: 'Max',
-}
+const selectedText = computed(() => {
+  const { selectedCount, allSelected } = scope.value
+  return (
+    m.value.selectedCount?.(n(selectedCount), allSelected) ??
+    `${allSelected ? 'All ' : ''}${n(selectedCount)} selected`
+  )
+})
+const label = (name: StatusBarAggregate) =>
+  ({
+    sum: m.value.sum ?? 'Sum',
+    avg: m.value.average ?? 'Average',
+    min: m.value.min ?? 'Min',
+    max: m.value.max ?? 'Max',
+  })[name]
 </script>
 
 <template>
-  <div class="vg-status-bar" role="group" aria-label="Grid status">
+  <div class="vg-status-bar" role="group" :aria-label="m.statusBar ?? 'Grid status'">
     <Custom v-if="render" />
     <template v-else>
-      <span class="vg-status-item">{{ rowsText }}</span>
-      <span v-if="scope.selectedCount" class="vg-status-item">
-        {{ scope.allSelected ? 'All ' : '' }}{{ n(scope.selectedCount) }} selected
+      <span v-if="bar.show.value.rows" class="vg-status-item">{{ rowsText }}</span>
+      <span v-if="scope.selectedCount && bar.show.value.selected" class="vg-status-item">
+        {{ selectedText }}
       </span>
-      <span v-if="scope.filterCount" class="vg-status-item">
-        {{ plural(scope.filterCount, 'filter', 'filters') }}
+      <span v-if="scope.filterCount && bar.show.value.filters" class="vg-status-item">
+        {{ m.filterCount?.(scope.filterCount) ?? plural(scope.filterCount, 'filter', 'filters') }}
         <button
-          v-if="bar.canClear"
+          v-if="bar.canClear && bar.show.value.clear"
           type="button"
           class="vg-link-button"
           @click="scope.clearFilters()"
         >
-          Clear
+          {{ m.clear ?? 'Clear' }}
         </button>
       </span>
       <span v-if="scope.summary.length" class="vg-status-summary">
         <span v-for="col in scope.summary" :key="col.key" class="vg-status-item">
           <span class="vg-status-label">{{ col.label }}:</span>
           <span v-for="item in col.items" :key="item.name" class="vg-status-value"
-            >{{ LABELS[item.name] }} <strong>{{ item.text }}</strong></span
+            >{{ label(item.name) }} <strong>{{ item.text }}</strong></span
           >
         </span>
       </span>

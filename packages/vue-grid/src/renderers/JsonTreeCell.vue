@@ -4,8 +4,10 @@ import type { CellRendererProps } from '../types'
 import { parseJsonish } from './format'
 import JsonTreeNode from './JsonTreeNode.vue'
 import type { JsonTreeOptions } from './options'
+import { useMessages } from '../internal/messages'
 
 const props = defineProps<CellRendererProps<unknown, unknown, JsonTreeOptions>>()
+const m = useMessages()
 const data = computed(() => parseJsonish(props.value))
 const isEmpty = computed(() => data.value === undefined || data.value === null || data.value === '')
 </script>
@@ -16,7 +18,7 @@ const isEmpty = computed(() => data.value === undefined || data.value === null |
   }}</span>
   <!-- `collapsed`: a native <details> disclosure — no JS state. -->
   <details v-else-if="!isEmpty && options.collapsed" class="vg-json-reveal" @click.stop>
-    <summary class="vg-link-button">{{ options.toggleLabel ?? 'More info' }}</summary>
+    <summary class="vg-link-button">{{ options.toggleLabel ?? m.moreInfo ?? 'More info' }}</summary>
     <ul class="vg-json-tree">
       <JsonTreeNode
         :value="data"

@@ -8,6 +8,7 @@ import {
 import type { AnchorTarget } from '../internal/anchor'
 import { holdEvent, isHoldEvent, touchHold } from '../internal/touchHold'
 import type {
+  GridMessages,
   CellContext,
   ColumnDef,
   ColumnState,
@@ -25,6 +26,8 @@ export interface MenuHandle {
 
 export interface GridMenusOptions<T> {
   menu: Ref<MenuHandle | undefined>
+  /** The grid's built-in text. */
+  messages: () => GridMessages
   columns: () => readonly ColumnDef<T>[]
   columnState: () => ColumnState
   setColumnState: (state: ColumnState) => void
@@ -102,7 +105,7 @@ function tidy(items: MenuItem[]): MenuItem[] {
  */
 export function useGridMenus<T>(opts: GridMenusOptions<T>) {
   const items = shallowRef<MenuItem[]>([])
-  const label = shallowRef('Row actions')
+  const label = shallowRef('')
   let target:
     { kind: 'cell'; ctx: CellContext<T> } | { kind: 'header'; column: ColumnDef<T> } | null = null
 
@@ -136,7 +139,7 @@ export function useGridMenus<T>(opts: GridMenusOptions<T>) {
     const next = build ? tidy(build(ctx) ?? []) : []
     if (!next.length) return // keep the browser's native menu
     target = { kind: 'cell', ctx }
-    void show(event, el, next, 'Row actions')
+    void show(event, el, next, opts.messages().rowActions ?? 'Row actions')
   }
 
   /** Touch screens: hold, then release without moving → the menu, at the finger. */
@@ -163,46 +166,59 @@ export function useGridMenus<T>(opts: GridMenusOptions<T>) {
   }
 
   function builtinHeaderItems(column: ColumnDef<T>): MenuItem[] {
+    const m = opts.messages()
     const state = opts.columnState()
     const out: MenuItem[] = []
     if (opts.sortable(column)) {
       const dir = opts.sort.value?.key === column.key ? opts.sort.value.dir : null
       out.push(
-        { name: 'vg:sort-asc', label: 'Sort ascending', disabled: dir === 'asc' },
-        { name: 'vg:sort-desc', label: 'Sort descending', disabled: dir === 'desc' },
-        { name: 'vg:sort-clear', label: 'Clear sort', disabled: !dir },
+        {
+          name: 'vg:sort-asc',
+          label: m.sortAscending ?? 'Sort ascending',
+          disabled: dir === 'asc',
+        },
+        {
+          name: 'vg:sort-desc',
+          label: m.sortDescending ?? 'Sort descending',
+          disabled: dir === 'desc',
+        },
+        { name: 'vg:sort-clear', label: m.clearSort ?? 'Clear sort', disabled: !dir },
         SEPARATOR,
       )
     }
     if (opts.filters && column.filterable) {
       out.push(
-        { name: 'vg:filter', label: 'Filter…' },
+        { name: 'vg:filter', label: m.filterMenu ?? 'Filter…' },
         {
           name: 'vg:filter-clear',
-          label: 'Clear filter',
+          label: m.clearFilter ?? 'Clear filter',
           disabled: !opts.filters.isActive(column.key),
         },
       )
       if (opts.filters.anyActive())
-        out.push({ name: 'vg:filter-clear-all', label: 'Clear all filters' })
+        out.push({ name: 'vg:filter-clear-all', label: m.clearAllFilters ?? 'Clear all filters' })
       out.push(SEPARATOR)
     }
     if (opts.grouping?.can(column)) {
       const grouped = opts.grouping.isGrouped(column.key)
       out.push(
         grouped
-          ? { name: 'vg:ungroup', label: 'Ungroup' }
-          : { name: 'vg:group', label: `Group by ${column.header ?? column.key}` },
+          ? { name: 'vg:ungroup', label: m.ungroup ?? 'Ungroup' }
+          : {
+              name: 'vg:group',
+              label: (m.groupBy ?? ((c) => `Group by ${c}`))(column.header ?? column.key),
+            },
       )
-      if (opts.grouping.any()) out.push({ name: 'vg:ungroup-all', label: 'Ungroup all' })
+      if (opts.grouping.any())
+        out.push({ name: 'vg:ungroup-all', label: m.ungroupAll ?? 'Ungroup all' })
       out.push(SEPARATOR)
     }
     if (opts.pinnable(column)) {
       const pin = effectivePin(column, state)
       out.push(
-        { name: 'vg:pin-left', label: 'Pin left', disabled: pin === 'left' },
-        { name: 'vg:pin-right', label: 'Pin right', disabled: pin === 'right' },
-        { name: 'vg:unpin', label: 'Unpin', disabled: !pin },
+        { name: 'vg:pin-left', label: m.pinLeft ?? 'Pin left', disabled: pin === 'left' },
+        { name: 'vg:pin-right', label: m.pinRight ?? 'Pin right', disabled: pin === 'right' },
+        { name: 'vg:unpin', label: m.unpin ?? 'Unpin', disabled: !pin },
         SEPARATOR,
       )
     }
@@ -212,26 +228,38 @@ export function useGridMenus<T>(opts: GridMenusOptions<T>) {
       const sameGroup = (c: ColumnDef<T> | undefined) =>
         !!c && opts.reorderable(c) && effectivePin(c, state) === effectivePin(column, state)
       out.push(
-        { name: 'vg:move-left', label: 'Move left', disabled: !sameGroup(visible[i - 1]) },
-        { name: 'vg:move-right', label: 'Move right', disabled: !sameGroup(visible[i + 1]) },
+        {
+          name: 'vg:move-left',
+          label: m.moveLeft ?? 'Move left',
+          disabled: !sameGroup(visible[i - 1]),
+        },
+        {
+          name: 'vg:move-right',
+          label: m.moveRight ?? 'Move right',
+          disabled: !sameGroup(visible[i + 1]),
+        },
         SEPARATOR,
       )
     }
     if (opts.resize?.can(column)) {
       out.push(
-        { name: 'vg:fit-width', label: 'Fit width' },
+        { name: 'vg:fit-width', label: m.fitWidth ?? 'Fit width' },
         {
           name: 'vg:reset-width',
-          label: 'Reset width',
+          label: m.resetWidth ?? 'Reset width',
           disabled: !opts.resize.isResized(column.key),
         },
         SEPARATOR,
       )
     }
     if (opts.hideColumn && column.hideable !== false) {
-      out.push({ name: 'vg:hide', label: 'Hide column', disabled: visible.length <= 1 })
+      out.push({
+        name: 'vg:hide',
+        label: m.hideColumn ?? 'Hide column',
+        disabled: visible.length <= 1,
+      })
     }
-    out.push({ name: 'vg:reset', label: 'Reset columns' })
+    out.push({ name: 'vg:reset', label: m.resetColumns ?? 'Reset columns' })
     return tidy(out)
   }
 
@@ -244,7 +272,12 @@ export function useGridMenus<T>(opts: GridMenusOptions<T>) {
     )
     if (!next.length) return
     target = { kind: 'header', column }
-    void show(event, el, next, `${column.header ?? column.key} column`)
+    void show(
+      event,
+      el,
+      next,
+      (opts.messages().columnMenu ?? ((c) => `${c} column`))(column.header ?? column.key),
+    )
   }
 
   function runBuiltin(name: string, column: ColumnDef<T>) {

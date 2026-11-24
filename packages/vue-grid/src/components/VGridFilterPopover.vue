@@ -2,6 +2,7 @@
 import { computed, defineAsyncComponent, onBeforeUnmount, shallowRef, useId } from 'vue'
 import { anchorNameFor, trackAnchor } from '../internal/anchor'
 import { useInternalGrid, type ResolvedColumn } from '../internal/context'
+import { useMessages } from '../internal/messages'
 
 // The panel is loaded on demand (own chunk) when a filter popover first opens.
 const VGridFilterPanel = defineAsyncComponent(() => import('./VGridFilterPanel.vue'))
@@ -12,6 +13,7 @@ const VGridFilterPanel = defineAsyncComponent(() => import('./VGridFilterPanel.v
  * anchor fallback where CSS anchor positioning is missing).
  */
 const props = defineProps<{ column: ResolvedColumn }>()
+const m = useMessages()
 
 // Rendered by the filtering feature only, so the grid always has filters here.
 const grid = useInternalGrid()
@@ -50,7 +52,11 @@ const stop = (e: Event) => e.stopPropagation()
     type="button"
     :class="['vg-icon-button', 'vg-filter-button', { 'vg-filter-on': active }]"
     :tabindex="grid.rovingTabindex"
-    :aria-label="active ? `Filter ${label} (active)` : `Filter ${label}`"
+    :aria-label="
+      active
+        ? (m.filterColumnActive?.(label) ?? `Filter ${label} (active)`)
+        : (m.filterColumn?.(label) ?? `Filter ${label}`)
+    "
     aria-haspopup="dialog"
     :aria-expanded="open"
     :aria-controls="id"
@@ -68,7 +74,7 @@ const stop = (e: Event) => e.stopPropagation()
     ref="panel"
     popover="auto"
     role="dialog"
-    :aria-label="`Filter ${label}`"
+    :aria-label="m.filterColumn?.(label) ?? `Filter ${label}`"
     class="vg-menu vg-filter-popover"
     data-placement="bottom-end"
     :style="{ 'position-anchor': anchor }"

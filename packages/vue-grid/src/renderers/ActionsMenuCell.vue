@@ -4,8 +4,10 @@ import VGridMenu from '../components/VGridMenu.vue'
 import { anchorNameFor } from '../internal/anchor'
 import type { CellRendererEmits, CellRendererProps, MenuAction, MenuItem } from '../types'
 import type { ActionsMenuOptions } from './options'
+import { useMessages } from '../internal/messages'
 
 const props = defineProps<CellRendererProps<unknown, unknown, ActionsMenuOptions>>()
+const m = useMessages()
 const emit = defineEmits<CellRendererEmits>()
 
 const uid = useId()
@@ -30,7 +32,7 @@ function choose(item: MenuAction) {
     <button
       type="button"
       class="vg-icon-button"
-      :aria-label="options.label ?? 'Actions'"
+      :aria-label="options.label ?? m.actions ?? 'Actions'"
       aria-haspopup="menu"
       :aria-expanded="open"
       :aria-controls="menuId"
@@ -47,7 +49,7 @@ function choose(item: MenuAction) {
     <VGridMenu
       :id="menuId"
       :items="items"
-      :label="options.label ?? 'Actions'"
+      :label="options.label ?? m.actions ?? 'Actions'"
       :anchor-name="anchor"
       placement="bottom-end"
       @select="choose"

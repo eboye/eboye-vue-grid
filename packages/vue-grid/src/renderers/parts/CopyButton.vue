@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { onBeforeUnmount, ref } from 'vue'
 import { copyText } from '../../internal/clipboard'
+import { useMessages } from '../../internal/messages'
 import { CheckIcon, CopyIcon } from './icons'
 
-const props = withDefaults(defineProps<{ text: string; label?: string; title?: string }>(), {
-  label: 'Copy',
-})
+const props = defineProps<{ text: string; label?: string; title?: string }>()
+const m = useMessages()
 const emit = defineEmits<{ copied: [text: string]; failed: [text: string] }>()
 
 const done = ref(false)
@@ -27,11 +27,11 @@ onBeforeUnmount(() => window.clearTimeout(timer))
   <button
     type="button"
     :class="['vg-icon-button', 'vg-copy-button', { 'vg-copy-done': done }]"
-    :aria-label="done ? 'Copied' : label"
+    :aria-label="done ? (m.copied ?? 'Copied') : (label ?? m.copy ?? 'Copy')"
     :title="title ?? text"
     @click.stop="copy"
   >
     <component :is="done ? CheckIcon : CopyIcon" />
   </button>
-  <span class="vg-sr-only" aria-live="polite">{{ done ? 'Copied' : '' }}</span>
+  <span class="vg-sr-only" aria-live="polite">{{ done ? (m.copied ?? 'Copied') : '' }}</span>
 </template>

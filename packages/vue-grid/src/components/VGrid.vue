@@ -25,6 +25,7 @@ import type { RowPatches } from '../core/patch'
 import type { MenuHandle } from '../composables/useGridMenus'
 import type { DataSource, GridQuery } from '../composables/useDataSource'
 import { resolveFeatures } from '../internal/features'
+import { MESSAGES_KEY, PARTS_KEY, partOn } from '../internal/messages'
 import { warnOnce } from '../internal/dev'
 import { supportsHas } from '../internal/supports'
 import {
@@ -60,8 +61,11 @@ import type {
   PinnedRowsState,
   RowKey,
   SortState,
+  PaginationOptions,
   StatusBarOptions,
   StatusBarScope,
+  GridMessages,
+  GridParts,
   VGridExposed,
   VirtualOptions,
 } from '../types'
@@ -94,13 +98,17 @@ const props = withDefaults(
      */
     dataSource?: DataSource<T>
     /** Built-in pagination under the grid (server-side with `dataSource`, client-side otherwise). */
-    pagination?: boolean | { pageSizes?: number[] }
+    pagination?: boolean | PaginationOptions
     /**
      * A status bar under the grid (status bar feature): rows that pass the filters ("84 of 200
      * rows"), selected rows, active filters with Clear; `{ summary: ['total'] }` adds the sum and
      * average of those columns over the selected rows. `#status-bar` replaces its content.
      */
     statusBar?: boolean | StatusBarOptions
+    /** Built-in text (translations, wording), over `createVueGrid({ messages })`. */
+    messages?: GridMessages
+    /** Built-in parts to leave out (`{ progressBar: false }`), over `createVueGrid({ parts })`. */
+    parts?: GridParts
     /**
      * `controlled` (default): a header click only updates `v-model:sort` (sort on the server or in
      * your own code). `client`: the grid sorts the rows itself. Ignored with `dataSource`.
@@ -112,7 +120,7 @@ const props = withDefaults(
     filterRow?: boolean
     /** Persist the filter model (`string` = localStorage key). */
     filterStorage?: FilterStateStorage | string
-    /** Shown when filters hide every row. */
+    /** Shown when filters hide every row. Default: `messages.noMatch`, else `No rows match the current filters.` */
     noMatchText?: string
     /** A selection column: `true` = multi-select (with select-all), `'single'` = one row. */
     selectable?: boolean | 'single'
@@ -166,7 +174,7 @@ const props = withDefaults(
     density?: Density
     /** Shows a progress bar and sets `aria-busy` (server data sets it by itself). */
     loading?: boolean
-    /** Shown when there are no rows. */
+    /** Shown when there are no rows. Default: `messages.empty`, else `No data to show.` */
     emptyText?: string
     /** Accessible name of the grid. */
     ariaLabel?: string
@@ -188,7 +196,10 @@ const props = withDefaults(
      * it to the bottom, `'top'` under the header.
      */
     totals?: boolean | 'top' | 'bottom'
-    /** The totals row's label, in its first column (unless that column has an aggregate). */
+    /**
+     * The totals row's label, in its first column (unless that column has an aggregate). Default:
+     * `messages.total`, else `Total`.
+     */
     totalsLabel?: string
     /** Totals row values by column key, instead of computing them (e.g. totals from a server). */
     aggregates?: Record<string, unknown>
@@ -202,7 +213,6 @@ const props = withDefaults(
     sortMode: 'controlled',
     filterMode: 'client',
     filterRow: false,
-    noMatchText: 'No rows match the current filters.',
     selectable: false,
     selectionMode: 'cascade',
     pruneSelection: false,
@@ -210,9 +220,7 @@ const props = withDefaults(
     rowClickable: false,
     virtual: false,
     loading: false,
-    emptyText: 'No data to show.',
     totals: false,
-    totalsLabel: 'Total',
     groupsExpanded: false,
   },
 )
@@ -296,6 +304,21 @@ defineSlots<{
   detail?: (scope: { row: T; rowKey: RowKey; depth: number }) => unknown
   /** Shown when there are no rows. */
   empty?: () => unknown
+  /** Shown when filters hide every row, instead of the message and its Clear filters button. */
+  'no-match'?: (scope: { clearFilters: () => void; filterCount: number }) => unknown
+  /**
+   * A failed server request (server data): `stale` when the rows from before stay on screen (the
+   * notice above them), else in place of the rows. `retry()` asks again.
+   */
+  'load-error'?: (scope: { error: unknown; retry: () => Promise<void>; stale: boolean }) => unknown
+  /** Selection with server data: the "Select all N rows" banner. */
+  'select-all-banner'?: (scope: {
+    total: number
+    page: number
+    all: boolean
+    selectAll: () => void
+    clearSelection: () => void
+  }) => unknown
   /** The status bar's content (status bar feature): replaces the counts and the summary. */
   'status-bar'?: (scope: StatusBarScope) => unknown
   /** Shown while loading with no rows yet. */
@@ -334,6 +357,14 @@ const formatContext = computed(() =>
   ),
 )
 provide(FORMAT_CONTEXT_KEY, formatContext)
+
+/** Built-in text and parts: the grid's own over the app's. */
+const messages = computed<GridMessages>(() => ({ ...config?.messages, ...props.messages }))
+const parts = computed<GridParts>(() => ({ ...config?.parts, ...props.parts }))
+provide(MESSAGES_KEY, messages)
+provide(PARTS_KEY, parts)
+const part = (name: keyof GridParts) => partOn(parts.value, name)
+const totalsLabel = computed(() => props.totalsLabel ?? messages.value.total ?? 'Total')
 
 const getKey = (row: T) => resolveRowKey(row, props.rowKey)
 
@@ -806,7 +837,7 @@ const keyboard = features.keyboardNavigation?.useGridKeyboard(root, {
 })
 const onKeyDown = (event: KeyboardEvent) => {
   keyboard?.onKeyDown(event)
-  exporter?.onKeyDown(event)
+  if (part('copyShortcut')) exporter?.onKeyDown(event)
 }
 const onFocusIn = (event: FocusEvent) => keyboard?.onFocusIn(event)
 /** ARIA grid with keyboard navigation; a plain table (and tabbable controls) without it. */
@@ -818,6 +849,7 @@ const gridRole = computed(() =>
 const menuRef = shallowRef<MenuHandle>()
 const menus = features.menus?.useMenus<T>({
   menu: menuRef,
+  messages: () => messages.value,
   columns: () => layoutColumns.value,
   columnState: () => effectiveState.value,
   setColumnState,
@@ -983,7 +1015,7 @@ const exporter = features.export?.useExport<T>({
   prepare: (rows, filtered) => (filtered ? prepareRows : sortRowsFn)(rows),
   selected,
   extraRows: () => [...(props.pinnedTopRows ?? []), ...(props.pinnedBottomRows ?? [])],
-  totals: () => !!totals?.at.value && { values: totals.values.value, label: props.totalsLabel },
+  totals: () => !!totals?.at.value && { values: totals.values.value, label: totalsLabel.value },
   onCopy: (event) => emit('copy', event),
 })
 
@@ -1088,6 +1120,8 @@ const highlighted = computed(() => new Set(props.highlightedRows ?? []))
 
 const context: GridContext = {
   keyboardNav,
+  messages,
+  parts,
   cellRole: keyboardNav ? 'gridcell' : 'cell',
   rovingTabindex: keyboardNav ? -1 : undefined,
   columns: resolvedColumns,
@@ -1108,7 +1142,7 @@ const context: GridContext = {
   pinnedTopCount,
   totals: totals && {
     values: totals.values,
-    label: computed(() => props.totalsLabel),
+    label: totalsLabel,
   },
   treeMode,
   hasDetail,
@@ -1219,9 +1253,9 @@ const clearFilters = () => filt?.clearAll()
 const clearSelection = () => sel?.clear()
 
 /** The export feature's methods; without it they warn (dev) and do nothing. */
-function viaExport<K extends 'getCsv' | 'exportCsv' | 'getXlsx' | 'exportXlsx' | 'copyRows'>(
-  name: K,
-): VGridExposed[K] {
+function viaExport<
+  K extends 'getCsv' | 'exportCsv' | 'getXlsx' | 'exportXlsx' | 'print' | 'copyRows',
+>(name: K): VGridExposed[K] {
   return ((options?: object) => {
     if (exporter) return (exporter[name] as (o?: object) => unknown)(options)
     if (process.env.NODE_ENV !== 'production')
@@ -1231,7 +1265,7 @@ function viaExport<K extends 'getCsv' | 'exportCsv' | 'getXlsx' | 'exportXlsx' |
       ? ''
       : name === 'copyRows'
         ? Promise.resolve(false)
-        : name === 'exportXlsx'
+        : name === 'exportXlsx' || name === 'print'
           ? Promise.resolve()
           : undefined
   }) as VGridExposed[K]
@@ -1240,6 +1274,7 @@ const getCsv = viaExport('getCsv')
 const exportCsv = viaExport('exportCsv')
 const getXlsx = viaExport('getXlsx')
 const exportXlsx = viaExport('exportXlsx')
+const print = viaExport('print')
 const copyRows = viaExport('copyRows')
 
 defineExpose<VGridExposed>({
@@ -1259,6 +1294,7 @@ defineExpose<VGridExposed>({
   exportCsv,
   getXlsx,
   exportXlsx,
+  print,
   copyRows,
   clearSelection,
 })
@@ -1282,21 +1318,38 @@ defineExpose<VGridExposed>({
         :clear-selection="clearSelection"
       />
     </div>
-    <component
-      :is="features.selection.Banner"
-      v-if="features.selection && sel?.banner.value"
-      v-bind="sel.banner.value"
-      @select-all="selectAllMatching = true"
-      @clear="clearSelection"
-    />
+    <template v-if="features.selection && sel?.banner.value && part('selectAllBanner')">
+      <slot
+        name="select-all-banner"
+        v-bind="sel.banner.value"
+        :select-all="() => (selectAllMatching = true)"
+        :clear-selection="clearSelection"
+      >
+        <component
+          :is="features.selection.Banner"
+          v-bind="sel.banner.value"
+          @select-all="selectAllMatching = true"
+          @clear="clearSelection"
+        />
+      </slot>
+    </template>
     <!-- A failed request keeps the rows already shown: say they're out of date. (With no rows, the
          empty row says it instead.) The next request clears it. -->
-    <div v-if="loadError && windowRows.length" class="vg-load-error-banner" role="alert">
-      <span>Couldn't load the rows. These are from before.</span>
-      <button type="button" class="vg-link-button" @click="reload()">Retry</button>
-    </div>
+    <template v-if="loadError && windowRows.length && part('loadErrorNotice')">
+      <slot name="load-error" :error="loadError" :retry="reload" :stale="true">
+        <div class="vg-load-error-banner" role="alert">
+          <span
+            >{{ messages.loadError ?? "Couldn't load the rows." }}
+            {{ messages.staleRows ?? 'These are from before.' }}</span
+          >
+          <button v-if="part('retry')" type="button" class="vg-link-button" @click="reload()">
+            {{ messages.retry ?? 'Retry' }}
+          </button>
+        </div>
+      </slot>
+    </template>
     <div class="vg-viewport">
-      <div v-if="isLoading" class="vg-progress" aria-hidden="true" />
+      <div v-if="isLoading && part('progressBar')" class="vg-progress" aria-hidden="true" />
       <div
         ref="root"
         :class="[
@@ -1363,18 +1416,40 @@ defineExpose<VGridExposed>({
             :tabindex="context.rovingTabindex"
             :class="['vg-empty', ui?.empty]"
           >
-            <slot v-if="isLoading" name="loading">Loading…</slot>
-            <span v-else-if="loadError" class="vg-no-match vg-load-error" role="alert">
-              Couldn't load the rows.
-              <button type="button" class="vg-link-button" @click="reload()">Retry</button>
-            </span>
-            <span v-else-if="(serverMode || rows.length) && activeFilterCount" class="vg-no-match">
-              {{ noMatchText }}
-              <button type="button" class="vg-link-button" @click="clearFilters()">
-                Clear filters
-              </button>
-            </span>
-            <slot v-else name="empty">{{ emptyText }}</slot>
+            <slot v-if="isLoading" name="loading">{{ messages.loading ?? 'Loading…' }}</slot>
+            <slot
+              v-else-if="loadError"
+              name="load-error"
+              :error="loadError"
+              :retry="reload"
+              :stale="false"
+            >
+              <span class="vg-no-match vg-load-error" role="alert">
+                {{ messages.loadError ?? "Couldn't load the rows." }}
+                <button v-if="part('retry')" type="button" class="vg-link-button" @click="reload()">
+                  {{ messages.retry ?? 'Retry' }}
+                </button>
+              </span>
+            </slot>
+            <slot
+              v-else-if="(serverMode || rows.length) && activeFilterCount"
+              name="no-match"
+              :clear-filters="clearFilters"
+              :filter-count="activeFilterCount"
+            >
+              <span class="vg-no-match">
+                {{ noMatchText ?? messages.noMatch ?? 'No rows match the current filters.' }}
+                <button
+                  v-if="part('clearFiltersButton')"
+                  type="button"
+                  class="vg-link-button"
+                  @click="clearFilters()"
+                >
+                  {{ messages.clearFilters ?? 'Clear filters' }}
+                </button>
+              </span>
+            </slot>
+            <slot v-else name="empty">{{ emptyText ?? messages.empty ?? 'No data to show.' }}</slot>
           </div>
         </div>
         <component
@@ -1403,7 +1478,7 @@ defineExpose<VGridExposed>({
       v-model:page-size="pageSize"
       class="vg-grid-pagination"
       :total="totalRows"
-      :page-sizes="typeof pagination === 'object' ? pagination.pageSizes : undefined"
+      v-bind="typeof pagination === 'object' ? pagination : {}"
     />
     <component
       :is="features.menus.Menu"

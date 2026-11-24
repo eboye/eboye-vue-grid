@@ -4,8 +4,10 @@ import { useGridContext } from '../registry/plugin'
 import type { CellRendererProps } from '../types'
 import { formatCurrency, formatNumber, toNumber } from './format'
 import type { ChangeOptions } from './options'
+import { useMessages } from '../internal/messages'
 
 const props = defineProps<CellRendererProps<unknown, unknown, ChangeOptions>>()
+const m = useMessages()
 const ctx = useGridContext()
 
 const direction = computed(() => {
@@ -36,7 +38,14 @@ const text = computed(() => {
   return formatNumber(props.value, ctx.value, format)
 })
 
-const srLabel = computed(() => ({ up: 'Increased', down: 'Decreased', equal: '' })[direction.value])
+const srLabel = computed(
+  () =>
+    ({
+      up: m.value.increased ?? 'Increased',
+      down: m.value.decreased ?? 'Decreased',
+      equal: '',
+    })[direction.value],
+)
 const iconOnly = computed(() => props.options.iconOnly || !text.value)
 </script>
 

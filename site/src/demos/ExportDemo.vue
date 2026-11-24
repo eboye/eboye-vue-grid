@@ -82,6 +82,10 @@ const onCopy = (e: CopyEvent<Bet>) =>
       >
         Download Excel
       </button>
+      <!-- Every row that passes the filters, the header on each printed page. -->
+      <button type="button" class="vg-button" @click="grid?.print({ title: 'Bets', totals: true })">
+        Print
+      </button>
       <button
         type="button"
         class="vg-button"

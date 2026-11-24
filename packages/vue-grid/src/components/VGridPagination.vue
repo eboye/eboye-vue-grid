@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { pageItems } from '../core/pagination'
+import { useMessages } from '../internal/messages'
 
 const props = withDefaults(
   defineProps<{
@@ -8,12 +9,19 @@ const props = withDefaults(
     /** Page-size choices; renders a selector when given. */
     pageSizes?: number[]
     siblings?: number
+    /** Default: `messages.pagination`, else `Pagination`. */
     ariaLabel?: string
-    /** Use `{from}`, `{to}` and `{total}` placeholders; empty string hides the summary. */
+    /**
+     * Use `{from}`, `{to}` and `{total}` placeholders; an empty string hides the summary. Default:
+     * `messages.pageSummary`, else `{from}–{to} of {total}`.
+     */
     summary?: string
+    /** The first and last page buttons (« »). Default `true`. */
+    firstLast?: boolean
   }>(),
-  { siblings: 1, ariaLabel: 'Pagination', summary: '{from}–{to} of {total}' },
+  { siblings: 1, firstLast: true },
 )
+const m = useMessages()
 
 const page = defineModel<number>('page', { default: 1 })
 const pageSize = defineModel<number>('pageSize', { default: 25 })
@@ -22,10 +30,12 @@ const pageCount = computed(() => Math.max(1, Math.ceil(props.total / Math.max(1,
 const current = computed(() => Math.min(Math.max(1, page.value), pageCount.value))
 const items = computed(() => pageItems(current.value, pageCount.value, props.siblings))
 const summaryText = computed(() => {
-  if (!props.summary || props.total <= 0) return ''
+  if (props.summary === '' || props.total <= 0) return ''
   const from = (current.value - 1) * pageSize.value + 1
   const to = Math.min(props.total, current.value * pageSize.value)
-  return props.summary
+  if (props.summary === undefined && m.value.pageSummary)
+    return m.value.pageSummary(String(from), String(to), String(props.total))
+  return (props.summary ?? '{from}–{to} of {total}')
     .replace('{from}', String(from))
     .replace('{to}', String(to))
     .replace('{total}', String(props.total))
@@ -43,20 +53,23 @@ function onSizeChange(event: Event) {
 </script>
 
 <template>
-  <nav class="vg-pagination" :aria-label="ariaLabel">
+  <nav class="vg-pagination" :aria-label="ariaLabel ?? m.pagination ?? 'Pagination'">
     <span v-if="summaryText" class="vg-pagination-summary">{{ summaryText }}</span>
     <label v-if="pageSizes?.length" class="vg-pagination-size">
-      <span class="vg-sr-only">Rows per page</span>
+      <span class="vg-sr-only">{{ m.rowsPerPage ?? 'Rows per page' }}</span>
       <select class="vg-select" :value="pageSize" @change="onSizeChange">
-        <option v-for="size in pageSizes" :key="size" :value="size">{{ size }} / page</option>
+        <option v-for="size in pageSizes" :key="size" :value="size">
+          {{ m.pageSize?.(size) ?? `${size} / page` }}
+        </option>
       </select>
     </label>
     <div class="vg-pagination-pages">
       <button
+        v-if="firstLast"
         type="button"
         class="vg-page vg-page-nav vg-page-first"
         :disabled="current <= 1"
-        aria-label="First page"
+        :aria-label="m.firstPage ?? 'First page'"
         @click="go(1)"
       >
         «
@@ -65,7 +78,7 @@ function onSizeChange(event: Event) {
         type="button"
         class="vg-page vg-page-nav"
         :disabled="current <= 1"
-        aria-label="Previous page"
+        :aria-label="m.previousPage ?? 'Previous page'"
         @click="go(current - 1)"
       >
         ‹
@@ -77,7 +90,7 @@ function onSizeChange(event: Event) {
           type="button"
           class="vg-page"
           :aria-current="item === current ? 'page' : undefined"
-          :aria-label="`Page ${item}`"
+          :aria-label="m.page?.(Number(item)) ?? `Page ${item}`"
           @click="go(item)"
         >
           {{ item }}
@@ -87,16 +100,17 @@ function onSizeChange(event: Event) {
         type="button"
         class="vg-page vg-page-nav"
         :disabled="current >= pageCount"
-        aria-label="Next page"
+        :aria-label="m.nextPage ?? 'Next page'"
         @click="go(current + 1)"
       >
         ›
       </button>
       <button
+        v-if="firstLast"
         type="button"
         class="vg-page vg-page-nav vg-page-last"
         :disabled="current >= pageCount"
-        aria-label="Last page"
+        :aria-label="m.lastPage ?? 'Last page'"
         @click="go(pageCount)"
       >
         »

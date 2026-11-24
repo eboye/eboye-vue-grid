@@ -2,6 +2,7 @@
 import { computed, inject, onBeforeUnmount, ref, watch } from 'vue'
 import { GRID_CONTEXT_KEY } from '../internal/context'
 import { warnOnce } from '../internal/dev'
+import { useMessages } from '../internal/messages'
 
 declare const process: { env: Record<string, string | undefined> } // replaced by the bundler (see internal/dev.ts)
 
@@ -10,14 +11,17 @@ declare const process: { env: Record<string, string | undefined> } // replaced b
  * anywhere else, bind it with `v-model` (e.g. to `filters.search`).
  */
 const props = withDefaults(
-  defineProps<{ modelValue?: string; placeholder?: string; label?: string; debounce?: number }>(),
-  {
-    modelValue: undefined,
-    placeholder: 'Search…',
-    label: 'Search rows',
-    debounce: 150,
-  },
+  defineProps<{
+    modelValue?: string
+    /** Default: `messages.searchPlaceholder`, else `Search…`. */
+    placeholder?: string
+    /** Default: `messages.searchLabel`, else `Search rows`. */
+    label?: string
+    debounce?: number
+  }>(),
+  { modelValue: undefined, debounce: 150 },
 )
+const m = useMessages()
 const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
 
 const grid = inject(GRID_CONTEXT_KEY, undefined)
@@ -58,8 +62,8 @@ function onInput(value: string) {
   <input
     class="vg-input vg-search"
     type="search"
-    :placeholder="placeholder"
-    :aria-label="label"
+    :placeholder="placeholder ?? m.searchPlaceholder ?? 'Search…'"
+    :aria-label="label ?? m.searchLabel ?? 'Search rows'"
     :value="text"
     @focus="focused = true"
     @blur="focused = false"

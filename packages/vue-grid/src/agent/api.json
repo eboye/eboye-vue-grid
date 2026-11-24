@@ -1,6 +1,6 @@
 {
   "package": "@nocopypaste/vue-grid",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "component": "VGrid",
   "props": [
     {
@@ -37,7 +37,7 @@
     },
     {
       "name": "pagination",
-      "type": "boolean | { pageSizes?: number[] }",
+      "type": "boolean | PaginationOptions",
       "required": false,
       "default": "false",
       "description": "Built-in pagination under the grid (server-side with `dataSource`, client-side otherwise).",
@@ -49,6 +49,18 @@
       "required": false,
       "description": "A status bar under the grid (status bar feature): rows that pass the filters (\"84 of 200 rows\"), selected rows, active filters with Clear; `{ summary: ['total'] }` adds the sum and average of those columns over the selected rows. `#status-bar` replaces its content.",
       "feature": "statusBar"
+    },
+    {
+      "name": "messages",
+      "type": "GridMessages",
+      "required": false,
+      "description": "Built-in text (translations, wording), over `createVueGrid({ messages })`."
+    },
+    {
+      "name": "parts",
+      "type": "GridParts",
+      "required": false,
+      "description": "Built-in parts to leave out (`{ progressBar: false }`), over `createVueGrid({ parts })`."
     },
     {
       "name": "sortMode",
@@ -84,8 +96,7 @@
       "name": "noMatchText",
       "type": "string",
       "required": false,
-      "default": "'No rows match the current filters.'",
-      "description": "Shown when filters hide every row.",
+      "description": "Shown when filters hide every row. Default: `messages.noMatch`, else `No rows match the current filters.`",
       "feature": "filtering"
     },
     {
@@ -234,8 +245,7 @@
       "name": "emptyText",
       "type": "string",
       "required": false,
-      "default": "'No data to show.'",
-      "description": "Shown when there are no rows."
+      "description": "Shown when there are no rows. Default: `messages.empty`, else `No data to show.`"
     },
     {
       "name": "ariaLabel",
@@ -290,8 +300,7 @@
       "name": "totalsLabel",
       "type": "string",
       "required": false,
-      "default": "'Total'",
-      "description": "The totals row's label, in its first column (unless that column has an aggregate).",
+      "description": "The totals row's label, in its first column (unless that column has an aggregate). Default: `messages.total`, else `Total`.",
       "feature": "aggregation"
     },
     {
@@ -458,6 +467,21 @@
       "description": "Shown when there are no rows."
     },
     {
+      "name": "no-match",
+      "scope": "{ clearFilters: () => void; filterCount: number }",
+      "description": "Shown when filters hide every row, instead of the message and its Clear filters button."
+    },
+    {
+      "name": "load-error",
+      "scope": "{ error: unknown; retry: () => Promise<void>; stale: boolean }",
+      "description": "A failed server request (server data): `stale` when the rows from before stay on screen (the notice above them), else in place of the rows. `retry()` asks again."
+    },
+    {
+      "name": "select-all-banner",
+      "scope": "{ total: number; page: number; all: boolean; selectAll: () => void; clearSelection: () => void }",
+      "description": "Selection with server data: the \"Select all N rows\" banner."
+    },
+    {
       "name": "status-bar",
       "scope": "StatusBarScope",
       "description": "The status bar's content (status bar feature): replaces the counts and the summary."
@@ -585,6 +609,12 @@
       "type": "Promise<void>",
       "required": true,
       "description": "Downloads the rows as an Excel file (`filename`, default `export.xlsx`). Export feature."
+    },
+    {
+      "name": "print",
+      "type": "Promise<void>",
+      "required": true,
+      "description": "Prints the rows as a table (the browser's print dialog): the filtered, sorted rows on every page (not just those in view), as the cells show them, the header repeated on each printed page, numbers right-aligned, the totals in bold. Resolves when printing is over. Export feature."
     },
     {
       "name": "copyRows",
@@ -900,7 +930,7 @@
     {
       "id": "export",
       "export": "exportFeature",
-      "description": "CSV and Excel export and copying: `grid.exportCsv()` downloads the filtered, sorted rows as a CSV file, `grid.getCsv()` returns the text, `grid.exportXlsx()` / `grid.getXlsx()` write an Excel workbook with typed cells (the writer loads on demand), `grid.copyRows()` copies rows as tab-separated text, and Ctrl/⌘+C copies the selected rows, else the focused cell, as displayed. Columns can set `exportValue` and `exportable: false`. Without it those methods only warn.",
+      "description": "CSV and Excel export and copying: `grid.exportCsv()` downloads the filtered, sorted rows as a CSV file, `grid.getCsv()` returns the text, `grid.exportXlsx()` / `grid.getXlsx()` write an Excel workbook with typed cells (the writer loads on demand), `grid.print()` prints every matching row as a table with the header on each page, `grid.copyRows()` copies rows as tab-separated text, and Ctrl/⌘+C copies the selected rows, else the focused cell, as displayed. Columns can set `exportValue` and `exportable: false`. Without it those methods only warn.",
       "props": [],
       "columnOptions": [
         "exportValue",
@@ -2490,6 +2520,18 @@
         "type": "Density",
         "required": false,
         "description": "Default density: `compact`, `cozy` (default) or `comfortable`."
+      },
+      {
+        "name": "messages",
+        "type": "GridMessages",
+        "required": false,
+        "description": "Built-in text for every grid (translations, wording); a grid's own `messages` win."
+      },
+      {
+        "name": "parts",
+        "type": "GridParts",
+        "required": false,
+        "description": "Built-in parts to turn off in every grid; a grid's own `parts` win."
       }
     ]
   }

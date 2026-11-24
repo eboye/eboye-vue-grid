@@ -2,8 +2,10 @@
 import { computed } from 'vue'
 import type { CellRendererEmits, CellRendererProps } from '../types'
 import type { ListOptions } from './options'
+import { useMessages } from '../internal/messages'
 
 const props = defineProps<CellRendererProps<unknown, unknown, ListOptions>>()
+const m = useMessages()
 const emit = defineEmits<CellRendererEmits>()
 
 const all = computed(() => {
@@ -33,8 +35,9 @@ function onToggle(event: Event) {
     </ul>
     <details v-if="rest.length" class="vg-list-more" @toggle="onToggle">
       <summary class="vg-link-button">
-        <span class="vg-list-more-closed">+{{ rest.length }} more</span
-        ><span class="vg-list-more-open">Show less</span>
+        <span class="vg-list-more-closed">{{
+          m.moreItems?.(rest.length) ?? `+${rest.length} more`
+        }}</span><span class="vg-list-more-open">{{ m.showLess ?? 'Show less' }}</span>
       </summary>
       <ul class="vg-list-items">
         <li v-for="(item, i) in rest" :key="i" class="vg-text vg-text-ellipsis" :title="item">

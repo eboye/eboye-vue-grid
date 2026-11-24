@@ -3,8 +3,10 @@ import { computed } from 'vue'
 import type { CellRendererEmits, CellRendererProps } from '../types'
 import type { CopyOptions } from './options'
 import CopyButton from './parts/CopyButton.vue'
+import { useMessages } from '../internal/messages'
 
 const props = defineProps<CellRendererProps<unknown, unknown, CopyOptions>>()
+const m = useMessages()
 const emit = defineEmits<CellRendererEmits>()
 
 const isEmpty = computed(
@@ -32,7 +34,10 @@ const tooltip = computed(() =>
     }}</span>
     <CopyButton
       :text="copyValue"
-      :label="options.label ?? (options.title ? `Copy ${options.title}` : 'Copy')"
+      :label="
+        options.label ??
+        (options.title ? `${m.copy ?? 'Copy'} ${options.title}` : (m.copy ?? 'Copy'))
+      "
       :title="tooltip"
       @copied="emit('action', 'copy', $event)"
       @failed="emit('action', 'copy-error', $event)"

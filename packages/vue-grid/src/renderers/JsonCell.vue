@@ -3,8 +3,10 @@ import { computed, shallowRef } from 'vue'
 import type { CellRendererProps } from '../types'
 import { stringifyJson } from './format'
 import { resolveOption, type JsonOptions } from './options'
+import { useMessages } from '../internal/messages'
 
 const props = defineProps<CellRendererProps<unknown, unknown, JsonOptions>>()
+const m = useMessages()
 
 const dialog = shallowRef<HTMLDialogElement>()
 const hasValue = computed(
@@ -35,12 +37,14 @@ function onDialogClick(event: MouseEvent) {
 <template>
   <span v-if="hasValue" class="vg-json">
     <button type="button" class="vg-link-button" @click.stop="open">
-      {{ options.label ?? 'View' }}
+      {{ options.label ?? m.view ?? 'View' }}
     </button>
     <dialog ref="dialog" class="vg-dialog" closedby="any" @click.stop="onDialogClick" @keydown.stop>
       <header class="vg-dialog-header">
         <strong>{{ title }}</strong>
-        <form method="dialog"><button class="vg-icon-button" aria-label="Close">✕</button></form>
+        <form method="dialog">
+          <button class="vg-icon-button" :aria-label="m.close ?? 'Close'">✕</button>
+        </form>
       </header>
       <pre class="vg-json-pre">{{ pretty }}</pre>
     </dialog>

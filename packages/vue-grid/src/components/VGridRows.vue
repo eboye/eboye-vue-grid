@@ -177,7 +177,7 @@ watchEffect(() => {
               :fn="grid.slots['sub-rows-loading']"
               :scope="{ row: item.row }"
             />
-            <template v-else>Loading…</template>
+            <template v-else>{{ grid.messages.value.loading ?? 'Loading…' }}</template>
           </div>
         </div>
         <div
@@ -191,9 +191,14 @@ watchEffect(() => {
             :tabindex="grid.rovingTabindex"
             class="vg-status vg-status-error"
           >
-            <span>Could not load rows.</span>
-            <button type="button" class="vg-button" @click="grid.retrySubRows(item.row)">
-              Retry
+            <span>{{ grid.messages.value.subRowsError ?? 'Could not load rows.' }}</span>
+            <button
+              v-if="grid.parts.value.retry !== false"
+              type="button"
+              class="vg-button"
+              @click="grid.retrySubRows(item.row)"
+            >
+              {{ grid.messages.value.retry ?? 'Retry' }}
             </button>
           </div>
         </div>

@@ -403,6 +403,12 @@ export interface VGridExposed {
   /** Downloads the rows as an Excel file (`filename`, default `export.xlsx`). Export feature. */
   exportXlsx(options?: XlsxExportOptions & { filename?: string }): Promise<void>
   /**
+   * Prints the rows as a table (the browser's print dialog): the filtered, sorted rows on every page
+   * (not just those in view), as the cells show them, the header repeated on each printed page,
+   * numbers right-aligned, the totals in bold. Resolves when printing is over. Export feature.
+   */
+  print(options?: PrintOptions): Promise<void>
+  /**
    * Copies rows to the clipboard as tab-separated text (pastes as cells into spreadsheets): the
    * selected rows by default, as displayed, no header. Resolves `false` if nothing was copied.
    * Export feature.
@@ -439,12 +445,35 @@ export interface XlsxExportOptions extends Omit<ExportOptions, 'delimiter' | 'gu
   sheetName?: string
 }
 
+/** Options of `print` (export feature): which rows and columns, as for exports, plus the page. */
+export interface PrintOptions extends Omit<ExportOptions, 'delimiter' | 'guard' | 'values'> {
+  /** A heading above the table, also the document title (some browsers print it in the page header). */
+  title?: string
+  /** Landscape pages, for wide grids. Default: the browser's setting. */
+  landscape?: boolean
+}
+
 /** Something was copied to the clipboard (export feature): rows (`copyRows`, Ctrl+C) or one cell. */
 export interface CopyEvent<T = any> {
   kind: 'rows' | 'cell'
   text: string
   rows: readonly T[]
   columns: readonly ColumnDef<T>[]
+}
+
+/** The built-in pager's options (`pagination` prop, pagination feature). */
+export interface PaginationOptions {
+  /** Page-size choices: a selector appears when there are any. */
+  pageSizes?: number[]
+  /** Page buttons on each side of the current one. Default `1`. */
+  siblings?: number
+  /**
+   * The "1–25 of 240" text, with `{from}`, `{to}` and `{total}`; `''` hides it. Default:
+   * `messages.pageSummary`, else `{from}–{to} of {total}`.
+   */
+  summary?: string
+  /** The first and last page buttons (« »). Default `true`. */
+  firstLast?: boolean
 }
 
 /** An aggregate the status bar can show for the selected rows. */
@@ -459,6 +488,14 @@ export interface StatusBarOptions {
   summary?: string[]
   /** What to show for each `summary` column. Default `['sum', 'avg']`. */
   aggregates?: StatusBarAggregate[]
+  /** The row count (`84 of 200 rows`). Default `true`. */
+  rows?: boolean
+  /** The selected count. Default `true`. */
+  selected?: boolean
+  /** The active filter count. Default `true`. */
+  filters?: boolean
+  /** The Clear button next to the filter count. Default `true`. */
+  clear?: boolean
 }
 
 /** One `summary` column of the status bar: its aggregates over the selected rows. */
@@ -625,4 +662,284 @@ export interface VueGridConfig {
   timeZone?: string
   /** Default density: `compact`, `cozy` (default) or `comfortable`. */
   density?: Density
+  /** Built-in text for every grid (translations, wording); a grid's own `messages` win. */
+  messages?: GridMessages
+  /** Built-in parts to turn off in every grid; a grid's own `parts` win. */
+  parts?: GridParts
+}
+
+/**
+ * Every built-in text of the grid, its menus, filters, pager, status bar and renderers: set the
+ * ones you need, the rest stay English. Functions get the values that go into the text. App-wide in
+ * `createVueGrid({ messages })`, per grid with `:messages`. Props that name a text (`empty-text`,
+ * `no-match-text`, `totals-label`, a renderer's `label`…) still win.
+ */
+export interface GridMessages {
+  // ── States ──
+  /** Default `Loading…`. */
+  loading?: string
+  /** No rows at all. Default `No data to show.` */
+  empty?: string
+  /** No row passes the filters. Default `No rows match the current filters.` */
+  noMatch?: string
+  /** The button next to `noMatch`. Default `Clear filters`. */
+  clearFilters?: string
+  /** A server request failed. Default `Couldn't load the rows.` */
+  loadError?: string
+  /** Added when the rows from before stay on screen. Default `These are from before.` */
+  staleRows?: string
+  /** Default `Retry`. */
+  retry?: string
+  /** A row's lazy children failed to load. Default `Could not load rows.` */
+  subRowsError?: string
+  /** The totals row's label. Default `Total`. */
+  total?: string
+  /** A group of rows with no value. Default `(blank)`. */
+  blank?: string
+  /** A group row's count, for screen readers. Default `` `${count} rows` ``. */
+  groupRowCount?: (count: number) => string
+
+  // ── Selection and expansion ──
+  /** Default `Select all rows`. */
+  selectAllRows?: string
+  /** Default `Select row`. */
+  selectRow?: string
+  /** Default `Select group`. */
+  selectGroup?: string
+  /** Default `` `All ${count} rows on this page are selected.` `` */
+  pageSelected?: (count: number) => string
+  /** Default `` `Select all ${total} rows` `` */
+  selectAllMatching?: (total: number) => string
+  /** Default `` `All ${total} rows are selected.` `` */
+  allSelected?: (total: number) => string
+  /** Default `Clear selection`. */
+  clearSelection?: string
+  /** Default `Expand row`. */
+  expandRow?: string
+  /** Default `Collapse row`. */
+  collapseRow?: string
+  /** Default `Expand group`. */
+  expandGroup?: string
+  /** Default `Collapse group`. */
+  collapseGroup?: string
+
+  // ── Header menu and columns ──
+  /** A header menu's name for screen readers. Default `` `${column} column` `` */
+  columnMenu?: (column: string) => string
+  /** The cell menu's name for screen readers. Default `Row actions`. */
+  rowActions?: string
+  /** Default `Sort ascending`. */
+  sortAscending?: string
+  /** Default `Sort descending`. */
+  sortDescending?: string
+  /** Default `Clear sort`. */
+  clearSort?: string
+  /** The header menu item that opens the column's filter. Default `Filter…`. */
+  filterMenu?: string
+  /** Default `Clear filter`. */
+  clearFilter?: string
+  /** Default `Clear all filters`. */
+  clearAllFilters?: string
+  /** Default `` `Group by ${column}` `` */
+  groupBy?: (column: string) => string
+  /** Default `Ungroup`. */
+  ungroup?: string
+  /** Default `Ungroup all`. */
+  ungroupAll?: string
+  /** Default `Pin left`. */
+  pinLeft?: string
+  /** Default `Pin right`. */
+  pinRight?: string
+  /** Default `Unpin`. */
+  unpin?: string
+  /** Default `Move left`. */
+  moveLeft?: string
+  /** Default `Move right`. */
+  moveRight?: string
+  /** Default `Fit width`. */
+  fitWidth?: string
+  /** Default `Reset width`. */
+  resetWidth?: string
+  /** Default `Hide column`. */
+  hideColumn?: string
+  /** Default `Reset columns`. */
+  resetColumns?: string
+  /** A column's resize grip. Default `` `Resize ${column}` `` */
+  resizeColumn?: (column: string) => string
+  /** `<VGridColumnMenu>`'s button. Default `Columns`. */
+  columns?: string
+  /** `<VGridColumnMenu>`'s search. Default `Filter columns…`. */
+  filterColumns?: string
+  /** Default `No matching columns`. */
+  noMatchingColumns?: string
+  /** `<VGridMenu>`'s button, when it has no label. Default `Menu`. */
+  menu?: string
+
+  // ── Filters ──
+  /** A header's filter button. Default `` `Filter ${column}` `` */
+  filterColumn?: (column: string) => string
+  /** A header's filter button while its filter is on. Default `` `Filter ${column} (active)` `` */
+  filterColumnActive?: (column: string) => string
+  /** The filter row's placeholder. Default `Filter…`. */
+  filterPlaceholder?: string
+  /** A filter row cell showing a filter it can't edit. Default `` `Filter ${column}: ${summary}` `` */
+  filterSummary?: (column: string, summary: string) => string
+  /** A filter made in the popover, in the filter row. Default `Custom`. */
+  customFilter?: string
+  /** Values ticked in a value list. Default `` `${count} selected` `` */
+  valuesSelected?: (count: number) => string
+  /** The condition select of a filter. Default `` `${column}: condition` `` */
+  filterCondition?: (column: string) => string
+  /** A filter's value input. Default `Value` (labelled `` `${column}: value` ``). */
+  filterValue?: string
+  /** A range filter's first input. Default `` `${column}: from` `` */
+  filterFrom?: (column: string) => string
+  /** A range filter's second input. Default `` `${column}: to` `` */
+  filterTo?: (column: string) => string
+  /** Default `Contains`. */
+  opContains?: string
+  /** Default `Does not contain`. */
+  opNotContains?: string
+  /** Default `Equals`. */
+  opEquals?: string
+  /** Default `Does not equal`. */
+  opNotEquals?: string
+  /** Default `Starts with`. */
+  opStartsWith?: string
+  /** Default `Ends with`. */
+  opEndsWith?: string
+  /** Default `Is empty`. */
+  opEmpty?: string
+  /** Default `Is not empty`. */
+  opNotEmpty?: string
+  /** Default `Between`. */
+  opBetween?: string
+  /** Date filters. Default `On`. */
+  opOn?: string
+  /** Date filters. Default `Before`. */
+  opBefore?: string
+  /** Date filters. Default `After`. */
+  opAfter?: string
+  /** Yes / no filters. Default `Any`. */
+  any?: string
+  /** Yes / no filters. Default `Yes`. */
+  yes?: string
+  /** Yes / no filters. Default `No`. */
+  no?: string
+  /** Yes / no filters, and a value list's empty value. Default `Empty`. */
+  emptyValue?: string
+  /** A value list's entry for empty values. Default `(Blanks)`. */
+  blanks?: string
+  /** A value list's search. Default `Search values`. */
+  searchValues?: string
+  /** A value list's "tick all". Default `All`. */
+  all?: string
+  /** A value list's "tick all" while searching. Default `All shown`. */
+  allShown?: string
+  /** Values a long list leaves out. Default `` `${count} more — search to narrow the list` `` */
+  moreValues?: (count: number) => string
+  /** Default `No matching values`. */
+  noMatchingValues?: string
+  /** `<VGridSearch>`'s placeholder. Default `Search…`. */
+  searchPlaceholder?: string
+  /** `<VGridSearch>`'s name for screen readers. Default `Search rows`. */
+  searchLabel?: string
+
+  // ── Pager ──
+  /** Default `Pagination`. */
+  pagination?: string
+  /** Default `Rows per page`. */
+  rowsPerPage?: string
+  /** A page size option. Default `` `${size} / page` `` */
+  pageSize?: (size: number) => string
+  /** Default `` `${from}–${to} of ${total}` `` (numbers formatted for the locale). */
+  pageSummary?: (from: string, to: string, total: string) => string
+  /** Default `First page`. */
+  firstPage?: string
+  /** Default `Previous page`. */
+  previousPage?: string
+  /** Default `Next page`. */
+  nextPage?: string
+  /** Default `Last page`. */
+  lastPage?: string
+  /** Default `` `Page ${page}` `` */
+  page?: (page: number) => string
+
+  // ── Status bar ──
+  /** The status bar's name for screen readers. Default `Grid status`. */
+  statusBar?: string
+  /** Default `` `${shown} of ${total} rows` `` while filtered, else `` `${shown} rows` `` (`1 row`). */
+  rowCount?: (shown: string, total: string | undefined, count: number) => string
+  /** Default `` `${count} selected` `` (`All ${count} selected` with all matching rows). */
+  selectedCount?: (count: string, all: boolean) => string
+  /** Default `` `${count} filters` `` (`1 filter`). */
+  filterCount?: (count: number) => string
+  /** The status bar's button. Default `Clear`. */
+  clear?: string
+  /** Default `Sum`. */
+  sum?: string
+  /** Default `Average`. */
+  average?: string
+  /** Default `Min`. */
+  min?: string
+  /** Default `Max`. */
+  max?: string
+
+  // ── Renderers (a renderer's own `label` options win) ──
+  /** `json`'s button. Default `View`. */
+  view?: string
+  /** Dialogs and popovers. Default `Close`. */
+  close?: string
+  /** `copy`'s button. Default `Copy` (`` `Copy ${title}` `` with a `title`). */
+  copy?: string
+  /** Announced after copying. Default `Copied`. */
+  copied?: string
+  /** `actions-menu`'s button. Default `Actions`. */
+  actions?: string
+  /** `details`' button. Default `Details`. */
+  details?: string
+  /** `json-tree`'s toggle. Default `More info`. */
+  moreInfo?: string
+  /** `list`'s toggle. Default `` `+${count} more` `` */
+  moreItems?: (count: number) => string
+  /** `list`'s toggle when open. Default `Show less`. */
+  showLess?: string
+  /** `change` and `multi-line` trends, for screen readers. Default `Increased`. */
+  increased?: string
+  /** Default `Decreased`. */
+  decreased?: string
+  /** `icon-toggle`'s name when it has no label. Default `Toggle`. */
+  toggle?: string
+  /** `edit`'s button, before the column name. Default `Edit`. */
+  edit?: string
+}
+
+/**
+ * Built-in parts a feature adds, each on by default: set one to `false` to leave it out (a slot can
+ * replace some instead). App-wide in `createVueGrid({ parts })`, per grid with `:parts`. A column's
+ * own options (`resizable`, `reorderable`, `filterable`…) work as before.
+ */
+export interface GridParts {
+  /** The thin bar at the top of the grid while loading. */
+  progressBar?: boolean
+  /** Server data: the notice above the rows when a request fails while rows are shown (`#load-error`). */
+  loadErrorNotice?: boolean
+  /** The Retry buttons of load errors and of lazy children that failed. */
+  retry?: boolean
+  /** The Clear filters button next to the no-match message (`#no-match`). */
+  clearFiltersButton?: boolean
+  /** Selection: the select-all checkbox in the header. */
+  selectAll?: boolean
+  /** Selection with server data: the "Select all N rows" banner (`#select-all-banner`). */
+  selectAllBanner?: boolean
+  /** Filtering: the funnel buttons in `filterable` headers (the filter row and search still work). */
+  filterButtons?: boolean
+  /** Column resizing: the grips on header edges (the header menu's Fit / Reset width stay). */
+  resizeGrips?: boolean
+  /** Column reordering: dragging headers (Alt+←/→ and the header menu still move columns). */
+  headerDrag?: boolean
+  /** Export: Ctrl/⌘+C copying in the grid. */
+  copyShortcut?: boolean
+  /** Row grouping: the row count on group rows. */
+  groupCounts?: boolean
 }

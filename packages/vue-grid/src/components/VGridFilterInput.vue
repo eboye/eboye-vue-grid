@@ -8,6 +8,7 @@ import {
   type FilterType,
 } from '../core/filter'
 import type { ColumnDef, ColumnFilterOptions } from '../types'
+import { useMessages } from '../internal/messages'
 
 /** The filter-row editor of one column (inside its header cell). */
 const props = defineProps<{
@@ -18,13 +19,15 @@ const props = defineProps<{
 const emit = defineEmits<{ 'update:modelValue': [filter: ColumnFilter | undefined]; open: [] }>()
 
 const title = computed(() => props.column.header ?? props.column.key)
+const m = useMessages()
+const filterLabel = computed(() => m.value.filterColumn?.(title.value) ?? `Filter ${title.value}`)
 const placeholder = computed(
   () =>
     (typeof props.column.filter === 'object'
       ? (props.column.filter as ColumnFilterOptions).placeholder
       : undefined) ??
     {
-      text: 'Filter…',
+      text: m.value.filterPlaceholder ?? 'Filter…',
       number: '> 10, 5..20',
       date: '> 2026-01-01',
       boolean: '',
@@ -68,8 +71,10 @@ function setBool(v: string) {
 }
 const summary = computed(() => {
   const f = props.modelValue
-  if (!isFilterActive(f)) return 'All'
-  return f?.type === 'set' ? `${f.values.length} selected` : 'Custom'
+  if (!isFilterActive(f)) return m.value.all ?? 'All'
+  return f?.type === 'set'
+    ? (m.value.valuesSelected?.(f.values.length) ?? `${f.values.length} selected`)
+    : (m.value.customFilter ?? 'Custom')
 })
 
 // Keep typing / clicking in the filter row from starting a column drag or a sort.
@@ -93,7 +98,7 @@ const stop = (e: Event) => e.stopPropagation()
       type="search"
       :inputmode="type === 'number' ? 'decimal' : undefined"
       :placeholder="placeholder"
-      :aria-label="`Filter ${title}`"
+      :aria-label="filterLabel"
       :value="text"
       @focus="focused = true"
       @blur="focused = false"
@@ -102,20 +107,20 @@ const stop = (e: Event) => e.stopPropagation()
     <select
       v-else-if="type === 'boolean'"
       class="vg-input"
-      :aria-label="`Filter ${title}`"
+      :aria-label="filterLabel"
       :value="boolValue"
       @change="setBool(($event.target as HTMLSelectElement).value)"
     >
-      <option value="any">All</option>
-      <option value="true">Yes</option>
-      <option value="false">No</option>
-      <option value="null">Empty</option>
+      <option value="any">{{ m.all ?? 'All' }}</option>
+      <option value="true">{{ m.yes ?? 'Yes' }}</option>
+      <option value="false">{{ m.no ?? 'No' }}</option>
+      <option value="null">{{ m.emptyValue ?? 'Empty' }}</option>
     </select>
     <button
       v-else
       type="button"
       class="vg-input vg-filter-summary"
-      :aria-label="`Filter ${title}: ${summary}`"
+      :aria-label="m.filterSummary?.(title, summary) ?? `Filter ${title}: ${summary}`"
       @click="emit('open')"
     >
       {{ summary }}

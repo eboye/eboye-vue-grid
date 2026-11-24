@@ -180,3 +180,65 @@ test('the Copy button copies the selected rows; the preview shows formatted valu
   const csv = (await page.locator('[data-test="csv"]').textContent())!
   expect(csv.split('\n')[1]).toMatch(/€/) // stake as currency
 })
+
+test('Print: a table of the filtered, sorted rows from a hidden frame, then the frame goes', async ({
+  page,
+}) => {
+  await open(page)
+  await page.locator('.vg-header [data-col-key="player"] .vg-sort').click()
+  await page.locator('.vg-header [data-col-key="city"] input').first().fill('Beograd')
+  await expect.poll(async () => (await names(page)).length).toBeLessThan(40)
+  const visible = await names(page)
+
+  // No print dialog in a test browser: catch the frame as it's added, keep what it would print.
+  await page.evaluate(() => {
+    const w = window as unknown as { printed?: unknown }
+    new MutationObserver((records) => {
+      for (const r of records)
+        for (const node of r.addedNodes)
+          if (node instanceof HTMLIFrameElement)
+            node.contentWindow!.print = () => {
+              const doc = node.contentDocument!
+              const cells = (sel: string) =>
+                [...doc.querySelectorAll(sel)].map((e) => e.textContent ?? '')
+              w.printed = {
+                title: doc.title,
+                header: cells('thead th'),
+                players: [...doc.querySelectorAll('tbody tr:not(.total)')].map(
+                  (tr) => tr.children[1]!.textContent,
+                ),
+                cities: [...doc.querySelectorAll('tbody tr:not(.total)')].map(
+                  (tr) => tr.children[2]!.textContent,
+                ),
+                stakeAlign: getComputedStyle(doc.querySelector('tbody td:nth-child(5)')!).textAlign,
+                footer: cells('tbody tr.total td'),
+                frameVisibleOnScreen: node.getBoundingClientRect().right > 0,
+              }
+            }
+    }).observe(document.body, { childList: true })
+  })
+  await page.locator('[data-test="print"]').click()
+  await expect
+    .poll(() => page.evaluate(() => !!(window as { printed?: unknown }).printed))
+    .toBe(true)
+  const printed = (await page.evaluate(() => (window as { printed?: unknown }).printed)) as {
+    title: string
+    header: string[]
+    players: string[]
+    cities: string[]
+    stakeAlign: string
+    footer: string[]
+    frameVisibleOnScreen: boolean
+  }
+  expect(printed.title).toBe('Bets')
+  expect(printed.header).toEqual(['#', 'Player', 'City', 'Status', 'Stake', 'Δ odds', 'Placed'])
+  expect(printed.players).toEqual(visible) // every matching row, in the grid's order
+  expect(printed.cities.every((c) => c === 'Beograd')).toBe(true)
+  expect(printed.stakeAlign).toMatch(/^(end|right)$/)
+  expect(printed.footer[0]).toBe('Total')
+  expect(printed.footer[4]).toMatch(/^€[\d,]+\.\d\d$/)
+  expect(printed.frameVisibleOnScreen).toBe(false)
+  // printing is over once the page has focus again: the frame is removed
+  await page.evaluate(() => window.dispatchEvent(new Event('focus')))
+  await expect(page.locator('iframe[aria-hidden="true"]')).toHaveCount(0)
+})

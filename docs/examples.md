@@ -55,6 +55,7 @@ export interface Order {
 24. [Row grouping](#24-row-grouping)
 25. [Export and copy](#25-export-and-copy)
 26. [Status bar](#26-status-bar)
+27. [Text and parts](#27-text-and-parts)
 
 ---
 
@@ -2130,7 +2131,7 @@ const groupBy = ref(['status', 'city'])
 
 ## 25. Export and copy
 
-Download CSV or Excel, copy rows and cells (`exportFeature`):
+Download CSV or Excel, print, copy rows and cells (`exportFeature`):
 
 ```vue
 <script setup lang="ts">
@@ -2186,6 +2187,15 @@ Excel instead of CSV, with real numbers and dates (the writer loads on first use
 - A bold, frozen header and a bold totals line; column widths from the content.
 - `getXlsx()` resolves to a `Blob` (to upload it); `toXlsx(rows, columns)` works without a grid.
 
+Print every row that passes the filters (a virtual grid only has the visible ones on screen):
+
+```vue
+<button @click="grid?.print({ title: 'Orders', totals: true })">Print</button>
+```
+
+- A plain table with the header on every page, numbers right-aligned, the totals once at the end.
+- `landscape: true` for wide grids; `rows`, `columns`, `header` as for the exports.
+
 ---
 
 ## 26. Status bar
@@ -2227,3 +2237,52 @@ A custom bar with the same numbers:
   </template>
 </VGrid>
 ```
+
+---
+
+## 27. Text and parts
+
+Translate or reword the built-in text, and leave out pieces a feature adds. App-wide:
+
+```ts
+app.use(
+  createVueGrid({
+    features: allFeatures,
+    // every key is optional; the rest stay English
+    messages: {
+      empty: 'Keine Daten.',
+      sortAscending: 'Aufsteigend sortieren',
+      sortDescending: 'Absteigend sortieren',
+      groupBy: (column) => `Nach ${column} gruppieren`,
+      pageSummary: (from, to, total) => `${from}–${to} von ${total}`,
+    },
+    parts: { progressBar: false },
+  }),
+)
+```
+
+Per grid (wins over the app's):
+
+```vue
+<VGrid
+  :rows
+  :columns
+  row-key="id"
+  :messages="{ noMatch: 'Nothing here — try fewer filters.' }"
+  :parts="{ filterButtons: false, resizeGrips: false, headerDrag: false }"
+  :pagination="{ pageSizes: [25, 50], firstLast: false }"
+  :status-bar="{ clear: false }"
+>
+  <!-- or replace a part with your own -->
+  <template #load-error="{ retry, stale }">
+    <MyAlert :stale="stale" @retry="retry()" />
+  </template>
+</VGrid>
+```
+
+- `GridMessages` has a key for every built-in text; functions get the values (`groupBy(column)`,
+  `rowCount(shown, total)`…). Props that name a text (`empty-text`, a renderer's `label`) still win.
+- `GridParts`: `progressBar`, `loadErrorNotice`, `retry`, `clearFiltersButton`, `selectAll`,
+  `selectAllBanner`, `filterButtons`, `resizeGrips`, `headerDrag`, `copyShortcut`, `groupCounts`, each
+  on unless `false`.
+- Slots that replace a part: `#load-error`, `#no-match`, `#select-all-banner`, `#status-bar`.

@@ -179,10 +179,11 @@ export const pages: Page[] = [
     title: 'Export and copy',
     section: 'Output',
     summary:
-      'Download the filtered, sorted rows as CSV or as an Excel file with real numbers and dates, or copy rows as tab-separated text that pastes into a spreadsheet as cells.',
+      'Download the filtered, sorted rows as CSV or as an Excel file with real numbers and dates, print them with the header on every page, or copy rows as tab-separated text that pastes into a spreadsheet as cells.',
     try: [
       'Select a few rows and press Ctrl/⌘+C, then paste into a spreadsheet.',
       'Filter, then Download CSV or Excel: only the matching rows are exported.',
+      'Press Print: every matching row, the header on each page.',
     ],
     docs: '25. Export and copy',
     files: ['ExportDemo'],
@@ -200,6 +201,20 @@ export const pages: Page[] = [
     ],
     docs: '26. Status bar',
     files: ['StatusBarDemo'],
+  },
+  {
+    id: 'configuration',
+    title: 'Text and parts',
+    section: 'Look',
+    summary:
+      'Every built-in text can be replaced (translations, wording), and every part a feature adds can be turned off or replaced with your own: app-wide or per grid.',
+    try: [
+      'Switch the language, then right-click a header.',
+      'Untick “Header drag”: headers no longer drag (the header menu still moves columns).',
+      'Untick “Filter funnels”: the filter row still filters.',
+    ],
+    docs: '27. Text and parts',
+    files: ['ConfigDemo'],
   },
   {
     id: 'theming',

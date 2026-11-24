@@ -56,6 +56,7 @@ export const ExportAndCopy: Story = {
         <div class="sb-note">
           <button type="button" class="vg-button" data-test="download" @click="grid?.exportCsv({ filename: 'bets.csv', totals: true })">Download CSV</button>
           <button type="button" class="vg-button" data-test="download-xlsx" @click="grid?.exportXlsx({ filename: 'bets.xlsx', totals: true, sheetName: 'Bets' })">Download Excel</button>
+          <button type="button" class="vg-button" data-test="print" @click="grid?.print({ title: 'Bets', totals: true })">Print</button>
           <button type="button" class="vg-button" data-test="copy" :disabled="!selected.length" @click="grid?.copyRows()">Copy {{ selected.length }} selected</button>
           <button type="button" class="vg-button vg-button-ghost" data-test="preview" @click="preview = grid?.getCsv({ values: 'formatted' }) ?? ''">Preview (formatted)</button>
           <span data-test="copied">{{ copied }}</span>

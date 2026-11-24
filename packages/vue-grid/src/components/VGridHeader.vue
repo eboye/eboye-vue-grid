@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { SelectionSummary } from '../core/selection'
 import { useInternalGrid, type ResolvedColumn } from '../internal/context'
+import { partOn, useMessages, useParts } from '../internal/messages'
 import { RenderSlot } from '../internal/RenderSlot'
 import type { SortState } from '../types'
 
@@ -21,6 +22,9 @@ const emit = defineEmits<{
 }>()
 
 const grid = useInternalGrid()
+const m = useMessages()
+const parts = useParts()
+const part = (name: Parameters<typeof partOn>[1]) => partOn(parts.value, name)
 
 function ariaSort(col: ResolvedColumn) {
   if (!grid.sortable(col.def)) return undefined
@@ -63,7 +67,7 @@ function ariaSort(col: ResolvedColumn) {
         grid.ui.value.headerCell,
       ]"
       :style="grid.pinStyle(col.key)"
-      @pointerdown="col.kind === 'data' && emit('dragStart', $event, col.key)"
+      @pointerdown="col.kind === 'data' && part('headerDrag') && emit('dragStart', $event, col.key)"
       @contextmenu="
         col.kind === 'data' &&
         grid.onHeaderContextMenu(col, $event, $event.currentTarget as HTMLElement)
@@ -72,11 +76,11 @@ function ariaSort(col: ResolvedColumn) {
       <template v-if="col.kind === 'select'">
         <component
           :is="grid.Checkbox"
-          v-if="grid.selectMode.value === 'multi'"
+          v-if="grid.selectMode.value === 'multi' && part('selectAll')"
           :checked="allState === 'all'"
           :indeterminate="allState === 'some'"
           :disabled="!hasSelectableRows"
-          label="Select all rows"
+          :label="m.selectAllRows ?? 'Select all rows'"
           @toggle="emit('toggleAll')"
         />
       </template>
@@ -110,7 +114,7 @@ function ariaSort(col: ResolvedColumn) {
           <template v-else>{{ col.def.header ?? col.key }}</template>
         </span>
         <template v-if="grid.filters && col.def.filterable">
-          <component :is="grid.filters.FilterButton" :column="col" />
+          <component :is="grid.filters.FilterButton" v-if="part('filterButtons')" :column="col" />
           <component
             :is="grid.filters.FilterInput"
             v-if="grid.filters.filterRow.value"
@@ -123,7 +127,7 @@ function ariaSort(col: ResolvedColumn) {
         </template>
         <component
           :is="grid.resize.Handle"
-          v-if="grid.resize?.can(col.def)"
+          v-if="grid.resize?.can(col.def) && part('resizeGrips')"
           :column-key="col.key"
           :label="col.def.header ?? col.key"
         />

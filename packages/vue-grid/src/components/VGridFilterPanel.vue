@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref, shallowRef, toRaw, useId, wa
 import { foldText, type ColumnFilter, type FilterType } from '../core/filter'
 import { toDistinct, type DistinctValue } from '../composables/useGridFilters'
 import type { ColumnDef, FilterOptionsLoader } from '../types'
+import { useMessages } from '../internal/messages'
 
 /** Body of the filter popover for one column. Live: every change emits a new filter (or undefined). */
 const props = defineProps<{
@@ -27,37 +28,43 @@ onMounted(() => {
 })
 const title = computed(() => props.column.header ?? props.column.key)
 
-const OPS = {
-  text: [
-    ['contains', 'Contains'],
-    ['notContains', 'Does not contain'],
-    ['equals', 'Equals'],
-    ['notEquals', 'Does not equal'],
-    ['startsWith', 'Starts with'],
-    ['endsWith', 'Ends with'],
-    ['empty', 'Is empty'],
-    ['notEmpty', 'Is not empty'],
-  ],
-  number: [
-    ['eq', '='],
-    ['ne', '≠'],
-    ['lt', '<'],
-    ['lte', '≤'],
-    ['gt', '>'],
-    ['gte', '≥'],
-    ['between', 'Between'],
-    ['empty', 'Is empty'],
-    ['notEmpty', 'Is not empty'],
-  ],
-  date: [
-    ['on', 'On'],
-    ['before', 'Before'],
-    ['after', 'After'],
-    ['between', 'Between'],
-    ['empty', 'Is empty'],
-    ['notEmpty', 'Is not empty'],
-  ],
-} as const
+const m = useMessages()
+const OPS = computed(() => {
+  const t = m.value
+  const empty = [
+    ['empty', t.opEmpty ?? 'Is empty'],
+    ['notEmpty', t.opNotEmpty ?? 'Is not empty'],
+  ] as const
+  const between = ['between', t.opBetween ?? 'Between'] as const
+  return {
+    text: [
+      ['contains', t.opContains ?? 'Contains'],
+      ['notContains', t.opNotContains ?? 'Does not contain'],
+      ['equals', t.opEquals ?? 'Equals'],
+      ['notEquals', t.opNotEquals ?? 'Does not equal'],
+      ['startsWith', t.opStartsWith ?? 'Starts with'],
+      ['endsWith', t.opEndsWith ?? 'Ends with'],
+      ...empty,
+    ],
+    number: [
+      ['eq', '='],
+      ['ne', '≠'],
+      ['lt', '<'],
+      ['lte', '≤'],
+      ['gt', '>'],
+      ['gte', '≥'],
+      between,
+      ...empty,
+    ],
+    date: [
+      ['on', t.opOn ?? 'On'],
+      ['before', t.opBefore ?? 'Before'],
+      ['after', t.opAfter ?? 'After'],
+      between,
+      ...empty,
+    ],
+  }
+})
 
 const current = computed(
   () =>
@@ -209,11 +216,13 @@ const customComponent = computed(
     <div v-if="type === 'text' || type === 'number' || type === 'date'" class="vg-filter-fields">
       <select
         class="vg-input"
-        :aria-label="`${title}: condition`"
+        :aria-label="m.filterCondition?.(title) ?? `${title}: condition`"
         :value="op"
         @change="update({ op: ($event.target as HTMLSelectElement).value })"
       >
-        <option v-for="[value, label] in OPS[type]" :key="value" :value="value">{{ label }}</option>
+        <option v-for="[value, label] in OPS[type as keyof typeof OPS]" :key="value" :value="value">
+          {{ label }}
+        </option>
       </select>
       <template v-if="needsValue">
         <input
@@ -221,8 +230,8 @@ const customComponent = computed(
           class="vg-input"
           type="search"
           autofocus
-          :aria-label="`${title}: value`"
-          placeholder="Value"
+          :aria-label="`${title}: ${m.filterValue ?? 'value'}`"
+          :placeholder="m.filterValue ?? 'Value'"
           :value="current?.value ?? ''"
           @input="update({ value: ($event.target as HTMLInputElement).value }, true)"
         />
@@ -231,7 +240,11 @@ const customComponent = computed(
             class="vg-input"
             :type="type === 'number' ? 'number' : 'date'"
             autofocus
-            :aria-label="op === 'between' ? `${title}: from` : `${title}: value`"
+            :aria-label="
+              op === 'between'
+                ? (m.filterFrom?.(title) ?? `${title}: from`)
+                : `${title}: ${m.filterValue ?? 'value'}`
+            "
             :value="current?.value ?? ''"
             @input="
               update({
@@ -246,7 +259,7 @@ const customComponent = computed(
             v-if="op === 'between'"
             class="vg-input"
             :type="type === 'number' ? 'number' : 'date'"
-            :aria-label="`${title}: to`"
+            :aria-label="m.filterTo?.(title) ?? `${title}: to`"
             :value="current?.to ?? ''"
             @input="
               update({
@@ -270,10 +283,10 @@ const customComponent = computed(
     >
       <label
         v-for="[value, label] in [
-          ['any', 'Any'],
-          ['true', 'Yes'],
-          ['false', 'No'],
-          ['null', 'Empty'],
+          ['any', m.any ?? 'Any'],
+          ['true', m.yes ?? 'Yes'],
+          ['false', m.no ?? 'No'],
+          ['null', m.emptyValue ?? 'Empty'],
         ]"
         :key="value"
         class="vg-filter-option"
@@ -297,8 +310,8 @@ const customComponent = computed(
         class="vg-input"
         type="search"
         autofocus
-        placeholder="Search values"
-        :aria-label="`${title}: search values`"
+        :placeholder="m.searchValues ?? 'Search values'"
+        :aria-label="`${title}: ${m.searchValues ?? 'search values'}`"
       />
       <label class="vg-filter-option vg-filter-all">
         <input
@@ -307,26 +320,29 @@ const customComponent = computed(
           :indeterminate="!allShownSelected && someShownSelected"
           @change="toggleAllShown"
         />
-        {{ search ? 'All shown' : 'All' }}
+        {{ search ? (m.allShown ?? 'All shown') : (m.all ?? 'All') }}
       </label>
       <ul class="vg-filter-values">
         <li v-for="v in renderedValues" :key="v.key">
           <label class="vg-filter-option">
             <input type="checkbox" :checked="selected.has(v.key)" @change="toggleValue(v.key)" />
             <span class="vg-filter-value-label" :class="{ 'vg-text-muted': !v.key }">{{
-              v.label
+              !v.key && v.label === '(Blanks)' ? (m.blanks ?? v.label) : v.label
             }}</span>
             <span v-if="v.count" class="vg-filter-count">{{ v.count }}</span>
           </label>
         </li>
         <li v-if="hiddenValueCount > 0" class="vg-text-muted vg-filter-none">
-          {{ hiddenValueCount }} more — search to narrow the list
+          {{
+            m.moreValues?.(hiddenValueCount) ??
+            `${hiddenValueCount} more — search to narrow the list`
+          }}
         </li>
         <li v-if="loadingValues" class="vg-text-muted vg-filter-none" aria-live="polite">
-          Loading…
+          {{ m.loading ?? 'Loading…' }}
         </li>
         <li v-else-if="!shownValues.length" class="vg-text-muted vg-filter-none">
-          No matching values
+          {{ m.noMatchingValues ?? 'No matching values' }}
         </li>
       </ul>
     </div>

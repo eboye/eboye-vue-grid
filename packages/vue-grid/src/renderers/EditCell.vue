@@ -3,8 +3,10 @@ import { computed } from 'vue'
 import type { CellRendererEmits, CellRendererProps } from '../types'
 import { resolveOption, type EditOptions } from './options'
 import { PencilIcon } from './parts/icons'
+import { useMessages } from '../internal/messages'
 
 const props = defineProps<CellRendererProps<unknown, unknown, EditOptions>>()
+const m = useMessages()
 const emit = defineEmits<CellRendererEmits>()
 
 const text = computed(() => {
@@ -13,7 +15,7 @@ const text = computed(() => {
 })
 const disabled = computed(() => !!resolveOption(props.options.disabled, props.value, props.row))
 const label = computed(() =>
-  `${props.options.label ?? 'Edit'} ${props.column.header ?? props.column.key}`.trim(),
+  `${props.options.label ?? m.value.edit ?? 'Edit'} ${props.column.header ?? props.column.key}`.trim(),
 )
 </script>
 

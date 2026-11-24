@@ -3,16 +3,26 @@ import { computed, nextTick, onBeforeUnmount, ref, shallowRef, useId } from 'vue
 import { normalizeColumnState, setColumnHidden } from '../core/columns'
 import { anchorNameFor, trackAnchor } from '../internal/anchor'
 import type { ColumnDef, ColumnState } from '../types'
+import { useMessages } from '../internal/messages'
 
 const props = withDefaults(
   defineProps<{
     columns: readonly ColumnDef[]
+    /** The button. Default: `messages.columns`, else `Columns`. */
     label?: string
+    /** Default: `messages.filterColumns`, else `Filter columns…`. */
     filterPlaceholder?: string
+    /** Default: `messages.resetColumns`, else `Reset columns`. */
     resetLabel?: string
   }>(),
-  { label: 'Columns', filterPlaceholder: 'Filter columns…', resetLabel: 'Reset columns' },
+  {},
 )
+const m = useMessages()
+const text = computed(() => ({
+  label: props.label ?? m.value.columns ?? 'Columns',
+  filter: props.filterPlaceholder ?? m.value.filterColumns ?? 'Filter columns…',
+  reset: props.resetLabel ?? m.value.resetColumns ?? 'Reset columns',
+}))
 
 const columnState = defineModel<ColumnState | undefined>('columnState', { default: undefined })
 
@@ -84,14 +94,14 @@ function onToggle(event: Event) {
           stroke-linecap="round"
         />
       </svg>
-      {{ label }}
+      {{ text.label }}
     </button>
     <div
       :id="id"
       ref="panel"
       popover="auto"
       role="dialog"
-      :aria-label="label"
+      :aria-label="text.label"
       class="vg-menu vg-column-panel"
       data-placement="bottom-end"
       :style="{ 'position-anchor': anchor }"
@@ -102,8 +112,8 @@ function onToggle(event: Event) {
         v-model="filter"
         type="search"
         class="vg-input"
-        :placeholder="filterPlaceholder"
-        :aria-label="filterPlaceholder"
+        :placeholder="text.filter"
+        :aria-label="text.filter"
       />
       <ul class="vg-column-list">
         <li v-for="col in items" :key="col.key">
@@ -117,10 +127,12 @@ function onToggle(event: Event) {
             <span>{{ col.header ?? col.key }}</span>
           </label>
         </li>
-        <li v-if="!items.length" class="vg-text-muted vg-column-none">No matching columns</li>
+        <li v-if="!items.length" class="vg-text-muted vg-column-none">
+          {{ m.noMatchingColumns ?? 'No matching columns' }}
+        </li>
       </ul>
       <button type="button" class="vg-button vg-button-ghost" @click="reset">
-        {{ resetLabel }}
+        {{ text.reset }}
       </button>
     </div>
   </span>

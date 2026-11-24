@@ -64,8 +64,9 @@ runs in the [live examples](https://eboye.github.io/eboye-vue-grid/), each with 
 | Rows that stay on top / bottom                    | `rowPinningFeature`               | `v-model:pinned-rows="{ top: [id], bottom: [] }"`, `pinRow()`, `pinned-top-rows`                                                                                                               |
 | A totals row (sum, avg, …)                        | `aggregationFeature`              | column `aggregate: 'sum' \| 'avg' \| 'min' \| 'max' \| 'count' \| fn`; `totals` (or `'top'`)                                                                                                   |
 | Group rows by a column ("by status, then city")   | `rowGroupingFeature`              | `v-model:group-by="['status', 'city']"`, `groups-expanded`; column `groupable: true` (header menu), `groupValue: (row) => …` (e.g. month); `aggregate` shows per group                         |
-| Download CSV or Excel, copy rows / cells (Ctrl+C) | `exportFeature`                   | `grid.exportCsv()`, `getCsv()`, `exportXlsx()`, `getXlsx()`, `copyRows()`, `@copy`; column `exportValue`, `exportable: false`                                                                  |
+| Download CSV / Excel, print, copy rows / cells    | `exportFeature`                   | `grid.exportCsv()`, `getCsv()`, `exportXlsx()`, `getXlsx()`, `print()`, `copyRows()`, `@copy`; column `exportValue`, `exportable: false`                                                       |
 | Row / selection counts, sum of the selected rows  | `statusBarFeature`                | `status-bar` (or `{ summary: ['total'], aggregates?: ['sum', 'avg'] }`); `#status-bar="{ rowCount, selectedCount, summary, … }"`                                                               |
+| Translate / reword the grid, drop built-in pieces | —                                 | `messages` (`GridMessages`), `parts` (`GridParts`): app-wide in `createVueGrid` or per grid; slots `#load-error`, `#no-match`, `#select-all-banner`                                            |
 | Arrow-key navigation (ARIA grid)                  | `keyboardNavigationFeature`       | —                                                                                                                                                                                              |
 | Remember column layout                            | —                                 | `storage="orders-grid"` (localStorage key)                                                                                                                                                     |
 | Cell type (money, date, badge, link, …)           | —                                 | `renderer: currencyRenderer` etc. (list below)                                                                                                                                                 |
@@ -400,6 +401,8 @@ raw values; `copyRows` and Ctrl/⌘+C to the selected rows as displayed, tab-sep
 `header`, `totals`, `children`, `delimiter`. `toCsv(rows, columns)` works without a grid.
 `exportXlsx({ filename, sheetName })` / `getXlsx()` (a Promise) write an Excel file with typed cells
 (numbers, dates, booleans) and number formats from the renderers; `toXlsx(rows, columns)` without a grid.
+`print({ title, totals, landscape })` prints every matching row as a table (header on each page);
+Ctrl+P on the page only prints what is on screen.
 
 ### Row actions and context menu
 
@@ -512,6 +515,9 @@ only sees stylesheet rules. Density:
 - Ctrl+C copies nothing for a clicked cell → cells only take focus with `keyboardNavigationFeature`
   (or select rows first); `exportFeature` must be registered too.
 - An exported column of `⋯` / buttons / `[object Object]` → `exportable: false`, or `exportValue: (row) => …`.
+- Printing the page (Ctrl+P) shows only the rows on screen, clipped to the grid → use `grid.print()`.
+- Translating by replacing components or CSS `content` → set `messages` (every built-in text has a key).
+- Hiding a built-in piece with CSS → `parts: { filterButtons: false, … }` leaves it out of the DOM (and the tab order).
 - Copied numbers come out as `€1,234.50` → copying uses displayed values; pass `{ values: 'raw' }`
   (CSV exports are raw by default).
 - `group-by` names a field, not a column → it takes column `key`s; add a (hidden) column for it.
@@ -522,7 +528,7 @@ only sees stylesheet rules. Density:
 
 ---
 
-# @nocopypaste/vue-grid 0.6.0 — API reference
+# @nocopypaste/vue-grid 0.7.0 — API reference
 
 > Generated from the TypeScript sources (`scripts/gen-agent.mjs`). Machine-readable: `agent/api.json`, `agent/grid-config.schema.json`.
 
@@ -538,7 +544,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `columnReorderFeature` | Column reordering: drag a header (mouse, pen, touch), Alt+←/→ on a focused header, and the header menu's Move left / Move right. Columns opt out with `reorderable: false`. The order is part of `v-model:column-state` and persisted with `storage`; `<VGridColumnMenu>` works without it. |  | `reorderable` |
 | `columnResizingFeature` | Column resizing: drag a header's edge (mouse, pen, touch), use ←/→ on the focused edge (Alt+Shift+←/→ on a header with keyboard navigation), or double-click the edge to fit the content. `minWidth` / `maxWidth` bound it; columns opt out with `resizable: false`. Widths are kept in `columnState.widths` and persisted with `storage`. The header menu gains Fit width / Reset width. |  | `maxWidth` `resizable` |
 | `columnVisibilityFeature` | Column visibility: `hidden: true` columns, `columnState.hidden` (persisted with `storage`), the header menu's Hide column item and `<VGridColumnMenu>`'s checkboxes. Columns opt out with `hideable: false`. Without it, every column shows. |  | `hidden` `hideable` |
-| `exportFeature` | CSV and Excel export and copying: `grid.exportCsv()` downloads the filtered, sorted rows as a CSV file, `grid.getCsv()` returns the text, `grid.exportXlsx()` / `grid.getXlsx()` write an Excel workbook with typed cells (the writer loads on demand), `grid.copyRows()` copies rows as tab-separated text, and Ctrl/⌘+C copies the selected rows, else the focused cell, as displayed. Columns can set `exportValue` and `exportable: false`. Without it those methods only warn. |  | `exportValue` `exportable` |
+| `exportFeature` | CSV and Excel export and copying: `grid.exportCsv()` downloads the filtered, sorted rows as a CSV file, `grid.getCsv()` returns the text, `grid.exportXlsx()` / `grid.getXlsx()` write an Excel workbook with typed cells (the writer loads on demand), `grid.print()` prints every matching row as a table with the header on each page, `grid.copyRows()` copies rows as tab-separated text, and Ctrl/⌘+C copies the selected rows, else the focused cell, as displayed. Columns can set `exportValue` and `exportable: false`. Without it those methods only warn. |  | `exportValue` `exportable` |
 | `filteringFeature` | Filtering: header funnels with typed filter popovers on `filterable` columns, the filter row, `<VGridSearch>`, the filter items of the header menu, `v-model:filters` and filter persistence. The popover body and the filter-row editors load on demand (own chunks). | `filterMode` `filterRow` `filterStorage` `noMatchText` `filters` | `filterable` `filter` `filterValue` `filterFn` `filterComponent` `searchable` |
 | `keyboardNavigationFeature` | Keyboard navigation (the ARIA grid pattern): the grid is one tab stop, arrow keys / Home / End / PageUp / PageDown move between cells, Enter activates a cell's control, Space selects a row, →/← expand and collapse, Alt+←/→ move a column, ContextMenu / Shift+F10 open the cell menu. Without it the grid is an ARIA `table`: its own controls (sort buttons, expanders, checkboxes, filter buttons) sit in the normal Tab order instead. |  |  |
 | `menusFeature` | Context menus: the built-in header menu (sort, filter, pin, move, hide, reset, your own items via `header-menu`) and body-cell menus (`context-menu`), opened by right-click, the ContextMenu key or Shift+F10. Without it the browser's own menu shows. The standalone `<VGridMenu>` and the `actions-menu` renderer don't need it. | `contextMenu` `headerMenu` |  |
@@ -561,13 +567,15 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `rowKey` (required) | `RowKeyGetter<T>` |  |  | Stable unique id of a row: a property name or `(row) => string \| number`. All row state is keyed by it. |
 | `features` | `readonly GridFeature[]` |  |  | Opt-in features for this grid (added to the app-wide `createVueGrid({ features })`): `sortingFeature`, `filteringFeature`, `serverDataFeature`, `paginationFeature`, or `allFeatures`. Read once, when the grid is created. |
 | `dataSource` | `DataSource<T>` |  | `serverDataFeature` | Server data: called with the current query (sort, filters, search, page) whenever it changes. The grid cancels superseded requests, shows loading and errors, and sorts / filters / pages nothing itself. |
-| `pagination` | `boolean \| { pageSizes?: number[] }` | `false` | `paginationFeature` | Built-in pagination under the grid (server-side with `dataSource`, client-side otherwise). |
+| `pagination` | `boolean \| PaginationOptions` | `false` | `paginationFeature` | Built-in pagination under the grid (server-side with `dataSource`, client-side otherwise). |
 | `statusBar` | `boolean \| StatusBarOptions` |  | `statusBarFeature` | A status bar under the grid (status bar feature): rows that pass the filters ("84 of 200 rows"), selected rows, active filters with Clear; `{ summary: ['total'] }` adds the sum and average of those columns over the selected rows. `#status-bar` replaces its content. |
+| `messages` | `GridMessages` |  |  | Built-in text (translations, wording), over `createVueGrid({ messages })`. |
+| `parts` | `GridParts` |  |  | Built-in parts to leave out (`{ progressBar: false }`), over `createVueGrid({ parts })`. |
 | `sortMode` | `'controlled' \| 'client'` | `'controlled'` |  | `controlled` (default): a header click only updates `v-model:sort` (sort on the server or in your own code). `client`: the grid sorts the rows itself. Ignored with `dataSource`. |
 | `filterMode` | `'client' \| 'controlled'` | `'client'` | `filteringFeature` | `client` (default): the grid filters its rows. `controlled`: it only emits `update:filters`. |
 | `filterRow` | `boolean` | `false` | `filteringFeature` | Show the filter row: an input under each filterable column's header. |
 | `filterStorage` | `FilterStateStorage \| string` |  | `filteringFeature` | Persist the filter model (`string` = localStorage key). |
-| `noMatchText` | `string` | `'No rows match the current filters.'` | `filteringFeature` | Shown when filters hide every row. |
+| `noMatchText` | `string` |  | `filteringFeature` | Shown when filters hide every row. Default: `messages.noMatch`, else `No rows match the current filters.` |
 | `selectable` | `boolean \| 'single'` | `false` | `selectionFeature` | A selection column: `true` = multi-select (with select-all), `'single'` = one row. |
 | `selectionMode` | `'cascade' \| 'independent'` | `'cascade'` | `selectionFeature` | `cascade` (default): selecting a parent selects its children. `independent`: rows alone. |
 | `isRowSelectable` | `(row: T) => boolean` |  | `selectionFeature` | Rows that can't be selected get a disabled checkbox. |
@@ -589,7 +597,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `timeZone` | `string` |  |  | IANA time zone for date renderers and date filters. |
 | `density` | `Density` |  |  | Cell padding scale. |
 | `loading` | `boolean` | `false` |  | Shows a progress bar and sets `aria-busy` (server data sets it by itself). |
-| `emptyText` | `string` | `'No data to show.'` |  | Shown when there are no rows. |
+| `emptyText` | `string` |  |  | Shown when there are no rows. Default: `messages.empty`, else `No data to show.` |
 | `ariaLabel` | `string` |  |  | Accessible name of the grid. |
 | `ui` | `Partial<Record<GridPart, ClassValue>>` |  |  | Extra classes per part (`root`, `header`, `headerCell`, `row`, `cell`, `subgrid`, `detail`, `empty`), e.g. Tailwind utilities. |
 | `contextMenu` | `(ctx: CellContext<T>) => MenuItem[] \| null \| undefined` |  | `menusFeature` | Right-click menu items for a body cell. Return `null`/`[]` to keep the browser's menu. |
@@ -597,7 +605,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `pinnedTopRows` | `readonly T[]` |  | `rowPinningFeature` | Extra rows above the body, not part of the data (row pinning feature). |
 | `pinnedBottomRows` | `readonly T[]` |  | `rowPinningFeature` | Extra rows below the body, not part of the data (row pinning feature). |
 | `totals` | `boolean \| 'top' \| 'bottom'` | `false` | `aggregationFeature` | A totals row with each column's `aggregate` (aggregation feature): `true` / `'bottom'` sticks it to the bottom, `'top'` under the header. |
-| `totalsLabel` | `string` | `'Total'` | `aggregationFeature` | The totals row's label, in its first column (unless that column has an aggregate). |
+| `totalsLabel` | `string` |  | `aggregationFeature` | The totals row's label, in its first column (unless that column has an aggregate). Default: `messages.total`, else `Total`. |
 | `aggregates` | `Record<string, unknown>` |  | `aggregationFeature` | Totals row values by column key, instead of computing them (e.g. totals from a server). |
 | `groupsExpanded` | `boolean` | `false` | `rowGroupingFeature` | Groups start expanded (row grouping feature). Default: collapsed. |
 
@@ -640,6 +648,9 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `group-<key>` | `{ value: unknown; count: number; rows: readonly T[]; column: ColumnDef<T>; group: RowGroup<T> }` | The value of a group row grouped by this column (row grouping feature): `#group-<key>`. |
 | `detail` | `{ row: T; rowKey: RowKey; depth: number }` | Expandable detail row under a row: any content, even another grid. |
 | `empty` |  | Shown when there are no rows. |
+| `no-match` | `{ clearFilters: () => void; filterCount: number }` | Shown when filters hide every row, instead of the message and its Clear filters button. |
+| `load-error` | `{ error: unknown; retry: () => Promise<void>; stale: boolean }` | A failed server request (server data): `stale` when the rows from before stay on screen (the notice above them), else in place of the rows. `retry()` asks again. |
+| `select-all-banner` | `{ total: number; page: number; all: boolean; selectAll: () => void; clearSelection: () => void }` | Selection with server data: the "Select all N rows" banner. |
 | `status-bar` | `StatusBarScope` | The status bar's content (status bar feature): replaces the counts and the summary. |
 | `loading` |  | Shown while loading with no rows yet. |
 | `sub-rows-loading` | `{ row: T }` | Shown while a row's lazy children load. |
@@ -666,6 +677,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `exportCsv` | `void` |  | Downloads the rows as a CSV file (`filename`, default `export.csv`; UTF-8 with a BOM). Export feature. |
 | `getXlsx` | `Promise<Blob>` |  | The rows as an Excel workbook (.xlsx): typed cells (numbers, dates, booleans), number formats from the columns' renderers, a bold frozen header. The writer loads on demand. Export feature. |
 | `exportXlsx` | `Promise<void>` |  | Downloads the rows as an Excel file (`filename`, default `export.xlsx`). Export feature. |
+| `print` | `Promise<void>` |  | Prints the rows as a table (the browser's print dialog): the filtered, sorted rows on every page (not just those in view), as the cells show them, the header repeated on each printed page, numbers right-aligned, the totals in bold. Resolves when printing is over. Export feature. |
 | `copyRows` | `Promise<boolean>` |  | Copies rows to the clipboard as tab-separated text (pastes as cells into spreadsheets): the selected rows by default, as displayed, no header. Resolves `false` if nothing was copied. Export feature. |
 
 ## `ColumnDef<T>`
@@ -1175,12 +1187,16 @@ The first items of a list, with a “+N more” toggle. Emits `expand`. Align: `
 | `currency`? | `string` | Default ISO 4217 currency for currency renderers. |
 | `timeZone`? | `string` | Default IANA time zone for date renderers and date filters. |
 | `density`? | `Density` | Default density: `compact`, `cozy` (default) or `comfortable`. |
+| `messages`? | `GridMessages` | Built-in text for every grid (translations, wording); a grid's own `messages` win. |
+| `parts`? | `GridParts` | Built-in parts to turn off in every grid; a grid's own `parts` win. |
 
 ---
 
 # README
 
 # @nocopypaste/vue-grid
+
+[![Live demo](https://img.shields.io/badge/live_demo-eboye.github.io-2563eb?logo=googlechrome&logoColor=white)](https://eboye.github.io/eboye-vue-grid/) — every feature running live, with its source.
 
 A data grid for Vue 3 built on **CSS Grid** — with real `subgrid` sub-rows, pinned columns, column
 reorder/visibility with persistence, selection, virtual scrolling, pagination, a pluggable
@@ -1312,7 +1328,7 @@ an opt-in feature:
 | `rowPinningFeature`         | `v-model:pinned-rows` / `pinRow()`: rows that stay in view above or below the body, plus `pinned-top-rows` / `pinned-bottom-rows` for rows that aren't in the data                                                                                                                                                                      |
 | `aggregationFeature`        | Column `aggregate` (`sum`, `avg`, `min`, `max`, `count`, a function) and `totals`: a sticky totals row over the filtered rows                                                                                                                                                                                                           |
 | `rowGroupingFeature`        | `v-model:group-by`: rows grouped by one or more columns into collapsible group rows with the value, row count and aggregates; Group by / Ungroup in the header menu for `groupable` columns                                                                                                                                             |
-| `exportFeature`             | `exportCsv()` / `getCsv()`, `exportXlsx()` / `getXlsx()` (Excel, typed cells), `copyRows()`, Ctrl/⌘+C for the selected rows or the focused cell, the `copy` event; column `exportValue` / `exportable`                                                                                                                                  |
+| `exportFeature`             | `exportCsv()` / `getCsv()`, `exportXlsx()` / `getXlsx()` (Excel, typed cells), `print()` (every row, header on each page), `copyRows()`, Ctrl/⌘+C for the selected rows or the focused cell, the `copy` event; column `exportValue` / `exportable`                                                                                      |
 | `statusBarFeature`          | `status-bar`: a bar under the grid with the rows that pass the filters, the selected rows, the active filters (with Clear), and `{ summary: [keys] }` columns' sum and average over the selected rows; the `#status-bar` slot                                                                                                           |
 
 ```ts
@@ -1357,33 +1373,33 @@ what you import.
 
 | Import (minified / gzip, Vue excluded)                                       | Initial chunk      |
 | ---------------------------------------------------------------------------- | ------------------ |
-| `VGrid` (no features)                                                        | 40.4 kB / 14.1 kB  |
-| `VGrid` + `sortingFeature`                                                   | 41.2 kB / 14.3 kB  |
-| `VGrid` + `filteringFeature`                                                 | 51.0 kB / 17.8 kB  |
-| `VGrid` + `serverDataFeature`                                                | 41.8 kB / 14.6 kB  |
+| `VGrid` (no features)                                                        | 40.5 kB / 14.1 kB  |
+| `VGrid` + `sortingFeature`                                                   | 41.2 kB / 14.4 kB  |
+| `VGrid` + `filteringFeature`                                                 | 51.1 kB / 17.8 kB  |
+| `VGrid` + `serverDataFeature`                                                | 41.8 kB / 14.7 kB  |
 | `VGrid` + `paginationFeature`                                                | 40.6 kB / 14.1 kB  |
 | `VGrid` + `selectionFeature`                                                 | 44.6 kB / 15.5 kB  |
 | `VGrid` + `subGridsFeature`                                                  | 42.8 kB / 14.9 kB  |
 | `VGrid` + `menusFeature`                                                     | 50.9 kB / 17.6 kB  |
-| `VGrid` + `columnReorderFeature`                                             | 44.1 kB / 15.3 kB  |
+| `VGrid` + `columnReorderFeature`                                             | 44.2 kB / 15.3 kB  |
 | `VGrid` + `columnPinningFeature`                                             | 43.4 kB / 15.1 kB  |
-| `VGrid` + `virtualScrollingFeature`                                          | 46.2 kB / 16.2 kB  |
+| `VGrid` + `virtualScrollingFeature`                                          | 46.2 kB / 16.3 kB  |
 | `VGrid` + `columnVisibilityFeature`                                          | 40.6 kB / 14.1 kB  |
 | `VGrid` + `keyboardNavigationFeature`                                        | 43.2 kB / 15.1 kB  |
-| `VGrid` + `columnResizingFeature`                                            | 43.7 kB / 15.2 kB  |
-| `VGrid` + `columnGroupsFeature`                                              | 41.7 kB / 14.5 kB  |
+| `VGrid` + `columnResizingFeature`                                            | 43.7 kB / 15.3 kB  |
+| `VGrid` + `columnGroupsFeature`                                              | 41.8 kB / 14.5 kB  |
 | `VGrid` + `rowPinningFeature`                                                | 45.4 kB / 15.4 kB  |
 | `VGrid` + `aggregationFeature`                                               | 45.6 kB / 15.5 kB  |
 | `VGrid` + `rowGroupingFeature`                                               | 50.2 kB / 16.9 kB  |
-| `VGrid` + `exportFeature`                                                    | 45.0 kB / 15.8 kB  |
+| `VGrid` + `exportFeature`                                                    | 45.4 kB / 16.0 kB  |
 | `VGrid` + `statusBarFeature`                                                 | 42.8 kB / 15.0 kB  |
-| `VGrid` + `allFeatures` + `VGridSearch`                                      | 107.7 kB / 36.3 kB |
-| `VGrid` + `currencyRenderer`                                                 | 41.8 kB / 14.5 kB  |
+| `VGrid` + `allFeatures` + `VGridSearch`                                      | 108.1 kB / 36.5 kB |
+| `VGrid` + `currencyRenderer`                                                 | 41.9 kB / 14.5 kB  |
 | `VGrid` + `VGridPagination` + `VGridColumnMenu`                              | 47.2 kB / 16.3 kB  |
 | `sortRows` only                                                              | 0.7 kB / 0.4 kB    |
 | `toCsv` only                                                                 | 1.1 kB / 0.6 kB    |
-| everything                                                                   | 160.4 kB / 51.3 kB |
-| `validateGridConfig` (`@nocopypaste/vue-grid/agent`, never in an app bundle) | 70.2 kB / 19.1 kB  |
+| everything                                                                   | 160.7 kB / 51.5 kB |
+| `validateGridConfig` (`@nocopypaste/vue-grid/agent`, never in an app bundle) | 70.5 kB / 19.2 kB  |
 
 With `filteringFeature`, the filter popover body and the filter-row editors are **on-demand
 chunks**: they load the first time a popover opens or `filter-row` is on. With
@@ -1400,57 +1416,60 @@ chunks that on-demand imports share with the entry, even when nothing uses them.
 
 ### Props
 
-| Prop                                 | Type                                                                                                                         | Default                                |                                                                                                                                                                                                                             |
-| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `rows`                               | `T[]`                                                                                                                        | `[]`                                   | Your data objects, used as-is (never mutated). Not needed with `dataSource`.                                                                                                                                                |
-| `features`                           | `GridFeature[]`                                                                                                              | —                                      | Opt-in features for this grid, added to the app-wide ones. See [Features](#features-everything-optional).                                                                                                                   |
-| `dataSource`                         | `(query, { signal }) => Promise<{ rows, total? }>`                                                                           | —                                      | Server rows: the grid calls it whenever sort, filters or page change. Needs `serverDataFeature`. See [Server data](#server-data).                                                                                           |
-| `columns`                            | `ColumnDef<T>[]`                                                                                                             | —                                      | See below.                                                                                                                                                                                                                  |
-| `rowKey`                             | `keyof T \| (row) => string \| number`                                                                                       | —                                      | Stable unique id; all row state is keyed by it.                                                                                                                                                                             |
-| `v-model:sort`                       | `{ key, dir: 'asc' \| 'desc' } \| null`                                                                                      | `null`                                 | Header click cycles asc → desc → none. Needs `sortingFeature` for the header UI.                                                                                                                                            |
-| `sortMode`                           | `'controlled' \| 'client'`                                                                                                   | `'controlled'`                         | `controlled` only emits (server-side sorting). Ignored with `dataSource`.                                                                                                                                                   |
-| `v-model:filters`                    | `FilterState \| null`                                                                                                        | `null`                                 | `{ columns: Record<key, ColumnFilter>, search }`. Needs `filteringFeature` (as do the next four). See [Filtering](#filtering).                                                                                              |
-| `filterMode`                         | `'client' \| 'controlled'`                                                                                                   | `'client'`                             | `controlled` only emits (server-side filtering). Ignored with `dataSource`.                                                                                                                                                 |
-| `filterRow`                          | `boolean`                                                                                                                    | `false`                                | A row of inline filter inputs under the headers.                                                                                                                                                                            |
-| `filterStorage`                      | `string \| FilterStateStorage`                                                                                               | —                                      | Persist filters (`string` = localStorage key).                                                                                                                                                                              |
-| `noMatchText`                        | `string`                                                                                                                     | `'No rows match the current filters.'` | Shown, with a _Clear filters_ button, when filters hide every row.                                                                                                                                                          |
-| `pagination`                         | `boolean \| { pageSizes?: number[] }`                                                                                        | `false`                                | Built-in pagination bar: slices client rows, or asks the `dataSource` for pages. Needs `paginationFeature`.                                                                                                                 |
-| `v-model:page` / `v-model:pageSize`  | `number`                                                                                                                     | `1` / `25`                             | Reset to page 1 when sort or filters change.                                                                                                                                                                                |
-| `v-model:columnState`                | `{ order: string[]; hidden: string[]; pinned?: Record<string, "left" \| "right" \| null>; widths?: Record<string, string> }` | derived                                | Column order, visibility and runtime pins.                                                                                                                                                                                  |
-| `storage`                            | `string \| ColumnStateStorage`                                                                                               | —                                      | Persist column state (`string` = localStorage key).                                                                                                                                                                         |
-| `pinnedMaxShare`                     | `number \| false`                                                                                                            | `0.5`                                  | Pinned columns scroll like the others while together they'd take more than this share of the grid's width (a phone, a narrow panel), and pin again once there's room. `false`: always pinned. Needs `columnPinningFeature`. |
-| `v-model:expanded`                   | `RowKey[]`                                                                                                                   | `[]`                                   | Expanded rows (sub-grids and detail rows).                                                                                                                                                                                  |
-| `subRows`                            | `(row) => T[] \| undefined`                                                                                                  | —                                      | Synchronous children → sub-grid. Needs `subGridsFeature` (as do the next two).                                                                                                                                              |
-| `loadSubRows`                        | `(row) => Promise<T[]>`                                                                                                      | —                                      | Lazy children (cached, loading/error/retry).                                                                                                                                                                                |
-| `hasSubRows`                         | `(row) => boolean`                                                                                                           | —                                      | Which rows get an expander when lazy.                                                                                                                                                                                       |
-| `rowExpandable`                      | `(row) => boolean`                                                                                                           | —                                      | Which rows can open the `#detail` slot.                                                                                                                                                                                     |
-| `selectable`                         | `boolean \| 'single'`                                                                                                        | `false`                                | Adds a selection column. Needs `selectionFeature` (as do the next five). See [Selection and batch actions](#selection-and-batch-actions).                                                                                   |
-| `v-model:selected`                   | `RowKey[]`                                                                                                                   | `[]`                                   |                                                                                                                                                                                                                             |
-| `selectionMode`                      | `'cascade' \| 'independent'`                                                                                                 | `'cascade'`                            | Whether selecting a parent selects its children.                                                                                                                                                                            |
-| `isRowSelectable`                    | `(row) => boolean`                                                                                                           | —                                      |                                                                                                                                                                                                                             |
-| `pruneSelection`                     | `boolean`                                                                                                                    | `false`                                | Drop selected keys whose rows left the data (reload, delete, another server page).                                                                                                                                          |
-| `v-model:selectAllMatching`          | `boolean`                                                                                                                    | `false`                                | Server data: every row matching the query is selected (from the banner).                                                                                                                                                    |
-| `virtual`                            | `{ rowHeight: number; overscan?: number; detailHeight?: number } \| false`                                                   | `false`                                | Virtual scrolling (fixed-height rows; sub-grids and measured detail rows included). Needs `virtualScrollingFeature`.                                                                                                        |
-| `v-model:pinnedRows`                 | `{ top?: RowKey[]; bottom?: RowKey[] } \| null`                                                                              | `null`                                 | Top-level rows pinned above / below the body. Needs `rowPinningFeature` (as do the next two). See [Pinned rows and totals](#pinned-rows-and-totals).                                                                        |
-| `pinnedTopRows` / `pinnedBottomRows` | `T[]`                                                                                                                        | —                                      | Extra pinned rows that aren't part of `rows` (a target, last year's figures).                                                                                                                                               |
-| `totals`                             | `boolean \| 'top' \| 'bottom'`                                                                                               | `false`                                | A totals row with each column's `aggregate`; `true` = `'bottom'`. Needs `aggregationFeature` (as do the next two).                                                                                                          |
-| `totalsLabel`                        | `string`                                                                                                                     | `'Total'`                              | Shown in the totals row's first column (unless that column has an aggregate).                                                                                                                                               |
-| `aggregates`                         | `Record<string, unknown>`                                                                                                    | —                                      | Totals by column key, used instead of computing them (e.g. from a server).                                                                                                                                                  |
-| `v-model:groupBy`                    | `string[] \| string \| null`                                                                                                 | `null`                                 | Column keys to group the rows by, outermost first. Needs `rowGroupingFeature` (as does the next one). See [Row grouping](#row-grouping).                                                                                    |
-| `groupsExpanded`                     | `boolean`                                                                                                                    | `false`                                | Groups start expanded.                                                                                                                                                                                                      |
-| `rowClickable`                       | `boolean`                                                                                                                    | `false`                                | Pointer cursor; `row-click` is always emitted.                                                                                                                                                                              |
-| `rowClass`                           | `(row, index) => ClassValue`                                                                                                 | —                                      |                                                                                                                                                                                                                             |
-| `highlightedRows`                    | `RowKey[]`                                                                                                                   | —                                      |                                                                                                                                                                                                                             |
-| `flash`                              | `boolean \| 'direction'`                                                                                                     | `false`                                | Briefly highlight cells whose value changes; `'direction'` = green up / red down. Columns override with `flash`.                                                                                                            |
-| `renderers`                          | `CellRendererDefinition[]`                                                                                                   | —                                      | Renderers usable by name in this grid (override plugin ones).                                                                                                                                                               |
-| `locale` / `currency` / `timeZone`   | `string`                                                                                                                     | plugin → browser                       | Formatting context for renderers.                                                                                                                                                                                           |
-| `density`                            | `'compact' \| 'cozy' \| 'comfortable'`                                                                                       | `'cozy'`                               | Scales cell padding.                                                                                                                                                                                                        |
-| `loading`                            | `boolean`                                                                                                                    | `false`                                | Progress bar + `aria-busy`.                                                                                                                                                                                                 |
-| `emptyText`                          | `string`                                                                                                                     | `'No data to show.'`                   |                                                                                                                                                                                                                             |
-| `ariaLabel`                          | `string`                                                                                                                     | —                                      |                                                                                                                                                                                                                             |
-| `contextMenu`                        | `(ctx: { row, rowKey, column, value }) => MenuItem[] \| null`                                                                | —                                      | Right-click menu for body cells. Needs `menusFeature`.                                                                                                                                                                      |
-| `headerMenu`                         | `boolean \| ({ column, items }) => MenuItem[] \| null`                                                                       | `true`                                 | Built-in header menu (sort, pin, move, hide, reset). Needs `menusFeature`.                                                                                                                                                  |
-| `ui`                                 | `Partial<Record<'root' \| 'header' \| 'headerCell' \| 'row' \| 'cell' \| 'subgrid' \| 'detail' \| 'empty', ClassValue>>`     | —                                      | Extra classes per part (Tailwind-friendly).                                                                                                                                                                                 |
+| Prop                                 | Type                                                                                                                         | Default            |                                                                                                                                                                                                                             |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `rows`                               | `T[]`                                                                                                                        | `[]`               | Your data objects, used as-is (never mutated). Not needed with `dataSource`.                                                                                                                                                |
+| `features`                           | `GridFeature[]`                                                                                                              | —                  | Opt-in features for this grid, added to the app-wide ones. See [Features](#features-everything-optional).                                                                                                                   |
+| `dataSource`                         | `(query, { signal }) => Promise<{ rows, total? }>`                                                                           | —                  | Server rows: the grid calls it whenever sort, filters or page change. Needs `serverDataFeature`. See [Server data](#server-data).                                                                                           |
+| `columns`                            | `ColumnDef<T>[]`                                                                                                             | —                  | See below.                                                                                                                                                                                                                  |
+| `rowKey`                             | `keyof T \| (row) => string \| number`                                                                                       | —                  | Stable unique id; all row state is keyed by it.                                                                                                                                                                             |
+| `v-model:sort`                       | `{ key, dir: 'asc' \| 'desc' } \| null`                                                                                      | `null`             | Header click cycles asc → desc → none. Needs `sortingFeature` for the header UI.                                                                                                                                            |
+| `sortMode`                           | `'controlled' \| 'client'`                                                                                                   | `'controlled'`     | `controlled` only emits (server-side sorting). Ignored with `dataSource`.                                                                                                                                                   |
+| `v-model:filters`                    | `FilterState \| null`                                                                                                        | `null`             | `{ columns: Record<key, ColumnFilter>, search }`. Needs `filteringFeature` (as do the next four). See [Filtering](#filtering).                                                                                              |
+| `filterMode`                         | `'client' \| 'controlled'`                                                                                                   | `'client'`         | `controlled` only emits (server-side filtering). Ignored with `dataSource`.                                                                                                                                                 |
+| `filterRow`                          | `boolean`                                                                                                                    | `false`            | A row of inline filter inputs under the headers.                                                                                                                                                                            |
+| `filterStorage`                      | `string \| FilterStateStorage`                                                                                               | —                  | Persist filters (`string` = localStorage key).                                                                                                                                                                              |
+| `noMatchText`                        | `string`                                                                                                                     | `messages.noMatch` | Shown, with a _Clear filters_ button, when filters hide every row (`No rows match the current filters.`).                                                                                                                   |
+| `pagination`                         | `boolean \| PaginationOptions`                                                                                               | `false`            | The built-in pager (pagination feature): `{ pageSizes, siblings, summary, firstLast }`.                                                                                                                                     |
+| `v-model:page` / `v-model:pageSize`  | `number`                                                                                                                     | `1` / `25`         | Reset to page 1 when sort or filters change.                                                                                                                                                                                |
+| `v-model:columnState`                | `{ order: string[]; hidden: string[]; pinned?: Record<string, "left" \| "right" \| null>; widths?: Record<string, string> }` | derived            | Column order, visibility and runtime pins.                                                                                                                                                                                  |
+| `storage`                            | `string \| ColumnStateStorage`                                                                                               | —                  | Persist column state (`string` = localStorage key).                                                                                                                                                                         |
+| `pinnedMaxShare`                     | `number \| false`                                                                                                            | `0.5`              | Pinned columns scroll like the others while together they'd take more than this share of the grid's width (a phone, a narrow panel), and pin again once there's room. `false`: always pinned. Needs `columnPinningFeature`. |
+| `v-model:expanded`                   | `RowKey[]`                                                                                                                   | `[]`               | Expanded rows (sub-grids and detail rows).                                                                                                                                                                                  |
+| `subRows`                            | `(row) => T[] \| undefined`                                                                                                  | —                  | Synchronous children → sub-grid. Needs `subGridsFeature` (as do the next two).                                                                                                                                              |
+| `loadSubRows`                        | `(row) => Promise<T[]>`                                                                                                      | —                  | Lazy children (cached, loading/error/retry).                                                                                                                                                                                |
+| `hasSubRows`                         | `(row) => boolean`                                                                                                           | —                  | Which rows get an expander when lazy.                                                                                                                                                                                       |
+| `rowExpandable`                      | `(row) => boolean`                                                                                                           | —                  | Which rows can open the `#detail` slot.                                                                                                                                                                                     |
+| `selectable`                         | `boolean \| 'single'`                                                                                                        | `false`            | Adds a selection column. Needs `selectionFeature` (as do the next five). See [Selection and batch actions](#selection-and-batch-actions).                                                                                   |
+| `v-model:selected`                   | `RowKey[]`                                                                                                                   | `[]`               |                                                                                                                                                                                                                             |
+| `selectionMode`                      | `'cascade' \| 'independent'`                                                                                                 | `'cascade'`        | Whether selecting a parent selects its children.                                                                                                                                                                            |
+| `isRowSelectable`                    | `(row) => boolean`                                                                                                           | —                  |                                                                                                                                                                                                                             |
+| `pruneSelection`                     | `boolean`                                                                                                                    | `false`            | Drop selected keys whose rows left the data (reload, delete, another server page).                                                                                                                                          |
+| `v-model:selectAllMatching`          | `boolean`                                                                                                                    | `false`            | Server data: every row matching the query is selected (from the banner).                                                                                                                                                    |
+| `virtual`                            | `{ rowHeight: number; overscan?: number; detailHeight?: number } \| false`                                                   | `false`            | Virtual scrolling (fixed-height rows; sub-grids and measured detail rows included). Needs `virtualScrollingFeature`.                                                                                                        |
+| `v-model:pinnedRows`                 | `{ top?: RowKey[]; bottom?: RowKey[] } \| null`                                                                              | `null`             | Top-level rows pinned above / below the body. Needs `rowPinningFeature` (as do the next two). See [Pinned rows and totals](#pinned-rows-and-totals).                                                                        |
+| `pinnedTopRows` / `pinnedBottomRows` | `T[]`                                                                                                                        | —                  | Extra pinned rows that aren't part of `rows` (a target, last year's figures).                                                                                                                                               |
+| `totals`                             | `boolean \| 'top' \| 'bottom'`                                                                                               | `false`            | A totals row with each column's `aggregate`; `true` = `'bottom'`. Needs `aggregationFeature` (as do the next two).                                                                                                          |
+| `totalsLabel`                        | `string`                                                                                                                     | `messages.total`   | Shown in the totals row's first column (unless that column has an aggregate). `Total` by default.                                                                                                                           |
+| `aggregates`                         | `Record<string, unknown>`                                                                                                    | —                  | Totals by column key, used instead of computing them (e.g. from a server).                                                                                                                                                  |
+| `v-model:groupBy`                    | `string[] \| string \| null`                                                                                                 | `null`             | Column keys to group the rows by, outermost first. Needs `rowGroupingFeature` (as does the next one). See [Row grouping](#row-grouping).                                                                                    |
+| `groupsExpanded`                     | `boolean`                                                                                                                    | `false`            | Groups start expanded.                                                                                                                                                                                                      |
+| `rowClickable`                       | `boolean`                                                                                                                    | `false`            | Pointer cursor; `row-click` is always emitted.                                                                                                                                                                              |
+| `rowClass`                           | `(row, index) => ClassValue`                                                                                                 | —                  |                                                                                                                                                                                                                             |
+| `highlightedRows`                    | `RowKey[]`                                                                                                                   | —                  |                                                                                                                                                                                                                             |
+| `flash`                              | `boolean \| 'direction'`                                                                                                     | `false`            | Briefly highlight cells whose value changes; `'direction'` = green up / red down. Columns override with `flash`.                                                                                                            |
+| `renderers`                          | `CellRendererDefinition[]`                                                                                                   | —                  | Renderers usable by name in this grid (override plugin ones).                                                                                                                                                               |
+| `locale` / `currency` / `timeZone`   | `string`                                                                                                                     | plugin → browser   | Formatting context for renderers.                                                                                                                                                                                           |
+| `density`                            | `'compact' \| 'cozy' \| 'comfortable'`                                                                                       | `'cozy'`           | Scales cell padding.                                                                                                                                                                                                        |
+| `loading`                            | `boolean`                                                                                                                    | `false`            | Progress bar + `aria-busy`.                                                                                                                                                                                                 |
+| `emptyText`                          | `string`                                                                                                                     | `messages.empty`   | Shown when there are no rows (`No data to show.`).                                                                                                                                                                          |
+| `ariaLabel`                          | `string`                                                                                                                     | —                  |                                                                                                                                                                                                                             |
+| `statusBar`                          | `boolean \| StatusBarOptions`                                                                                                | `false`            | A status bar under the grid (status bar feature): counts, and `{ summary: [keys] }` sums of the selected rows. See [Status bar](#status-bar).                                                                               |
+| `messages`                           | `GridMessages`                                                                                                               | —                  | Built-in text (translations, wording), over `createVueGrid({ messages })`. See [Text and parts](#text-and-parts).                                                                                                           |
+| `parts`                              | `GridParts`                                                                                                                  | —                  | Built-in parts to leave out (`{ filterButtons: false }`), over `createVueGrid({ parts })`.                                                                                                                                  |
+| `contextMenu`                        | `(ctx: { row, rowKey, column, value }) => MenuItem[] \| null`                                                                | —                  | Right-click menu for body cells. Needs `menusFeature`.                                                                                                                                                                      |
+| `headerMenu`                         | `boolean \| ({ column, items }) => MenuItem[] \| null`                                                                       | `true`             | Built-in header menu (sort, pin, move, hide, reset). Needs `menusFeature`.                                                                                                                                                  |
+| `ui`                                 | `Partial<Record<'root' \| 'header' \| 'headerCell' \| 'row' \| 'cell' \| 'subgrid' \| 'detail' \| 'empty', ClassValue>>`     | —                  | Extra classes per part (Tailwind-friendly).                                                                                                                                                                                 |
 
 ### Events
 
@@ -1469,7 +1488,9 @@ Clicks on links, buttons and inputs inside a cell never trigger `row-click`.
 `total-<key>` (`{ value, column, group? }`, a cell of the totals row or a group row) ·
 `group-<key>` (`{ value, count, rows, column, group }`, the value of a group row) · `detail` (`{ row, rowKey, depth }`) ·
 `toolbar` (`{ columns, columnState, setColumnState, filters, setFilters, clearFilters, activeFilterCount, selected, selectedCount, selectAllMatching, clearSelection }`) ·
-`empty` · `loading` · `sub-rows-loading` (`{ row }`).
+`empty` · `loading` · `sub-rows-loading` (`{ row }`) · `no-match` (`{ clearFilters, filterCount }`) ·
+`load-error` (`{ error, retry, stale }`, server data) · `select-all-banner` (`{ total, page, all, selectAll, clearSelection }`) ·
+`status-bar` (`StatusBarScope`).
 
 ### Exposed methods
 
@@ -2045,7 +2066,8 @@ same grouping elsewhere.
 
 ## Export and copy
 
-`exportFeature` turns the grid's rows into CSV or an Excel workbook and copies them to the clipboard.
+`exportFeature` turns the grid's rows into CSV or an Excel workbook, prints them, and copies them to
+the clipboard.
 
 ```vue
 <script setup lang="ts">
@@ -2126,6 +2148,23 @@ Without the grid: `toXlsx(rows, columns, { sheetName, header, timeZone, formats 
 file's bytes (`Uint8Array`); `formats` overrides the guess per column key (`'money'`, `'percent'`,
 `'date'`, `'datetime'`, `'number'`, `'auto'`).
 
+### Print
+
+**`print(options)`** prints the rows as a table from a hidden frame, with the browser's print
+dialog: every row that passes the filters (not just the ones a virtual grid has in view), sorted,
+as the cells show them. Printing the page itself (Ctrl+P) gives only what is on screen, clipped
+to the grid's frame.
+
+```ts
+await grid.value?.print({ title: 'Orders', totals: true, landscape: true })
+```
+
+- A real `<table>`: the header repeats on every printed page, numbers and money are
+  right-aligned as in the grid, the totals print once, in bold, after the last row.
+- Options: `rows`, `children`, `columns`, `header`, `totals` as for the exports, plus `title`
+  (a heading, also the document title) and `landscape`.
+- It resolves when printing is over. The printing code (1.1 kB gzip) loads on first use.
+
 ## Status bar
 
 `statusBarFeature` adds a bar under the grid, like a spreadsheet's:
@@ -2152,6 +2191,7 @@ file's bytes (`Uint8Array`); `formats` overrides the guess per column key (`'mon
   (server data) the summary hides: only the loaded page is known.
 - **Your own content**: the `#status-bar` slot gets `{ rowCount, totalRowCount, selectedCount,
 allSelected, filterCount, summary, clearFilters }` and replaces the default content.
+- Leave items out with `rows: false`, `selected: false`, `filters: false` or `clear: false`.
 - The bar is a `group` labelled "Grid status"; style it with `.vg-status-bar`. Its component loads
   on demand (own chunk).
 
@@ -2361,6 +2401,56 @@ Renderer props: `value`, `row`, `rowKey`, `rowIndex`, `depth`, `column`, `option
 with `rendererOptions`). Emit `action(name, payload)`; the grid re-emits it as `cell-action` with the
 row and column. `useGridContext()` gives `{ locale, currency, timeZone }`. Lookup order:
 a definition or component on the column → `:renderers` → plugin → `text` (the only renderer built in).
+
+## Text and parts
+
+Everything a feature adds is configurable: its text, and whether each piece shows at all.
+
+**Text.** Every built-in string (menus, filters, the pager, the status bar, notices, screen-reader
+labels, renderer buttons) has a key in `GridMessages`. Set the ones you need; the rest stay English.
+Functions get the values that go into the text.
+
+```ts
+app.use(
+  createVueGrid({
+    messages: {
+      sortAscending: 'Rastuće',
+      empty: 'Nema podataka.',
+      groupBy: (column) => `Grupiši po: ${column}`,
+      pageSummary: (from, to, total) => `${from}–${to} od ${total}`,
+      rowCount: (shown, total) => (total ? `${shown} od ${total} redova` : `${shown} redova`),
+    },
+  }),
+)
+```
+
+A grid's own `:messages` win over the app's, and props that name a text (`empty-text`,
+`no-match-text`, `totals-label`, `<VGridSearch placeholder>`, a renderer's `label`…) win over both.
+`<VGridPagination>`, `<VGridSearch>`, `<VGridColumnMenu>` and `<VGridMenu>` use the app's messages on
+their own too. Every key, with its English default, is in the API reference (`GridMessages`).
+
+**Parts.** `GridParts` turns off what a feature adds, each on by default; app-wide in
+`createVueGrid({ parts })`, per grid with `:parts`:
+
+| Part                 | Leaves out                                                                   |
+| -------------------- | ---------------------------------------------------------------------------- |
+| `progressBar`        | The thin bar at the top while loading (`aria-busy` stays)                    |
+| `loadErrorNotice`    | The notice above the rows when a request fails while rows are shown          |
+| `retry`              | The Retry buttons of load errors and of lazy children                        |
+| `clearFiltersButton` | The Clear filters button of the no-match message                             |
+| `selectAll`          | The select-all checkbox in the header (rows still select)                    |
+| `selectAllBanner`    | The "Select all N rows" banner (server data)                                 |
+| `filterButtons`      | The funnels in `filterable` headers (the filter row and search still filter) |
+| `resizeGrips`        | The grips on header edges (Fit width / Reset width stay in the header menu)  |
+| `headerDrag`         | Dragging headers to reorder (Alt+←/→ and the header menu still move columns) |
+| `copyShortcut`       | Ctrl/⌘+C copying in the grid (`copyRows()` still works)                      |
+| `groupCounts`        | The row count on group rows                                                  |
+
+Some parts can be replaced instead: `#load-error`, `#no-match`, `#select-all-banner` and
+`#status-bar`. The pager takes `pagination: { firstLast: false, summary: '' }`, the status bar
+`{ rows, selected, filters, clear }` flags. Per column, `sortable`, `filterable`, `resizable`,
+`reorderable`, `pinnable`, `hideable`, `groupable` and `exportable` work as before, and
+`header-menu` (`false`, or a function that edits the built-in items) shapes the header menu.
 
 ## Theming
 

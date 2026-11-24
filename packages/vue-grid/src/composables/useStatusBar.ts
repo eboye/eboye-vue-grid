@@ -107,6 +107,16 @@ export function useStatusBar<T>(opts: UseStatusBarOptions<T>) {
 
   return {
     enabled: computed(() => !!config.value),
+    /** Which items show (each on unless `false`). */
+    show: computed(() => {
+      const c = config.value ?? {}
+      return {
+        rows: c.rows !== false,
+        selected: c.selected !== false,
+        filters: c.filters !== false,
+        clear: c.clear !== false,
+      }
+    }),
     canClear: opts.canClear,
     scope: computed<StatusBarScope>(() => ({
       rowCount: opts.rowCount(),

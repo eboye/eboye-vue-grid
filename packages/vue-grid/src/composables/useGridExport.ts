@@ -9,6 +9,7 @@ import type {
   CopyEvent,
   ExportOptions,
   FormatContext,
+  PrintOptions,
   RowKey,
   XlsxExportOptions,
 } from '../types'
@@ -183,6 +184,31 @@ export function useGridExport<T>(opts: GridExportOptions<T>) {
   }
 
   /**
+   * Prints the rows as a table (the browser's print dialog): every row that passes the filters,
+   * not just the ones in view, as the cells show them, with the header on each page. The printing
+   * code loads on demand. Resolves when printing is over.
+   */
+  async function print(o: PrintOptions = {}) {
+    const t = table(o, { values: 'formatted', header: true })
+    const text = (line: readonly unknown[]) => line.map((v) => plainText(v))
+    const { printTable } = await import('../internal/print')
+    await printTable({
+      title: o.title,
+      landscape: o.landscape,
+      header: t.header,
+      body: t.body.map(text),
+      footer: t.footer && text(t.footer),
+      align: t.cols.map(
+        (c) =>
+          opts.columns().find((r) => r.key === c.key)?.align ??
+          c.align ??
+          renderer(c).definition?.align ??
+          'start',
+      ),
+    })
+  }
+
+  /**
    * Copies rows as tab-separated text (pastes as cells into spreadsheets): the selected rows by
    * default, as displayed, without a header. Resolves `false` when nothing was copied.
    */
@@ -242,7 +268,7 @@ export function useGridExport<T>(opts: GridExportOptions<T>) {
     )
   }
 
-  return { getCsv, exportCsv, getXlsx, exportXlsx, copyRows, onKeyDown }
+  return { getCsv, exportCsv, getXlsx, exportXlsx, print, copyRows, onKeyDown }
 }
 
 const XLSX_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'

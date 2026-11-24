@@ -1,4 +1,4 @@
-# @nocopypaste/vue-grid 0.6.0 — API reference
+# @nocopypaste/vue-grid 0.7.0 — API reference
 
 > Generated from the TypeScript sources (`scripts/gen-agent.mjs`). Machine-readable: `agent/api.json`, `agent/grid-config.schema.json`.
 
@@ -14,7 +14,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `columnReorderFeature` | Column reordering: drag a header (mouse, pen, touch), Alt+←/→ on a focused header, and the header menu's Move left / Move right. Columns opt out with `reorderable: false`. The order is part of `v-model:column-state` and persisted with `storage`; `<VGridColumnMenu>` works without it. |  | `reorderable` |
 | `columnResizingFeature` | Column resizing: drag a header's edge (mouse, pen, touch), use ←/→ on the focused edge (Alt+Shift+←/→ on a header with keyboard navigation), or double-click the edge to fit the content. `minWidth` / `maxWidth` bound it; columns opt out with `resizable: false`. Widths are kept in `columnState.widths` and persisted with `storage`. The header menu gains Fit width / Reset width. |  | `maxWidth` `resizable` |
 | `columnVisibilityFeature` | Column visibility: `hidden: true` columns, `columnState.hidden` (persisted with `storage`), the header menu's Hide column item and `<VGridColumnMenu>`'s checkboxes. Columns opt out with `hideable: false`. Without it, every column shows. |  | `hidden` `hideable` |
-| `exportFeature` | CSV and Excel export and copying: `grid.exportCsv()` downloads the filtered, sorted rows as a CSV file, `grid.getCsv()` returns the text, `grid.exportXlsx()` / `grid.getXlsx()` write an Excel workbook with typed cells (the writer loads on demand), `grid.copyRows()` copies rows as tab-separated text, and Ctrl/⌘+C copies the selected rows, else the focused cell, as displayed. Columns can set `exportValue` and `exportable: false`. Without it those methods only warn. |  | `exportValue` `exportable` |
+| `exportFeature` | CSV and Excel export and copying: `grid.exportCsv()` downloads the filtered, sorted rows as a CSV file, `grid.getCsv()` returns the text, `grid.exportXlsx()` / `grid.getXlsx()` write an Excel workbook with typed cells (the writer loads on demand), `grid.print()` prints every matching row as a table with the header on each page, `grid.copyRows()` copies rows as tab-separated text, and Ctrl/⌘+C copies the selected rows, else the focused cell, as displayed. Columns can set `exportValue` and `exportable: false`. Without it those methods only warn. |  | `exportValue` `exportable` |
 | `filteringFeature` | Filtering: header funnels with typed filter popovers on `filterable` columns, the filter row, `<VGridSearch>`, the filter items of the header menu, `v-model:filters` and filter persistence. The popover body and the filter-row editors load on demand (own chunks). | `filterMode` `filterRow` `filterStorage` `noMatchText` `filters` | `filterable` `filter` `filterValue` `filterFn` `filterComponent` `searchable` |
 | `keyboardNavigationFeature` | Keyboard navigation (the ARIA grid pattern): the grid is one tab stop, arrow keys / Home / End / PageUp / PageDown move between cells, Enter activates a cell's control, Space selects a row, →/← expand and collapse, Alt+←/→ move a column, ContextMenu / Shift+F10 open the cell menu. Without it the grid is an ARIA `table`: its own controls (sort buttons, expanders, checkboxes, filter buttons) sit in the normal Tab order instead. |  |  |
 | `menusFeature` | Context menus: the built-in header menu (sort, filter, pin, move, hide, reset, your own items via `header-menu`) and body-cell menus (`context-menu`), opened by right-click, the ContextMenu key or Shift+F10. Without it the browser's own menu shows. The standalone `<VGridMenu>` and the `actions-menu` renderer don't need it. | `contextMenu` `headerMenu` |  |
@@ -37,13 +37,15 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `rowKey` (required) | `RowKeyGetter<T>` |  |  | Stable unique id of a row: a property name or `(row) => string \| number`. All row state is keyed by it. |
 | `features` | `readonly GridFeature[]` |  |  | Opt-in features for this grid (added to the app-wide `createVueGrid({ features })`): `sortingFeature`, `filteringFeature`, `serverDataFeature`, `paginationFeature`, or `allFeatures`. Read once, when the grid is created. |
 | `dataSource` | `DataSource<T>` |  | `serverDataFeature` | Server data: called with the current query (sort, filters, search, page) whenever it changes. The grid cancels superseded requests, shows loading and errors, and sorts / filters / pages nothing itself. |
-| `pagination` | `boolean \| { pageSizes?: number[] }` | `false` | `paginationFeature` | Built-in pagination under the grid (server-side with `dataSource`, client-side otherwise). |
+| `pagination` | `boolean \| PaginationOptions` | `false` | `paginationFeature` | Built-in pagination under the grid (server-side with `dataSource`, client-side otherwise). |
 | `statusBar` | `boolean \| StatusBarOptions` |  | `statusBarFeature` | A status bar under the grid (status bar feature): rows that pass the filters ("84 of 200 rows"), selected rows, active filters with Clear; `{ summary: ['total'] }` adds the sum and average of those columns over the selected rows. `#status-bar` replaces its content. |
+| `messages` | `GridMessages` |  |  | Built-in text (translations, wording), over `createVueGrid({ messages })`. |
+| `parts` | `GridParts` |  |  | Built-in parts to leave out (`{ progressBar: false }`), over `createVueGrid({ parts })`. |
 | `sortMode` | `'controlled' \| 'client'` | `'controlled'` |  | `controlled` (default): a header click only updates `v-model:sort` (sort on the server or in your own code). `client`: the grid sorts the rows itself. Ignored with `dataSource`. |
 | `filterMode` | `'client' \| 'controlled'` | `'client'` | `filteringFeature` | `client` (default): the grid filters its rows. `controlled`: it only emits `update:filters`. |
 | `filterRow` | `boolean` | `false` | `filteringFeature` | Show the filter row: an input under each filterable column's header. |
 | `filterStorage` | `FilterStateStorage \| string` |  | `filteringFeature` | Persist the filter model (`string` = localStorage key). |
-| `noMatchText` | `string` | `'No rows match the current filters.'` | `filteringFeature` | Shown when filters hide every row. |
+| `noMatchText` | `string` |  | `filteringFeature` | Shown when filters hide every row. Default: `messages.noMatch`, else `No rows match the current filters.` |
 | `selectable` | `boolean \| 'single'` | `false` | `selectionFeature` | A selection column: `true` = multi-select (with select-all), `'single'` = one row. |
 | `selectionMode` | `'cascade' \| 'independent'` | `'cascade'` | `selectionFeature` | `cascade` (default): selecting a parent selects its children. `independent`: rows alone. |
 | `isRowSelectable` | `(row: T) => boolean` |  | `selectionFeature` | Rows that can't be selected get a disabled checkbox. |
@@ -65,7 +67,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `timeZone` | `string` |  |  | IANA time zone for date renderers and date filters. |
 | `density` | `Density` |  |  | Cell padding scale. |
 | `loading` | `boolean` | `false` |  | Shows a progress bar and sets `aria-busy` (server data sets it by itself). |
-| `emptyText` | `string` | `'No data to show.'` |  | Shown when there are no rows. |
+| `emptyText` | `string` |  |  | Shown when there are no rows. Default: `messages.empty`, else `No data to show.` |
 | `ariaLabel` | `string` |  |  | Accessible name of the grid. |
 | `ui` | `Partial<Record<GridPart, ClassValue>>` |  |  | Extra classes per part (`root`, `header`, `headerCell`, `row`, `cell`, `subgrid`, `detail`, `empty`), e.g. Tailwind utilities. |
 | `contextMenu` | `(ctx: CellContext<T>) => MenuItem[] \| null \| undefined` |  | `menusFeature` | Right-click menu items for a body cell. Return `null`/`[]` to keep the browser's menu. |
@@ -73,7 +75,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `pinnedTopRows` | `readonly T[]` |  | `rowPinningFeature` | Extra rows above the body, not part of the data (row pinning feature). |
 | `pinnedBottomRows` | `readonly T[]` |  | `rowPinningFeature` | Extra rows below the body, not part of the data (row pinning feature). |
 | `totals` | `boolean \| 'top' \| 'bottom'` | `false` | `aggregationFeature` | A totals row with each column's `aggregate` (aggregation feature): `true` / `'bottom'` sticks it to the bottom, `'top'` under the header. |
-| `totalsLabel` | `string` | `'Total'` | `aggregationFeature` | The totals row's label, in its first column (unless that column has an aggregate). |
+| `totalsLabel` | `string` |  | `aggregationFeature` | The totals row's label, in its first column (unless that column has an aggregate). Default: `messages.total`, else `Total`. |
 | `aggregates` | `Record<string, unknown>` |  | `aggregationFeature` | Totals row values by column key, instead of computing them (e.g. totals from a server). |
 | `groupsExpanded` | `boolean` | `false` | `rowGroupingFeature` | Groups start expanded (row grouping feature). Default: collapsed. |
 
@@ -116,6 +118,9 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `group-<key>` | `{ value: unknown; count: number; rows: readonly T[]; column: ColumnDef<T>; group: RowGroup<T> }` | The value of a group row grouped by this column (row grouping feature): `#group-<key>`. |
 | `detail` | `{ row: T; rowKey: RowKey; depth: number }` | Expandable detail row under a row: any content, even another grid. |
 | `empty` |  | Shown when there are no rows. |
+| `no-match` | `{ clearFilters: () => void; filterCount: number }` | Shown when filters hide every row, instead of the message and its Clear filters button. |
+| `load-error` | `{ error: unknown; retry: () => Promise<void>; stale: boolean }` | A failed server request (server data): `stale` when the rows from before stay on screen (the notice above them), else in place of the rows. `retry()` asks again. |
+| `select-all-banner` | `{ total: number; page: number; all: boolean; selectAll: () => void; clearSelection: () => void }` | Selection with server data: the "Select all N rows" banner. |
 | `status-bar` | `StatusBarScope` | The status bar's content (status bar feature): replaces the counts and the summary. |
 | `loading` |  | Shown while loading with no rows yet. |
 | `sub-rows-loading` | `{ row: T }` | Shown while a row's lazy children load. |
@@ -142,6 +147,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `exportCsv` | `void` |  | Downloads the rows as a CSV file (`filename`, default `export.csv`; UTF-8 with a BOM). Export feature. |
 | `getXlsx` | `Promise<Blob>` |  | The rows as an Excel workbook (.xlsx): typed cells (numbers, dates, booleans), number formats from the columns' renderers, a bold frozen header. The writer loads on demand. Export feature. |
 | `exportXlsx` | `Promise<void>` |  | Downloads the rows as an Excel file (`filename`, default `export.xlsx`). Export feature. |
+| `print` | `Promise<void>` |  | Prints the rows as a table (the browser's print dialog): the filtered, sorted rows on every page (not just those in view), as the cells show them, the header repeated on each printed page, numbers right-aligned, the totals in bold. Resolves when printing is over. Export feature. |
 | `copyRows` | `Promise<boolean>` |  | Copies rows to the clipboard as tab-separated text (pastes as cells into spreadsheets): the selected rows by default, as displayed, no header. Resolves `false` if nothing was copied. Export feature. |
 
 ## `ColumnDef<T>`
@@ -651,4 +657,6 @@ The first items of a list, with a “+N more” toggle. Emits `expand`. Align: `
 | `currency`? | `string` | Default ISO 4217 currency for currency renderers. |
 | `timeZone`? | `string` | Default IANA time zone for date renderers and date filters. |
 | `density`? | `Density` | Default density: `compact`, `cozy` (default) or `comfortable`. |
+| `messages`? | `GridMessages` | Built-in text for every grid (translations, wording); a grid's own `messages` win. |
+| `parts`? | `GridParts` | Built-in parts to turn off in every grid; a grid's own `parts` win. |
 

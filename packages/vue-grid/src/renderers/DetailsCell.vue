@@ -4,8 +4,10 @@ import { anchorNameFor, trackAnchor } from '../internal/anchor'
 import type { CellRendererProps } from '../types'
 import { resolveOption, resolveTone, safeTone, type DetailsOptions } from './options'
 import { CrossIcon, InfoIcon } from './parts/icons'
+import { useMessages } from '../internal/messages'
 
 const props = defineProps<CellRendererProps<unknown, unknown, DetailsOptions>>()
+const m = useMessages()
 
 const uid = useId()
 const panelId = `vg-details-${uid}`
@@ -26,7 +28,8 @@ const title = computed(
   () => resolveOption(props.options.title, props.value, props.row) ?? props.column.header ?? '',
 )
 const triggerLabel = computed(
-  () => `${props.options.triggerLabel ?? 'Details'}${title.value ? `: ${title.value}` : ''}`,
+  () =>
+    `${props.options.triggerLabel ?? m.value.details ?? 'Details'}${title.value ? `: ${title.value}` : ''}`,
 )
 
 let stopTracking = () => {}
@@ -78,7 +81,7 @@ function onToggle(event: Event) {
           <button
             type="button"
             class="vg-icon-button"
-            aria-label="Close"
+            :aria-label="m.close ?? 'Close'"
             :popovertarget="panelId"
             popovertargetaction="hide"
           >

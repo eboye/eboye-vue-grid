@@ -64,8 +64,9 @@ runs in the [live examples](https://eboye.github.io/eboye-vue-grid/), each with 
 | Rows that stay on top / bottom                    | `rowPinningFeature`               | `v-model:pinned-rows="{ top: [id], bottom: [] }"`, `pinRow()`, `pinned-top-rows`                                                                                                               |
 | A totals row (sum, avg, …)                        | `aggregationFeature`              | column `aggregate: 'sum' \| 'avg' \| 'min' \| 'max' \| 'count' \| fn`; `totals` (or `'top'`)                                                                                                   |
 | Group rows by a column ("by status, then city")   | `rowGroupingFeature`              | `v-model:group-by="['status', 'city']"`, `groups-expanded`; column `groupable: true` (header menu), `groupValue: (row) => …` (e.g. month); `aggregate` shows per group                         |
-| Download CSV or Excel, copy rows / cells (Ctrl+C) | `exportFeature`                   | `grid.exportCsv()`, `getCsv()`, `exportXlsx()`, `getXlsx()`, `copyRows()`, `@copy`; column `exportValue`, `exportable: false`                                                                  |
+| Download CSV / Excel, print, copy rows / cells    | `exportFeature`                   | `grid.exportCsv()`, `getCsv()`, `exportXlsx()`, `getXlsx()`, `print()`, `copyRows()`, `@copy`; column `exportValue`, `exportable: false`                                                       |
 | Row / selection counts, sum of the selected rows  | `statusBarFeature`                | `status-bar` (or `{ summary: ['total'], aggregates?: ['sum', 'avg'] }`); `#status-bar="{ rowCount, selectedCount, summary, … }"`                                                               |
+| Translate / reword the grid, drop built-in pieces | —                                 | `messages` (`GridMessages`), `parts` (`GridParts`): app-wide in `createVueGrid` or per grid; slots `#load-error`, `#no-match`, `#select-all-banner`                                            |
 | Arrow-key navigation (ARIA grid)                  | `keyboardNavigationFeature`       | —                                                                                                                                                                                              |
 | Remember column layout                            | —                                 | `storage="orders-grid"` (localStorage key)                                                                                                                                                     |
 | Cell type (money, date, badge, link, …)           | —                                 | `renderer: currencyRenderer` etc. (list below)                                                                                                                                                 |
@@ -400,6 +401,8 @@ raw values; `copyRows` and Ctrl/⌘+C to the selected rows as displayed, tab-sep
 `header`, `totals`, `children`, `delimiter`. `toCsv(rows, columns)` works without a grid.
 `exportXlsx({ filename, sheetName })` / `getXlsx()` (a Promise) write an Excel file with typed cells
 (numbers, dates, booleans) and number formats from the renderers; `toXlsx(rows, columns)` without a grid.
+`print({ title, totals, landscape })` prints every matching row as a table (header on each page);
+Ctrl+P on the page only prints what is on screen.
 
 ### Row actions and context menu
 
@@ -512,6 +515,9 @@ only sees stylesheet rules. Density:
 - Ctrl+C copies nothing for a clicked cell → cells only take focus with `keyboardNavigationFeature`
   (or select rows first); `exportFeature` must be registered too.
 - An exported column of `⋯` / buttons / `[object Object]` → `exportable: false`, or `exportValue: (row) => …`.
+- Printing the page (Ctrl+P) shows only the rows on screen, clipped to the grid → use `grid.print()`.
+- Translating by replacing components or CSS `content` → set `messages` (every built-in text has a key).
+- Hiding a built-in piece with CSS → `parts: { filterButtons: false, … }` leaves it out of the DOM (and the tab order).
 - Copied numbers come out as `€1,234.50` → copying uses displayed values; pass `{ values: 'raw' }`
   (CSV exports are raw by default).
 - `group-by` names a field, not a column → it takes column `key`s; add a (hidden) column for it.

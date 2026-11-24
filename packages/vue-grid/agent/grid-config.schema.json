@@ -52,18 +52,16 @@
       "description": "Server data: called with the current query (sort, filters, search, page) whenever it changes. The grid cancels superseded requests, shows loading and errors, and sorts / filters / pages nothing itself."
     },
     "pagination": {
-      "anyOf": [
-        {
-          "type": "boolean"
-        },
-        {
-          "type": "object"
-        }
-      ],
       "description": "Built-in pagination under the grid (server-side with `dataSource`, client-side otherwise)."
     },
     "statusBar": {
       "description": "A status bar under the grid (status bar feature): rows that pass the filters (\"84 of 200 rows\"), selected rows, active filters with Clear; `{ summary: ['total'] }` adds the sum and average of those columns over the selected rows. `#status-bar` replaces its content."
+    },
+    "messages": {
+      "description": "Built-in text (translations, wording), over `createVueGrid({ messages })`."
+    },
+    "parts": {
+      "description": "Built-in parts to leave out (`{ progressBar: false }`), over `createVueGrid({ parts })`."
     },
     "sortMode": {
       "enum": [
@@ -88,7 +86,7 @@
     },
     "noMatchText": {
       "type": "string",
-      "description": "Shown when filters hide every row."
+      "description": "Shown when filters hide every row. Default: `messages.noMatch`, else `No rows match the current filters.`"
     },
     "selectable": {
       "anyOf": [
@@ -231,7 +229,7 @@
     },
     "emptyText": {
       "type": "string",
-      "description": "Shown when there are no rows."
+      "description": "Shown when there are no rows. Default: `messages.empty`, else `No data to show.`"
     },
     "ariaLabel": {
       "type": "string",
@@ -273,7 +271,7 @@
     },
     "totalsLabel": {
       "type": "string",
-      "description": "The totals row's label, in its first column (unless that column has an aggregate)."
+      "description": "The totals row's label, in its first column (unless that column has an aggregate). Default: `messages.total`, else `Total`."
     },
     "aggregates": {
       "type": "object",

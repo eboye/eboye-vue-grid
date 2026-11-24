@@ -105,6 +105,9 @@ const toggleGroup = (key: string) =>
       <button type="button" class="vg-button" @click="grid?.exportCsv({ filename: 'bets.csv' })">
         CSV
       </button>
+      <button type="button" class="vg-button" @click="grid?.print({ title: 'Bets', totals: true })">
+        Print
+      </button>
     </template>
   </VGrid>
 </template>

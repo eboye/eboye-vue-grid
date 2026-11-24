@@ -5,8 +5,10 @@ import { safeHref } from './format'
 import { safeTone, type LineInput, type LineSpec, type MultiLineOptions } from './options'
 import ValueBadge from './parts/ValueBadge.vue'
 import { useRouterLink } from './parts/routerLink'
+import { useMessages } from '../internal/messages'
 
 const props = defineProps<CellRendererProps<unknown, unknown, MultiLineOptions>>()
+const m = useMessages()
 const emit = defineEmits<CellRendererEmits>()
 const RouterLink = useRouterLink()
 
@@ -70,7 +72,9 @@ const external = computed(() => props.options.target === '_blank')
         :class="['vg-change-icon', line.trend === 'up' ? 'vg-change-up' : 'vg-change-down']"
         viewBox="0 0 10 10"
         role="img"
-        :aria-label="line.trend === 'up' ? 'Increased' : 'Decreased'"
+        :aria-label="
+          line.trend === 'up' ? (m.increased ?? 'Increased') : (m.decreased ?? 'Decreased')
+        "
       >
         <path v-if="line.trend === 'up'" d="M5 1.5 9 7.5H1z" />
         <path v-else d="M5 8.5 1 2.5h8z" />

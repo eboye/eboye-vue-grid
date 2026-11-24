@@ -3,8 +3,10 @@ import { computed, toRaw } from 'vue'
 import type { CellRendererEmits, CellRendererProps } from '../types'
 import { resolveOption, type IconToggleOptions } from './options'
 import { StarFilledIcon, StarIcon } from './parts/icons'
+import { useMessages } from '../internal/messages'
 
 const props = defineProps<CellRendererProps<unknown, unknown, IconToggleOptions>>()
+const m = useMessages()
 const emit = defineEmits<CellRendererEmits>()
 
 const active = computed(() =>
@@ -15,7 +17,9 @@ const icon = computed(() => {
   const chosen = active.value ? (on ?? (off ? off : StarFilledIcon)) : (off ?? StarIcon)
   return toRaw(chosen)
 })
-const label = computed(() => resolveOption(props.options.label, props.value, props.row) ?? 'Toggle')
+const label = computed(
+  () => resolveOption(props.options.label, props.value, props.row) ?? m.value.toggle ?? 'Toggle',
+)
 const disabled = computed(() => !!resolveOption(props.options.disabled, props.value, props.row))
 </script>
 

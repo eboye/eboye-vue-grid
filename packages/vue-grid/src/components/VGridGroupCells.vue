@@ -71,7 +71,7 @@ const labelText = computed(() => {
   const col = groupColumn.value
   const format_ = col?.definition?.format
   const text = blank.value
-    ? '(blank)'
+    ? (grid.messages.value.blank ?? '(blank)')
     : !column.groupValue && format_ && format
       ? format_(value, col.options, format.value, firstRow.value)
       : String(value)
@@ -127,7 +127,7 @@ function onLabelClick(event: MouseEvent) {
         :checked="grid.rowCheckState(group) === 'all'"
         :indeterminate="grid.rowCheckState(group) === 'some'"
         :disabled="!grid.isRowSelectable(group)"
-        label="Select group"
+        :label="grid.messages.value.selectGroup ?? 'Select group'"
         @toggle="(range: boolean) => grid.toggleRow(group, range)"
       />
     </template>
@@ -138,7 +138,11 @@ function onLabelClick(event: MouseEvent) {
           class="vg-expander"
           :tabindex="grid.rovingTabindex"
           :aria-expanded="expanded"
-          :aria-label="expanded ? 'Collapse group' : 'Expand group'"
+          :aria-label="
+            expanded
+              ? (grid.messages.value.collapseGroup ?? 'Collapse group')
+              : (grid.messages.value.expandGroup ?? 'Expand group')
+          "
           @click.stop="grid.toggleExpanded(group)"
         >
           <svg viewBox="0 0 16 16" aria-hidden="true" class="vg-expander-icon">
@@ -166,7 +170,9 @@ function onLabelClick(event: MouseEvent) {
             group,
           }"
         />
-        <span v-else-if="blank" class="vg-rowgroup-value vg-rowgroup-blank">(blank)</span>
+        <span v-else-if="blank" class="vg-rowgroup-value vg-rowgroup-blank">{{
+          grid.messages.value.blank ?? '(blank)'
+        }}</span>
         <span
           v-else-if="group.column.groupValue || !groupColumn?.component"
           class="vg-rowgroup-value"
@@ -184,7 +190,12 @@ function onLabelClick(event: MouseEvent) {
             :options="groupColumn.options"
           />
         </span>
-        <span class="vg-rowgroup-count" :aria-label="`${count} rows`">{{ count }}</span>
+        <span
+          v-if="grid.parts.value.groupCounts !== false"
+          class="vg-rowgroup-count"
+          :aria-label="grid.messages.value.groupRowCount?.(group.rows.length) ?? `${count} rows`"
+          >{{ count }}</span
+        >
       </div>
     </template>
     <div v-else-if="part.kind === 'aggregate'" class="vg-cell-content">

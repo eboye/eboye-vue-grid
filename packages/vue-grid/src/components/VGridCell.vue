@@ -135,7 +135,7 @@ function onClick(event: MouseEvent) {
         :checked="grid.rowCheckState(row) === 'all'"
         :indeterminate="grid.rowCheckState(row) === 'some'"
         :disabled="!grid.isRowSelectable(row)"
-        label="Select row"
+        :label="grid.messages.value.selectRow ?? 'Select row'"
         @toggle="(range: boolean) => grid.toggleRow(row, range)"
       />
     </template>
@@ -150,7 +150,11 @@ function onClick(event: MouseEvent) {
           class="vg-expander"
           :tabindex="grid.rovingTabindex"
           :aria-expanded="expanded"
-          :aria-label="expanded ? 'Collapse row' : 'Expand row'"
+          :aria-label="
+            expanded
+              ? (grid.messages.value.collapseRow ?? 'Collapse row')
+              : (grid.messages.value.expandRow ?? 'Expand row')
+          "
           @click.stop="grid.toggleExpanded(row)"
         >
           <svg viewBox="0 0 16 16" aria-hidden="true" class="vg-expander-icon">

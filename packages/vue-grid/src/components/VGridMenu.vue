@@ -2,6 +2,7 @@
 import { nextTick, onBeforeUnmount, ref, shallowRef, toRaw, useId } from 'vue'
 import { anchorNameFor, trackAnchor, type AnchorTarget, type Placement } from '../internal/anchor'
 import type { MenuAction, MenuItem } from '../types'
+import { useMessages } from '../internal/messages'
 
 /**
  * Accessible menu rendered with the Popover API (top layer: never clipped by the grid's overflow;
@@ -15,6 +16,7 @@ import type { MenuAction, MenuItem } from '../types'
 const props = withDefaults(
   defineProps<{
     items: readonly MenuItem[]
+    /** The menu's name for screen readers. Default: `messages.menu`, else `Menu`. */
     label?: string
     placement?: Placement
     /** Popover id (for `popovertarget`). Generated when omitted. */
@@ -22,8 +24,9 @@ const props = withDefaults(
     /** `anchor-name` set on an external trigger (declarative mode). */
     anchorName?: string
   }>(),
-  { label: 'Menu', placement: 'bottom-end' },
+  { placement: 'bottom-end' },
 )
+const m = useMessages()
 
 const emit = defineEmits<{
   select: [item: MenuAction]
@@ -171,7 +174,7 @@ defineExpose({ id: menuId, openAt, close, isOpen })
     ref="menu"
     popover="auto"
     role="menu"
-    :aria-label="label"
+    :aria-label="label || m.menu || 'Menu'"
     class="vg-menu"
     :data-placement="placement"
     :style="{ 'position-anchor': anchorName }"
