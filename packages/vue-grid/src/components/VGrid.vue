@@ -1219,16 +1219,27 @@ const clearFilters = () => filt?.clearAll()
 const clearSelection = () => sel?.clear()
 
 /** The export feature's methods; without it they warn (dev) and do nothing. */
-function viaExport<K extends 'getCsv' | 'exportCsv' | 'copyRows'>(name: K): VGridExposed[K] {
+function viaExport<K extends 'getCsv' | 'exportCsv' | 'getXlsx' | 'exportXlsx' | 'copyRows'>(
+  name: K,
+): VGridExposed[K] {
   return ((options?: object) => {
     if (exporter) return (exporter[name] as (o?: object) => unknown)(options)
     if (process.env.NODE_ENV !== 'production')
       warnOnce('feature:export', `${name}() needs the export feature (exportFeature).`)
-    return name === 'getCsv' ? '' : name === 'copyRows' ? Promise.resolve(false) : undefined
+    if (name === 'getXlsx') return Promise.reject(new Error('getXlsx() needs the export feature'))
+    return name === 'getCsv'
+      ? ''
+      : name === 'copyRows'
+        ? Promise.resolve(false)
+        : name === 'exportXlsx'
+          ? Promise.resolve()
+          : undefined
   }) as VGridExposed[K]
 }
 const getCsv = viaExport('getCsv')
 const exportCsv = viaExport('exportCsv')
+const getXlsx = viaExport('getXlsx')
+const exportXlsx = viaExport('exportXlsx')
 const copyRows = viaExport('copyRows')
 
 defineExpose<VGridExposed>({
@@ -1246,6 +1257,8 @@ defineExpose<VGridExposed>({
   pinRow,
   getCsv,
   exportCsv,
+  getXlsx,
+  exportXlsx,
   copyRows,
   clearSelection,
 })

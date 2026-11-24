@@ -64,7 +64,7 @@ runs in the [live examples](https://eboye.github.io/eboye-vue-grid/), each with 
 | Rows that stay on top / bottom                    | `rowPinningFeature`               | `v-model:pinned-rows="{ top: [id], bottom: [] }"`, `pinRow()`, `pinned-top-rows`                                                                                                               |
 | A totals row (sum, avg, …)                        | `aggregationFeature`              | column `aggregate: 'sum' \| 'avg' \| 'min' \| 'max' \| 'count' \| fn`; `totals` (or `'top'`)                                                                                                   |
 | Group rows by a column ("by status, then city")   | `rowGroupingFeature`              | `v-model:group-by="['status', 'city']"`, `groups-expanded`; column `groupable: true` (header menu), `groupValue: (row) => …` (e.g. month); `aggregate` shows per group                         |
-| Download CSV, copy rows / cells (Ctrl+C)          | `exportFeature`                   | `grid.exportCsv()`, `getCsv()`, `copyRows()`, `@copy`; column `exportValue`, `exportable: false`                                                                                               |
+| Download CSV or Excel, copy rows / cells (Ctrl+C) | `exportFeature`                   | `grid.exportCsv()`, `getCsv()`, `exportXlsx()`, `getXlsx()`, `copyRows()`, `@copy`; column `exportValue`, `exportable: false`                                                                  |
 | Row / selection counts, sum of the selected rows  | `statusBarFeature`                | `status-bar` (or `{ summary: ['total'], aggregates?: ['sum', 'avg'] }`); `#status-bar="{ rowCount, selectedCount, summary, … }"`                                                               |
 | Arrow-key navigation (ARIA grid)                  | `keyboardNavigationFeature`       | —                                                                                                                                                                                              |
 | Remember column layout                            | —                                 | `storage="orders-grid"` (localStorage key)                                                                                                                                                     |
@@ -365,7 +365,7 @@ visible column and runs across the next ones up to the first with an `aggregate`
 column it drops the column name and ellipsizes the value (full label as tooltip), so give it room
 where the value matters. `#group-<key>="{ value, count }"` renders a group's value yourself.
 
-### CSV export and copy
+### CSV / Excel export and copy
 
 ```vue
 <script setup lang="ts">
@@ -398,6 +398,8 @@ const grid = ref<VGridExposed>()
 raw values; `copyRows` and Ctrl/⌘+C to the selected rows as displayed, tab-separated. Options:
 `rows: 'filtered' | 'all' | 'page' | 'selected'`, `columns: [keys]`, `values: 'raw' | 'formatted'`,
 `header`, `totals`, `children`, `delimiter`. `toCsv(rows, columns)` works without a grid.
+`exportXlsx({ filename, sheetName })` / `getXlsx()` (a Promise) write an Excel file with typed cells
+(numbers, dates, booleans) and number formats from the renderers; `toXlsx(rows, columns)` without a grid.
 
 ### Row actions and context menu
 

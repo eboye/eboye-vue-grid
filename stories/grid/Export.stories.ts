@@ -15,7 +15,8 @@ const exportColumns = [
 ]
 
 /**
- * CSV export and copying (export feature). `grid.exportCsv()` downloads the filtered, sorted rows;
+ * CSV and Excel export and copying (export feature). `grid.exportCsv()` / `grid.exportXlsx()` download
+ * the filtered, sorted rows;
  * `grid.copyRows()` and Ctrl/⌘+C copy the selected rows as tab-separated text (paste them into a
  * spreadsheet), or the focused cell when no row is selected, as the cells show them.
  */
@@ -54,6 +55,7 @@ export const ExportAndCopy: Story = {
       <div class="sb-frame">
         <div class="sb-note">
           <button type="button" class="vg-button" data-test="download" @click="grid?.exportCsv({ filename: 'bets.csv', totals: true })">Download CSV</button>
+          <button type="button" class="vg-button" data-test="download-xlsx" @click="grid?.exportXlsx({ filename: 'bets.xlsx', totals: true, sheetName: 'Bets' })">Download Excel</button>
           <button type="button" class="vg-button" data-test="copy" :disabled="!selected.length" @click="grid?.copyRows()">Copy {{ selected.length }} selected</button>
           <button type="button" class="vg-button vg-button-ghost" data-test="preview" @click="preview = grid?.getCsv({ values: 'formatted' }) ?? ''">Preview (formatted)</button>
           <span data-test="copied">{{ copied }}</span>

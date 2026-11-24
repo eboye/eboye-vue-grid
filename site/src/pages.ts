@@ -179,10 +179,10 @@ export const pages: Page[] = [
     title: 'Export and copy',
     section: 'Output',
     summary:
-      'Download the filtered, sorted rows as CSV, or copy rows as tab-separated text that pastes into a spreadsheet as cells.',
+      'Download the filtered, sorted rows as CSV or as an Excel file with real numbers and dates, or copy rows as tab-separated text that pastes into a spreadsheet as cells.',
     try: [
       'Select a few rows and press Ctrl/⌘+C, then paste into a spreadsheet.',
-      'Filter, then Download CSV: only the matching rows are exported.',
+      'Filter, then Download CSV or Excel: only the matching rows are exported.',
     ],
     docs: '25. Export and copy',
     files: ['ExportDemo'],

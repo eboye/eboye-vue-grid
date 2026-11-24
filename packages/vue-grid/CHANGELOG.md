@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.6.0 — 2026-11-24
+
+**Excel export** (export feature): `grid.exportXlsx()` downloads the rows as an `.xlsx` workbook
+and `grid.getXlsx()` resolves to it as a `Blob`. They take the CSV options (which rows, columns,
+raw or formatted values, header, totals, sub-grid rows) plus `sheetName`. Cells are typed:
+numbers, booleans and dates stay what they are, so the sheet can sum and sort them, with number
+formats from the columns' renderers (money `#,##0.00`, percentages, `yyyy-mm-dd` dates and date-
+times in the grid's time zone). The header is bold and frozen, the totals line bold, and column
+widths follow the content. Text is never written as a formula. The writer has no dependencies and
+loads the first time you export (2.9 kB gzip); the export feature itself grows by 0.3 kB gzip.
+`toXlsx(rows, columns)` writes a workbook without a grid. New exported types `XlsxExportOptions`,
+`ToXlsxOptions`, `XlsxFormat`.
+
 ## 0.5.0 — 2026-11-24
 
 **Status bar** (`statusBarFeature`): `status-bar` adds a bar under the grid with the rows that pass

@@ -10,6 +10,7 @@ import type {
   ExportOptions,
   FormatContext,
   RowKey,
+  XlsxExportOptions,
 } from '../types'
 
 export interface GridExportOptions<T> {
@@ -100,67 +101,85 @@ export function useGridExport<T>(opts: GridExportOptions<T>) {
     }
   }
 
-  /** A cell as text: `exportValue`, else the renderer's text (formatted) or the plain value. */
-  function cellText(
+  /** A cell for export: `exportValue`, else the value or (with `ctx`) the renderer's text. */
+  function cellValue(
     row: T,
     col: ColumnDef<T>,
     ctx: FormatContext | null,
     r = ctx && renderer(col),
-  ): string {
-    if (col.exportValue) return plainText(col.exportValue(row))
+  ): unknown {
+    if (col.exportValue) return col.exportValue(row)
     const value = getCellValue(row, col)
-    return ctx && r?.definition?.format
-      ? r.definition.format(value, r.options, ctx, row)
-      : plainText(value)
+    return ctx && r?.definition?.format ? r.definition.format(value, r.options, ctx, row) : value
   }
+  const cellText = (row: T, col: ColumnDef<T>, ctx: FormatContext | null) =>
+    plainText(cellValue(row, col, ctx))
 
-  function table(o: ExportOptions, defaults: { values: 'raw' | 'formatted'; header: boolean }) {
+  /** The rows to export as a table of values: raw, or (`formatted`) as the cells show them. */
+  function table(o: XlsxExportOptions, defaults: { values: 'raw' | 'formatted'; header: boolean }) {
     const cols = columnsFor(o)
     // formatted: the format context, and each column's renderer, looked up once
     const ctx = (o.values ?? defaults.values) === 'formatted' ? opts.format() : null
     const renderers = cols.map((c) => (ctx ? renderer(c) : null))
-    const guard = o.guard === false ? (s: string) => s : guardFormula
     const rows = rowsFor(o)
-    const lines: string[][] = []
-    if (o.header ?? defaults.header) lines.push(cols.map((c) => guard(c.header ?? c.key)))
-    for (const row of rows)
-      lines.push(cols.map((c, i) => guard(cellText(row, c, ctx, renderers[i]))))
+    const header = (o.header ?? defaults.header) ? cols.map((c) => c.header ?? c.key) : undefined
+    const body = rows.map((row) => cols.map((c, i) => cellValue(row, c, ctx, renderers[i])))
     const total = o.totals ? opts.totals() : undefined
-    if (total) {
-      lines.push(
-        cols.map((c, i) => {
-          if (!(c.key in total.values)) return i === 0 ? guard(total.label) : ''
-          const value = total.values[c.key]
-          const r = renderers[i]
-          return guard(
-            ctx && c.aggregate !== 'count' && r?.definition?.format
-              ? r.definition.format(value, r.options, ctx, total.values)
-              : plainText(value),
-          )
-        }),
-      )
-    }
-    return { rows, cols, lines }
+    const footer =
+      total &&
+      cols.map((c, i) => {
+        if (!(c.key in total.values)) return i === 0 ? total.label : null
+        const value = total.values[c.key]
+        const r = renderers[i]
+        return ctx && c.aggregate !== 'count' && r?.definition?.format
+          ? r.definition.format(value, r.options, ctx, total.values)
+          : value
+      })
+    return { rows, cols, ctx, header, body, footer: footer || undefined }
+  }
+
+  /** A table as lines of text, formula-like text guarded unless `guard: false`. */
+  function lines(t: ReturnType<typeof table>, o: ExportOptions): string[][] {
+    const guard = o.guard === false ? (s: string) => s : guardFormula
+    return [...(t.header ? [t.header] : []), ...t.body, ...(t.footer ? [t.footer] : [])].map(
+      (line) => line.map((v) => guard(plainText(v))),
+    )
   }
 
   /** The rows as CSV text (raw values, a header line, `,`). */
   function getCsv(o: ExportOptions = {}): string {
-    return toDelimited(table(o, { values: 'raw', header: true }).lines, o.delimiter ?? ',')
+    return toDelimited(lines(table(o, { values: 'raw', header: true }), o), o.delimiter ?? ',')
   }
 
   /** Downloads the rows as a CSV file (UTF-8 with a BOM, so Excel reads accents right). */
   function exportCsv(o: ExportOptions & { filename?: string; bom?: boolean } = {}) {
     const text = getCsv(o)
-    const blob = new Blob([o.bom === false ? '' : '﻿', text], { type: 'text/csv;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = o.filename ?? 'export.csv'
-    a.style.display = 'none'
-    document.body.appendChild(a)
-    a.click()
-    a.remove()
-    setTimeout(() => URL.revokeObjectURL(url), 0)
+    download(
+      new Blob([o.bom === false ? '' : '\uFEFF', text], { type: 'text/csv;charset=utf-8' }),
+      o.filename ?? 'export.csv',
+    )
+  }
+
+  /**
+   * The rows as an Excel workbook: typed cells (numbers, dates, booleans), number formats from the
+   * columns' renderers, a bold frozen header, the totals in bold. The writer loads on demand.
+   */
+  async function getXlsx(o: XlsxExportOptions = {}): Promise<Blob> {
+    const t = table(o, { values: 'raw', header: true })
+    const { writeXlsx, xlsxFormatOf } = await import('../core/xlsx')
+    const bytes = writeXlsx({
+      ...t,
+      name: o.sheetName,
+      rows: t.body,
+      formats: t.cols.map((c) => (t.ctx ? 'auto' : xlsxFormatOf(c as ColumnDef))),
+      timeZone: opts.format().timeZone,
+    })
+    return new Blob([bytes as BlobPart], { type: XLSX_TYPE })
+  }
+
+  /** Downloads the rows as an Excel file (.xlsx). */
+  async function exportXlsx(o: XlsxExportOptions & { filename?: string } = {}) {
+    download(await getXlsx(o), o.filename ?? 'export.xlsx')
   }
 
   /**
@@ -168,12 +187,11 @@ export function useGridExport<T>(opts: GridExportOptions<T>) {
    * default, as displayed, without a header. Resolves `false` when nothing was copied.
    */
   async function copyRows(o: ExportOptions = {}): Promise<boolean> {
-    const { rows, cols, lines } = table(
-      { rows: 'selected', ...o },
-      { values: 'formatted', header: false },
-    )
-    if (!lines.length) return false
-    const text = toDelimited(lines, o.delimiter ?? '\t', '\n')
+    const t = table({ rows: 'selected', ...o }, { values: 'formatted', header: false })
+    const { rows, cols } = t
+    const copied = lines(t, o)
+    if (!copied.length) return false
+    const text = toDelimited(copied, o.delimiter ?? '\t', '\n')
     if (!(await copyText(text))) return false
     opts.onCopy({ kind: 'rows', text, rows, columns: cols })
     return true
@@ -224,5 +242,20 @@ export function useGridExport<T>(opts: GridExportOptions<T>) {
     )
   }
 
-  return { getCsv, exportCsv, copyRows, onKeyDown }
+  return { getCsv, exportCsv, getXlsx, exportXlsx, copyRows, onKeyDown }
+}
+
+const XLSX_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+
+/** Saves a file: a temporary link to it, clicked. */
+function download(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  a.style.display = 'none'
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  setTimeout(() => URL.revokeObjectURL(url), 0)
 }

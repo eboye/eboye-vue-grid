@@ -74,6 +74,14 @@ const onCopy = (e: CopyEvent<Bet>) =>
       >
         Download CSV
       </button>
+      <!-- Typed cells (numbers, dates), money formats, a bold frozen header; the writer loads on demand. -->
+      <button
+        type="button"
+        class="vg-button"
+        @click="grid?.exportXlsx({ filename: 'bets.xlsx', totals: true, sheetName: 'Bets' })"
+      >
+        Download Excel
+      </button>
       <button
         type="button"
         class="vg-button"

@@ -396,6 +396,13 @@ export interface VGridExposed {
   /** Downloads the rows as a CSV file (`filename`, default `export.csv`; UTF-8 with a BOM). Export feature. */
   exportCsv(options?: ExportOptions & { filename?: string; bom?: boolean }): void
   /**
+   * The rows as an Excel workbook (.xlsx): typed cells (numbers, dates, booleans), number formats
+   * from the columns' renderers, a bold frozen header. The writer loads on demand. Export feature.
+   */
+  getXlsx(options?: XlsxExportOptions): Promise<Blob>
+  /** Downloads the rows as an Excel file (`filename`, default `export.xlsx`). Export feature. */
+  exportXlsx(options?: XlsxExportOptions & { filename?: string }): Promise<void>
+  /**
    * Copies rows to the clipboard as tab-separated text (pastes as cells into spreadsheets): the
    * selected rows by default, as displayed, no header. Resolves `false` if nothing was copied.
    * Export feature.
@@ -424,6 +431,12 @@ export interface ExportOptions {
   delimiter?: string
   /** Prefix text a spreadsheet would run as a formula (`=…`, `+…`, `@…`) with `'`. Default `true`. */
   guard?: boolean
+}
+
+/** Options of `getXlsx` / `exportXlsx` (export feature): the CSV ones, without the text-only ones. */
+export interface XlsxExportOptions extends Omit<ExportOptions, 'delimiter' | 'guard'> {
+  /** The sheet's name (31 characters at most). Default `Sheet1`. */
+  sheetName?: string
 }
 
 /** Something was copied to the clipboard (export feature): rows (`copyRows`, Ctrl+C) or one cell. */

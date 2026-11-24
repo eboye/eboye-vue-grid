@@ -130,7 +130,7 @@ an opt-in feature:
 | `rowPinningFeature`         | `v-model:pinned-rows` / `pinRow()`: rows that stay in view above or below the body, plus `pinned-top-rows` / `pinned-bottom-rows` for rows that aren't in the data                                                                                                                                                                      |
 | `aggregationFeature`        | Column `aggregate` (`sum`, `avg`, `min`, `max`, `count`, a function) and `totals`: a sticky totals row over the filtered rows                                                                                                                                                                                                           |
 | `rowGroupingFeature`        | `v-model:group-by`: rows grouped by one or more columns into collapsible group rows with the value, row count and aggregates; Group by / Ungroup in the header menu for `groupable` columns                                                                                                                                             |
-| `exportFeature`             | `exportCsv()` / `getCsv()` / `copyRows()`, Ctrl/⌘+C for the selected rows or the focused cell, the `copy` event; column `exportValue` / `exportable`                                                                                                                                                                                    |
+| `exportFeature`             | `exportCsv()` / `getCsv()`, `exportXlsx()` / `getXlsx()` (Excel, typed cells), `copyRows()`, Ctrl/⌘+C for the selected rows or the focused cell, the `copy` event; column `exportValue` / `exportable`                                                                                                                                  |
 | `statusBarFeature`          | `status-bar`: a bar under the grid with the rows that pass the filters, the selected rows, the active filters (with Clear), and `{ summary: [keys] }` columns' sum and average over the selected rows; the `#status-bar` slot                                                                                                           |
 
 ```ts
@@ -175,33 +175,33 @@ what you import.
 
 | Import (minified / gzip, Vue excluded)                                       | Initial chunk      |
 | ---------------------------------------------------------------------------- | ------------------ |
-| `VGrid` (no features)                                                        | 40.3 kB / 14.0 kB  |
-| `VGrid` + `sortingFeature`                                                   | 41.0 kB / 14.3 kB  |
-| `VGrid` + `filteringFeature`                                                 | 50.9 kB / 17.8 kB  |
-| `VGrid` + `serverDataFeature`                                                | 41.6 kB / 14.6 kB  |
-| `VGrid` + `paginationFeature`                                                | 40.4 kB / 14.1 kB  |
-| `VGrid` + `selectionFeature`                                                 | 44.4 kB / 15.4 kB  |
-| `VGrid` + `subGridsFeature`                                                  | 42.6 kB / 14.8 kB  |
-| `VGrid` + `menusFeature`                                                     | 50.7 kB / 17.5 kB  |
-| `VGrid` + `columnReorderFeature`                                             | 44.0 kB / 15.2 kB  |
-| `VGrid` + `columnPinningFeature`                                             | 43.2 kB / 15.0 kB  |
-| `VGrid` + `virtualScrollingFeature`                                          | 46.0 kB / 16.2 kB  |
-| `VGrid` + `columnVisibilityFeature`                                          | 40.4 kB / 14.0 kB  |
-| `VGrid` + `keyboardNavigationFeature`                                        | 43.0 kB / 15.0 kB  |
-| `VGrid` + `columnResizingFeature`                                            | 43.5 kB / 15.2 kB  |
-| `VGrid` + `columnGroupsFeature`                                              | 41.6 kB / 14.5 kB  |
-| `VGrid` + `rowPinningFeature`                                                | 45.2 kB / 15.3 kB  |
-| `VGrid` + `aggregationFeature`                                               | 45.4 kB / 15.4 kB  |
-| `VGrid` + `rowGroupingFeature`                                               | 50.0 kB / 16.9 kB  |
-| `VGrid` + `exportFeature`                                                    | 44.0 kB / 15.5 kB  |
-| `VGrid` + `statusBarFeature`                                                 | 42.6 kB / 14.9 kB  |
-| `VGrid` + `allFeatures` + `VGridSearch`                                      | 106.9 kB / 36.0 kB |
-| `VGrid` + `currencyRenderer`                                                 | 41.6 kB / 14.5 kB  |
-| `VGrid` + `VGridPagination` + `VGridColumnMenu`                              | 47.0 kB / 16.2 kB  |
+| `VGrid` (no features)                                                        | 40.4 kB / 14.1 kB  |
+| `VGrid` + `sortingFeature`                                                   | 41.2 kB / 14.3 kB  |
+| `VGrid` + `filteringFeature`                                                 | 51.0 kB / 17.8 kB  |
+| `VGrid` + `serverDataFeature`                                                | 41.8 kB / 14.6 kB  |
+| `VGrid` + `paginationFeature`                                                | 40.6 kB / 14.1 kB  |
+| `VGrid` + `selectionFeature`                                                 | 44.6 kB / 15.5 kB  |
+| `VGrid` + `subGridsFeature`                                                  | 42.8 kB / 14.9 kB  |
+| `VGrid` + `menusFeature`                                                     | 50.9 kB / 17.6 kB  |
+| `VGrid` + `columnReorderFeature`                                             | 44.1 kB / 15.3 kB  |
+| `VGrid` + `columnPinningFeature`                                             | 43.4 kB / 15.1 kB  |
+| `VGrid` + `virtualScrollingFeature`                                          | 46.2 kB / 16.2 kB  |
+| `VGrid` + `columnVisibilityFeature`                                          | 40.6 kB / 14.1 kB  |
+| `VGrid` + `keyboardNavigationFeature`                                        | 43.2 kB / 15.1 kB  |
+| `VGrid` + `columnResizingFeature`                                            | 43.7 kB / 15.2 kB  |
+| `VGrid` + `columnGroupsFeature`                                              | 41.7 kB / 14.5 kB  |
+| `VGrid` + `rowPinningFeature`                                                | 45.4 kB / 15.4 kB  |
+| `VGrid` + `aggregationFeature`                                               | 45.6 kB / 15.5 kB  |
+| `VGrid` + `rowGroupingFeature`                                               | 50.2 kB / 16.9 kB  |
+| `VGrid` + `exportFeature`                                                    | 45.0 kB / 15.8 kB  |
+| `VGrid` + `statusBarFeature`                                                 | 42.8 kB / 15.0 kB  |
+| `VGrid` + `allFeatures` + `VGridSearch`                                      | 107.7 kB / 36.3 kB |
+| `VGrid` + `currencyRenderer`                                                 | 41.8 kB / 14.5 kB  |
+| `VGrid` + `VGridPagination` + `VGridColumnMenu`                              | 47.2 kB / 16.3 kB  |
 | `sortRows` only                                                              | 0.7 kB / 0.4 kB    |
 | `toCsv` only                                                                 | 1.1 kB / 0.6 kB    |
-| everything                                                                   | 151.7 kB / 48.5 kB |
-| `validateGridConfig` (`@nocopypaste/vue-grid/agent`, never in an app bundle) | 69.7 kB / 18.9 kB  |
+| everything                                                                   | 160.4 kB / 51.3 kB |
+| `validateGridConfig` (`@nocopypaste/vue-grid/agent`, never in an app bundle) | 70.2 kB / 19.1 kB  |
 
 With `filteringFeature`, the filter popover body and the filter-row editors are **on-demand
 chunks**: they load the first time a popover opens or `filter-row` is on. With
@@ -863,7 +863,7 @@ same grouping elsewhere.
 
 ## Export and copy
 
-`exportFeature` turns the grid's rows into CSV and copies them to the clipboard.
+`exportFeature` turns the grid's rows into CSV or an Excel workbook and copies them to the clipboard.
 
 ```vue
 <script setup lang="ts">
@@ -921,6 +921,28 @@ const columns = [
 Without the grid: `toCsv(rows, columns, { delimiter, header, guard })` writes CSV from any rows
 and column definitions (raw values, `exportValue`, `exportable`); `toDelimited(table)`,
 `plainText(value)` and `guardFormula(text)` are its parts.
+
+### Excel (.xlsx)
+
+**`exportXlsx(options)`** downloads an Excel workbook (`filename`, default `export.xlsx`) and
+**`getXlsx(options)`** resolves to it as a `Blob`; both take the options above (but `delimiter` and
+`guard`) plus `sheetName`.
+
+```ts
+await grid.value?.exportXlsx({ filename: 'orders.xlsx', sheetName: 'Orders', totals: true })
+```
+
+- **Typed cells**: numbers stay numbers, booleans booleans, and dates are Excel dates, so the sheet
+  can sum, sort and filter them. Number formats follow the renderer: `currency` (and `change` with
+  `currency`) → `#,##0.00`, a percent `number` → `0.00%`, `date` → `yyyy-mm-dd`, `datetime` →
+  `yyyy-mm-dd hh:mm`, in the grid's `time-zone` (date-only values stay that day).
+- A bold header frozen at the top, the totals as a bold last line, column widths from the content.
+- Text is written as text, never as a formula. `values: 'formatted'` writes the cells as shown.
+- The writer (2.9 kB gzip) loads the first time you export; it has no dependencies.
+
+Without the grid: `toXlsx(rows, columns, { sheetName, header, timeZone, formats })` returns the
+file's bytes (`Uint8Array`); `formats` overrides the guess per column key (`'money'`, `'percent'`,
+`'date'`, `'datetime'`, `'number'`, `'auto'`).
 
 ## Status bar
 

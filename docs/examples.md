@@ -2130,7 +2130,7 @@ const groupBy = ref(['status', 'city'])
 
 ## 25. Export and copy
 
-Download CSV, copy rows and cells (`exportFeature`):
+Download CSV or Excel, copy rows and cells (`exportFeature`):
 
 ```vue
 <script setup lang="ts">
@@ -2172,6 +2172,19 @@ const copied = ref('')
   too), `values` (`raw`, `formatted`), `header`, `totals`, `delimiter`, `guard`.
 - Text that a spreadsheet would run as a formula (`=…`, `+…`, `@…`) gets a leading `'`.
 - Without a grid: `toCsv(rows, columns)`.
+
+Excel instead of CSV, with real numbers and dates (the writer loads on first use):
+
+```vue
+<button @click="grid?.exportXlsx({ filename: 'orders.xlsx', sheetName: 'Orders', totals: true })">
+  Download Excel
+</button>
+```
+
+- Numbers, booleans and dates are typed cells; `currency` columns get `#,##0.00`, percent
+  `number` columns `0.00%`, `date` / `datetime` columns Excel date formats in the grid's time zone.
+- A bold, frozen header and a bold totals line; column widths from the content.
+- `getXlsx()` resolves to a `Blob` (to upload it); `toXlsx(rows, columns)` works without a grid.
 
 ---
 

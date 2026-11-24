@@ -1,6 +1,6 @@
 {
   "package": "@nocopypaste/vue-grid",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "component": "VGrid",
   "props": [
     {
@@ -575,6 +575,18 @@
       "description": "Downloads the rows as a CSV file (`filename`, default `export.csv`; UTF-8 with a BOM). Export feature."
     },
     {
+      "name": "getXlsx",
+      "type": "Promise<Blob>",
+      "required": true,
+      "description": "The rows as an Excel workbook (.xlsx): typed cells (numbers, dates, booleans), number formats from the columns' renderers, a bold frozen header. The writer loads on demand. Export feature."
+    },
+    {
+      "name": "exportXlsx",
+      "type": "Promise<void>",
+      "required": true,
+      "description": "Downloads the rows as an Excel file (`filename`, default `export.xlsx`). Export feature."
+    },
+    {
       "name": "copyRows",
       "type": "Promise<boolean>",
       "required": true,
@@ -888,7 +900,7 @@
     {
       "id": "export",
       "export": "exportFeature",
-      "description": "CSV export and copying: `grid.exportCsv()` downloads the filtered, sorted rows as a CSV file, `grid.getCsv()` returns the text, `grid.copyRows()` copies rows as tab-separated text, and Ctrl/⌘+C copies the selected rows, else the focused cell, as displayed. Columns can set `exportValue` and `exportable: false`. Without it those methods only warn.",
+      "description": "CSV and Excel export and copying: `grid.exportCsv()` downloads the filtered, sorted rows as a CSV file, `grid.getCsv()` returns the text, `grid.exportXlsx()` / `grid.getXlsx()` write an Excel workbook with typed cells (the writer loads on demand), `grid.copyRows()` copies rows as tab-separated text, and Ctrl/⌘+C copies the selected rows, else the focused cell, as displayed. Columns can set `exportValue` and `exportable: false`. Without it those methods only warn.",
       "props": [],
       "columnOptions": [
         "exportValue",

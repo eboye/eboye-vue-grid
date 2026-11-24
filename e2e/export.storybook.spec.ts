@@ -41,6 +41,81 @@ test('Download CSV: the filtered, sorted rows with a header, totals, a BOM, and 
   expect(lines.at(-1)).toMatch(/^Total,/)
 })
 
+/** The files of the stored (uncompressed) ZIP that an .xlsx is, by name, as text. */
+function unzip(bytes: Buffer): Record<string, string> {
+  const files: Record<string, string> = {}
+  let at = 0
+  while (bytes.readUInt32LE(at) === 0x04034b50) {
+    const size = bytes.readUInt32LE(at + 18)
+    const nameLength = bytes.readUInt16LE(at + 26)
+    const name = bytes.subarray(at + 30, at + 30 + nameLength).toString('utf8')
+    const start = at + 30 + nameLength
+    files[name] = bytes.subarray(start, start + size).toString('utf8')
+    at = start + size
+  }
+  return files
+}
+
+test('Download Excel: the filtered, sorted rows as typed cells, a bold header, the totals', async ({
+  page,
+}) => {
+  await open(page)
+  await page.locator('.vg-header [data-col-key="player"] .vg-sort').click() // sort by player
+  await page.locator('.vg-header [data-col-key="city"] input').first().fill('Beograd')
+  await expect.poll(async () => (await names(page)).length).toBeLessThan(40)
+  const visible = await names(page)
+  const stakes = await grid(page)
+    .locator(':scope > .vg-row > [data-col-key="stake"]')
+    .evaluateAll((els) => els.map((e) => Number(e.textContent!.replace(/[^\d.-]/g, ''))))
+
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.locator('[data-test="download-xlsx"]').click(),
+  ])
+  expect(download.suggestedFilename()).toBe('bets.xlsx')
+  const files = unzip(readFileSync((await download.path())!))
+  expect(files['xl/workbook.xml']).toContain('<sheet name="Bets"')
+  const sheet = files['xl/worksheets/sheet1.xml']!
+  const rows = [...sheet.matchAll(/<row r="(\d+)">(.*?)<\/row>/g)].map(([, , body]) =>
+    [...body!.matchAll(/<c r="([A-Z]+)\d+" s="(\d+)"(?: t="(\w+)")?>(.*?)<\/c>/g)].map(
+      ([, col, style, type, value]) => ({
+        col,
+        style: Number(style),
+        type: type ?? 'n',
+        value: value!.replace(/<[^>]+>/g, ''),
+      }),
+    ),
+  )
+  // header: bold text, frozen
+  expect(rows[0]!.map((c) => c.value)).toEqual([
+    '#',
+    'Player',
+    'City',
+    'Status',
+    'Stake',
+    'Δ odds',
+    'Placed',
+  ])
+  expect(rows[0]!.every((c) => c.style === 1)).toBe(true)
+  expect(sheet).toContain('state="frozen"')
+  // the body: what the grid shows, in its order; stakes as numbers in a money format
+  const body = rows.slice(1, -1)
+  expect(body.map((r) => r.find((c) => c.col === 'B')!.value)).toEqual(visible)
+  expect(body.every((r) => r.find((c) => c.col === 'C')!.value === 'Beograd')).toBe(true)
+  const stake = body.map((r) => r.find((c) => c.col === 'E')!)
+  expect(stake.every((c) => c.type === 'n' && c.style === 2)).toBe(true)
+  expect(stake.map((c) => Number(c.value))).toEqual(stakes)
+  // dates are Excel dates (serial numbers in a date format), not text
+  expect(body.every((r) => r.find((c) => c.col === 'G')!.style === 4)).toBe(true)
+  // totals: a bold last line, the sum of the stakes
+  const totals = rows.at(-1)!
+  expect(totals[0]).toMatchObject({ value: 'Total', style: 1 })
+  expect(Number(totals.find((c) => c.col === 'E')!.value)).toBeCloseTo(
+    stakes.reduce((a, b) => a + b, 0),
+    6,
+  )
+})
+
 test('Ctrl/⌘+C on a focused cell copies it as shown; with rows selected it copies the rows', async ({
   page,
   browserName,
