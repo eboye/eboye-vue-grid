@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.4.0 — 2026-11-24
 
 **Pinned columns on phones** (column pinning feature): while the pinned columns together would
 take more than half of the grid's width (a phone, a narrow side panel), they scroll like the
