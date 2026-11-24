@@ -68,6 +68,8 @@
     --vg-flash-duration: 1.2s;
     --vg-total-row-bg: var(--vg-color-header-bg);
     --vg-total-row-font-weight: 600;
+    --vg-rowgroup-bg: color-mix(in srgb, var(--vg-color-header-bg) 70%, var(--vg-color-surface));
+    --vg-rowgroup-font-weight: 600;
   }
   .vg-root {
     --_vg-density: 1;
@@ -460,6 +462,26 @@
     font-weight: var(--vg-total-row-font-weight);
   }
   .vg-total-label { color: var(--vg-color-header-text); }
+
+  /* Row grouping: group rows on a tint, bold, with the column name muted and the count as a pill. */
+  .vg-rowgroup > .vg-cell {
+    background: var(--vg-rowgroup-bg);
+    font-weight: var(--vg-rowgroup-font-weight);
+  }
+  .vg-rowgroup-name {
+    color: var(--vg-color-text-muted);
+    font-weight: 400;
+  }
+  .vg-rowgroup-blank { color: var(--vg-color-text-muted); font-style: italic; font-weight: 400; }
+  .vg-rowgroup-count {
+    padding: 0 0.4375rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--vg-color-text) 8%, transparent);
+    color: var(--vg-color-text-muted);
+    font-size: 0.8125em;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
 
   /*
    * Column resizing: a short line on hover, full height and accent while focused or dragging. It

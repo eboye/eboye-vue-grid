@@ -23,6 +23,7 @@ import {
   normalizeColumnState,
   visibleColumns,
 } from '../core/columns'
+import type { RowGroup } from '../core/grouping'
 import { localStorageAdapter } from '../core/storage'
 import { getCellValue, resolveRowKey, type RowKeyGetter } from '../core/value'
 import type { RowPatches } from '../core/patch'
@@ -173,6 +174,8 @@ const props = withDefaults(
     totalsLabel?: string
     /** Totals row values by column key, instead of computing them (e.g. totals from a server). */
     aggregates?: Record<string, unknown>
+    /** Groups start expanded (row grouping feature). Default: collapsed. */
+    groupsExpanded?: boolean
   }>(),
   {
     rows: () => [],
@@ -190,6 +193,7 @@ const props = withDefaults(
     emptyText: 'No data to show.',
     totals: false,
     totalsLabel: 'Total',
+    groupsExpanded: false,
   },
 )
 
@@ -209,6 +213,11 @@ const page = defineModel<number>('page', { default: 1 })
 const pageSize = defineModel<number>('pageSize', { default: 25 })
 /** Top-level rows pinned above / below the body, by key: `{ top, bottom }`. Needs the row pinning feature. */
 const pinnedRows = defineModel<PinnedRowsState | null>('pinnedRows', { default: null })
+/**
+ * Column keys to group the rows by, outermost first (`['region', 'status']`, or one key). Group rows
+ * show the value, the row count and the columns' aggregates. Needs the row grouping feature.
+ */
+const groupBy = defineModel<readonly string[] | string | null>('groupBy', { default: null })
 
 const emit = defineEmits<{
   /** The combined query (sort, filters, search, page) — on mount and whenever it changes. */
@@ -241,8 +250,16 @@ defineSlots<{
   }) => unknown
   /** A column's header content: `#header-<key>`. */
   [key: `header-${string}`]: (scope: { column: ColumnDef<T> }) => unknown
-  /** A column's cell in the totals row (aggregation feature). */
-  [key: `total-${string}`]: (scope: { value: unknown; column: ColumnDef<T> }) => unknown
+  /** A column's cell in the totals row and in group rows (aggregation, row grouping); `group` in group rows. */
+  [key: `total-${string}`]: (scope: { value: unknown; column: ColumnDef<T>; group?: RowGroup<T> }) => unknown
+  /** The value of a group row grouped by this column (row grouping feature): `#group-<key>`. */
+  [key: `group-${string}`]: (scope: {
+    value: unknown
+    count: number
+    rows: readonly T[]
+    column: ColumnDef<T>
+    group: RowGroup<T>
+  }) => unknown
   /** Expandable detail row under a row: any content, even another grid. */
   detail?: (scope: { row: T; rowKey: RowKey; depth: number }) => unknown
   /** Shown when there are no rows. */
@@ -611,6 +628,21 @@ const sel =features.selection?.useSelection<T>({
 const allState = computed(() => sel?.allState.value ?? 'none')
 const hasSelectableRows = computed(() => !!sel?.selectableKeys.value.length)
 
+// ── Row grouping ────────────────────────────────────────────────────────────────────────────
+// It groups the body's rows (`topRows`, below); the context, virtual layout and menu learn about
+// group rows from it.
+const grouping = features.rowGrouping?.useRowGrouping<T>({
+  groupBy: () => groupBy.value,
+  setGroupBy: (keys) => (groupBy.value = keys),
+  columns: () => props.columns,
+  rows: () => topRows.value,
+  sort: () => (features.sorting ? sort.value : null),
+  expandedByDefault: () => props.groupsExpanded,
+  selected,
+  cascade: () => cascadeSelection.value,
+  walk,
+})
+
 // ── Pinned columns, drag & keyboard ─────────────────────────────────────────────────────────
 const pinning = features.columnPinning
 const pinOffsets = pinning?.usePinnedOffsets(root, () => sizedColumns.value)
@@ -672,7 +704,7 @@ const keyboard = features.keyboardNavigation?.useGridKeyboard(root, {
 const onKeyDown = (event: KeyboardEvent) => keyboard?.onKeyDown(event)
 const onFocusIn = (event: FocusEvent) => keyboard?.onFocusIn(event)
 /** ARIA grid with keyboard navigation; a plain table (and tabbable controls) without it. */
-const gridRole = computed(() => (!keyboardNav ? 'table' : treeMode.value ? 'treegrid' : 'grid'))
+const gridRole = computed(() => (!keyboardNav ? 'table' : context.treeMode.value ? 'treegrid' : 'grid'))
 
 // ── Context menus ───────────────────────────────────────────────────────────────────────────
 const menuRef = shallowRef<MenuHandle>()
@@ -697,6 +729,7 @@ const menus = features.menus?.useMenus<T>({
   moveColumnBy,
   contextMenu: () => props.contextMenu,
   headerMenu: () => props.headerMenu,
+  grouping: grouping?.menu,
   onContextAction: (event) => emit('context-action', event),
   onHeaderAction: (event) => emit('header-action', event),
   filters: filt && {
@@ -760,33 +793,41 @@ const topRows = computed(() => {
   const key = keyReader()
   return all.filter((row) => !pinned.has(key(row)))
 })
+/** The body's top level: the rows, or their groups (row grouping; type-erased like the rows). */
+const displayRows = computed<readonly T[]>(() =>
+  grouping?.active.value ? (grouping.groups.value as unknown as T[]) : topRows.value,
+)
 const virt = features.virtualScrolling?.useVirtualRows<T>({
   root,
   options: () => virtualOptions.value,
-  rows: () => topRows.value,
-  keyOf: keyReader,
-  expanded: () => expandedSet.value,
-  subRows: () => (treeMode.value && sub ? sub.snapshot : null),
+  rows: () => displayRows.value,
+  keyOf: grouping ? () => grouping.keyOf(keyReader()) : keyReader,
+  expanded: () => grouping?.expanded(expandedSet.value) ?? expandedSet.value,
+  subRows: () => {
+    const tree = treeMode.value && sub ? sub.snapshot : null
+    return grouping ? grouping.tree(tree) : tree
+  },
   hasDetail: () => hasDetail.value,
   rowExpandable: () => props.rowExpandable,
   preparer: () => {
     const visible = filt?.visibleKeys.value ?? null
     const sorter = makeSorter()
     const key = keyReader()
-    return (rows) => sorter(visible ? rows.filter((row) => visible.has(key(toRaw(row)))) : rows)
+    const prepare = (rows: readonly T[]) => sorter(visible ? rows.filter((row) => visible.has(key(toRaw(row)))) : rows)
+    return grouping ? grouping.preparer(prepare) : prepare
   },
 })
 const onScroll = () => virt?.onScroll()
 /** Virtual mode: positions of every visible row, detail row and sub-grid. */
 const virtualLayout = computed(() => virt?.layout.value ?? null)
-/** Rows on all pages: the server's total, or the filtered client rows. */
-const totalRows = computed(() => (serverMode.value ? (ds?.total.value ?? sourceRows.value.length) : topRows.value.length))
+/** Rows on all pages: the server's total, or the filtered client rows (top-level groups when grouped). */
+const totalRows = computed(() => (serverMode.value ? (ds?.total.value ?? sourceRows.value.length) : displayRows.value.length))
 const windowRows = computed(() => {
   if (paginated.value && !serverMode.value) {
     const start = (currentPage.value - 1) * currentPageSize.value
-    return topRows.value.slice(start, start + currentPageSize.value)
+    return displayRows.value.slice(start, start + currentPageSize.value)
   }
-  return topRows.value
+  return displayRows.value
 })
 // Stay on a page that exists — when filters shrink the rows, the page size grows, the app sets an
 // out-of-range page, or the server's total shrinks — and write it back, so the pager and the rows
@@ -842,6 +883,11 @@ if (process.env.NODE_ENV !== 'production') {
     if (!features.rowPinning && (pinnedRows.value || props.pinnedTopRows || props.pinnedBottomRows))
       missing('rowPinning', '`pinned-rows` / `pinned-top-rows` / `pinned-bottom-rows`')
     if (!features.aggregation && props.totals) missing('aggregation', '`totals`')
+    const groupKeys = groupBy.value == null ? [] : typeof groupBy.value === 'string' ? [groupBy.value] : groupBy.value
+    if (!features.rowGrouping && groupKeys.length) missing('rowGrouping', '`group-by`')
+    const unknownGroup = groupKeys.find((k) => !props.columns.some((c) => c.key === k))
+    if (features.rowGrouping && unknownGroup !== undefined)
+      warnOnce(`group-by:${unknownGroup}`, `\`group-by\` names "${unknownGroup}", which is not a column key; it is ignored.`)
   })
   watch(
     () => props.features,
@@ -926,6 +972,7 @@ const context: GridContext = {
         menus.holdCell({ row, rowKey, column: column.def, value: getCellValue(row, column.def) }, event, el)
     : undefined,
 }
+grouping?.extend(context, features.rowGrouping!.GroupCells)
 provide(GRID_CONTEXT_KEY, context)
 
 // ── Imperative API ──────────────────────────────────────────────────────────────────────────
@@ -945,10 +992,12 @@ function expandAll() {
     if (canExpand(row)) keys.push(getKey(row))
   })
   expanded.value = keys
+  grouping?.setAll(true)
 }
 
 function collapseAll() {
   expanded.value = []
+  grouping?.setAll(false)
 }
 
 /** Field patches for lazily loaded child rows (top-level rows belong to the app: patch those). */
@@ -1003,6 +1052,7 @@ defineExpose<VGridExposed>({
             'vg-is-dragging': drag?.dragging.value,
             'vg-is-resizing': resize?.resizing.value,
             'vg-has-groups': hasGroups,
+            'vg-grouped': grouping?.active.value,
             'vg-has-pinned-rows': pinnedItems.top.length || pinnedItems.bottom.length,
             'vg-has-cell-menu': !!menus && !!contextMenu,
           },

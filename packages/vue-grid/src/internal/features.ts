@@ -1,5 +1,6 @@
 import type {
   AggregationFeature,
+  RowGroupingFeature,
   RowPinningFeature,
   ColumnGroupsFeature,
   ColumnPinningFeature,
@@ -36,6 +37,7 @@ export interface FeatureSet {
   columnGroups?: ColumnGroupsFeature
   rowPinning?: RowPinningFeature
   aggregation?: AggregationFeature
+  rowGrouping?: RowGroupingFeature
 }
 
 /** Merges feature lists (app-wide, then per grid); a later entry with the same name wins. */

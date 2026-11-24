@@ -279,8 +279,19 @@ export function validateGridConfig(config: GridConfigInput): ValidationResult {
     )
   if (isSet(props.totals) && !aggregated && props.aggregates === undefined)
     report('warning', 'props.totals', 'A totals row, but no column has an `aggregate`: it shows only its label.', 'Add `aggregate: \'sum\'` (or avg / min / max / count) to the columns to total.')
-  if (aggregated && !isSet(props.totals))
+  const groupBy = props.groupBy
+  const groupKeys = typeof groupBy === 'string' ? [groupBy] : Array.isArray(groupBy) ? groupBy : []
+  if (aggregated && !isSet(props.totals) && !groupKeys.length)
     report('info', 'props.totals', 'Columns have an `aggregate`, but there is no totals row to show it.', 'Add `totals` (bottom) or `totals="top"`.')
+  groupKeys.forEach((k, i) => {
+    if (typeof k === 'string' && !keys.has(k))
+      report(
+        'error',
+        typeof groupBy === 'string' ? 'props.groupBy' : `props.groupBy[${i}]`,
+        `\`group-by\` names \`${k}\`, which is not a column key (it is ignored).`,
+        didYouMean(k, [...keys.keys()]) ?? 'Group by the `key` of a column (it may be hidden).',
+      )
+  })
 
   return { ok: !diagnostics.some((d) => d.severity === 'error'), diagnostics }
 }

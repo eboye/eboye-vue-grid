@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+
+**Row grouping** (`rowGroupingFeature`): `v-model:group-by` groups the rows by one or more
+columns into collapsible group rows with the value (in the column's renderer, or the
+`#group-<key>` slot), the row count and each column's `aggregate` for the group. Groups follow
+filters and sorting, page as a unit, work with virtual scrolling, and select their rows from a
+group checkbox. Columns with `groupable: true` get Group by / Ungroup in the header menu;
+`groupValue` groups by a derived value (a month, a range); `groups-expanded` opens every group;
+`expandAll()` / `collapseAll()` include groups. `validateGridConfig()` checks `group-by` keys.
+`groupRows()` and `isRowGroup()` are exported.
+
+Docs: the generated API reference no longer inserts stray `;` into multi-line column option
+descriptions.
+
 ## 0.2.0 — first public release
 
 `<VGrid>`: a Vue 3 data grid laid out with CSS Grid, nested rows in real `subgrid`. A plain grid

@@ -15,7 +15,7 @@ JSON Schema. The `@nocopypaste/vue-grid-mcp` MCP server serves all of this as to
 1. **Import the CSS once**: `import '@nocopypaste/vue-grid/style.css'` (in `main.ts`). Without it the
    grid has no layout.
 2. **Register every feature an option needs.** `sortable`, `filterable`, `pagination`,
-   `selectable`, `sub-rows`, `virtual`, `pinned`, `hidden`, `group`, `aggregate`, `totals`,
+   `selectable`, `sub-rows`, `virtual`, `pinned`, `hidden`, `group`, `aggregate`, `totals`, `group-by`,
    `pinned-rows`, `context-menu`… each needs its feature (table below). Without it the option
    **silently does nothing** (dev builds log a `[vue-grid]` warning naming the feature). Per grid:
    `:features="[sortingFeature, filteringFeature]"`; app-wide: `createVueGrid({ features: [...] })`;
@@ -62,6 +62,7 @@ JSON Schema. The `@nocopypaste/vue-grid-mcp` MCP server serves all of this as to
 | Grouped headers ("Q1" over three columns) | `columnGroupsFeature` | column `group: 'Q1'` |
 | Rows that stay on top / bottom | `rowPinningFeature` | `v-model:pinned-rows="{ top: [id], bottom: [] }"`, `pinRow()`, `pinned-top-rows` |
 | A totals row (sum, avg, …) | `aggregationFeature` | column `aggregate: 'sum' \| 'avg' \| 'min' \| 'max' \| 'count' \| fn`; `totals` (or `'top'`) |
+| Group rows by a column ("by status, then city") | `rowGroupingFeature` | `v-model:group-by="['status', 'city']"`, `groups-expanded`; column `groupable: true` (header menu), `groupValue: (row) => …` (e.g. month); `aggregate` shows per group |
 | Arrow-key navigation (ARIA grid) | `keyboardNavigationFeature` | — |
 | Remember column layout | — | `storage="orders-grid"` (localStorage key) |
 | Cell type (money, date, badge, link, …) | — | `renderer: currencyRenderer` etc. (list below) |
@@ -214,6 +215,27 @@ const pinned = ref<PinnedRowsState>({ top: [42] })
 <!-- grid.value.pinRow(key, 'top' | 'bottom' | null) from your own button or context menu -->
 ```
 
+### Row grouping
+
+```ts
+const columns = [
+  col({ key: 'customer', field: 'customer.name' }),
+  col({ key: 'status', renderer: statusRenderer, groupable: true }),
+  col({ key: 'placedAt', renderer: dateRenderer, groupable: true, groupValue: (o) => o.placedAt.slice(0, 7) }),
+  col({ key: 'total', renderer: currencyRenderer, aggregate: 'sum' }), // shown in every group row
+]
+const groupBy = ref(['status'])
+```
+
+```vue
+<VGrid v-model:group-by="groupBy" :rows="orders" :columns="columns" row-key="id" sort-mode="client"
+       :features="[rowGroupingFeature, sortingFeature, menusFeature]" style="height: 480px" />
+```
+
+Groups start collapsed (`groups-expanded` to open them); the group label sits in the first
+visible column, so keep that column wide enough (or give the next columns no `aggregate`, so the
+label runs across them). `#group-<key>="{ value, count }"` renders a group's value yourself.
+
 ### Row actions and context menu
 
 ```vue
@@ -283,6 +305,8 @@ Tokens: `--vg-*` (see README → Theming). Dark mode follows `color-scheme`. Den
 - Virtual grid with variable row content → rows must share `rowHeight`; use `lines`/`ellipsis` to keep them uniform.
 - `dataSource` plus `rows` → `rows` is ignored with a data source.
 - A nested child with different columns → not a sub-grid; use `#detail` with another `<VGrid>`.
+- One group per date or timestamp → group by a coarser value: `groupValue: (row) => row.date.slice(0, 7)`.
+- `group-by` names a field, not a column → it takes column `key`s; add a (hidden) column for it.
 
 ---
 
@@ -306,6 +330,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `keyboardNavigationFeature` | Keyboard navigation (the ARIA grid pattern): the grid is one tab stop, arrow keys / Home / End / PageUp / PageDown move between cells, Enter activates a cell's control, Space selects a row, →/← expand and collapse, Alt+←/→ move a column, ContextMenu / Shift+F10 open the cell menu. Without it the grid is an ARIA `table`: its own controls (sort buttons, expanders, checkboxes, filter buttons) sit in the normal Tab order instead. |  |  |
 | `menusFeature` | Context menus: the built-in header menu (sort, filter, pin, move, hide, reset, your own items via `header-menu`) and body-cell menus (`context-menu`), opened by right-click, the ContextMenu key or Shift+F10. Without it the browser's own menu shows. The standalone `<VGridMenu>` and the `actions-menu` renderer don't need it. | `contextMenu` `headerMenu` |  |
 | `paginationFeature` | Built-in pagination: the `pagination` prop and `v-model:page` / `v-model:page-size`. Pages the client rows, or asks the `dataSource` for pages. The pager loads on demand (own chunk). Not needed for the standalone `<VGridPagination>` component. | `pagination` `page` `pageSize` |  |
+| `rowGroupingFeature` | Row grouping: `v-model:group-by="['region', 'status']"` groups the rows by those columns into collapsible group rows with their value, row count and the aggregates of columns with an `aggregate`. Columns with `groupable: true` get Group by / Ungroup items in the header menu. Without it, `group-by` is ignored. | `groupsExpanded` `groupBy` | `groupable` `groupValue` |
 | `rowPinningFeature` | Pinned rows: `v-model:pinned-rows` (`{ top, bottom }` row keys), `pinned-top-rows` / `pinned-bottom-rows` (extra rows that aren't in the data) and the `pinRow()` method. Pinned rows stay in view (sticky) under the header or at the bottom while the body scrolls, and aren't filtered, sorted or paged. Without it, those options are ignored. | `pinnedTopRows` `pinnedBottomRows` `pinnedRows` |  |
 | `selectionFeature` | Row selection: the `selectable` prop (multi or single), `v-model:selected`, `selection-mode` (cascade through sub-grids), `is-row-selectable`, Space on a row and the select-all checkbox. | `selectable` `selectionMode` `isRowSelectable` `selected` |  |
 | `serverDataFeature` | Server data: the `dataSource` prop. The grid sends sort, filters and page to your function, cancels superseded requests, and shows loading, error and retry states. | `dataSource` |  |
@@ -357,6 +382,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `totals` | `boolean \| 'top' \| 'bottom'` | `false` | `aggregationFeature` | A totals row with each column's `aggregate` (aggregation feature): `true` / `'bottom'` sticks it to the bottom, `'top'` under the header. |
 | `totalsLabel` | `string` | `'Total'` | `aggregationFeature` | The totals row's label, in its first column (unless that column has an aggregate). |
 | `aggregates` | `Record<string, unknown>` |  | `aggregationFeature` | Totals row values by column key, instead of computing them (e.g. totals from a server). |
+| `groupsExpanded` | `boolean` | `false` | `rowGroupingFeature` | Groups start expanded (row grouping feature). Default: collapsed. |
 
 ## `v-model`s
 
@@ -370,6 +396,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `v-model:page` | `number` | `1` | `paginationFeature` | Current page (1-based); resets to 1 when sort or filters change. Needs the pagination feature. |
 | `v-model:pageSize` | `number` | `25` | `paginationFeature` | Rows per page. Needs the pagination feature. |
 | `v-model:pinnedRows` | `PinnedRowsState \| null` | `null` | `rowPinningFeature` | Top-level rows pinned above / below the body, by key: `{ top, bottom }`. Needs the row pinning feature. |
+| `v-model:groupBy` | `readonly string[] \| string \| null` | `null` | `rowGroupingFeature` | Column keys to group the rows by, outermost first (`['region', 'status']`, or one key). Group rows show the value, the row count and the columns' aggregates. Needs the row grouping feature. |
 
 ## Events
 
@@ -390,7 +417,8 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 |---|---|---|
 | `cell-<key>` | `{ row: T; value: unknown; rowKey: RowKey; rowIndex: number; depth: number; column: ColumnDef<T> }` | A column's body cell, replacing its renderer: `#cell-<key>`. |
 | `header-<key>` | `{ column: ColumnDef<T> }` | A column's header content: `#header-<key>`. |
-| `total-<key>` | `{ value: unknown; column: ColumnDef<T> }` | A column's cell in the totals row (aggregation feature). |
+| `total-<key>` | `{ value: unknown; column: ColumnDef<T>; group?: RowGroup<T> }` | A column's cell in the totals row and in group rows (aggregation, row grouping); `group` in group rows. |
+| `group-<key>` | `{ value: unknown; count: number; rows: readonly T[]; column: ColumnDef<T>; group: RowGroup<T> }` | The value of a group row grouped by this column (row grouping feature): `#group-<key>`. |
 | `detail` | `{ row: T; rowKey: RowKey; depth: number }` | Expandable detail row under a row: any content, even another grid. |
 | `empty` |  | Shown when there are no rows. |
 | `loading` |  | Shown while loading with no rows yet. |
@@ -406,7 +434,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `expandAll` | `void` |  | Expands every expandable row (sub-grids and detail rows) that passes the filters. |
 | `collapseAll` | `void` |  | Collapses every row. |
 | `setColumnState` | `void` |  | Replaces the column state (order, hidden, pins, widths), and saves it with `storage`. |
-| `patchLoadedRows` | `number` |  | Applies field patches to lazily loaded child rows (`loadSubRows`), which the grid caches and the; app can't reach. Top-level and synchronous `subRows` data belong to the app: update them there (assign fields on reactive rows, or use `patchRows`). Returns the number of rows patched. |
+| `patchLoadedRows` | `number` |  | Applies field patches to lazily loaded child rows (`loadSubRows`), which the grid caches and the app can't reach. Top-level and synchronous `subRows` data belong to the app: update them there (assign fields on reactive rows, or use `patchRows`). Returns the number of rows patched. |
 | `setFilters` | `void` | `filteringFeature` | Replaces the filter model (also persisted with `filter-storage`). |
 | `clearFilters` | `void` | `filteringFeature` | Removes every column filter and the search. |
 | `openFilter` | `void` | `filteringFeature` | Opens a column's filter popover. |
@@ -429,7 +457,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `minWidth` | `string` |  | Lower bound; combined with `width` into `minmax(minWidth, width)`, and the resize minimum. |
 | `maxWidth` | `string` | `columnResizingFeature` | Upper bound when the user resizes the column (column resizing feature). |
 | `resizable` | `boolean` | `columnResizingFeature` | Can the user resize this column (column resizing feature)? Default `true`. |
-| `group` | `string` | `columnGroupsFeature` | Header group label (column groups feature): adjacent visible columns with the same `group`; share one header cell above their own headers. |
+| `group` | `string` | `columnGroupsFeature` | Header group label (column groups feature): adjacent visible columns with the same `group` share one header cell above their own headers. |
 | `align` | `Align` |  | Cell and header alignment (default: the renderer's, e.g. `end` for numbers, else `start`). |
 | `sortable` | `boolean` | `sortingFeature` | A sort button in the header (sorting feature). Client sorting needs `sort-mode="client"`. |
 | `sortValue` | `(row: T) => unknown` | `sortingFeature` | The value client sorting compares (default: the renderer's sort value, else the cell value). |
@@ -447,7 +475,9 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `filterComponent` | `Component` | `filteringFeature` | Custom filter UI (popover), receives `modelValue` / emits `update:modelValue` with a filter. |
 | `searchable` | `boolean` | `filteringFeature` | Include in the quick search. Default `true` for visible columns. |
 | `flash` | `FlashMode` |  | Briefly highlight the cell when its value changes (overrides the grid's `flash` prop). `'direction'`: green when a number goes up, red when it goes down. |
-| `aggregate` | `AggregateName \| AggregateFn<T>` | `aggregationFeature` | The column's value in the totals row (aggregation feature): `'sum' \| 'avg' \| 'min' \| 'max'`; over the cell values (empty values skipped), `'count'` of rows, or a function of the values and; the rows. Shown with the column's renderer (`count` as a plain number). |
+| `aggregate` | `AggregateName \| AggregateFn<T>` | `aggregationFeature` | The column's value in the totals row (aggregation feature): `'sum' \| 'avg' \| 'min' \| 'max'` over the cell values (empty values skipped), `'count'` of rows, or a function of the values and the rows. Shown with the column's renderer (`count` as a plain number). |
+| `groupable` | `boolean` | `rowGroupingFeature` | The header menu offers Group by / Ungroup for this column (row grouping feature). Any column can be grouped through `v-model:group-by`; this only adds the menu items. |
+| `groupValue` | `(row: T) => unknown` | `rowGroupingFeature` | The value rows are grouped by (row grouping feature), e.g. `(row) => row.placedAt.slice(0, 7)` for months. Default: the cell value, shown with the column's renderer; a `groupValue` is shown as text (or with the `#group-<key>` slot). |
 | `cellClass` | `ClassValue \| ((row: T) => ClassValue)` |  | Extra classes for the column's body cells (or a function of the row). |
 | `headerClass` | `ClassValue` |  | Extra classes for the column's header cell. |
 
@@ -807,7 +837,7 @@ The first items of a list, with a “+N more” toggle. Emits `expand`. Align: `
 |---|---|---|
 | `rowHeight` | `number` | Fixed row height in px. |
 | `overscan`? | `number` | Extra rows rendered above/below the viewport. Default 6. |
-| `detailHeight`? | `number` | Estimated height in px of a detail row (`#detail` slot) until it has been rendered and; measured. Default 4 × `rowHeight`. Data rows always have `rowHeight`. |
+| `detailHeight`? | `number` | Estimated height in px of a detail row (`#detail` slot) until it has been rendered and measured. Default 4 × `rowHeight`. Data rows always have `rowHeight`. |
 
 ### `PinnedRowsState`
 
@@ -822,7 +852,7 @@ The first items of a list, with a “+N more” toggle. Emits `expand`. Align: `
 |---|---|---|
 | `order` | `string[]` | Column keys in display order (all known columns, visible or not). |
 | `hidden` | `string[]` | Keys of hidden columns. |
-| `pinned`? | `Record<string, PinSide \| null>` | Runtime pin overrides (e.g. from the header menu). `null` = explicitly unpinned; a missing key; falls back to the column's `pinned` definition. Optional so older persisted state still loads. |
+| `pinned`? | `Record<string, PinSide \| null>` | Runtime pin overrides (e.g. from the header menu). `null` = explicitly unpinned; a missing key falls back to the column's `pinned` definition. Optional so older persisted state still loads. |
 | `widths`? | `Record<string, string>` | Widths the user resized columns to (CSS lengths, e.g. `'240px'`). Column resizing feature. |
 
 ### `SortState`
@@ -837,7 +867,7 @@ The first items of a list, with a “+N more” toggle. Emits `expand`. Align: `
 | Field | Type | Description |
 |---|---|---|
 | `type`? | `FilterType` |  |
-| `options`? | `readonly FilterOption[] \| FilterOptionsLoader` | Choices for a `set` filter: a list, or a loader called with the search text (e.g. from a; backend — honour `signal`). Default: distinct values from the rows. |
+| `options`? | `readonly FilterOption[] \| FilterOptionsLoader` | Choices for a `set` filter: a list, or a loader called with the search text (e.g. from a backend — honour `signal`). Default: distinct values from the rows. |
 | `placeholder`? | `string` | Placeholder of the filter-row input. |
 
 ### `FilterOption`
@@ -1035,6 +1065,7 @@ an opt-in feature:
 | `columnGroupsFeature` | Grouped column headers: columns with the same `group` share a header cell in a sticky row above theirs; groups follow reordering, hiding, resizing and pinning (a pin boundary splits a group) |
 | `rowPinningFeature` | `v-model:pinned-rows` / `pinRow()`: rows that stay in view above or below the body, plus `pinned-top-rows` / `pinned-bottom-rows` for rows that aren't in the data |
 | `aggregationFeature` | Column `aggregate` (`sum`, `avg`, `min`, `max`, `count`, a function) and `totals`: a sticky totals row over the filtered rows |
+| `rowGroupingFeature` | `v-model:group-by`: rows grouped by one or more columns into collapsible group rows with the value, row count and aggregates; Group by / Ungroup in the header menu for `groupable` columns |
 
 ```ts
 // per grid
@@ -1068,39 +1099,40 @@ what you import.
   | File | What | gzip |
   |---|---|---|
   | `base.css` | Structure only: grid layout, subgrid, sticky header and pins, tree indent, popover placement, virtual rows, pinned rows, truncation | 2.2 kB |
-  | `theme.css` | The default look on top of `base.css`: `--vg-*` tokens, colours, dark mode, densities, spacing, borders, typography, shadows, animation | 3.2 kB |
-  | `core.css` | `base.css` + `theme.css` | 5.0 kB |
+  | `theme.css` | The default look on top of `base.css`: `--vg-*` tokens, colours, dark mode, densities, spacing, borders, typography, shadows, animation | 3.3 kB |
+  | `core.css` | `base.css` + `theme.css` | 5.1 kB |
   | `renderers.css` | Styles for the cell renderers (other than text); uses the theme's tokens | 2.2 kB |
-  | `style.css` | All of the above | 6.5 kB |
+  | `style.css` | All of the above | 6.6 kB |
 
   For a fully custom look, import only `base.css` (and `renderers.css` if you use renderers)
   and style the `.vg-*` classes yourself. See [Theming](#theming).
 
 | Import (minified / gzip, Vue excluded) | Initial chunk |
 |---|---|
-| `VGrid` (no features) | 37.2 kB / 13.2 kB |
-| `VGrid` + `sortingFeature` | 38.0 kB / 13.5 kB |
-| `VGrid` + `filteringFeature` | 40.9 kB / 14.5 kB |
-| `VGrid` + `serverDataFeature` | 38.6 kB / 13.8 kB |
-| `VGrid` + `paginationFeature` | 37.4 kB / 13.2 kB |
-| `VGrid` + `selectionFeature` | 39.6 kB / 14.0 kB |
-| `VGrid` + `subGridsFeature` | 39.5 kB / 14.0 kB |
-| `VGrid` + `menusFeature` | 47.7 kB / 16.8 kB |
-| `VGrid` + `columnReorderFeature` | 40.9 kB / 14.5 kB |
-| `VGrid` + `columnPinningFeature` | 39.5 kB / 14.1 kB |
-| `VGrid` + `virtualScrollingFeature` | 43.0 kB / 15.5 kB |
-| `VGrid` + `columnVisibilityFeature` | 37.4 kB / 13.2 kB |
-| `VGrid` + `keyboardNavigationFeature` | 39.6 kB / 14.0 kB |
-| `VGrid` + `columnResizingFeature` | 40.1 kB / 14.3 kB |
-| `VGrid` + `columnGroupsFeature` | 38.8 kB / 13.8 kB |
-| `VGrid` + `rowPinningFeature` | 42.4 kB / 14.7 kB |
-| `VGrid` + `aggregationFeature` | 42.7 kB / 14.8 kB |
-| `VGrid` + `allFeatures` + `VGridSearch` | 81.0 kB / 28.1 kB |
-| `VGrid` + `currencyRenderer` | 38.5 kB / 13.6 kB |
-| `VGrid` + `VGridPagination` + `VGridColumnMenu` | 41.6 kB / 14.7 kB |
-| `sortRows` only | 0.7 kB / 0.5 kB |
-| everything | 124.1 kB / 40.4 kB |
-| `validateGridConfig` (`@nocopypaste/vue-grid/agent`, never in an app bundle) | 57.5 kB / 15.4 kB |
+| `VGrid` (no features) | 39.1 kB / 13.8 kB |
+| `VGrid` + `sortingFeature` | 39.9 kB / 14.1 kB |
+| `VGrid` + `filteringFeature` | 42.9 kB / 15.1 kB |
+| `VGrid` + `serverDataFeature` | 40.5 kB / 14.4 kB |
+| `VGrid` + `paginationFeature` | 39.2 kB / 13.9 kB |
+| `VGrid` + `selectionFeature` | 41.5 kB / 14.7 kB |
+| `VGrid` + `subGridsFeature` | 41.4 kB / 14.7 kB |
+| `VGrid` + `menusFeature` | 50.2 kB / 17.6 kB |
+| `VGrid` + `columnReorderFeature` | 42.8 kB / 15.1 kB |
+| `VGrid` + `columnPinningFeature` | 41.4 kB / 14.8 kB |
+| `VGrid` + `virtualScrollingFeature` | 45.1 kB / 16.2 kB |
+| `VGrid` + `columnVisibilityFeature` | 39.3 kB / 13.9 kB |
+| `VGrid` + `keyboardNavigationFeature` | 41.5 kB / 14.7 kB |
+| `VGrid` + `columnResizingFeature` | 42.1 kB / 14.9 kB |
+| `VGrid` + `columnGroupsFeature` | 40.7 kB / 14.4 kB |
+| `VGrid` + `rowPinningFeature` | 44.4 kB / 15.3 kB |
+| `VGrid` + `aggregationFeature` | 44.7 kB / 15.5 kB |
+| `VGrid` + `rowGroupingFeature` | 48.8 kB / 16.9 kB |
+| `VGrid` + `allFeatures` + `VGridSearch` | 93.0 kB / 32.0 kB |
+| `VGrid` + `currencyRenderer` | 40.4 kB / 14.2 kB |
+| `VGrid` + `VGridPagination` + `VGridColumnMenu` | 43.5 kB / 15.4 kB |
+| `sortRows` only | 0.8 kB / 0.4 kB |
+| everything | 137.2 kB / 44.6 kB |
+| `validateGridConfig` (`@nocopypaste/vue-grid/agent`, never in an app bundle) | 61.1 kB / 16.4 kB |
 
 With `filteringFeature`, the filter popover body and the filter-row editors are **on-demand
 chunks**: they load the first time a popover opens or `filter-row` is on. With
@@ -1144,6 +1176,8 @@ chunks**: they load the first time a popover opens or `filter-row` is on. With
 | `totals` | `boolean \| 'top' \| 'bottom'` | `false` | A totals row with each column's `aggregate`; `true` = `'bottom'`. Needs `aggregationFeature` (as do the next two). |
 | `totalsLabel` | `string` | `'Total'` | Shown in the totals row's first column (unless that column has an aggregate). |
 | `aggregates` | `Record<string, unknown>` | — | Totals by column key, used instead of computing them (e.g. from a server). |
+| `v-model:groupBy` | `string[] \| string \| null` | `null` | Column keys to group the rows by, outermost first. Needs `rowGroupingFeature` (as does the next one). See [Row grouping](#row-grouping). |
+| `groupsExpanded` | `boolean` | `false` | Groups start expanded. |
 | `rowClickable` | `boolean` | `false` | Pointer cursor; `row-click` is always emitted. |
 | `rowClass` | `(row, index) => ClassValue` | — | |
 | `highlightedRows` | `RowKey[]` | — | |
@@ -1171,7 +1205,8 @@ Clicks on links, buttons and inputs inside a cell never trigger `row-click`.
 ### Slots
 
 `cell-<key>` (`{ row, value, rowKey, rowIndex, depth, column }`) · `header-<key>` (`{ column }`) ·
-`total-<key>` (`{ value, column }`, a cell of the totals row) · `detail` (`{ row, rowKey, depth }`) ·
+`total-<key>` (`{ value, column, group? }`, a cell of the totals row or a group row) ·
+`group-<key>` (`{ value, count, rows, column, group }`, the value of a group row) · `detail` (`{ row, rowKey, depth }`) ·
 `toolbar` (`{ columns, columnState, setColumnState, filters, setFilters, clearFilters, activeFilterCount }`) ·
 `empty` · `loading` · `sub-rows-loading` (`{ row }`).
 
@@ -1244,7 +1279,9 @@ animate on the compositor (GPU): a busy live feed costs the main thread about a 
   filterFn?: (row, filter) => boolean            // replaces the built-in matching for this column
   filterComponent?: Component    // custom popover body: props { modelValue, column }, emits update:modelValue
   searchable?: boolean           // included in the quick search (default true for visible columns)
-  aggregate?: 'sum' | 'avg' | 'min' | 'max' | 'count' | ((values, rows) => unknown)  // totals row (aggregationFeature)
+  aggregate?: 'sum' | 'avg' | 'min' | 'max' | 'count' | ((values, rows) => unknown)  // totals row (aggregationFeature) and group rows
+  groupable?: boolean            // Group by / Ungroup in the header menu (rowGroupingFeature)
+  groupValue?: (row) => unknown  // what rows are grouped by (default: the cell value), e.g. the month of a date
   cellClass?: ClassValue | ((row) => ClassValue); headerClass?: ClassValue
 }
 ```
@@ -1520,6 +1557,55 @@ moves through them like any row, and a focused row scrolls clear of them (`scrol
 With virtual scrolling, `aria-rowindex` / `aria-rowcount` count them. Style them with
 `.vg-pinned-top`, `.vg-pinned-bottom`, `.vg-row-pinned`, `.vg-row-total` and the
 `--vg-total-row-bg` / `--vg-total-row-font-weight` tokens.
+
+## Row grouping
+
+`rowGroupingFeature` groups the rows by one or more columns. Each group is a row with the grouped
+column's name, the value, the number of rows and each column's `aggregate` over the group; expand
+it to see its sub-groups or, at the last level, its rows.
+
+```vue
+<script setup lang="ts">
+const columns = [
+  col({ key: 'player', field: 'player.name' }),
+  col({ key: 'city', field: 'player.city', groupable: true }),
+  col({ key: 'status', renderer: statusRenderer, groupable: true }),
+  col({ key: 'stake', renderer: currencyRenderer, aggregate: 'sum' }),
+  col({ key: 'placedAt', renderer: dateRenderer, groupable: true, groupValue: (b) => b.placedAt.slice(0, 7) }),
+]
+const groupBy = ref(['status', 'city'])
+</script>
+
+<template>
+  <VGrid v-model:group-by="groupBy" :rows="bets" :columns="columns" row-key="id" totals
+         :features="[rowGroupingFeature, aggregationFeature]" />
+</template>
+```
+
+- **What a group shows.** The first column holds the expander, the grouped column's header, the
+  value (with that column's renderer, so a status groups under its badge; a `groupValue` shows as
+  text) and the row count. That cell runs across the columns after it up to the first one with
+  an `aggregate`; those show the group's own aggregate. The `group-<key>` slot renders the value
+  yourself (`{ value, count, rows, column, group }`); `total-<key>` also renders group cells
+  (with `group` set). Empty values form a `(blank)` group, last.
+- **Order, filters, pages.** Groups follow the filters and are ordered by value, descending when
+  the grid is sorted descending by the grouped column; sorting by any other column orders the
+  rows inside each group. Pagination pages the top-level groups. With server data, the rows of
+  the current page are grouped.
+- **Expanding.** Groups start collapsed (`groups-expanded` opens them). Click a group's label or its
+  arrow, or use →/← with keyboard navigation; `expandAll()` / `collapseAll()` include groups.
+  Changing `group-by` starts over.
+- **Selection.** A group's checkbox selects or clears every row in it, and shows partly
+  selected groups as indeterminate.
+- **Header menu.** Columns with `groupable: true` get *Group by* (adds a level) / *Ungroup*, and
+  *Ungroup all*. Any column can be grouped through `v-model:group-by`.
+- **Virtual scrolling.** Group rows are part of the virtual layout: thousands of rows in a few
+  groups render only what's in view.
+
+Style group rows with `.vg-rowgroup` (and `[data-group-level]`), `.vg-rowgroup-name`,
+`.vg-rowgroup-value`, `.vg-rowgroup-count` and the `--vg-rowgroup-bg` /
+`--vg-rowgroup-font-weight` tokens. `groupRows()` and `isRowGroup()` are exported for using the
+same grouping elsewhere.
 
 ## Virtual scrolling
 

@@ -175,6 +175,17 @@ export interface ColumnDef<T = any, R extends RendererRef = RendererName> {
    * the rows. Shown with the column's renderer (`count` as a plain number).
    */
   aggregate?: AggregateName | AggregateFn<T>
+  /**
+   * The header menu offers Group by / Ungroup for this column (row grouping feature). Any column can
+   * be grouped through `v-model:group-by`; this only adds the menu items.
+   */
+  groupable?: boolean
+  /**
+   * The value rows are grouped by (row grouping feature), e.g. `(row) => row.placedAt.slice(0, 7)`
+   * for months. Default: the cell value, shown with the column's renderer; a `groupValue` is shown
+   * as text (or with the `#group-<key>` slot).
+   */
+  groupValue?: (row: T) => unknown
   /** Extra classes for the column's body cells (or a function of the row). */
   cellClass?: ClassValue | ((row: T) => ClassValue)
   /** Extra classes for the column's header cell. */
@@ -425,7 +436,14 @@ export interface AggregationFeature {
   /** The sticky section the totals row renders in. */
   PinnedRows: Component
 }
+export interface RowGroupingFeature {
+  readonly feature: 'rowGrouping'
+  useRowGrouping: typeof import('./composables/useRowGrouping').useRowGrouping
+  /** The cells of a group row. */
+  GroupCells: Component
+}
 export type GridFeature =
+  | RowGroupingFeature
   | AggregationFeature
   | RowPinningFeature
   | ColumnGroupsFeature

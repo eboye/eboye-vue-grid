@@ -63,7 +63,10 @@ export interface GridContext {
     values: ComputedRef<Record<string, unknown>>
     label: ComputedRef<string>
   }
+  /** Row grouping feature, with rows grouped: renders the cells of group rows. */
+  grouping?: { GroupCells: Component; isGroup(row: any): boolean }
   // expansion
+  /** Rows nest (sub-grids, or grouped rows): the first column has the expander gutter. */
   treeMode: ComputedRef<boolean>
   hasDetail: ComputedRef<boolean>
   canExpand(row: any): boolean

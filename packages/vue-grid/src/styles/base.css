@@ -156,6 +156,19 @@
   }
   .vg-expander-icon { width: 1rem; height: 1rem; }
   .vg-expander[aria-expanded='true'] .vg-expander-icon { transform: rotate(90deg); }
+  /* Row grouping: the label cell toggles its group; value and count sit side by side. */
+  .vg-rowgroup-cell { cursor: pointer; }
+  .vg-rowgroup-label {
+    gap: 0.5rem;
+    white-space: nowrap;
+  }
+  .vg-rowgroup-value {
+    display: inline-flex;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .vg-rowgroup-count { flex: none; }
   .vg-subgrid {
     grid-column: 1 / -1;
     display: grid;

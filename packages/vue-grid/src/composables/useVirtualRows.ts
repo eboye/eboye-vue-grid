@@ -9,6 +9,7 @@ import {
   type ComputedRef,
   type Ref,
 } from 'vue'
+import { isRowGroup } from '../core/grouping'
 import { buildLayout, locateRow, visibleSpan, type LevelLayout } from '../core/virtual'
 import type { RowKey, VirtualOptions } from '../types'
 import type { SubRowEntry } from './useSubRows'
@@ -217,7 +218,8 @@ export function useVirtualRows<T>(opts: VirtualRowsOptions<T>) {
       rowHeight: v.rowHeight,
       prepare: opts.preparer(),
       isExpanded: (row) => expandedKeys.has(rawKey(row)) && expandable(row),
-      detailHeight: (_row, k) => (detail ? (measured.get(`d:${String(k)}`) ?? detailEstimate) : 0),
+      // group rows (row grouping) have no detail row
+      detailHeight: (row, k) => (detail && !isRowGroup(row) ? (measured.get(`d:${String(k)}`) ?? detailEstimate) : 0),
       subRows: (row) => {
         if (!tree) return undefined
         const state = tree.state(row)

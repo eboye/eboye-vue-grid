@@ -15,7 +15,7 @@ JSON Schema. The `@nocopypaste/vue-grid-mcp` MCP server serves all of this as to
 1. **Import the CSS once**: `import '@nocopypaste/vue-grid/style.css'` (in `main.ts`). Without it the
    grid has no layout.
 2. **Register every feature an option needs.** `sortable`, `filterable`, `pagination`,
-   `selectable`, `sub-rows`, `virtual`, `pinned`, `hidden`, `group`, `aggregate`, `totals`,
+   `selectable`, `sub-rows`, `virtual`, `pinned`, `hidden`, `group`, `aggregate`, `totals`, `group-by`,
    `pinned-rows`, `context-menu`… each needs its feature (table below). Without it the option
    **silently does nothing** (dev builds log a `[vue-grid]` warning naming the feature). Per grid:
    `:features="[sortingFeature, filteringFeature]"`; app-wide: `createVueGrid({ features: [...] })`;
@@ -62,6 +62,7 @@ JSON Schema. The `@nocopypaste/vue-grid-mcp` MCP server serves all of this as to
 | Grouped headers ("Q1" over three columns) | `columnGroupsFeature` | column `group: 'Q1'` |
 | Rows that stay on top / bottom | `rowPinningFeature` | `v-model:pinned-rows="{ top: [id], bottom: [] }"`, `pinRow()`, `pinned-top-rows` |
 | A totals row (sum, avg, …) | `aggregationFeature` | column `aggregate: 'sum' \| 'avg' \| 'min' \| 'max' \| 'count' \| fn`; `totals` (or `'top'`) |
+| Group rows by a column ("by status, then city") | `rowGroupingFeature` | `v-model:group-by="['status', 'city']"`, `groups-expanded`; column `groupable: true` (header menu), `groupValue: (row) => …` (e.g. month); `aggregate` shows per group |
 | Arrow-key navigation (ARIA grid) | `keyboardNavigationFeature` | — |
 | Remember column layout | — | `storage="orders-grid"` (localStorage key) |
 | Cell type (money, date, badge, link, …) | — | `renderer: currencyRenderer` etc. (list below) |
@@ -214,6 +215,27 @@ const pinned = ref<PinnedRowsState>({ top: [42] })
 <!-- grid.value.pinRow(key, 'top' | 'bottom' | null) from your own button or context menu -->
 ```
 
+### Row grouping
+
+```ts
+const columns = [
+  col({ key: 'customer', field: 'customer.name' }),
+  col({ key: 'status', renderer: statusRenderer, groupable: true }),
+  col({ key: 'placedAt', renderer: dateRenderer, groupable: true, groupValue: (o) => o.placedAt.slice(0, 7) }),
+  col({ key: 'total', renderer: currencyRenderer, aggregate: 'sum' }), // shown in every group row
+]
+const groupBy = ref(['status'])
+```
+
+```vue
+<VGrid v-model:group-by="groupBy" :rows="orders" :columns="columns" row-key="id" sort-mode="client"
+       :features="[rowGroupingFeature, sortingFeature, menusFeature]" style="height: 480px" />
+```
+
+Groups start collapsed (`groups-expanded` to open them); the group label sits in the first
+visible column, so keep that column wide enough (or give the next columns no `aggregate`, so the
+label runs across them). `#group-<key>="{ value, count }"` renders a group's value yourself.
+
 ### Row actions and context menu
 
 ```vue
@@ -283,3 +305,5 @@ Tokens: `--vg-*` (see README → Theming). Dark mode follows `color-scheme`. Den
 - Virtual grid with variable row content → rows must share `rowHeight`; use `lines`/`ellipsis` to keep them uniform.
 - `dataSource` plus `rows` → `rows` is ignored with a data source.
 - A nested child with different columns → not a sub-grid; use `#detail` with another `<VGrid>`.
+- One group per date or timestamp → group by a coarser value: `groupValue: (row) => row.date.slice(0, 7)`.
+- `group-by` names a field, not a column → it takes column `key`s; add a (hidden) column for it.

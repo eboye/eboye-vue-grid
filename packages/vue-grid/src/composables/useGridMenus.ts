@@ -44,6 +44,14 @@ export interface GridMenusOptions<T> {
   headerMenu: () => boolean | ((ctx: HeaderMenuContext<T>) => MenuItem[] | null | undefined)
   onContextAction: (event: ContextActionEvent<T>) => void
   onHeaderAction: (event: HeaderActionEvent<T>) => void
+  /** Group by / Ungroup items; only with the row grouping feature. */
+  grouping?: {
+    can(column: ColumnDef<T>): boolean
+    isGrouped(key: string): boolean
+    toggle(key: string): void
+    clear(): void
+    any(): boolean
+  }
   filters?: {
     isActive(key: string): boolean
     anyActive(): boolean
@@ -166,6 +174,12 @@ export function useGridMenus<T>(opts: GridMenusOptions<T>) {
       if (opts.filters.anyActive()) out.push({ name: 'vg:filter-clear-all', label: 'Clear all filters' })
       out.push(SEPARATOR)
     }
+    if (opts.grouping?.can(column)) {
+      const grouped = opts.grouping.isGrouped(column.key)
+      out.push(grouped ? { name: 'vg:ungroup', label: 'Ungroup' } : { name: 'vg:group', label: `Group by ${column.header ?? column.key}` })
+      if (opts.grouping.any()) out.push({ name: 'vg:ungroup-all', label: 'Ungroup all' })
+      out.push(SEPARATOR)
+    }
     if (opts.pinnable(column)) {
       const pin = effectivePin(column, state)
       out.push(
@@ -255,6 +269,13 @@ export function useGridMenus<T>(opts: GridMenusOptions<T>) {
         break
       case 'vg:filter-clear-all':
         opts.filters?.clearAll()
+        break
+      case 'vg:group':
+      case 'vg:ungroup':
+        opts.grouping?.toggle(column.key)
+        break
+      case 'vg:ungroup-all':
+        opts.grouping?.clear()
         break
       case 'vg:reset':
         opts.setColumnState(normalizeColumnState(columns, null))

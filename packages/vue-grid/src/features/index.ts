@@ -9,6 +9,7 @@ import { filteringFeature } from './filtering'
 import { keyboardNavigationFeature } from './keyboardNavigation'
 import { menusFeature } from './menus'
 import { paginationFeature } from './pagination'
+import { rowGroupingFeature } from './rowGrouping'
 import { rowPinningFeature } from './rowPinning'
 import { selectionFeature } from './selection'
 import { serverDataFeature } from './serverData'
@@ -27,6 +28,7 @@ export {
   keyboardNavigationFeature,
   menusFeature,
   paginationFeature,
+  rowGroupingFeature,
   rowPinningFeature,
   selectionFeature,
   serverDataFeature,
@@ -53,4 +55,5 @@ export const allFeatures: readonly GridFeature[] = [
   columnGroupsFeature,
   rowPinningFeature,
   aggregationFeature,
+  rowGroupingFeature,
 ]

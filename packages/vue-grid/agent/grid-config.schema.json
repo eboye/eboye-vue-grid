@@ -35,6 +35,7 @@
           "keyboardNavigationFeature",
           "menusFeature",
           "paginationFeature",
+          "rowGroupingFeature",
           "rowPinningFeature",
           "selectionFeature",
           "serverDataFeature",
@@ -162,7 +163,7 @@
             },
             "detailHeight": {
               "type": "number",
-              "description": "Estimated height in px of a detail row (`#detail` slot) until it has been rendered and; measured. Default 4 × `rowHeight`. Data rows always have `rowHeight`."
+              "description": "Estimated height in px of a detail row (`#detail` slot) until it has been rendered and measured. Default 4 × `rowHeight`. Data rows always have `rowHeight`."
             }
           },
           "required": [
@@ -258,6 +259,10 @@
       "type": "object",
       "description": "Totals row values by column key, instead of computing them (e.g. totals from a server)."
     },
+    "groupsExpanded": {
+      "type": "boolean",
+      "description": "Groups start expanded (row grouping feature). Default: collapsed."
+    },
     "sort": {
       "anyOf": [
         {
@@ -301,7 +306,7 @@
             },
             "pinned": {
               "type": "object",
-              "description": "Runtime pin overrides (e.g. from the header menu). `null` = explicitly unpinned; a missing key; falls back to the column's `pinned` definition. Optional so older persisted state still loads."
+              "description": "Runtime pin overrides (e.g. from the header menu). `null` = explicitly unpinned; a missing key falls back to the column's `pinned` definition. Optional so older persisted state still loads."
             },
             "widths": {
               "type": "object",
@@ -383,6 +388,23 @@
         }
       ],
       "description": "Top-level rows pinned above / below the body, by key: `{ top, bottom }`. Needs the row pinning feature."
+    },
+    "groupBy": {
+      "anyOf": [
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Column keys to group the rows by, outermost first (`['region', 'status']`, or one key). Group rows show the value, the row count and the columns' aggregates. Needs the row grouping feature."
     }
   },
   "required": [
@@ -478,7 +500,7 @@
         },
         "group": {
           "type": "string",
-          "description": "Header group label (column groups feature): adjacent visible columns with the same `group`; share one header cell above their own headers."
+          "description": "Header group label (column groups feature): adjacent visible columns with the same `group` share one header cell above their own headers."
         },
         "align": {
           "enum": [
@@ -553,7 +575,7 @@
                   ]
                 },
                 "options": {
-                  "description": "Choices for a `set` filter: a list, or a loader called with the search text (e.g. from a; backend — honour `signal`). Default: distinct values from the rows."
+                  "description": "Choices for a `set` filter: a list, or a loader called with the search text (e.g. from a backend — honour `signal`). Default: distinct values from the rows."
                 },
                 "placeholder": {
                   "type": "string",
@@ -591,7 +613,14 @@
           "description": "Briefly highlight the cell when its value changes (overrides the grid's `flash` prop). `'direction'`: green when a number goes up, red when it goes down."
         },
         "aggregate": {
-          "description": "The column's value in the totals row (aggregation feature): `'sum' | 'avg' | 'min' | 'max'`; over the cell values (empty values skipped), `'count'` of rows, or a function of the values and; the rows. Shown with the column's renderer (`count` as a plain number)."
+          "description": "The column's value in the totals row (aggregation feature): `'sum' | 'avg' | 'min' | 'max'` over the cell values (empty values skipped), `'count'` of rows, or a function of the values and the rows. Shown with the column's renderer (`count` as a plain number)."
+        },
+        "groupable": {
+          "type": "boolean",
+          "description": "The header menu offers Group by / Ungroup for this column (row grouping feature). Any column can be grouped through `v-model:group-by`; this only adds the menu items."
+        },
+        "groupValue": {
+          "description": "The value rows are grouped by (row grouping feature), e.g. `(row) => row.placedAt.slice(0, 7)` for months. Default: the cell value, shown with the column's renderer; a `groupValue` is shown as text (or with the `#group-<key>` slot)."
         },
         "cellClass": {
           "description": "Extra classes for the column's body cells (or a function of the row)."

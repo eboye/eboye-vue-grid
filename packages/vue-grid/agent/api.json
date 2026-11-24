@@ -277,6 +277,14 @@
       "required": false,
       "description": "Totals row values by column key, instead of computing them (e.g. totals from a server).",
       "feature": "aggregation"
+    },
+    {
+      "name": "groupsExpanded",
+      "type": "boolean",
+      "required": false,
+      "default": "false",
+      "description": "Groups start expanded (row grouping feature). Default: collapsed.",
+      "feature": "rowGrouping"
     }
   ],
   "models": [
@@ -332,6 +340,13 @@
       "default": "null",
       "description": "Top-level rows pinned above / below the body, by key: `{ top, bottom }`. Needs the row pinning feature.",
       "feature": "rowPinning"
+    },
+    {
+      "name": "groupBy",
+      "type": "readonly string[] | string | null",
+      "default": "null",
+      "description": "Column keys to group the rows by, outermost first (`['region', 'status']`, or one key). Group rows show the value, the row count and the columns' aggregates. Needs the row grouping feature.",
+      "feature": "rowGrouping"
     }
   ],
   "events": [
@@ -389,8 +404,13 @@
     },
     {
       "name": "total-<key>",
-      "scope": "{ value: unknown; column: ColumnDef<T> }",
-      "description": "A column's cell in the totals row (aggregation feature)."
+      "scope": "{ value: unknown; column: ColumnDef<T>; group?: RowGroup<T> }",
+      "description": "A column's cell in the totals row and in group rows (aggregation, row grouping); `group` in group rows."
+    },
+    {
+      "name": "group-<key>",
+      "scope": "{ value: unknown; count: number; rows: readonly T[]; column: ColumnDef<T>; group: RowGroup<T> }",
+      "description": "The value of a group row grouped by this column (row grouping feature): `#group-<key>`."
     },
     {
       "name": "detail",
@@ -453,7 +473,7 @@
       "name": "patchLoadedRows",
       "type": "number",
       "required": true,
-      "description": "Applies field patches to lazily loaded child rows (`loadSubRows`), which the grid caches and the; app can't reach. Top-level and synchronous `subRows` data belong to the app: update them there (assign fields on reactive rows, or use `patchRows`). Returns the number of rows patched."
+      "description": "Applies field patches to lazily loaded child rows (`loadSubRows`), which the grid caches and the app can't reach. Top-level and synchronous `subRows` data belong to the app: update them there (assign fields on reactive rows, or use `patchRows`). Returns the number of rows patched."
     },
     {
       "name": "setFilters",
@@ -570,7 +590,7 @@
       "name": "group",
       "type": "string",
       "required": false,
-      "description": "Header group label (column groups feature): adjacent visible columns with the same `group`; share one header cell above their own headers.",
+      "description": "Header group label (column groups feature): adjacent visible columns with the same `group` share one header cell above their own headers.",
       "feature": "columnGroups"
     },
     {
@@ -693,8 +713,22 @@
       "name": "aggregate",
       "type": "AggregateName | AggregateFn<T>",
       "required": false,
-      "description": "The column's value in the totals row (aggregation feature): `'sum' | 'avg' | 'min' | 'max'`; over the cell values (empty values skipped), `'count'` of rows, or a function of the values and; the rows. Shown with the column's renderer (`count` as a plain number).",
+      "description": "The column's value in the totals row (aggregation feature): `'sum' | 'avg' | 'min' | 'max'` over the cell values (empty values skipped), `'count'` of rows, or a function of the values and the rows. Shown with the column's renderer (`count` as a plain number).",
       "feature": "aggregation"
+    },
+    {
+      "name": "groupable",
+      "type": "boolean",
+      "required": false,
+      "description": "The header menu offers Group by / Ungroup for this column (row grouping feature). Any column can be grouped through `v-model:group-by`; this only adds the menu items.",
+      "feature": "rowGrouping"
+    },
+    {
+      "name": "groupValue",
+      "type": "(row: T) => unknown",
+      "required": false,
+      "description": "The value rows are grouped by (row grouping feature), e.g. `(row) => row.placedAt.slice(0, 7)` for months. Default: the cell value, shown with the column's renderer; a `groupValue` is shown as text (or with the `#group-<key>` slot).",
+      "feature": "rowGrouping"
     },
     {
       "name": "cellClass",
@@ -818,6 +852,19 @@
         "pageSize"
       ],
       "columnOptions": []
+    },
+    {
+      "id": "rowGrouping",
+      "export": "rowGroupingFeature",
+      "description": "Row grouping: `v-model:group-by=\"['region', 'status']\"` groups the rows by those columns into collapsible group rows with their value, row count and the aggregates of columns with an `aggregate`. Columns with `groupable: true` get Group by / Ungroup items in the header menu. Without it, `group-by` is ignored.",
+      "props": [
+        "groupsExpanded",
+        "groupBy"
+      ],
+      "columnOptions": [
+        "groupable",
+        "groupValue"
+      ]
     },
     {
       "id": "rowPinning",
@@ -2011,7 +2058,7 @@
         "name": "detailHeight",
         "type": "number",
         "required": false,
-        "description": "Estimated height in px of a detail row (`#detail` slot) until it has been rendered and; measured. Default 4 × `rowHeight`. Data rows always have `rowHeight`."
+        "description": "Estimated height in px of a detail row (`#detail` slot) until it has been rendered and measured. Default 4 × `rowHeight`. Data rows always have `rowHeight`."
       }
     ],
     "PinnedRowsState": [
@@ -2045,7 +2092,7 @@
         "name": "pinned",
         "type": "Record<string, PinSide | null>",
         "required": false,
-        "description": "Runtime pin overrides (e.g. from the header menu). `null` = explicitly unpinned; a missing key; falls back to the column's `pinned` definition. Optional so older persisted state still loads."
+        "description": "Runtime pin overrides (e.g. from the header menu). `null` = explicitly unpinned; a missing key falls back to the column's `pinned` definition. Optional so older persisted state still loads."
       },
       {
         "name": "widths",
@@ -2079,7 +2126,7 @@
         "name": "options",
         "type": "readonly FilterOption[] | FilterOptionsLoader",
         "required": false,
-        "description": "Choices for a `set` filter: a list, or a loader called with the search text (e.g. from a; backend — honour `signal`). Default: distinct values from the rows."
+        "description": "Choices for a `set` filter: a list, or a loader called with the search text (e.g. from a backend — honour `signal`). Default: distinct values from the rows."
       },
       {
         "name": "placeholder",

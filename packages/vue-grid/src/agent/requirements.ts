@@ -20,6 +20,7 @@ export type FeatureId =
   | 'columnGroups'
   | 'rowPinning'
   | 'aggregation'
+  | 'rowGrouping'
 
 /** Grid props (and `v-model`s) that need a feature. */
 export const propFeatures: Readonly<Record<string, FeatureId>> = {
@@ -48,6 +49,8 @@ export const propFeatures: Readonly<Record<string, FeatureId>> = {
   totals: 'aggregation',
   totalsLabel: 'aggregation',
   aggregates: 'aggregation',
+  groupBy: 'rowGrouping',
+  groupsExpanded: 'rowGrouping',
 }
 
 /** Column options that need a feature. */
@@ -70,6 +73,8 @@ export const columnFeatures: Readonly<Record<string, FeatureId>> = {
   maxWidth: 'columnResizing',
   group: 'columnGroups',
   aggregate: 'aggregation',
+  groupable: 'rowGrouping',
+  groupValue: 'rowGrouping',
 }
 
 /**

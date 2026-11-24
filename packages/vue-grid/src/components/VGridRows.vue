@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, watchEffect } from 'vue'
+import type { RowGroup } from '../core/grouping'
 import type { LevelLayout } from '../core/virtual'
 import { useInternalGrid } from '../internal/context'
 import { RenderSlot } from '../internal/RenderSlot'
@@ -48,6 +49,7 @@ const items = computed(() => {
     const at = first + i
     return {
       row,
+      group: grid.grouping?.isGroup(row) ? (row as RowGroup) : undefined,
       key,
       index: props.indexOffset + at,
       expandable,
@@ -79,34 +81,39 @@ watchEffect(() => {
         'vg-row',
         {
           'vg-row-selected': item.selected,
-          'vg-row-highlighted': grid.isHighlighted(item.key),
-          'vg-row-clickable': grid.rowClickable.value,
+          'vg-row-highlighted': !item.group && grid.isHighlighted(item.key),
+          'vg-row-clickable': !item.group && grid.rowClickable.value,
           'vg-row-expanded': item.expanded,
+          'vg-rowgroup': item.group,
         },
-        grid.rowClass(item.row, item.index),
+        item.group ? undefined : grid.rowClass(item.row, item.index),
         grid.ui.value.row,
       ]"
       :data-row-key="String(item.key)"
       :data-depth="depth"
+      :data-group-level="item.group?.level"
       :style="depth ? { '--vg-depth': depth } : undefined"
       :aria-level="grid.keyboardNav && grid.treeMode.value ? depth + 1 : undefined"
       :aria-expanded="item.expandable ? item.expanded : undefined"
       :aria-selected="grid.keyboardNav ? item.selected : undefined"
       :aria-rowindex="item.virtual ? item.virtual.ariaIndex + 1 + grid.headerRows.value + grid.pinnedTopCount.value : undefined"
     >
-      <VGridCell
-        v-for="column in grid.columns.value"
-        :key="column.key"
-        :row="item.row"
-        :row-key="item.key"
-        :row-index="item.index"
-        :depth="depth"
-        :column="column"
-      />
+      <component :is="grid.grouping?.GroupCells" v-if="item.group" :group="item.group" :depth="depth" />
+      <template v-else>
+        <VGridCell
+          v-for="column in grid.columns.value"
+          :key="column.key"
+          :row="item.row"
+          :row-key="item.key"
+          :row-index="item.index"
+          :depth="depth"
+          :column="column"
+        />
+      </template>
     </div>
 
     <template v-if="item.expanded">
-      <div v-if="grid.hasDetail.value" role="row" class="vg-detail-row" :data-detail-for="String(item.key)">
+      <div v-if="grid.hasDetail.value && !item.group" role="row" class="vg-detail-row" :data-detail-for="String(item.key)">
         <div
           :ref="layout ? virtual?.measureDetail(item.key) : undefined"
           :role="grid.cellRole"
@@ -159,7 +166,12 @@ watchEffect(() => {
           :offset="item.virtual.childOffset"
           :aria-base="item.virtual.childAriaBase"
         />
-        <VGridRows v-else-if="!layout && grid.children(item.row)?.length" :rows="grid.children(item.row)!" :depth="depth + 1" />
+        <VGridRows
+          v-else-if="!layout && grid.children(item.row)?.length"
+          :rows="grid.children(item.row)!"
+          :depth="depth + 1"
+          :presorted="!!item.group"
+        />
       </div>
     </template>
   </template>

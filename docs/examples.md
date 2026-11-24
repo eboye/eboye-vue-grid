@@ -50,6 +50,8 @@ export interface Order {
 20. [Writing a cell renderer add-on](#20-writing-a-cell-renderer-add-on)
 21. [Using VGridMenu in your own components](#21-using-vgridmenu-in-your-own-components)
 22. [Pure helpers](#22-pure-helpers)
+23. [Pinned rows and totals](#23-pinned-rows-and-totals)
+24. [Row grouping](#24-row-grouping)
 
 ---
 
@@ -115,7 +117,8 @@ you leave out the renderer styles.
 ### Choosing features
 
 Out of the box `<VGrid>` is a plain table. Sorting, filtering, server data, pagination,
-selection, sub-grids, context menus, column reordering, resizing, pinning, visibility and grouping, virtual scrolling and keyboard navigation are
+selection, sub-grids, context menus, column reordering, resizing, pinning, visibility and grouping,
+pinned rows, totals, row grouping, virtual scrolling and keyboard navigation are
 opt-in features, and only the ones you import are bundled:
 
 ```ts
@@ -145,6 +148,9 @@ app.use(createVueGrid({ features: allFeatures })) // all of them
 | `keyboardNavigationFeature` | arrow-key navigation between cells (ARIA grid); without it an ARIA table with tabbable controls |
 | `columnResizingFeature` | dragging a header edge to resize, double-click to fit, `resizable`, `maxWidth`, `columnState.widths` |
 | `columnGroupsFeature` | `group` on columns: a sticky row of group headers above the column headers |
+| `rowPinningFeature` | `v-model:pinned-rows`, `pinRow()`, `pinned-top-rows` / `pinned-bottom-rows` |
+| `aggregationFeature` | column `aggregate`, `totals`, `totals-label`, `aggregates` |
+| `rowGroupingFeature` | `v-model:group-by`, `groups-expanded`, column `groupable` / `groupValue`, `#group-<key>` |
 
 Without its feature, an option does nothing and a dev warning names the feature to add. A grid
 reads `features` once when it is created.
@@ -1907,6 +1913,9 @@ import {
   setColumnPinned,
   pageItems, // page buttons with ellipses: pageItems(5, 20, 1)
   localStorageAdapter, // localStorageAdapter('orders-grid')
+  aggregateRows, // aggregateRows(rows, columns) → { total: 1234, … } for columns with an `aggregate`
+  groupRows, // groupRows(rows, { columns: [statusCol], allColumns: columns }) → nested RowGroup[]
+  isRowGroup,
 } from '@nocopypaste/vue-grid'
 
 // client-side paging + sorting
@@ -1917,3 +1926,89 @@ const pageRows = computed(() =>
   ),
 )
 ```
+
+---
+
+## 23. Pinned rows and totals
+
+A sticky totals row (`aggregationFeature`) and rows pinned above or below the body
+(`rowPinningFeature`):
+
+```vue
+<script setup lang="ts">
+const columns = [
+  col({ key: 'customer', field: 'customer.name', aggregate: 'count' }),
+  col({ key: 'total', renderer: currencyRenderer, aggregate: 'sum' }),
+  col({ key: 'placedAt', renderer: dateRenderer, aggregate: 'max' }),
+]
+const pinned = ref<PinnedRowsState>({ top: [42], bottom: [] })
+const grid = ref<VGridExposed>()
+</script>
+
+<template>
+  <VGrid
+    ref="grid"
+    v-model:pinned-rows="pinned"
+    :rows="orders"
+    :columns="columns"
+    row-key="id"
+    totals
+    :features="[aggregationFeature, rowPinningFeature]"
+    style="height: 480px"
+  />
+  <button @click="grid?.pinRow(7, 'bottom')">Pin order 7 to the bottom</button>
+</template>
+```
+
+- `totals` (bottom) or `totals="top"`; `totals-label` names the row. Each `aggregate` (`sum`,
+  `avg`, `min`, `max`, `count` or `(values, rows) => …`) is shown with the column's renderer.
+- The totals cover the rows that pass the filters, on every page. With server data, pass the
+  server's totals as `:aggregates="{ total: 125000 }"`.
+- `pinned-top-rows` / `pinned-bottom-rows` show rows that aren't in `rows` (a target, last year).
+
+---
+
+## 24. Row grouping
+
+Group the rows by one or more columns (`rowGroupingFeature`). Group rows show the value, the row
+count and every column's `aggregate` for the group:
+
+```vue
+<script setup lang="ts">
+const columns = [
+  col({ key: 'customer', field: 'customer.name', width: 'minmax(12rem, 1fr)' }),
+  col({ key: 'status', renderer: statusRenderer, groupable: true }),
+  col({ key: 'city', field: 'customer.city', groupable: true }),
+  col({ key: 'placedAt', renderer: dateRenderer, groupable: true, groupValue: (o) => o.placedAt.slice(0, 7) }),
+  col({ key: 'total', renderer: currencyRenderer, aggregate: 'sum' }),
+]
+const groupBy = ref(['status', 'city'])
+</script>
+
+<template>
+  <VGrid
+    v-model:group-by="groupBy"
+    :rows="orders"
+    :columns="columns"
+    row-key="id"
+    sort-mode="client"
+    groups-expanded
+    :features="[rowGroupingFeature, sortingFeature, menusFeature, selectionFeature]"
+    selectable
+    style="height: 480px"
+  >
+    <!-- optional: draw a group's value yourself -->
+    <template #group-city="{ value, count }">{{ value }} — {{ count }} orders</template>
+  </VGrid>
+</template>
+```
+
+- Groups start collapsed unless `groups-expanded`; click a group's label or arrow (→/← with
+  keyboard navigation). `expandAll()` / `collapseAll()` include groups.
+- Sorting by the grouped column orders the groups; sorting by another column orders the rows in
+  each group. Filters apply first; pagination pages the top-level groups.
+- `groupable: true` columns get *Group by* / *Ungroup* / *Ungroup all* in the header menu.
+- `groupValue` groups by a derived value (here the month); empty values form a `(blank)` group.
+- A group's checkbox selects every row in it. Works with virtual scrolling.
+- The label sits in the first visible column and runs across the columns after it up to the first
+  one with an `aggregate`, so give that first column some width.

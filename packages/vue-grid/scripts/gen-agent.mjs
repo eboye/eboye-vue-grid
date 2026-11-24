@@ -147,7 +147,7 @@ function membersOfType(type) {
       name: p.name,
       type: typeText,
       required: !(p.flags & ts.SymbolFlags.Optional),
-      description: clean(ts.displayPartsToString(p.getDocumentationComment(checker))),
+      description: ts.displayPartsToString(p.getDocumentationComment(checker)).replace(/\s+/g, ' ').trim(),
     }
   })
 }
