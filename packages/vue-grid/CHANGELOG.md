@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+Releases are published from GitHub Actions with npm trusted publishing, so every version from
+now on carries npm provenance (a signed link to the commit and workflow that built it).
+
 ## 0.3.0 — 2026-11-24
 
 **Row grouping** (`rowGroupingFeature`): `v-model:group-by` groups the rows by one or more

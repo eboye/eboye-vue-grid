@@ -546,13 +546,34 @@ npm run screenshots      # re-shoot the renderer gallery → docs/media/renderer
 
 </details>
 
-### Publishing
+### Releasing
 
-```sh
-npm run build
-npm publish -w @nocopypaste/vue-grid --access public
-npm publish -w @nocopypaste/vue-grid-renderer-template --access public
-```
+Releases publish from GitHub Actions ([`release.yml`](.github/workflows/release.yml)) with npm
+trusted publishing: npm trusts the workflow through GitHub's OIDC token, so no npm token or
+`npm login` is involved, and every version carries provenance.
+
+1. Set the new version in `packages/vue-grid`, `packages/vue-grid-mcp` and
+   `packages/cell-renderer-template` (and the latter two's `@nocopypaste/vue-grid` range), in
+   `plugins/vue-grid/.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json`; run
+   `npm install` (lockfile) and `npm run build` (regenerates the agent reference).
+2. Turn the CHANGELOG's `## Unreleased` into `## <version> — <date>`. Its text becomes the GitHub
+   release notes.
+3. Commit, tag and push the tag to GitHub:
+
+   ```sh
+   git commit -am "chore: release 0.4.0" && git tag -a v0.4.0 -m v0.4.0
+   git push origin main --follow-tags && git push github main --follow-tags
+   ```
+
+The workflow checks that the tag matches every package version, builds, type-checks and tests,
+publishes the grid, then the MCP server and the renderer template (skipping versions npm already
+has, so a failed run can be re-run), and creates the GitHub release. A pre-release tag
+(`v0.4.0-beta.1`) publishes under the `next` dist-tag and marks the release as a pre-release.
+
+One-time setup, per package on npmjs.com (Package → Settings → Trusted publishing → GitHub
+Actions): organization `eboye`, repository `eboye-vue-grid`, workflow `release.yml`, no
+environment, and allow `npm publish` under the allowed actions. Then, under Publishing access,
+choose "Require two-factor authentication and disallow tokens".
 
 ## License
 
