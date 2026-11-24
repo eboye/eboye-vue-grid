@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="vue-grid: a Vue 3 data grid laid out with CSS Grid and subgrid. Live examples of every feature, with their code."
+    />
+    <title>vue-grid showcase</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%232563eb'/><path d='M8 11h16M8 16h16M8 21h16M14 8v16' stroke='white' stroke-width='2.2'/></svg>"
+    />
+    <script>
+      // Apply the saved theme before the first paint (no flash of the wrong one).
+      try {
+        const theme = localStorage.getItem('vg-site-theme')
+        if (theme === 'light' || theme === 'dark') document.documentElement.dataset.theme = theme
+      } catch {}
+    </script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

@@ -8,11 +8,12 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript&logoColor=white)
 ![Zero dependencies](https://img.shields.io/badge/dependencies-0-success)
 ![ESM, tree-shakeable](https://img.shields.io/badge/ESM-tree--shakeable-blueviolet)
-![Tested in Chromium and Firefox](https://img.shields.io/badge/tested-Chromium%20%C2%B7%20Firefox-orange)
+![Tested in Chromium, Firefox and WebKit](https://img.shields.io/badge/tested-Chromium%20%C2%B7%20Firefox%20%C2%B7%20WebKit-orange)
 ![License: MIT](https://img.shields.io/badge/license-MIT-blue)
 
 <img src="docs/media/showcase.gif" alt="vue-grid showcase: sorting, context menus, pinned columns, nested sub-grids, 10,000-row virtual scrolling, cell renderers, theming and dark mode" width="800">
 
+**[Live examples ↗](https://eboye.github.io/eboye-vue-grid/)** ·
 [▶ Watch the full-quality video (MP4, 43 s)](docs/media/showcase.mp4) ·
 [Examples cookbook](docs/examples.md) ·
 [API reference](packages/vue-grid/README.md) ·
@@ -491,14 +492,15 @@ matrix is in the [API reference](packages/vue-grid/README.md#browser-support).
 
 ## Documentation
 
-| Resource                                           | What it covers                                                                        |
-| -------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| [Examples cookbook](docs/examples.md)              | Task-by-task guide with copy-paste snippets for every feature                         |
-| [API reference](packages/vue-grid/README.md)       | Props, events, slots, column options, every renderer option, CSS tokens               |
-| **Storybook** — `npm run storybook`                | A story per feature and per renderer, live controls, generated prop tables, dark mode |
-| **Playground** — `npm run dev`                     | Every feature on one page                                                             |
-| [Add-on template](packages/cell-renderer-template) | A publishable third-party renderer (star rating) to copy                              |
-| [AGENTS.md](packages/vue-grid/AGENTS.md)           | The guide for coding agents: rules, feature / renderer choice, recipes, pitfalls      |
+| Resource                                                 | What it covers                                                                        |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| [Live examples](https://eboye.github.io/eboye-vue-grid/) | Every feature running live, each with its source code, light and dark                 |
+| [Examples cookbook](docs/examples.md)                    | Task-by-task guide with copy-paste snippets for every feature                         |
+| [API reference](packages/vue-grid/README.md)             | Props, events, slots, column options, every renderer option, CSS tokens               |
+| **Storybook** — `npm run storybook`                      | A story per feature and per renderer, live controls, generated prop tables, dark mode |
+| **Playground** — `npm run dev`                           | Every feature on one page                                                             |
+| [Add-on template](packages/cell-renderer-template)       | A publishable third-party renderer (star rating) to copy                              |
+| [AGENTS.md](packages/vue-grid/AGENTS.md)                 | The guide for coding agents: rules, feature / renderer choice, recipes, pitfalls      |
 
 ## For coding agents
 
@@ -533,6 +535,7 @@ from the sources, so it can't drift from the code:
 npm install
 npm run dev              # playground → http://localhost:5180
 npm run storybook        # Storybook  → http://localhost:6006
+npm run site             # showcase   → http://localhost:5190 (uses the built package: npm run build first)
 npm test                 # unit tests (Vitest)
 npm run typecheck && npm run lint && npm run format:check   # npm run format fixes formatting
 npm run build            # both packages → dist/
@@ -552,11 +555,20 @@ npm run screenshots      # re-shoot the renderer gallery → docs/media/renderer
 | [`packages/cell-renderer-template`](packages/cell-renderer-template) | Boilerplate third-party renderer add-on                                            |
 | `stories/`, `.storybook/`                                            | Storybook                                                                          |
 | `playground/`                                                        | Demo app; target of the browser tests                                              |
+| `site/`                                                              | The showcase on GitHub Pages: a page per feature with its source                   |
 | `e2e/`                                                               | Playwright tests driving the playground and Storybook with real mouse and keyboard |
 | `docs/`                                                              | Examples cookbook, showcase media, renderer screenshots, design notes              |
 | `scripts/`                                                           | Showcase recorder, renderer gallery screenshots                                    |
 
 </details>
+
+### Showcase site
+
+[`pages.yml`](.github/workflows/pages.yml) builds `site/` against the built package and deploys it to
+GitHub Pages (<https://eboye.github.io/eboye-vue-grid/>) on every push to main; CI builds it too, so a
+broken example fails the checks. Each page is a demo component in `site/src/demos`, listed in
+`site/src/pages.ts`; the code shown under a demo is that file, highlighted at build time. One-time
+setup: repository Settings → Pages → Source: GitHub Actions.
 
 ### Releasing
 

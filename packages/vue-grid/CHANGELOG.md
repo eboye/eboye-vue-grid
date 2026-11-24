@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+Docs: **live examples** at <https://eboye.github.io/eboye-vue-grid/>, a page per feature (renderers,
+filtering, server data, selection, row grouping, totals, sub-grids, virtual scrolling, column
+layout, menus, export, theming, custom cells), each running live with its complete source, in light
+and dark. Linked from the READMEs, AGENTS.md, llms.txt and the Claude Code skill.
+
 ## 0.4.1 — 2026-11-24
 
 **Accessibility**, found by a new axe-core check (WCAG 2.1 A / AA) of every story, light and dark,

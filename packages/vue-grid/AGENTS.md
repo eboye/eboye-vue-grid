@@ -8,7 +8,8 @@ generated reference is [`agent/api.md`](agent/api.md) (also inside `llms-full.tx
 
 Machine-checkable: `validateGridConfig()` from `@nocopypaste/vue-grid/agent` checks a grid config and
 says how to fix each problem; [`agent/grid-config.schema.json`](agent/grid-config.schema.json) is its
-JSON Schema. The `@nocopypaste/vue-grid-mcp` MCP server serves all of this as tools.
+JSON Schema. The `@nocopypaste/vue-grid-mcp` MCP server serves all of this as tools. Every feature
+runs in the [live examples](https://eboye.github.io/eboye-vue-grid/), each with its complete source.
 
 ## Rules (each one is a bug when skipped)
 

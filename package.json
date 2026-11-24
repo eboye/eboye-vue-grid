@@ -6,7 +6,8 @@
     "packages/vue-grid",
     "packages/vue-grid-mcp",
     "packages/cell-renderer-template",
-    "playground"
+    "playground",
+    "site"
   ],
   "engines": {
     "node": ">=20"
@@ -24,7 +25,8 @@
     "e2e:storybook": "playwright test -c e2e/storybook.config.ts",
     "showcase": "node scripts/record-showcase.mjs",
     "screenshots": "node scripts/renderer-screenshots.mjs",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "site": "npm run dev -w site"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",

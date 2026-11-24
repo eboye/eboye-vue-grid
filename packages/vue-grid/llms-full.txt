@@ -8,7 +8,8 @@ generated reference is [`agent/api.md`](agent/api.md) (also inside `llms-full.tx
 
 Machine-checkable: `validateGridConfig()` from `@nocopypaste/vue-grid/agent` checks a grid config and
 says how to fix each problem; [`agent/grid-config.schema.json`](agent/grid-config.schema.json) is its
-JSON Schema. The `@nocopypaste/vue-grid-mcp` MCP server serves all of this as tools.
+JSON Schema. The `@nocopypaste/vue-grid-mcp` MCP server serves all of this as tools. Every feature
+runs in the [live examples](https://eboye.github.io/eboye-vue-grid/), each with its complete source.
 
 ## Rules (each one is a bug when skipped)
 
@@ -1185,7 +1186,8 @@ reorder/visibility with persistence, selection, virtual scrolling, pagination, a
   is caught). Value maps ignore inherited keys, and saved state is validated.
 
 **New here? Start with the [examples cookbook](../../docs/examples.md)** — runnable snippets for every
-feature. This README is the API reference.
+feature — and see each one running in the [live examples](https://eboye.github.io/eboye-vue-grid/).
+This README is the API reference.
 
 ## Install
 

@@ -14,7 +14,8 @@ reorder/visibility with persistence, selection, virtual scrolling, pagination, a
   is caught). Value maps ignore inherited keys, and saved state is validated.
 
 **New here? Start with the [examples cookbook](../../docs/examples.md)** — runnable snippets for every
-feature. This README is the API reference.
+feature — and see each one running in the [live examples](https://eboye.github.io/eboye-vue-grid/).
+This README is the API reference.
 
 ## Install
 

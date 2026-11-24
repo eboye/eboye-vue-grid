@@ -9,6 +9,7 @@ Read AGENTS.md first: it lists the rules that cause silent bugs when skipped (re
 - [AGENTS.md](https://unpkg.com/@nocopypaste/vue-grid/AGENTS.md): rules, feature and renderer choice, recipes, pitfalls — start here
 - [API reference](https://unpkg.com/@nocopypaste/vue-grid/agent/api.md): every prop, v-model, event, slot, method, column option, feature and renderer option (generated from the sources)
 - [README](https://unpkg.com/@nocopypaste/vue-grid/README.md): each area in depth (filtering, server data, sub-grids, virtual scrolling, theming, browser support)
+- [Live examples](https://eboye.github.io/eboye-vue-grid/): every feature running, each page with its complete source
 
 ## Machine-readable
 

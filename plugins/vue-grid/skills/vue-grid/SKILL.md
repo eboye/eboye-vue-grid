@@ -32,6 +32,8 @@ and the renderer export (`currencyRenderer`, …).
 - **`vue_grid_search_docs`** `{ query }` — how-to sections (server data, lazy sub-rows, theming…).
 
 Without MCP: `node_modules/@nocopypaste/vue-grid/agent/api.md` (generated reference) and `README.md`.
+A working example of each feature, complete component source included:
+<https://eboye.github.io/eboye-vue-grid/> (the code under each demo).
 
 ## 4. Write the code
 

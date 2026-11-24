@@ -2,8 +2,9 @@
 
 A task-oriented cookbook. Every snippet is a complete `<script setup>` component you can paste into an
 app that has the plugin and stylesheet installed (step 1). For the full prop/event tables see the
-[package README](../packages/vue-grid/README.md). To try every example live, with editable props,
-run Storybook (`npm run storybook` → http://localhost:6006).
+[package README](../packages/vue-grid/README.md). To see every feature running, each with its source,
+open the [live examples](https://eboye.github.io/eboye-vue-grid/); to change props live, run Storybook
+(`npm run storybook` → http://localhost:6006).
 
 The examples share this row type:
 
