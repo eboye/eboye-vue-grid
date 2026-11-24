@@ -1153,7 +1153,19 @@ Row highlights (hover, selection) appear at once and fade out over `--vg-transit
 responds the moment the pointer arrives.
 
 Colours use `light-dark()`: set `color-scheme: light dark` on `html` to follow the OS, or
-`color-scheme: dark` to force dark. Stable class names (`.vg-header-cell`, `.vg-cell`, `.vg-row`,
+`color-scheme: dark` to force dark; with neither, the grid is light. For a theme switch, set it in a
+stylesheet (`html.dark { color-scheme: dark }`, then toggle the class), not as an inline style from
+JavaScript. A production build that rewrites `light-dark()` for older browsers only follows the
+`color-scheme` rules it saw; Lightning CSS, the CSS minifier of Vite 8, does that for its default
+targets. To keep `light-dark()` as is, target browsers that have it, e.g. in Vite:
+
+```ts
+build: {
+  cssTarget: ['chrome123', 'edge123', 'firefox120', 'safari17.5']
+}
+```
+
+Stable class names (`.vg-header-cell`, `.vg-cell`, `.vg-row`,
 `.vg-subgrid`, `.vg-pin-left`, …) and the `ui` prop are there for anything tokens don't cover.
 
 ### Bring your own theme

@@ -10,6 +10,23 @@
  * `vue-grid` cascade layer.
  */
 
+/*
+ * light-dark() in an app's production build. Lightning CSS (the CSS minifier of Vite 8 and others)
+ * rewrites light-dark(A, B) for older browser targets into
+ *   var(--lightningcss-light, A) var(--lightningcss-dark, B)
+ * and defines those two variables only where the app's CSS declares `color-scheme`. Where it
+ * declares none, both fallbacks applied and every colour was invalid. These defaults pick light,
+ * as a native light-dark() does without a color-scheme. They are in their own layer, so a
+ * color-scheme rule in the app's CSS (unlayered, or in a layer declared after this file)
+ * overrides them. With a native light-dark() they do nothing.
+ */
+@layer vue-grid-scheme {
+  :root {
+    --lightningcss-light: initial;
+    --lightningcss-dark: ;
+  }
+}
+
 /* Private per-cell value: must not inherit into nested cells. */
 @property --_vg-pin-shadow {
   syntax: '*';

@@ -1724,7 +1724,21 @@ html {
 }
 ```
 
-or force it (`color-scheme: dark` on `html` or on a wrapper). To set custom colours for both modes:
+or force it (`color-scheme: dark` on `html` or on a wrapper). For a theme switch, toggle a class or
+attribute that a stylesheet rule turns into `color-scheme`, rather than setting it inline from
+JavaScript:
+
+```css
+html[data-theme='dark'] {
+  color-scheme: dark;
+}
+```
+
+A production build that rewrites `light-dark()` for older browsers (Lightning CSS does, the CSS
+minifier of Vite 8, for its default targets) only follows the `color-scheme` rules in your CSS.
+Without any, the grid is light.
+
+To set custom colours for both modes:
 
 ```css
 .orders-grid {

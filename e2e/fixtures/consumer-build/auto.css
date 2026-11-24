@@ -1,0 +1,5 @@
+@import './grid.css';
+
+html {
+  color-scheme: light dark;
+}

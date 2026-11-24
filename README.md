@@ -387,7 +387,8 @@ all of them). Without `sortingFeature`, `sortable` columns stay plain headers; w
 }
 ```
 
-Set `color-scheme: light dark` on `html` to follow the OS, or `dark` to force it. Every token is
+Set `color-scheme: light dark` on `html` to follow the OS, or `dark` to force it, in a stylesheet
+rather than inline from JavaScript (see [Theming](packages/vue-grid/README.md#theming) for why). Every token is
 listed in the [API reference](packages/vue-grid/README.md#theming).
 
 ## Performance

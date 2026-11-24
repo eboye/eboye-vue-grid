@@ -215,7 +215,7 @@ const fetchOrders: DataSource<Order> = async (query, { signal }) => {
     body: JSON.stringify(query),
     signal,
   })
-  if (!res.ok) throw new Error(res.statusText) // the grid shows an error with Retry, emits load-error
+  if (!res.ok) throw new Error(res.statusText) // emits load-error; Retry shows if no rows are on screen
   return res.json() as Promise<{ rows: Order[]; total: number }>
 }
 ```
@@ -476,7 +476,9 @@ export const ratingRenderer = defineCellRenderer<{ max?: number }>({
 }
 ```
 
-Tokens: `--vg-*` (see README → Theming). Dark mode follows `color-scheme`. Density:
+Tokens: `--vg-*` (see README → Theming). Dark mode follows `color-scheme`, set in CSS
+(`html.dark { color-scheme: dark }`), not inline from JS: a build that rewrites `light-dark()` (Vite 8)
+only sees stylesheet rules. Density:
 `density="compact" | "cozy" | "comfortable"`. Utility classes per part: `:ui="{ cell: 'px-2' }"`.
 
 ## Check your work

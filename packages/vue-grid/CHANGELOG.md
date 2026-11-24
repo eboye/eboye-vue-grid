@@ -1,6 +1,16 @@
 # Changelog
 
-## Unreleased
+## 0.4.2 — 2026-11-24
+
+**Fix: theme colours in production builds that rewrite `light-dark()`.** Lightning CSS (the CSS
+minifier of Vite 8, and others) rewrites `light-dark()` for older browser targets into variables
+that only a `color-scheme` rule in the app's CSS defines. In an app without one, every grid colour
+became invalid in the production build (the dev server was fine): text fell back to black, and
+backgrounds, borders and badges lost their colours. The theme now defaults those variables to
+light, in their own cascade layer, so a `color-scheme` rule in the app's CSS still wins. A browser
+test builds an app with Vite's defaults and checks the colours with no `color-scheme`, with `dark`,
+and with `light dark` following the OS. Docs: set `color-scheme` in a stylesheet for a theme
+switch, not inline from JavaScript, or target browsers with native `light-dark()`.
 
 Docs: **live examples** at <https://eboye.github.io/eboye-vue-grid/>, a page per feature (renderers,
 filtering, server data, selection, row grouping, totals, sub-grids, virtual scrolling, column
