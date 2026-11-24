@@ -32,6 +32,10 @@ row.
 Copying (the text cell's copy button too) falls back to the browser's copy command where the
 Clipboard API is missing or refused, e.g. on pages served over plain http.
 
+Bundle: virtual scrolling and export no longer pull in the row grouping code; the README's
+bundle sizes are now measured with Rolldown (Vite's bundler), counting every chunk an app loads up
+front (a plain grid: 13.6 kB gzip).
+
 Docs: the generated API reference no longer inserts stray `;` into multi-line column option
 descriptions.
 
