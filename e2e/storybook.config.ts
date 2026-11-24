@@ -1,20 +1,12 @@
-import { defineConfig, devices } from '@playwright/test'
+import { defineConfig } from '@playwright/test'
+import { ciOptions, projects } from './projects'
 
 export default defineConfig({
   testDir: '.',
   testMatch: '*storybook.spec.ts',
-  reporter: [['list']],
+  ...ciOptions,
   use: { trace: 'retain-on-failure', viewport: { width: 1280, height: 900 } },
-  projects: [
-    {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'], viewport: { width: 1280, height: 900 } },
-    },
-    {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'], viewport: { width: 1280, height: 900 } },
-    },
-  ],
+  projects,
   webServer: {
     command: 'npm run storybook -- --ci',
     cwd: '..',

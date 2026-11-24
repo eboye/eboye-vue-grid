@@ -3,7 +3,12 @@
 ## Unreleased
 
 Releases are published from GitHub Actions with npm trusted publishing, so every version from
-now on carries npm provenance (a signed link to the commit and workflow that built it).
+now on carries npm provenance (a signed link to the commit and workflow that built it). CI runs
+the unit tests and the browser tests in Chromium, Firefox and WebKit on every push.
+
+Fix (Safari): an open menu (row actions, cell and header menus) now hides when its trigger is
+scrolled out of the grid. WebKit accepts CSS `position-visibility: anchor-visible` but didn't hide
+it there; the grid's JavaScript fallback now always runs next to the CSS.
 
 ## 0.3.0 — 2026-11-24
 

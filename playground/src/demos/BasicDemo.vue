@@ -91,9 +91,9 @@ function onAction(e: CellActionEvent<Bet>) {
       sort-mode="client"
       row-clickable
       aria-label="Bets"
-      @row-click="onRowClick"
       :context-menu="contextMenu"
       :header-menu="({ items }) => [{ name: 'copy-column', label: 'Copy column values' }, { separator: true }, ...items]"
+      @row-click="onRowClick"
       @cell-action="onAction"
       @context-action="onContextAction"
       @header-action="onHeaderAction"

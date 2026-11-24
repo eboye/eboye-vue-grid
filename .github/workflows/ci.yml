@@ -1,0 +1,63 @@
+# Checks every push to main and every pull request: build, types, lint and unit tests, then the
+# browser tests (the playground and Storybook suites) in Chromium, Firefox and WebKit.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Build, types, lint, unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test # also fails when the generated agent reference is out of date
+
+  e2e:
+    name: Browser tests (${{ matrix.suite }}, ${{ matrix.browser }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+        suite: [playground, storybook]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Install ${{ matrix.browser }}
+        run: npx playwright install --with-deps ${{ matrix.browser }}
+      # The playground and Storybook run the library from source: no build needed.
+      - name: Run
+        run: |
+          config=e2e/playwright.config.ts
+          [ "${{ matrix.suite }}" = storybook ] && config=e2e/storybook.config.ts
+          npx playwright test -c "$config" --project=${{ matrix.browser }}
+      - name: Traces of failed tests
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: traces-${{ matrix.suite }}-${{ matrix.browser }}
+          path: test-results/
+          retention-days: 7

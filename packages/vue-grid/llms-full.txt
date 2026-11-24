@@ -2040,7 +2040,7 @@ small JS fallback runs only when a feature check (`CSS.supports`) says the brows
 | Behaviour | Done with | JS fallback when unsupported |
 |---|---|---|
 | Menu / popover placement, flipping, following the anchor on scroll | Popover API + CSS anchor positioning | measured placement, re-run on scroll / resize |
-| Hiding a popover once its anchor scrolls out of view | `position-visibility: anchor-visible` | IntersectionObserver (e.g. Firefox 159) |
+| Hiding a popover once its anchor scrolls out of view | `position-visibility: anchor-visible` | IntersectionObserver, always on as well (Firefox 159 parses only an older value; WebKit / Safari 27 accepts it but keeps a popover whose anchor is clipped by the grid) |
 | Sticky offsets of pinned columns | `calc()` sums of the declared widths | ResizeObserver, only for content-sized pinned columns |
 | Which pinned column gets the edge shadow | `:has()` / sibling selectors | a class |
 | Shadow only while content is scrolled under pinned columns | `@container scroll-state(scrollable: …)` | scroll listener sets `data-vg-scrollable` |

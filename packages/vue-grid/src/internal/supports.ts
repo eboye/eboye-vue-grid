@@ -21,12 +21,6 @@ export const supportsHas = () => check('has', () => CSS.supports('selector(:has(
 export const supportsScrollState = () =>
   check('scroll-state', () => CSS.supports('container-type: scroll-state'))
 
-/**
- * Hiding an anchored popover once its anchor is clipped. Checked via the current value name: engines
- * that only parse the old `anchors-visible` (Firefox 159) parse it without hiding anything.
- */
-export const supportsAnchorVisibility = () =>
-  check('anchor-visible', () => CSS.supports('position-visibility: anchor-visible'))
 
 /** Relative colour syntax — picks readable chip text in CSS. */
 export const supportsRelativeColor = () =>

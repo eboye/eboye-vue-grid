@@ -1,20 +1,18 @@
-import { defineConfig, devices } from '@playwright/test'
+import { defineConfig } from '@playwright/test'
+import { ciOptions, projects } from './projects'
 
 export default defineConfig({
   testDir: '.',
   testIgnore: '*storybook.spec.ts', // has its own config: storybook.config.ts
   timeout: 30_000,
   fullyParallel: true,
-  reporter: [['list']],
+  ...ciOptions,
   use: {
     baseURL: 'http://localhost:5180',
     trace: 'retain-on-failure',
     viewport: { width: 1280, height: 900 },
   },
-  projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'], viewport: { width: 1280, height: 900 } } },
-    { name: 'firefox', use: { ...devices['Desktop Firefox'], viewport: { width: 1280, height: 900 } } },
-  ],
+  projects,
   webServer: {
     command: 'npm run dev -w playground',
     cwd: '..',

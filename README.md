@@ -471,8 +471,8 @@ CSS (minified with Lightning CSS): `style.css` has everything (6.6 kB gzip). The
 
 ## Browser support
 
-Current Chrome / Edge and Firefox — both covered by the automated browser tests — and Safari
-(same baseline, not yet in the automated tests). The baseline is CSS `subgrid`, `@layer`,
+Current Chrome / Edge, Firefox and Safari, all three covered by the automated browser tests
+(Chromium, Firefox and WebKit, in CI on every push). The baseline is CSS `subgrid`, `@layer`,
 `light-dark()` and the Popover API.
 Newer CSS — anchor positioning, `position-visibility`, scroll-state container queries,
 `contrast-color()` — is used where available, with small JavaScript fallbacks elsewhere. The full
@@ -525,7 +525,8 @@ npm run storybook        # Storybook  → http://localhost:6006
 npm test                 # unit tests (Vitest)
 npm run typecheck && npm run lint
 npm run build            # both packages → dist/
-npm run e2e              # browser tests, Chromium + Firefox (first time: npx playwright install chromium firefox)
+npm run e2e              # browser tests, Chromium + Firefox (first time: npx playwright install chromium firefox);
+                         # E2E_WEBKIT=1 adds WebKit (CI runs all three on every push and pull request)
 npm run e2e:storybook    # every story renders without errors; interactive renderers with real input
 npm run showcase         # re-record docs/media/showcase.* (needs dev + Storybook running, and ffmpeg)
 npm run screenshots      # re-shoot the renderer gallery → docs/media/renderers (needs Storybook running)

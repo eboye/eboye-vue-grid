@@ -3,7 +3,6 @@
  * `position-area` + `position-try-fallbacks`); this module only provides unique anchor names and a
  * JS fallback for browsers without anchor positioning.
  */
-import { supportsAnchorVisibility } from './supports'
 
 let supported: boolean | undefined
 
@@ -47,8 +46,11 @@ export function placeWithoutAnchorSupport(floating: HTMLElement, target: AnchorT
 /**
  * JS fallbacks for an open anchored popover, each only where CSS can't do the job:
  * - no CSS anchor positioning → place it now and again on scroll / resize, so it follows its anchor;
- * - no working `position-visibility: anchor-visible` → hide it (`data-vg-anchor-hidden`) while the
- *   anchor element is clipped by a scroll container (IntersectionObserver applies ancestor clipping).
+ * - hide it (`data-vg-anchor-hidden`) while the anchor element is clipped by a scroll container
+ *   (IntersectionObserver applies ancestor clipping). Always, next to CSS
+ *   `position-visibility: anchor-visible`: Firefox 159 only parses an older value, and WebKit
+ *   (Safari 27) reports support but doesn't hide a popover whose anchor is clipped by the grid's
+ *   own scroll container — feature detection can't tell.
  * Returns a cleanup function; call it when the popover closes.
  */
 export function trackAnchor(floating: HTMLElement, target: AnchorTarget, placement: Placement): () => void {
@@ -70,7 +72,7 @@ export function trackAnchor(floating: HTMLElement, target: AnchorTarget, placeme
     })
   }
 
-  if (!supportsAnchorVisibility() && target instanceof HTMLElement && typeof IntersectionObserver !== 'undefined') {
+  if (target instanceof HTMLElement && typeof IntersectionObserver !== 'undefined') {
     const io = new IntersectionObserver(([entry]) => {
       floating.toggleAttribute('data-vg-anchor-hidden', !!entry && !entry.isIntersecting)
     })
