@@ -140,6 +140,12 @@ const props = withDefaults(
     virtual?: VirtualOptions | false
     /** Persist column state (order, hidden, pins, widths): a localStorage key or your own storage. */
     storage?: ColumnStateStorage | string
+    /**
+     * Pinned columns scroll like the others while together they'd take more than this share of the
+     * grid's width (a phone, a narrow panel); pinned again once there's room. `false`: always
+     * pinned. Column pinning feature.
+     */
+    pinnedMaxShare?: number | false
     /** Renderers usable by name in this grid (merged over the app-wide ones). */
     renderers?: CellRendererDefinition[]
     /** Locale for number / date renderers (default: the plugin's, else the browser's). */
@@ -192,6 +198,7 @@ const props = withDefaults(
     selectable: false,
     selectionMode: 'cascade',
     pruneSelection: false,
+    pinnedMaxShare: 0.5,
     rowClickable: false,
     virtual: false,
     loading: false,
@@ -405,6 +412,11 @@ const selectMode = computed<false | 'multi' | 'single'>(() =>
         ? 'multi'
         : false,
 )
+/** Pins don't apply right now: the pinned columns would take too much of a narrow grid (`pinned-max-share`). */
+const pinsDropped = shallowRef(false)
+/** A column's pin side as laid out: from the column state, unless pins are dropped. */
+const pinOf = (def: ColumnDef<T>, state: ColumnState) =>
+  pinsDropped.value ? undefined : effectivePin(def, state)
 
 const resolvedColumns = computed<ResolvedColumn[]>(() => {
   const state = effectiveState.value
@@ -419,7 +431,7 @@ const resolvedColumns = computed<ResolvedColumn[]>(() => {
       definition: undefined,
       options: {},
       align: 'center',
-      pinned: data.some((c) => effectivePin(c, state) === 'left') ? 'left' : undefined,
+      pinned: data.some((c) => pinOf(c, state) === 'left') ? 'left' : undefined,
       pinEdge: false,
       isTree: false,
     })
@@ -436,7 +448,7 @@ const resolvedColumns = computed<ResolvedColumn[]>(() => {
         ? {}
         : { ...(definition?.defaults as object), ...(def.rendererOptions as object) },
       align: def.align ?? definition?.align ?? 'start',
-      pinned: effectivePin(def, state),
+      pinned: pinOf(def, state),
       pinEdge: false,
       isTree: i === 0,
     })
@@ -704,6 +716,18 @@ const grouping = features.rowGrouping?.useRowGrouping<T>({
 
 // ── Pinned columns, drag & keyboard ─────────────────────────────────────────────────────────
 const pinning = features.columnPinning
+// Pins pause while the pinned columns (from the column state) would crowd out the rest.
+const pinFit = pinning?.usePinFit(root, {
+  share: () => props.pinnedMaxShare,
+  pinnedKeys: () => {
+    const state = effectiveState.value
+    const keys = visibleColumns(layoutColumns.value, state)
+      .filter((c) => effectivePin(c, state))
+      .map((c) => c.key)
+    return selectMode.value && keys.length ? [SELECT_COLUMN_KEY, ...keys] : keys
+  },
+})
+if (pinFit) watch(pinFit.dropped, (v) => (pinsDropped.value = v), { immediate: true })
 const pinOffsets = pinning?.usePinnedOffsets(root, () => sizedColumns.value)
 pinning?.useScrollEdges(root, () => template.value)
 const canPin = (col: ColumnDef<T>) => !!pinning && col.pinnable !== false
@@ -1232,6 +1256,7 @@ defineExpose<VGridExposed>({
             'vg-is-dragging': drag?.dragging.value,
             'vg-is-resizing': resize?.resizing.value,
             'vg-has-groups': hasGroups,
+            'vg-pins-dropped': pinsDropped,
             'vg-grouped': grouping?.active.value,
             'vg-has-pinned-rows': pinnedItems.top.length || pinnedItems.bottom.length,
             'vg-has-cell-menu': !!menus && !!contextMenu,

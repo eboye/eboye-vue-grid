@@ -34,6 +34,7 @@ export const propFeatures: Readonly<Record<string, FeatureId>> = {
   pruneSelection: 'selection',
   selectAllMatching: 'selection',
   selectionMode: 'selection',
+  pinnedMaxShare: 'columnPinning',
   isRowSelectable: 'selection',
   subRows: 'subGrids',
   loadSubRows: 'subGrids',
@@ -94,6 +95,7 @@ export const optOuts: ReadonlySet<string> = new Set([
   'searchable',
   'headerMenu',
   'exportable',
+  'pinnedMaxShare',
 ])
 
 /** The export name of a feature: `sorting` → `sortingFeature`. */

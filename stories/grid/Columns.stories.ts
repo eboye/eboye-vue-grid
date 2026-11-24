@@ -64,7 +64,8 @@ type Story = StoryObj<typeof meta>
 /**
  * Scroll sideways: # and Player stay left, Open stays right. Drag headers to reorder, right-click a
  * header to pin / move / hide, or use the Columns button. `storage` saves the layout in localStorage —
- * reload the story to see it kept.
+ * reload the story to see it kept. On a phone the pinned columns (21rem) would take most of the
+ * grid, so they scroll like the others (`pinned-max-share`, half the grid by default).
  */
 export const PinnedWithColumnMenu: Story = {
   args: { storage: 'storybook-columns-demo' },
@@ -79,6 +80,16 @@ export const PinnedWithColumnMenu: Story = {
           </template>
         </VGrid>
       </div>`,
+  }),
+}
+
+/** `pinned-max-share="false"`: pinned columns stay pinned at any width, even when they leave little room. */
+export const AlwaysPinned: Story = {
+  args: { pinnedMaxShare: false },
+  render: (args) => ({
+    components: { VGrid },
+    setup: () => ({ args }),
+    template: `<div class="sb-frame" style="max-width: 900px"><VGrid v-bind="args" /></div>`,
   }),
 }
 

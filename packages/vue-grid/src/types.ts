@@ -484,6 +484,7 @@ export interface ColumnPinningFeature {
   readonly feature: 'columnPinning'
   usePinnedOffsets: typeof import('./composables/usePinnedOffsets').usePinnedOffsets
   useScrollEdges: typeof import('./composables/useScrollEdges').useScrollEdges
+  usePinFit: typeof import('./composables/usePinFit').usePinFit
 }
 export interface VirtualScrollingFeature {
   readonly feature: 'virtualScrolling'

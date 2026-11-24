@@ -185,6 +185,17 @@
     "storage": {
       "description": "Persist column state (order, hidden, pins, widths): a localStorage key or your own storage."
     },
+    "pinnedMaxShare": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "const": false
+        }
+      ],
+      "description": "Pinned columns scroll like the others while together they'd take more than this share of the grid's width (a phone, a narrow panel); pinned again once there's room. `false`: always pinned. Column pinning feature."
+    },
     "renderers": {
       "type": "array",
       "items": {},

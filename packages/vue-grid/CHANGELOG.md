@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+**Pinned columns on phones** (column pinning feature): while the pinned columns together would
+take more than half of the grid's width (a phone, a narrow side panel), they scroll like the
+others, so the rest of the row stays readable; they pin again once the grid is wide enough. The
+pins stay in the column state and the header menu. `pinned-max-share` sets the share (default
+`0.5`); `false` keeps the old behaviour, always pinned. The grid has the `vg-pins-dropped` class
+meanwhile.
+
 ## 0.3.2 — 2026-11-24
 
 Row grouping fixes:

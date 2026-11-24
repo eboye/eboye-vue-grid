@@ -1154,6 +1154,10 @@ With `columnPinningFeature`, pinned columns stay put while the grid scrolls side
 (`--vg-shadow-pinned`). They can only be reordered within their pin group. Users can pin/unpin at
 runtime from the header menu unless the column has `pinnable: false`.
 
+On a narrow grid (a phone, a side panel), pinned columns that would take more than half its
+width scroll like the others, so the rest of the row stays readable; they pin again once the
+grid is wide enough. `pinned-max-share` sets the share (`0.5`), `false` keeps them always pinned.
+
 ---
 
 ## 12. Context menus
