@@ -14,13 +14,13 @@ import {
   type DateOptions,
   type DateTimeOptions,
   type ListOptions,
-  type NumberOptions,
+  type SignedNumberOptions,
   type StatusOptions,
 } from './options'
 
 const isEmpty = (v: unknown) => v === null || v === undefined || v === ''
 
-export const numberText = (v: unknown, o: NumberOptions & { signed?: boolean }, ctx: FormatContext) =>
+export const numberText = (v: unknown, o: SignedNumberOptions, ctx: FormatContext) =>
   (o.signed ? formatSigned : formatNumber)(v, ctx, o.format)
 
 export const currencyText = (v: unknown, o: CurrencyOptions, ctx: FormatContext, row?: unknown) =>

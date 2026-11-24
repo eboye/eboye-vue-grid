@@ -34,6 +34,12 @@ describe('agent API reference (generated)', () => {
     expect(undocumented).toEqual([])
   })
 
+  it('documents every renderer option and every field of the public types', () => {
+    const options = api.renderers.flatMap((r) => r.options.filter((o) => !o.description).map((o) => `${r.name}.${o.name}`))
+    const fields = Object.entries(api.types).flatMap(([type, ms]) => ms.filter((m) => !m.description).map((m) => `${type}.${m.name}`))
+    expect([...options, ...fields]).toEqual([])
+  })
+
   it('ships the agent files in the package', () => {
     const pkg = JSON.parse(readFileSync(`${root}/package.json`, 'utf8'))
     expect(pkg.files).toEqual(expect.arrayContaining(['AGENTS.md', 'llms.txt', 'llms-full.txt', 'agent']))

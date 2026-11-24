@@ -39,6 +39,7 @@ export interface TextOptions {
   ellipsis?: boolean
   /** Clamp to N lines. */
   lines?: number
+  /** CSS max width of the text, e.g. `'16rem'`: longer text wraps or, with `ellipsis`, is cut. */
   maxWidth?: string
   /** Keep line breaks in the value (`white-space: pre-line`). */
   preserveNewlines?: boolean
@@ -46,14 +47,17 @@ export interface TextOptions {
   tooltip?: boolean | RowFn<string | undefined>
   /** Shown when the value is empty. */
   placeholder?: string
+  /** Colour of the text (`success`, `danger`, `warning`, `info`, `neutral`, `accent`), or `(value, row) => tone`. */
   tone?: RowOption<Tone | undefined>
   /** `text` (default) colours the text; `fill` colours the badge-like background. */
   toneMode?: 'text' | 'fill'
+  /** Bold text, for every row or `(value, row) => boolean`. */
   bold?: RowOption<boolean>
   /** Muted text after the value, e.g. a half-time score: `2:1 (1:0)`. */
   secondary?: RowFn<string | null | undefined>
   /** Badge before (default) or after the value. */
   badge?: RowFn<BadgeSpec | string | null | undefined>
+  /** Where `badge` goes: `start` (default, before the value) or `end`. */
   badgePosition?: 'start' | 'end'
   /** Icon before the value, e.g. `{ icon: BellIcon, tone: 'warning', label: 'Notify' }`. */
   icon?: RowFn<IconSpec | null | undefined>
@@ -66,6 +70,7 @@ export interface TextOptions {
 export interface ToggleTextOptions extends Pick<TextOptions, 'placeholder'> {
   /** When true, the text is a button that emits action `toggle`. */
   clickable?: boolean | RowFn<boolean>
+  /** Shown as switched on (highlighted, `aria-pressed`), e.g. `(v, row) => row.starred`. */
   highlighted?: boolean | RowFn<boolean>
 }
 
@@ -76,6 +81,11 @@ export interface NumberOptions {
   placeholder?: string
   /** Renders the number as a link-style button that emits `click` (drill-down). */
   clickable?: RowOption<boolean>
+}
+
+export interface SignedNumberOptions extends NumberOptions {
+  /** Always show the sign (`+3`, `−2`). Default `true` for `signed-number`; `false` formats like `number`. */
+  signed?: boolean
 }
 
 export interface CurrencyOptions extends NumberOptions {
@@ -100,14 +110,18 @@ export interface DateOptions {
 }
 
 export interface DateTimeOptions extends DateOptions {
+  /** Show milliseconds in the time (`12:30:05.123`). */
   milliseconds?: boolean
   /** Date and time on two lines (default true). */
   twoLines?: boolean
 }
 
 export interface BooleanOptions {
+  /** Text for `true` (and its accessible name in icon mode). Default “Yes”. */
   trueLabel?: string
+  /** Text for `false`. Default “No”. */
   falseLabel?: string
+  /** Text for `null` / `undefined`. Default: nothing. */
   nullLabel?: string
   /** `text` (default): labels. `icon`: a check for true, nothing (or a cross) for false. */
   display?: 'text' | 'icon'
@@ -116,9 +130,11 @@ export interface BooleanOptions {
 }
 
 export interface StatusOptions {
+  /** Badge colour: one tone, a value → tone map (`{ Paid: 'success', Open: 'info' }`), or `(value, row) => tone`. Default `neutral`. */
   tone?: ToneOption
   /** Label from a function, or a value → label map. */
   label?: RowFn<string> | Record<string, string>
+  /** A coloured dot before the label. Default `true`; `false` hides it. */
   dot?: boolean
   /** `soft` (default, tinted), `solid` (filled) or `outline`. */
   variant?: 'soft' | 'solid' | 'outline'
@@ -129,11 +145,15 @@ export interface StatusOptions {
 }
 
 export interface LinkOptions {
+  /** The URL, from the value and row (default: the value). Only http(s), mailto and tel are linked; wins over `to`. */
   href?: RowFn<string | undefined>
   /** Router location; rendered with `<RouterLink>` when vue-router is installed, else as an href. */
   to?: RowFn<RouteTarget | null | undefined>
+  /** Link text (default: the value). */
   label?: RowFn<string>
+  /** `_blank` opens a new tab (with `rel="noopener noreferrer"`). */
   target?: '_self' | '_blank'
+  /** Hover text of the link. */
   tooltip?: RowFn<string | undefined>
 }
 
@@ -142,13 +162,18 @@ export interface IconOptions {
   icon?: Component
   /** Picks the icon per row (wins over `icon`). Kept separate because functional components are functions too. */
   iconFor?: RowFn<Component | undefined>
+  /** Show the icon for this row (default: always). A hidden icon keeps its space, so columns stay aligned. */
   show?: RowFn<boolean>
+  /** Accessible name and tooltip. Without one the icon is decorative. */
   label?: string | RowFn<string>
+  /** Icon colour, or `(value, row) => tone`. */
   tone?: Tone | RowFn<Tone | undefined>
 }
 
 export interface JsonOptions {
+  /** Text of the button that opens the JSON in a dialog. Default “View”. */
   label?: string
+  /** Heading of the dialog (default: the column header). */
   dialogTitle?: string | RowFn<string>
 }
 
@@ -161,6 +186,7 @@ export interface JsonTreeOptions {
   parseNested?: boolean
   /** Starts hidden behind a toggle button (labelled `toggleLabel`, default “More info”). */
   collapsed?: boolean
+  /** Text of the `collapsed` toggle. Default “More info”. */
   toggleLabel?: string
   /** Shown for null / empty values. Default: nothing. */
   emptyText?: string
@@ -170,18 +196,24 @@ export interface ActionsMenuOptions {
   /** Menu items (actions and `{ separator: true }`), or a function of the row. */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- see RowFn
   actions?: MenuItem[] | ((row: any) => MenuItem[])
+  /** Accessible name of the `⋯` button and the menu. Default “Actions”. */
   label?: string
 }
 
 export interface ActionButtonOptions {
+  /** Button text (default: the value), or `(value, row) => text`. */
   label?: string | RowFn<string>
   /** Action name emitted on click. Default `click`. */
   action?: string
+  /** An icon component before the label. */
   icon?: Component
+  /** Button colour, e.g. `danger` for a delete button. */
   tone?: Tone
+  /** Disable the button for some rows: `(value, row) => boolean`. */
   disabled?: RowFn<boolean>
   /** Hide the button for some rows. */
   visible?: RowFn<boolean>
+  /** `outline` (default), `solid` or `ghost`. */
   variant?: ButtonVariant
   /** Only the icon; the label becomes its accessible name and tooltip. */
   iconOnly?: boolean
@@ -217,6 +249,7 @@ export interface MultiLineOptions {
   boldLines?: number[]
   /** Each line on one row with ellipsis (default true). */
   ellipsis?: boolean
+  /** `_blank` opens linked lines in a new tab. */
   target?: '_self' | '_blank'
   /** Shown when the value is empty. */
   placeholder?: string
@@ -240,8 +273,11 @@ export interface ChipOptions {
   color?: RowOption<string | null | undefined>
   /** Named tone instead of a raw colour. */
   tone?: ToneOption
+  /** Chip text (default: the value, or its `label` / `name` / `text` field). A tone map is keyed by this label. */
   label?: RowFn<string>
+  /** Hover text (default: the value's `description` field, if any). */
   tooltip?: RowFn<string | null | undefined>
+  /** `square` (default), `circle` or `pill`. */
   shape?: 'square' | 'circle' | 'pill'
   /** Box size for square/circle. Default `1.75rem`. */
   size?: string
@@ -252,6 +288,7 @@ export interface ChipOptions {
 export interface CheckboxOptions {
   /** Default: the value is truthy. */
   checked?: RowFn<boolean>
+  /** Disabled for every row, or `(value, row) => boolean`. */
   disabled?: RowOption<boolean>
   /** Tooltip explaining why it's disabled. */
   disabledReason?: RowFn<string | null | undefined>
@@ -273,7 +310,9 @@ export interface EditOptions {
   placeholder?: string
   /** Accessible name of the button. Default “Edit”. */
   label?: string
+  /** Disables the edit button, for every row or `(value, row) => boolean`. */
   disabled?: RowOption<boolean>
+  /** Bold text. */
   bold?: boolean
 }
 
@@ -282,10 +321,13 @@ export interface ImageOptions {
   src?: RowFn<string | null | undefined>
   /** Prefixed to relative paths (e.g. a CDN). */
   baseUrl?: string
+  /** Alternative text (default: none, a decorative image), or `(value, row) => text`. */
   alt?: RowOption<string>
   /** Default `2.5rem`. */
   size?: string
+  /** `contain` (default) shows the whole image; `cover` fills the box and crops. */
   fit?: 'contain' | 'cover'
+  /** `rounded` (default), `circle` (avatars) or `square`. */
   shape?: 'rounded' | 'circle' | 'square'
 }
 
@@ -312,6 +354,7 @@ export interface ButtonSpec {
 }
 
 export interface ButtonGroupOptions {
+  /** The buttons (`{ name, label, tone?, variant?, disabled?, icon?, hidden? }`), or a function of the row. A click emits the button's `name`. */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- see RowFn
   buttons?: ButtonSpec[] | ((row: any) => ButtonSpec[])
 }
@@ -327,6 +370,7 @@ export interface IconToggleOptions {
   label?: RowOption<string>
   /** Tone when active. Default `warning`. */
   activeTone?: Tone
+  /** Disabled for every row, or `(value, row) => boolean`. */
   disabled?: RowOption<boolean>
 }
 
@@ -342,6 +386,7 @@ export interface DetailItem {
 export interface DetailsOptions {
   /** Summary badge tone, like `status`. */
   tone?: ToneOption
+  /** Badge text (default: the value). */
   label?: RowFn<string>
   /** Popover rows. Empty → no info button. */
   items?: RowFn<DetailItem[] | null | undefined>
@@ -354,6 +399,7 @@ export interface DetailsOptions {
 export interface ListOptions {
   /** Default: the value when it's an array. */
   items?: RowFn<unknown[] | null | undefined>
+  /** Text of one item, `(item, row) => string` (default: the item, objects as JSON). */
   itemLabel?: RowFn<string>
   /** Items shown before “+N more”. Default 1. */
   max?: number

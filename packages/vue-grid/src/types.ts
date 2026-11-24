@@ -15,7 +15,9 @@ export type SortDir = 'asc' | 'desc'
 export type Density = 'compact' | 'cozy' | 'comfortable'
 
 export interface SortState {
+  /** The sorted column’s `key`. */
   key: string
+  /** `asc` or `desc`. */
   dir: SortDir
 }
 
@@ -23,14 +25,18 @@ export type PinSide = 'left' | 'right'
 
 /** Rows pinned above / below the body, by row key (row pinning feature). */
 export interface PinnedRowsState {
+  /** Keys of the rows pinned above the body, in display order. */
   top?: RowKey[]
+  /** Keys of the rows pinned below the body, in display order. */
   bottom?: RowKey[]
 }
 
 export type { ColumnFilter, FilterState, FilterStateStorage, FilterType } from './core/filter'
 
 export interface FilterOption {
+  /** The value rows are matched against. */
   value: unknown
+  /** Text shown for the option (default: the value). */
   label?: string
   /** Shown next to the option (e.g. number of rows). */
   count?: number
@@ -39,6 +45,7 @@ export interface FilterOption {
 export type FilterOptionsLoader = (search: string, ctx: { signal: AbortSignal }) => Promise<readonly FilterOption[]>
 
 export interface ColumnFilterOptions {
+  /** `text`, `number`, `date`, `boolean` or `set` (default: from the renderer). */
   type?: FilterType
   /**
    * Choices for a `set` filter: a list, or a loader called with the search text (e.g. from a
@@ -250,18 +257,28 @@ export interface CellRendererDefinition<O = any> {
 }
 
 export interface CellActionEvent<T = any> {
+  /** The action, e.g. `click`, `change`, `toggle`, `copy` or a button’s `name`. */
   name: string
+  /** Action data: the new value of a toggle or input, the copied text, a line index… */
   payload: unknown
+  /** The row the cell belongs to. */
   row: T
+  /** The row’s key (`row-key`). */
   rowKey: RowKey
+  /** The cell’s column definition. */
   column: ColumnDef<T>
 }
 
 export interface CellClickEvent<T = any> {
+  /** The row the cell belongs to. */
   row: T
+  /** The row’s key (`row-key`). */
   rowKey: RowKey
+  /** The clicked column (one with `clickable: true`). */
   column: ColumnDef<T>
+  /** The cell value. */
   value: unknown
+  /** The DOM event of the click (Enter on a focused cell clicks it too). */
   event: MouseEvent | KeyboardEvent
 }
 
@@ -292,9 +309,13 @@ export type MenuTone = 'success' | 'danger' | 'warning' | 'info' | 'neutral' | '
 export interface MenuAction {
   /** Emitted as the action name. */
   name: string
+  /** Text of the item. */
   label: string
+  /** Shown but can’t be chosen. */
   disabled?: boolean
+  /** Colour, e.g. `danger` for a delete item. */
   tone?: MenuTone
+  /** An icon component before the label. */
   icon?: Component
   /** Shown right-aligned, e.g. a shortcut hint. */
   hint?: string
@@ -308,14 +329,20 @@ export type MenuItem = MenuAction | MenuSeparator
 
 /** What was right-clicked in the body. */
 export interface CellContext<T = any> {
+  /** The row the cell belongs to. */
   row: T
+  /** The row’s key (`row-key`). */
   rowKey: RowKey
+  /** The cell’s column definition. */
   column: ColumnDef<T>
+  /** The cell value (`value` / `field` / `key`). */
   value: unknown
 }
 
 export interface ContextActionEvent<T = any> extends CellContext<T> {
+  /** The chosen item’s `name`. */
   name: string
+  /** The chosen item. */
   item: MenuAction
 }
 
@@ -326,8 +353,11 @@ export interface HeaderMenuContext<T = any> {
 }
 
 export interface HeaderActionEvent<T = any> {
+  /** The chosen item’s `name`. */
   name: string
+  /** The chosen item. */
   item: MenuAction
+  /** The column whose header menu it was. */
   column: ColumnDef<T>
 }
 
@@ -524,11 +554,16 @@ export type GridFeature =
 export type GridFeatureName = GridFeature['feature']
 
 export interface VueGridConfig {
+  /** Renderers every grid can use by name (`renderer: 'currency'`); `allRenderers` for all of them. */
   renderers?: CellRendererDefinition[]
   /** Features every grid in the app gets (`allFeatures` for all of them). */
   features?: readonly GridFeature[]
+  /** Default locale for number and date renderers (default: the browser’s). */
   locale?: string
+  /** Default ISO 4217 currency for currency renderers. */
   currency?: string
+  /** Default IANA time zone for date renderers and date filters. */
   timeZone?: string
+  /** Default density: `compact`, `cozy` (default) or `comfortable`. */
   density?: Density
 }

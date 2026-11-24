@@ -3,10 +3,10 @@ import { computed } from 'vue'
 import { useGridContext } from '../registry/plugin'
 import type { CellRendererEmits, CellRendererProps } from '../types'
 import { formatNumber, formatSigned } from './format'
-import { resolveOption, type NumberOptions } from './options'
+import { resolveOption, type SignedNumberOptions } from './options'
 import NumberValue from './parts/NumberValue.vue'
 
-const props = defineProps<CellRendererProps<unknown, unknown, NumberOptions & { signed?: boolean }>>()
+const props = defineProps<CellRendererProps<unknown, unknown, SignedNumberOptions>>()
 const emit = defineEmits<CellRendererEmits>()
 const ctx = useGridContext()
 

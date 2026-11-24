@@ -544,16 +544,16 @@ Text, the default renderer (the only one `<VGrid>` bundles): ellipsis, line clam
 |---|---|---|
 | `ellipsis` | `boolean` | Single line with ellipsis (full text in a tooltip). |
 | `lines` | `number` | Clamp to N lines. |
-| `maxWidth` | `string` |  |
+| `maxWidth` | `string` | CSS max width of the text, e.g. `'16rem'`: longer text wraps or, with `ellipsis`, is cut. |
 | `preserveNewlines` | `boolean` | Keep line breaks in the value (`white-space: pre-line`). |
 | `tooltip` | `boolean \| RowFn<string \| undefined>` | `true` = value as tooltip; a function computes it. |
 | `placeholder` | `string` | Shown when the value is empty. |
-| `tone` | `RowOption<Tone \| undefined>` |  |
+| `tone` | `RowOption<Tone \| undefined>` | Colour of the text (`success`, `danger`, `warning`, `info`, `neutral`, `accent`), or `(value, row) => tone`. |
 | `toneMode` | `'text' \| 'fill'` | `text` (default) colours the text; `fill` colours the badge-like background. |
-| `bold` | `RowOption<boolean>` |  |
+| `bold` | `RowOption<boolean>` | Bold text, for every row or `(value, row) => boolean`. |
 | `secondary` | `RowFn<string \| null \| undefined>` | Muted text after the value, e.g. a half-time score: `2:1 (1:0)`. |
 | `badge` | `RowFn<BadgeSpec \| string \| null \| undefined>` | Badge before (default) or after the value. |
-| `badgePosition` | `'start' \| 'end'` |  |
+| `badgePosition` | `'start' \| 'end'` | Where `badge` goes: `start` (default, before the value) or `end`. |
 | `icon` | `RowFn<IconSpec \| null \| undefined>` | Icon before the value, e.g. `{ icon: BellIcon, tone: 'warning', label: 'Notify' }`. |
 | `copyable` | `boolean` | Adds a copy-to-clipboard button; emits `copy` with the copied text. |
 | `copyValue` | `RowFn<string>` | What gets copied (default: the displayed text). |
@@ -565,7 +565,7 @@ Text that toggles a highlight when clicked. Emits `toggle` (with `clickable`). A
 | Option | Type | Description |
 |---|---|---|
 | `clickable` | `boolean \| RowFn<boolean>` | When true, the text is a button that emits action `toggle`. |
-| `highlighted` | `boolean \| RowFn<boolean>` |  |
+| `highlighted` | `boolean \| RowFn<boolean>` | Shown as switched on (highlighted, `aria-pressed`), e.g. `(v, row) => row.starred`. |
 | `placeholder` | `string` | Shown when the value is empty. |
 
 ### `number` — `numberRenderer`
@@ -584,10 +584,10 @@ Numbers that always show their sign (+ / −). With `clickable`, emits `click`. 
 
 | Option | Type | Description |
 |---|---|---|
+| `signed` | `boolean` | Always show the sign (`+3`, `−2`). Default `true` for `signed-number`; `false` formats like `number`. |
 | `format` | `Intl.NumberFormatOptions` | `Intl.NumberFormat` options, e.g. `{ maximumFractionDigits: 0 }` or `{ style: 'percent' }`. |
 | `placeholder` | `string` | Shown when the value is empty. |
 | `clickable` | `RowOption<boolean>` | Renders the number as a link-style button that emits `click` (drill-down). |
-| `signed` | `boolean` |  |
 
 ### `currency` — `currencyRenderer`
 
@@ -628,7 +628,7 @@ Date and time, on two lines by default. Align: `start` · filter type: `date`.
 
 | Option | Type | Description |
 |---|---|---|
-| `milliseconds` | `boolean` |  |
+| `milliseconds` | `boolean` | Show milliseconds in the time (`12:30:05.123`). |
 | `twoLines` | `boolean` | Date and time on two lines (default true). |
 | `format` | `Intl.DateTimeFormatOptions` | `Intl.DateTimeFormat` options, e.g. `{ dateStyle: 'medium' }`. |
 | `placeholder` | `string` | Shown when the value is empty. |
@@ -639,9 +639,9 @@ Yes / no as text labels or icons. Align: `start` · filter type: `boolean`.
 
 | Option | Type | Description |
 |---|---|---|
-| `trueLabel` | `string` |  |
-| `falseLabel` | `string` |  |
-| `nullLabel` | `string` |  |
+| `trueLabel` | `string` | Text for `true` (and its accessible name in icon mode). Default “Yes”. |
+| `falseLabel` | `string` | Text for `false`. Default “No”. |
+| `nullLabel` | `string` | Text for `null` / `undefined`. Default: nothing. |
 | `display` | `'text' \| 'icon'` | `text` (default): labels. `icon`: a check for true, nothing (or a cross) for false. |
 | `falseIcon` | `boolean` | In icon mode, show a cross for false (default: nothing). |
 
@@ -651,9 +651,9 @@ A coloured status badge (tone from a map, a function or a constant). With `click
 
 | Option | Type | Description |
 |---|---|---|
-| `tone` | `ToneOption` |  |
+| `tone` | `ToneOption` | Badge colour: one tone, a value → tone map (`{ Paid: 'success', Open: 'info' }`), or `(value, row) => tone`. Default `neutral`. |
 | `label` | `RowFn<string> \| Record<string, string>` | Label from a function, or a value → label map. |
-| `dot` | `boolean` |  |
+| `dot` | `boolean` | A coloured dot before the label. Default `true`; `false` hides it. |
 | `variant` | `'soft' \| 'solid' \| 'outline'` | `soft` (default, tinted), `solid` (filled) or `outline`. |
 | `placeholder` | `string` | Shown when the value is empty. |
 | `clickable` | `RowOption<boolean>` | Badge becomes a button that emits `click`. |
@@ -664,11 +664,11 @@ A safe link (http(s), mailto, tel only), or a `<RouterLink>` with `to` when vue-
 
 | Option | Type | Description |
 |---|---|---|
-| `href` | `RowFn<string \| undefined>` |  |
+| `href` | `RowFn<string \| undefined>` | The URL, from the value and row (default: the value). Only http(s), mailto and tel are linked; wins over `to`. |
 | `to` | `RowFn<RouteTarget \| null \| undefined>` | Router location; rendered with `<RouterLink>` when vue-router is installed, else as an href. |
-| `label` | `RowFn<string>` |  |
-| `target` | `'_self' \| '_blank'` |  |
-| `tooltip` | `RowFn<string \| undefined>` |  |
+| `label` | `RowFn<string>` | Link text (default: the value). |
+| `target` | `'_self' \| '_blank'` | `_blank` opens a new tab (with `rel="noopener noreferrer"`). |
+| `tooltip` | `RowFn<string \| undefined>` | Hover text of the link. |
 
 ### `icon` — `iconRenderer`
 
@@ -678,9 +678,9 @@ An icon component, fixed or picked per row. Align: `center` · filter type: `tex
 |---|---|---|
 | `icon` | `Component` | Static icon component. |
 | `iconFor` | `RowFn<Component \| undefined>` | Picks the icon per row (wins over `icon`). Kept separate because functional components are functions too. |
-| `show` | `RowFn<boolean>` |  |
-| `label` | `string \| RowFn<string>` |  |
-| `tone` | `Tone \| RowFn<Tone \| undefined>` |  |
+| `show` | `RowFn<boolean>` | Show the icon for this row (default: always). A hidden icon keeps its space, so columns stay aligned. |
+| `label` | `string \| RowFn<string>` | Accessible name and tooltip. Without one the icon is decorative. |
+| `tone` | `Tone \| RowFn<Tone \| undefined>` | Icon colour, or `(value, row) => tone`. |
 
 ### `json` — `jsonRenderer`
 
@@ -688,8 +688,8 @@ A button that opens the value as escaped JSON in a dialog. Align: `start` · fil
 
 | Option | Type | Description |
 |---|---|---|
-| `label` | `string` |  |
-| `dialogTitle` | `string \| RowFn<string>` |  |
+| `label` | `string` | Text of the button that opens the JSON in a dialog. Default “View”. |
+| `dialogTitle` | `string \| RowFn<string>` | Heading of the dialog (default: the column header). |
 
 ### `json-tree` — `jsonTreeRenderer`
 
@@ -701,7 +701,7 @@ A collapsible tree of nested data. Align: `start` · filter type: `text`.
 | `maxDepth` | `number` | Deeper nodes are summarised (“3 items”) instead of expanded. Default unlimited. |
 | `parseNested` | `boolean` | String values that contain JSON are shown as nested trees. |
 | `collapsed` | `boolean` | Starts hidden behind a toggle button (labelled `toggleLabel`, default “More info”). |
-| `toggleLabel` | `string` |  |
+| `toggleLabel` | `string` | Text of the `collapsed` toggle. Default “More info”. |
 | `emptyText` | `string` | Shown for null / empty values. Default: nothing. |
 
 ### `actions-menu` — `actionsMenuRenderer`
@@ -711,7 +711,7 @@ A `⋯` button with a keyboard-friendly menu. Emits the chosen item's `name`. Al
 | Option | Type | Description |
 |---|---|---|
 | `actions` | `MenuItem[] \| ((row: any) => MenuItem[])` | Menu items (actions and `{ separator: true }`), or a function of the row. |
-| `label` | `string` |  |
+| `label` | `string` | Accessible name of the `⋯` button and the menu. Default “Actions”. |
 
 ### `action-button` — `actionButtonRenderer`
 
@@ -719,13 +719,13 @@ One button per row. Emits its `action` (default `click`). Align: `start` · filt
 
 | Option | Type | Description |
 |---|---|---|
-| `label` | `string \| RowFn<string>` |  |
+| `label` | `string \| RowFn<string>` | Button text (default: the value), or `(value, row) => text`. |
 | `action` | `string` | Action name emitted on click. Default `click`. |
-| `icon` | `Component` |  |
-| `tone` | `Tone` |  |
-| `disabled` | `RowFn<boolean>` |  |
+| `icon` | `Component` | An icon component before the label. |
+| `tone` | `Tone` | Button colour, e.g. `danger` for a delete button. |
+| `disabled` | `RowFn<boolean>` | Disable the button for some rows: `(value, row) => boolean`. |
 | `visible` | `RowFn<boolean>` | Hide the button for some rows. |
-| `variant` | `ButtonVariant` |  |
+| `variant` | `ButtonVariant` | `outline` (default), `solid` or `ghost`. |
 | `iconOnly` | `boolean` | Only the icon; the label becomes its accessible name and tooltip. |
 
 ### `multi-line` — `multiLineRenderer`
@@ -737,7 +737,7 @@ Stacked lines, each with its own style, link, badge, trend or action. Align: `st
 | `lines` | `RowFn<LineInput[] \| null \| undefined>` | Builds the lines; default: the value itself when it's an array. |
 | `boldLines` | `number[]` | Indexes of lines to show in bold. |
 | `ellipsis` | `boolean` | Each line on one row with ellipsis (default true). |
-| `target` | `'_self' \| '_blank'` |  |
+| `target` | `'_self' \| '_blank'` | `_blank` opens linked lines in a new tab. |
 | `placeholder` | `string` | Shown when the value is empty. |
 
 ### `copy` — `copyRenderer`
@@ -760,9 +760,9 @@ A chip in any colour (readable text picked by contrast), square, circle or pill.
 |---|---|---|
 | `color` | `RowOption<string \| null \| undefined>` | Any CSS colour (e.g. from an API); text colour is picked for contrast. |
 | `tone` | `ToneOption` | Named tone instead of a raw colour. |
-| `label` | `RowFn<string>` |  |
-| `tooltip` | `RowFn<string \| null \| undefined>` |  |
-| `shape` | `'square' \| 'circle' \| 'pill'` |  |
+| `label` | `RowFn<string>` | Chip text (default: the value, or its `label` / `name` / `text` field). A tone map is keyed by this label. |
+| `tooltip` | `RowFn<string \| null \| undefined>` | Hover text (default: the value's `description` field, if any). |
+| `shape` | `'square' \| 'circle' \| 'pill'` | `square` (default), `circle` or `pill`. |
 | `size` | `string` | Box size for square/circle. Default `1.75rem`. |
 | `placeholder` | `string` | Shown when the value is empty. |
 
@@ -773,7 +773,7 @@ A controlled checkbox, with a tooltip when disabled. Emits `change` with the req
 | Option | Type | Description |
 |---|---|---|
 | `checked` | `RowFn<boolean>` | Default: the value is truthy. |
-| `disabled` | `RowOption<boolean>` |  |
+| `disabled` | `RowOption<boolean>` | Disabled for every row, or `(value, row) => boolean`. |
 | `disabledReason` | `RowFn<string \| null \| undefined>` | Tooltip explaining why it's disabled. |
 | `label` | `RowOption<string>` | Accessible name. Default: the column header. |
 
@@ -784,7 +784,7 @@ A controlled on / off switch. Emits `change` with the requested state. Align: `c
 | Option | Type | Description |
 |---|---|---|
 | `checked` | `RowFn<boolean>` | Default: the value is truthy. |
-| `disabled` | `RowOption<boolean>` |  |
+| `disabled` | `RowOption<boolean>` | Disabled for every row, or `(value, row) => boolean`. |
 | `disabledReason` | `RowFn<string \| null \| undefined>` | Tooltip explaining why it's disabled. |
 | `label` | `RowOption<string>` | Accessible name. Default: the column header. |
 
@@ -796,7 +796,7 @@ One selected row across the column (controlled). Emits `select`. Align: `center`
 |---|---|---|
 | `name` | `string` | Radio group name. Default: the column key. |
 | `checked` | `RowFn<boolean>` | Default: the value is truthy. |
-| `disabled` | `RowOption<boolean>` |  |
+| `disabled` | `RowOption<boolean>` | Disabled for every row, or `(value, row) => boolean`. |
 | `disabledReason` | `RowFn<string \| null \| undefined>` | Tooltip explaining why it's disabled. |
 | `label` | `RowOption<string>` | Accessible name. Default: the column header. |
 
@@ -809,8 +809,8 @@ A value with an edit button, for opening your own editor. Emits `edit`. Align: `
 | `format` | `RowFn<string>` | Text shown next to the edit button (default: the value). |
 | `placeholder` | `string` | Shown when the value is empty. |
 | `label` | `string` | Accessible name of the button. Default “Edit”. |
-| `disabled` | `RowOption<boolean>` |  |
-| `bold` | `boolean` |  |
+| `disabled` | `RowOption<boolean>` | Disables the edit button, for every row or `(value, row) => boolean`. |
+| `bold` | `boolean` | Bold text. |
 
 ### `image` — `imageRenderer`
 
@@ -820,10 +820,10 @@ A thumbnail, with a placeholder when empty or broken. Align: `center` · filter 
 |---|---|---|
 | `src` | `RowFn<string \| null \| undefined>` | Default: the value. |
 | `baseUrl` | `string` | Prefixed to relative paths (e.g. a CDN). |
-| `alt` | `RowOption<string>` |  |
+| `alt` | `RowOption<string>` | Alternative text (default: none, a decorative image), or `(value, row) => text`. |
 | `size` | `string` | Default `2.5rem`. |
-| `fit` | `'contain' \| 'cover'` |  |
-| `shape` | `'rounded' \| 'circle' \| 'square'` |  |
+| `fit` | `'contain' \| 'cover'` | `contain` (default) shows the whole image; `cover` fills the box and crops. |
+| `shape` | `'rounded' \| 'circle' \| 'square'` | `rounded` (default), `circle` (avatars) or `square`. |
 
 ### `code` — `codeRenderer`
 
@@ -842,7 +842,7 @@ Several buttons, fixed or per row. Emits the clicked button's `name`. Align: `st
 
 | Option | Type | Description |
 |---|---|---|
-| `buttons` | `ButtonSpec[] \| ((row: any) => ButtonSpec[])` |  |
+| `buttons` | `ButtonSpec[] \| ((row: any) => ButtonSpec[])` | The buttons (`{ name, label, tone?, variant?, disabled?, icon?, hidden? }`), or a function of the row. A click emits the button's `name`. |
 
 ### `icon-toggle` — `iconToggleRenderer`
 
@@ -855,7 +855,7 @@ A star / flag style on-off button (controlled). Emits `toggle`. Align: `center` 
 | `activeIcon` | `Component` | Default: a filled star (or `icon`). |
 | `label` | `RowOption<string>` | Accessible name. Default “Toggle”. |
 | `activeTone` | `Tone` | Tone when active. Default `warning`. |
-| `disabled` | `RowOption<boolean>` |  |
+| `disabled` | `RowOption<boolean>` | Disabled for every row, or `(value, row) => boolean`. |
 
 ### `details` — `detailsRenderer`
 
@@ -864,7 +864,7 @@ A status badge plus an info button with an anchored popover of label / value row
 | Option | Type | Description |
 |---|---|---|
 | `tone` | `ToneOption` | Summary badge tone, like `status`. |
-| `label` | `RowFn<string>` |  |
+| `label` | `RowFn<string>` | Badge text (default: the value). |
 | `items` | `RowFn<DetailItem[] \| null \| undefined>` | Popover rows. Empty → no info button. |
 | `title` | `RowOption<string>` | Popover heading. Default: the column header. |
 | `triggerLabel` | `string` | Accessible name of the info button. Default “Details”. |
@@ -876,7 +876,7 @@ The first items of a list, with a “+N more” toggle. Emits `expand`. Align: `
 | Option | Type | Description |
 |---|---|---|
 | `items` | `RowFn<unknown[] \| null \| undefined>` | Default: the value when it's an array. |
-| `itemLabel` | `RowFn<string>` |  |
+| `itemLabel` | `RowFn<string>` | Text of one item, `(item, row) => string` (default: the item, objects as JSON). |
 | `max` | `number` | Items shown before “+N more”. Default 1. |
 | `placeholder` | `string` | Shown when the value is empty. |
 
@@ -894,8 +894,8 @@ The first items of a list, with a “+N more” toggle. Emits `expand`. Align: `
 
 | Field | Type | Description |
 |---|---|---|
-| `top`? | `RowKey[]` |  |
-| `bottom`? | `RowKey[]` |  |
+| `top`? | `RowKey[]` | Keys of the rows pinned above the body, in display order. |
+| `bottom`? | `RowKey[]` | Keys of the rows pinned below the body, in display order. |
 
 ### `ColumnState`
 
@@ -910,14 +910,14 @@ The first items of a list, with a “+N more” toggle. Emits `expand`. Align: `
 
 | Field | Type | Description |
 |---|---|---|
-| `key` | `string` |  |
-| `dir` | `SortDir` |  |
+| `key` | `string` | The sorted column’s `key`. |
+| `dir` | `SortDir` | `asc` or `desc`. |
 
 ### `ColumnFilterOptions`
 
 | Field | Type | Description |
 |---|---|---|
-| `type`? | `FilterType` |  |
+| `type`? | `FilterType` | `text`, `number`, `date`, `boolean` or `set` (default: from the renderer). |
 | `options`? | `readonly FilterOption[] \| FilterOptionsLoader` | Choices for a `set` filter: a list, or a loader called with the search text (e.g. from a backend — honour `signal`). Default: distinct values from the rows. |
 | `placeholder`? | `string` | Placeholder of the filter-row input. |
 
@@ -925,8 +925,8 @@ The first items of a list, with a “+N more” toggle. Emits `expand`. Align: `
 
 | Field | Type | Description |
 |---|---|---|
-| `value` | `unknown` |  |
-| `label`? | `string` |  |
+| `value` | `unknown` | The value rows are matched against. |
+| `label`? | `string` | Text shown for the option (default: the value). |
 | `count`? | `number` | Shown next to the option (e.g. number of rows). |
 
 ### `MenuAction`
@@ -934,70 +934,70 @@ The first items of a list, with a “+N more” toggle. Emits `expand`. Align: `
 | Field | Type | Description |
 |---|---|---|
 | `name` | `string` | Emitted as the action name. |
-| `label` | `string` |  |
-| `disabled`? | `boolean` |  |
-| `tone`? | `MenuTone` |  |
-| `icon`? | `Component` |  |
+| `label` | `string` | Text of the item. |
+| `disabled`? | `boolean` | Shown but can’t be chosen. |
+| `tone`? | `MenuTone` | Colour, e.g. `danger` for a delete item. |
+| `icon`? | `Component` | An icon component before the label. |
 | `hint`? | `string` | Shown right-aligned, e.g. a shortcut hint. |
 
 ### `CellContext`
 
 | Field | Type | Description |
 |---|---|---|
-| `row` | `T` |  |
-| `rowKey` | `RowKey` |  |
-| `column` | `ColumnDef<T>` |  |
-| `value` | `unknown` |  |
+| `row` | `T` | The row the cell belongs to. |
+| `rowKey` | `RowKey` | The row’s key (`row-key`). |
+| `column` | `ColumnDef<T>` | The cell’s column definition. |
+| `value` | `unknown` | The cell value (`value` / `field` / `key`). |
 
 ### `CellActionEvent`
 
 | Field | Type | Description |
 |---|---|---|
-| `name` | `string` |  |
-| `payload` | `unknown` |  |
-| `row` | `T` |  |
-| `rowKey` | `RowKey` |  |
-| `column` | `ColumnDef<T>` |  |
+| `name` | `string` | The action, e.g. `click`, `change`, `toggle`, `copy` or a button’s `name`. |
+| `payload` | `unknown` | Action data: the new value of a toggle or input, the copied text, a line index… |
+| `row` | `T` | The row the cell belongs to. |
+| `rowKey` | `RowKey` | The row’s key (`row-key`). |
+| `column` | `ColumnDef<T>` | The cell’s column definition. |
 
 ### `CellClickEvent`
 
 | Field | Type | Description |
 |---|---|---|
-| `row` | `T` |  |
-| `rowKey` | `RowKey` |  |
-| `column` | `ColumnDef<T>` |  |
-| `value` | `unknown` |  |
-| `event` | `MouseEvent \| KeyboardEvent` |  |
+| `row` | `T` | The row the cell belongs to. |
+| `rowKey` | `RowKey` | The row’s key (`row-key`). |
+| `column` | `ColumnDef<T>` | The clicked column (one with `clickable: true`). |
+| `value` | `unknown` | The cell value. |
+| `event` | `MouseEvent \| KeyboardEvent` | The DOM event of the click (Enter on a focused cell clicks it too). |
 
 ### `ContextActionEvent`
 
 | Field | Type | Description |
 |---|---|---|
-| `name` | `string` |  |
-| `item` | `MenuAction` |  |
-| `row` | `T` |  |
-| `rowKey` | `RowKey` |  |
-| `column` | `ColumnDef<T>` |  |
-| `value` | `unknown` |  |
+| `name` | `string` | The chosen item’s `name`. |
+| `item` | `MenuAction` | The chosen item. |
+| `row` | `T` | The row the cell belongs to. |
+| `rowKey` | `RowKey` | The row’s key (`row-key`). |
+| `column` | `ColumnDef<T>` | The cell’s column definition. |
+| `value` | `unknown` | The cell value (`value` / `field` / `key`). |
 
 ### `HeaderActionEvent`
 
 | Field | Type | Description |
 |---|---|---|
-| `name` | `string` |  |
-| `item` | `MenuAction` |  |
-| `column` | `ColumnDef<T>` |  |
+| `name` | `string` | The chosen item’s `name`. |
+| `item` | `MenuAction` | The chosen item. |
+| `column` | `ColumnDef<T>` | The column whose header menu it was. |
 
 ### `VueGridConfig`
 
 | Field | Type | Description |
 |---|---|---|
-| `renderers`? | `CellRendererDefinition[]` |  |
+| `renderers`? | `CellRendererDefinition[]` | Renderers every grid can use by name (`renderer: 'currency'`); `allRenderers` for all of them. |
 | `features`? | `readonly GridFeature[]` | Features every grid in the app gets (`allFeatures` for all of them). |
-| `locale`? | `string` |  |
-| `currency`? | `string` |  |
-| `timeZone`? | `string` |  |
-| `density`? | `Density` |  |
+| `locale`? | `string` | Default locale for number and date renderers (default: the browser’s). |
+| `currency`? | `string` | Default ISO 4217 currency for currency renderers. |
+| `timeZone`? | `string` | Default IANA time zone for date renderers and date filters. |
+| `density`? | `Density` | Default density: `compact`, `cozy` (default) or `comfortable`. |
 
 ---
 

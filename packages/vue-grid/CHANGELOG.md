@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+Docs: every renderer option (141) and every field of the public types (event payloads, menu
+items, `createVueGrid` config, sort and pinned-row state) now has a description, in the editor's
+hover help, the API reference, the JSON Schema and the MCP server's tools; a test keeps it that
+way. New exported type `SignedNumberOptions` (the `signed-number` renderer's options).
+
 ## 0.3.1 — 2026-11-24
 
 Releases are published from GitHub Actions with npm trusted publishing, so every version from

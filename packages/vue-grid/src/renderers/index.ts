@@ -55,6 +55,7 @@ import type {
   ListOptions,
   MultiLineOptions,
   NumberOptions,
+  SignedNumberOptions,
   RadioOptions,
   StatusOptions,
   SwitchOptions,
@@ -67,7 +68,7 @@ declare module '../types' {
     text: TextOptions
     'toggle-text': ToggleTextOptions
     number: NumberOptions
-    'signed-number': NumberOptions
+    'signed-number': SignedNumberOptions
     currency: CurrencyOptions
     change: ChangeOptions
     date: DateOptions
@@ -112,7 +113,7 @@ export const numberRenderer = /*#__PURE__*/ defineCellRenderer<NumberOptions>({
   format: numberText,
 })
 /** Numbers that always show their sign (+ / −). With `clickable`, emits `click`. */
-export const signedNumberRenderer = /*#__PURE__*/ defineCellRenderer<NumberOptions & { signed?: boolean }>({
+export const signedNumberRenderer = /*#__PURE__*/ defineCellRenderer<SignedNumberOptions>({
   name: 'signed-number',
   filterType: 'number',
   component: NumberCell,

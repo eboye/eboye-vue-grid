@@ -1024,7 +1024,7 @@
           "name": "maxWidth",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "CSS max width of the text, e.g. `'16rem'`: longer text wraps or, with `ellipsis`, is cut."
         },
         {
           "name": "preserveNewlines",
@@ -1048,7 +1048,7 @@
           "name": "tone",
           "type": "RowOption<Tone | undefined>",
           "required": false,
-          "description": ""
+          "description": "Colour of the text (`success`, `danger`, `warning`, `info`, `neutral`, `accent`), or `(value, row) => tone`."
         },
         {
           "name": "toneMode",
@@ -1060,7 +1060,7 @@
           "name": "bold",
           "type": "RowOption<boolean>",
           "required": false,
-          "description": ""
+          "description": "Bold text, for every row or `(value, row) => boolean`."
         },
         {
           "name": "secondary",
@@ -1078,7 +1078,7 @@
           "name": "badgePosition",
           "type": "'start' | 'end'",
           "required": false,
-          "description": ""
+          "description": "Where `badge` goes: `start` (default, before the value) or `end`."
         },
         {
           "name": "icon",
@@ -1117,7 +1117,7 @@
           "name": "highlighted",
           "type": "boolean | RowFn<boolean>",
           "required": false,
-          "description": ""
+          "description": "Shown as switched on (highlighted, `aria-pressed`), e.g. `(v, row) => row.starred`."
         },
         {
           "name": "placeholder",
@@ -1163,6 +1163,12 @@
       "defaults": "{ signed: true }",
       "options": [
         {
+          "name": "signed",
+          "type": "boolean",
+          "required": false,
+          "description": "Always show the sign (`+3`, `−2`). Default `true` for `signed-number`; `false` formats like `number`."
+        },
+        {
           "name": "format",
           "type": "Intl.NumberFormatOptions",
           "required": false,
@@ -1179,12 +1185,6 @@
           "type": "RowOption<boolean>",
           "required": false,
           "description": "Renders the number as a link-style button that emits `click` (drill-down)."
-        },
-        {
-          "name": "signed",
-          "type": "boolean",
-          "required": false,
-          "description": ""
         }
       ]
     },
@@ -1298,7 +1298,7 @@
           "name": "milliseconds",
           "type": "boolean",
           "required": false,
-          "description": ""
+          "description": "Show milliseconds in the time (`12:30:05.123`)."
         },
         {
           "name": "twoLines",
@@ -1331,19 +1331,19 @@
           "name": "trueLabel",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "Text for `true` (and its accessible name in icon mode). Default “Yes”."
         },
         {
           "name": "falseLabel",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "Text for `false`. Default “No”."
         },
         {
           "name": "nullLabel",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "Text for `null` / `undefined`. Default: nothing."
         },
         {
           "name": "display",
@@ -1370,7 +1370,7 @@
           "name": "tone",
           "type": "ToneOption",
           "required": false,
-          "description": ""
+          "description": "Badge colour: one tone, a value → tone map (`{ Paid: 'success', Open: 'info' }`), or `(value, row) => tone`. Default `neutral`."
         },
         {
           "name": "label",
@@ -1382,7 +1382,7 @@
           "name": "dot",
           "type": "boolean",
           "required": false,
-          "description": ""
+          "description": "A coloured dot before the label. Default `true`; `false` hides it."
         },
         {
           "name": "variant",
@@ -1415,7 +1415,7 @@
           "name": "href",
           "type": "RowFn<string | undefined>",
           "required": false,
-          "description": ""
+          "description": "The URL, from the value and row (default: the value). Only http(s), mailto and tel are linked; wins over `to`."
         },
         {
           "name": "to",
@@ -1427,19 +1427,19 @@
           "name": "label",
           "type": "RowFn<string>",
           "required": false,
-          "description": ""
+          "description": "Link text (default: the value)."
         },
         {
           "name": "target",
           "type": "'_self' | '_blank'",
           "required": false,
-          "description": ""
+          "description": "`_blank` opens a new tab (with `rel=\"noopener noreferrer\"`)."
         },
         {
           "name": "tooltip",
           "type": "RowFn<string | undefined>",
           "required": false,
-          "description": ""
+          "description": "Hover text of the link."
         }
       ]
     },
@@ -1466,19 +1466,19 @@
           "name": "show",
           "type": "RowFn<boolean>",
           "required": false,
-          "description": ""
+          "description": "Show the icon for this row (default: always). A hidden icon keeps its space, so columns stay aligned."
         },
         {
           "name": "label",
           "type": "string | RowFn<string>",
           "required": false,
-          "description": ""
+          "description": "Accessible name and tooltip. Without one the icon is decorative."
         },
         {
           "name": "tone",
           "type": "Tone | RowFn<Tone | undefined>",
           "required": false,
-          "description": ""
+          "description": "Icon colour, or `(value, row) => tone`."
         }
       ]
     },
@@ -1493,13 +1493,13 @@
           "name": "label",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "Text of the button that opens the JSON in a dialog. Default “View”."
         },
         {
           "name": "dialogTitle",
           "type": "string | RowFn<string>",
           "required": false,
-          "description": ""
+          "description": "Heading of the dialog (default: the column header)."
         }
       ]
     },
@@ -1538,7 +1538,7 @@
           "name": "toggleLabel",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "Text of the `collapsed` toggle. Default “More info”."
         },
         {
           "name": "emptyText",
@@ -1565,7 +1565,7 @@
           "name": "label",
           "type": "string",
           "required": false,
-          "description": ""
+          "description": "Accessible name of the `⋯` button and the menu. Default “Actions”."
         }
       ]
     },
@@ -1580,7 +1580,7 @@
           "name": "label",
           "type": "string | RowFn<string>",
           "required": false,
-          "description": ""
+          "description": "Button text (default: the value), or `(value, row) => text`."
         },
         {
           "name": "action",
@@ -1592,19 +1592,19 @@
           "name": "icon",
           "type": "Component",
           "required": false,
-          "description": ""
+          "description": "An icon component before the label."
         },
         {
           "name": "tone",
           "type": "Tone",
           "required": false,
-          "description": ""
+          "description": "Button colour, e.g. `danger` for a delete button."
         },
         {
           "name": "disabled",
           "type": "RowFn<boolean>",
           "required": false,
-          "description": ""
+          "description": "Disable the button for some rows: `(value, row) => boolean`."
         },
         {
           "name": "visible",
@@ -1616,7 +1616,7 @@
           "name": "variant",
           "type": "ButtonVariant",
           "required": false,
-          "description": ""
+          "description": "`outline` (default), `solid` or `ghost`."
         },
         {
           "name": "iconOnly",
@@ -1655,7 +1655,7 @@
           "name": "target",
           "type": "'_self' | '_blank'",
           "required": false,
-          "description": ""
+          "description": "`_blank` opens linked lines in a new tab."
         },
         {
           "name": "placeholder",
@@ -1727,19 +1727,19 @@
           "name": "label",
           "type": "RowFn<string>",
           "required": false,
-          "description": ""
+          "description": "Chip text (default: the value, or its `label` / `name` / `text` field). A tone map is keyed by this label."
         },
         {
           "name": "tooltip",
           "type": "RowFn<string | null | undefined>",
           "required": false,
-          "description": ""
+          "description": "Hover text (default: the value's `description` field, if any)."
         },
         {
           "name": "shape",
           "type": "'square' | 'circle' | 'pill'",
           "required": false,
-          "description": ""
+          "description": "`square` (default), `circle` or `pill`."
         },
         {
           "name": "size",
@@ -1772,7 +1772,7 @@
           "name": "disabled",
           "type": "RowOption<boolean>",
           "required": false,
-          "description": ""
+          "description": "Disabled for every row, or `(value, row) => boolean`."
         },
         {
           "name": "disabledReason",
@@ -1805,7 +1805,7 @@
           "name": "disabled",
           "type": "RowOption<boolean>",
           "required": false,
-          "description": ""
+          "description": "Disabled for every row, or `(value, row) => boolean`."
         },
         {
           "name": "disabledReason",
@@ -1844,7 +1844,7 @@
           "name": "disabled",
           "type": "RowOption<boolean>",
           "required": false,
-          "description": ""
+          "description": "Disabled for every row, or `(value, row) => boolean`."
         },
         {
           "name": "disabledReason",
@@ -1889,13 +1889,13 @@
           "name": "disabled",
           "type": "RowOption<boolean>",
           "required": false,
-          "description": ""
+          "description": "Disables the edit button, for every row or `(value, row) => boolean`."
         },
         {
           "name": "bold",
           "type": "boolean",
           "required": false,
-          "description": ""
+          "description": "Bold text."
         }
       ]
     },
@@ -1922,7 +1922,7 @@
           "name": "alt",
           "type": "RowOption<string>",
           "required": false,
-          "description": ""
+          "description": "Alternative text (default: none, a decorative image), or `(value, row) => text`."
         },
         {
           "name": "size",
@@ -1934,13 +1934,13 @@
           "name": "fit",
           "type": "'contain' | 'cover'",
           "required": false,
-          "description": ""
+          "description": "`contain` (default) shows the whole image; `cover` fills the box and crops."
         },
         {
           "name": "shape",
           "type": "'rounded' | 'circle' | 'square'",
           "required": false,
-          "description": ""
+          "description": "`rounded` (default), `circle` (avatars) or `square`."
         }
       ]
     },
@@ -1988,7 +1988,7 @@
           "name": "buttons",
           "type": "ButtonSpec[] | ((row: any) => ButtonSpec[])",
           "required": false,
-          "description": ""
+          "description": "The buttons (`{ name, label, tone?, variant?, disabled?, icon?, hidden? }`), or a function of the row. A click emits the button's `name`."
         }
       ]
     },
@@ -2033,7 +2033,7 @@
           "name": "disabled",
           "type": "RowOption<boolean>",
           "required": false,
-          "description": ""
+          "description": "Disabled for every row, or `(value, row) => boolean`."
         }
       ]
     },
@@ -2054,7 +2054,7 @@
           "name": "label",
           "type": "RowFn<string>",
           "required": false,
-          "description": ""
+          "description": "Badge text (default: the value)."
         },
         {
           "name": "items",
@@ -2093,7 +2093,7 @@
           "name": "itemLabel",
           "type": "RowFn<string>",
           "required": false,
-          "description": ""
+          "description": "Text of one item, `(item, row) => string` (default: the item, objects as JSON)."
         },
         {
           "name": "max",
@@ -2136,13 +2136,13 @@
         "name": "top",
         "type": "RowKey[]",
         "required": false,
-        "description": ""
+        "description": "Keys of the rows pinned above the body, in display order."
       },
       {
         "name": "bottom",
         "type": "RowKey[]",
         "required": false,
-        "description": ""
+        "description": "Keys of the rows pinned below the body, in display order."
       }
     ],
     "ColumnState": [
@@ -2176,13 +2176,13 @@
         "name": "key",
         "type": "string",
         "required": true,
-        "description": ""
+        "description": "The sorted column’s `key`."
       },
       {
         "name": "dir",
         "type": "SortDir",
         "required": true,
-        "description": ""
+        "description": "`asc` or `desc`."
       }
     ],
     "ColumnFilterOptions": [
@@ -2190,7 +2190,7 @@
         "name": "type",
         "type": "FilterType",
         "required": false,
-        "description": ""
+        "description": "`text`, `number`, `date`, `boolean` or `set` (default: from the renderer)."
       },
       {
         "name": "options",
@@ -2210,13 +2210,13 @@
         "name": "value",
         "type": "unknown",
         "required": true,
-        "description": ""
+        "description": "The value rows are matched against."
       },
       {
         "name": "label",
         "type": "string",
         "required": false,
-        "description": ""
+        "description": "Text shown for the option (default: the value)."
       },
       {
         "name": "count",
@@ -2236,25 +2236,25 @@
         "name": "label",
         "type": "string",
         "required": true,
-        "description": ""
+        "description": "Text of the item."
       },
       {
         "name": "disabled",
         "type": "boolean",
         "required": false,
-        "description": ""
+        "description": "Shown but can’t be chosen."
       },
       {
         "name": "tone",
         "type": "MenuTone",
         "required": false,
-        "description": ""
+        "description": "Colour, e.g. `danger` for a delete item."
       },
       {
         "name": "icon",
         "type": "Component",
         "required": false,
-        "description": ""
+        "description": "An icon component before the label."
       },
       {
         "name": "hint",
@@ -2268,25 +2268,25 @@
         "name": "row",
         "type": "T",
         "required": true,
-        "description": ""
+        "description": "The row the cell belongs to."
       },
       {
         "name": "rowKey",
         "type": "RowKey",
         "required": true,
-        "description": ""
+        "description": "The row’s key (`row-key`)."
       },
       {
         "name": "column",
         "type": "ColumnDef<T>",
         "required": true,
-        "description": ""
+        "description": "The cell’s column definition."
       },
       {
         "name": "value",
         "type": "unknown",
         "required": true,
-        "description": ""
+        "description": "The cell value (`value` / `field` / `key`)."
       }
     ],
     "CellActionEvent": [
@@ -2294,31 +2294,31 @@
         "name": "name",
         "type": "string",
         "required": true,
-        "description": ""
+        "description": "The action, e.g. `click`, `change`, `toggle`, `copy` or a button’s `name`."
       },
       {
         "name": "payload",
         "type": "unknown",
         "required": true,
-        "description": ""
+        "description": "Action data: the new value of a toggle or input, the copied text, a line index…"
       },
       {
         "name": "row",
         "type": "T",
         "required": true,
-        "description": ""
+        "description": "The row the cell belongs to."
       },
       {
         "name": "rowKey",
         "type": "RowKey",
         "required": true,
-        "description": ""
+        "description": "The row’s key (`row-key`)."
       },
       {
         "name": "column",
         "type": "ColumnDef<T>",
         "required": true,
-        "description": ""
+        "description": "The cell’s column definition."
       }
     ],
     "CellClickEvent": [
@@ -2326,31 +2326,31 @@
         "name": "row",
         "type": "T",
         "required": true,
-        "description": ""
+        "description": "The row the cell belongs to."
       },
       {
         "name": "rowKey",
         "type": "RowKey",
         "required": true,
-        "description": ""
+        "description": "The row’s key (`row-key`)."
       },
       {
         "name": "column",
         "type": "ColumnDef<T>",
         "required": true,
-        "description": ""
+        "description": "The clicked column (one with `clickable: true`)."
       },
       {
         "name": "value",
         "type": "unknown",
         "required": true,
-        "description": ""
+        "description": "The cell value."
       },
       {
         "name": "event",
         "type": "MouseEvent | KeyboardEvent",
         "required": true,
-        "description": ""
+        "description": "The DOM event of the click (Enter on a focused cell clicks it too)."
       }
     ],
     "ContextActionEvent": [
@@ -2358,37 +2358,37 @@
         "name": "name",
         "type": "string",
         "required": true,
-        "description": ""
+        "description": "The chosen item’s `name`."
       },
       {
         "name": "item",
         "type": "MenuAction",
         "required": true,
-        "description": ""
+        "description": "The chosen item."
       },
       {
         "name": "row",
         "type": "T",
         "required": true,
-        "description": ""
+        "description": "The row the cell belongs to."
       },
       {
         "name": "rowKey",
         "type": "RowKey",
         "required": true,
-        "description": ""
+        "description": "The row’s key (`row-key`)."
       },
       {
         "name": "column",
         "type": "ColumnDef<T>",
         "required": true,
-        "description": ""
+        "description": "The cell’s column definition."
       },
       {
         "name": "value",
         "type": "unknown",
         "required": true,
-        "description": ""
+        "description": "The cell value (`value` / `field` / `key`)."
       }
     ],
     "HeaderActionEvent": [
@@ -2396,19 +2396,19 @@
         "name": "name",
         "type": "string",
         "required": true,
-        "description": ""
+        "description": "The chosen item’s `name`."
       },
       {
         "name": "item",
         "type": "MenuAction",
         "required": true,
-        "description": ""
+        "description": "The chosen item."
       },
       {
         "name": "column",
         "type": "ColumnDef<T>",
         "required": true,
-        "description": ""
+        "description": "The column whose header menu it was."
       }
     ],
     "VueGridConfig": [
@@ -2416,7 +2416,7 @@
         "name": "renderers",
         "type": "CellRendererDefinition[]",
         "required": false,
-        "description": ""
+        "description": "Renderers every grid can use by name (`renderer: 'currency'`); `allRenderers` for all of them."
       },
       {
         "name": "features",
@@ -2428,25 +2428,25 @@
         "name": "locale",
         "type": "string",
         "required": false,
-        "description": ""
+        "description": "Default locale for number and date renderers (default: the browser’s)."
       },
       {
         "name": "currency",
         "type": "string",
         "required": false,
-        "description": ""
+        "description": "Default ISO 4217 currency for currency renderers."
       },
       {
         "name": "timeZone",
         "type": "string",
         "required": false,
-        "description": ""
+        "description": "Default IANA time zone for date renderers and date filters."
       },
       {
         "name": "density",
         "type": "Density",
         "required": false,
-        "description": ""
+        "description": "Default density: `compact`, `cozy` (default) or `comfortable`."
       }
     ]
   }

@@ -274,9 +274,12 @@
           "type": "object",
           "properties": {
             "key": {
-              "type": "string"
+              "type": "string",
+              "description": "The sorted column’s `key`."
             },
-            "dir": {}
+            "dir": {
+              "description": "`asc` or `desc`."
+            }
           },
           "required": [
             "key",
@@ -373,7 +376,8 @@
                   "string",
                   "number"
                 ]
-              }
+              },
+              "description": "Keys of the rows pinned above the body, in display order."
             },
             "bottom": {
               "type": "array",
@@ -382,7 +386,8 @@
                   "string",
                   "number"
                 ]
-              }
+              },
+              "description": "Keys of the rows pinned below the body, in display order."
             }
           },
           "required": [],
@@ -581,7 +586,8 @@
                     "date",
                     "boolean",
                     "set"
-                  ]
+                  ],
+                  "description": "`text`, `number`, `date`, `boolean` or `set` (default: from the renderer)."
                 },
                 "options": {
                   "description": "Choices for a `set` filter: a list, or a loader called with the search text (e.g. from a backend — honour `signal`). Default: distinct values from the rows."
