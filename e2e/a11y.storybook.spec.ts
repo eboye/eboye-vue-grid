@@ -17,7 +17,7 @@ interface IndexEntry {
 const DISABLED_RULES = ['region']
 
 /** The stories are split across this many tests, so workers check them in parallel. */
-const SHARDS = 8
+const SHARDS = 12
 
 for (let shard = 0; shard < SHARDS; shard++) {
   test(`stories pass axe (WCAG 2.1 A / AA), light and dark — part ${shard + 1}/${SHARDS}`, async ({
@@ -29,7 +29,7 @@ for (let shard = 0; shard < SHARDS; shard++) {
       browserName !== 'chromium',
       'axe checks markup and computed colours; one engine is enough',
     )
-    test.setTimeout(300_000)
+    test.setTimeout(600_000) // big stories (thousands of rows, every renderer) take a while in CI
     const index = (await (await request.get(`${base}/index.json`)).json()) as {
       entries: Record<string, IndexEntry>
     }
