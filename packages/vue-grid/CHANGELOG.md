@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.3.0 — 2026-11-24
 
 **Row grouping** (`rowGroupingFeature`): `v-model:group-by` groups the rows by one or more
 columns into collapsible group rows with the value (in the column's renderer, or the
