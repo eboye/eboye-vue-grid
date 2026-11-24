@@ -1,4 +1,4 @@
-# @nocopypaste/vue-grid 0.4.3 — API reference
+# @nocopypaste/vue-grid 0.5.0 — API reference
 
 > Generated from the TypeScript sources (`scripts/gen-agent.mjs`). Machine-readable: `agent/api.json`, `agent/grid-config.schema.json`.
 
@@ -24,6 +24,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `selectionFeature` | Row selection: the `selectable` prop (multi or single), `v-model:selected`, `selection-mode` (cascade through sub-grids), `is-row-selectable`, Space on a row, shift-click (or Shift+Space) for a range, the select-all checkbox, `prune-selection`, and with server data a "select all N matching rows" banner (`v-model:select-all-matching`; it loads on demand, its own chunk). | `selectable` `selectionMode` `isRowSelectable` `pruneSelection` `selected` `selectAllMatching` |  |
 | `serverDataFeature` | Server data: the `dataSource` prop. The grid sends sort, filters and page to your function, cancels superseded requests, and shows loading, error and retry states. | `dataSource` |  |
 | `sortingFeature` | Sorting: the sort button on `sortable` column headers, the sort items of the header menu and, with `sort-mode="client"`, sorting the rows in the browser. |  | `sortable` `sortValue` `sortFn` |
+| `statusBarFeature` | A status bar under the grid (`status-bar`): how many rows pass the filters ("84 of 200 rows"), how many are selected, how many filters are on (with Clear), and with `{ summary: ['total'] }` the sum and average of those columns over the selected rows, as the cells show them. The `#status-bar` slot replaces its content. Its component loads on demand (own chunk). | `statusBar` |  |
 | `subGridsFeature` | Sub-grids: nested child rows in a CSS `subgrid`, from `sub-rows` (synchronous) or `load-sub-rows` (lazy, cached, with loading / error / retry). Detail rows (`#detail` slot) don't need it. | `subRows` `loadSubRows` `hasSubRows` |  |
 | `virtualScrollingFeature` | Virtual scrolling: `:virtual="{ rowHeight, overscan?, detailHeight? }"` renders only the rows in view (plus `overscan`), so tens of thousands of rows stay fast — sub-grids and detail rows included, inside the same CSS grid / subgrid layout. Without it, `virtual` is ignored and every row renders. | `virtual` |  |
 
@@ -37,6 +38,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `features` | `readonly GridFeature[]` |  |  | Opt-in features for this grid (added to the app-wide `createVueGrid({ features })`): `sortingFeature`, `filteringFeature`, `serverDataFeature`, `paginationFeature`, or `allFeatures`. Read once, when the grid is created. |
 | `dataSource` | `DataSource<T>` |  | `serverDataFeature` | Server data: called with the current query (sort, filters, search, page) whenever it changes. The grid cancels superseded requests, shows loading and errors, and sorts / filters / pages nothing itself. |
 | `pagination` | `boolean \| { pageSizes?: number[] }` | `false` | `paginationFeature` | Built-in pagination under the grid (server-side with `dataSource`, client-side otherwise). |
+| `statusBar` | `boolean \| StatusBarOptions` |  | `statusBarFeature` | A status bar under the grid (status bar feature): rows that pass the filters ("84 of 200 rows"), selected rows, active filters with Clear; `{ summary: ['total'] }` adds the sum and average of those columns over the selected rows. `#status-bar` replaces its content. |
 | `sortMode` | `'controlled' \| 'client'` | `'controlled'` |  | `controlled` (default): a header click only updates `v-model:sort` (sort on the server or in your own code). `client`: the grid sorts the rows itself. Ignored with `dataSource`. |
 | `filterMode` | `'client' \| 'controlled'` | `'client'` | `filteringFeature` | `client` (default): the grid filters its rows. `controlled`: it only emits `update:filters`. |
 | `filterRow` | `boolean` | `false` | `filteringFeature` | Show the filter row: an input under each filterable column's header. |
@@ -114,6 +116,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `group-<key>` | `{ value: unknown; count: number; rows: readonly T[]; column: ColumnDef<T>; group: RowGroup<T> }` | The value of a group row grouped by this column (row grouping feature): `#group-<key>`. |
 | `detail` | `{ row: T; rowKey: RowKey; depth: number }` | Expandable detail row under a row: any content, even another grid. |
 | `empty` |  | Shown when there are no rows. |
+| `status-bar` | `StatusBarScope` | The status bar's content (status bar feature): replaces the counts and the summary. |
 | `loading` |  | Shown while loading with no rows yet. |
 | `sub-rows-loading` | `{ row: T }` | Shown while a row's lazy children load. |
 | `toolbar` | `{ columns: readonly ColumnDef<T>[]; columnState: ColumnState; setColumnState: (state: ColumnState) => void; filters: FilterState; setFilters: (state: FilterState) => void; clearFilters: () => void; activeFilterCount: number; selected: readonly RowKey[]; selectedCount: number; selectAllMatching: boolean; clearSelection: () => void }` | Above the grid: put a search box, column menu, filter summary or batch actions here. |

@@ -60,6 +60,8 @@ import type {
   PinnedRowsState,
   RowKey,
   SortState,
+  StatusBarOptions,
+  StatusBarScope,
   VGridExposed,
   VirtualOptions,
 } from '../types'
@@ -93,6 +95,12 @@ const props = withDefaults(
     dataSource?: DataSource<T>
     /** Built-in pagination under the grid (server-side with `dataSource`, client-side otherwise). */
     pagination?: boolean | { pageSizes?: number[] }
+    /**
+     * A status bar under the grid (status bar feature): rows that pass the filters ("84 of 200
+     * rows"), selected rows, active filters with Clear; `{ summary: ['total'] }` adds the sum and
+     * average of those columns over the selected rows. `#status-bar` replaces its content.
+     */
+    statusBar?: boolean | StatusBarOptions
     /**
      * `controlled` (default): a header click only updates `v-model:sort` (sort on the server or in
      * your own code). `client`: the grid sorts the rows itself. Ignored with `dataSource`.
@@ -288,6 +296,8 @@ defineSlots<{
   detail?: (scope: { row: T; rowKey: RowKey; depth: number }) => unknown
   /** Shown when there are no rows. */
   empty?: () => unknown
+  /** The status bar's content (status bar feature): replaces the counts and the summary. */
+  'status-bar'?: (scope: StatusBarScope) => unknown
   /** Shown while loading with no rows yet. */
   loading?: () => unknown
   /** Shown while a row's lazy children load. */
@@ -977,6 +987,26 @@ const exporter = features.export?.useExport<T>({
   onCopy: (event) => emit('copy', event),
 })
 
+// ── Status bar ──────────────────────────────────────────────────────────────────────────────
+const statusBar = features.statusBar?.useStatusBar<T>({
+  options: () => props.statusBar,
+  rowCount: () =>
+    serverMode.value ? (ds?.total.value ?? sourceRows.value.length) : filteredTopRows.value.length,
+  totalRowCount: () => (serverMode.value ? undefined : sourceRows.value.length),
+  rows: () => sourceRows.value,
+  selection: sel,
+  selected,
+  allMatching: selectAllMatching,
+  filterCount: activeFilterCount,
+  canClear: !!features.filtering,
+  clearFilters: () => clearFilters(),
+  children: childrenOf,
+  getKey,
+  columns: () => props.columns,
+  resolve: resolveRenderer,
+  format: formatContext,
+})
+
 if (process.env.NODE_ENV !== 'production') {
   watchEffect(() => {
     const seen = new Set<RowKey>()
@@ -1025,6 +1055,7 @@ if (process.env.NODE_ENV !== 'production') {
     if (!features.rowPinning && (pinnedRows.value || props.pinnedTopRows || props.pinnedBottomRows))
       missing('rowPinning', '`pinned-rows` / `pinned-top-rows` / `pinned-bottom-rows`')
     if (!features.aggregation && props.totals) missing('aggregation', '`totals`')
+    if (!features.statusBar && props.statusBar) missing('statusBar', '`status-bar`')
     const exportCol = props.columns.find((c) => c.exportValue)?.key
     if (!features.export && exportCol)
       missing('export', `Column "${exportCol}" has an \`exportValue\`; that`)
@@ -1346,6 +1377,12 @@ defineExpose<VGridExposed>({
         />
       </div>
     </div>
+    <component
+      :is="features.statusBar.StatusBar"
+      v-if="statusBar?.enabled.value && features.statusBar"
+      :bar="statusBar"
+      :render="slots['status-bar']"
+    />
     <component
       :is="features.pagination.Pagination"
       v-if="paginated && features.pagination"

@@ -16,6 +16,7 @@ import type {
   SelectionFeature,
   ServerDataFeature,
   SortingFeature,
+  StatusBarFeature,
   SubGridsFeature,
   VirtualScrollingFeature,
 } from '../types'
@@ -40,6 +41,7 @@ export interface FeatureSet {
   aggregation?: AggregationFeature
   rowGrouping?: RowGroupingFeature
   export?: ExportFeature
+  statusBar?: StatusBarFeature
 }
 
 /** Merges feature lists (app-wide, then per grid); a later entry with the same name wins. */

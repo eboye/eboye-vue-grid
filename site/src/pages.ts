@@ -188,6 +188,20 @@ export const pages: Page[] = [
     files: ['ExportDemo'],
   },
   {
+    id: 'status-bar',
+    title: 'Status bar',
+    section: 'Output',
+    summary:
+      'Row, selection and filter counts under the grid, and like a spreadsheet, the sum and average of chosen columns over the selected rows.',
+    try: [
+      'Shift-click a range of rows: the sums follow.',
+      'Filter the City column: “N of 300 rows”, then Clear.',
+      'Search for a player.',
+    ],
+    docs: '26. Status bar',
+    files: ['StatusBarDemo'],
+  },
+  {
     id: 'theming',
     title: 'Theming',
     section: 'Look',

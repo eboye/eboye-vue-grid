@@ -65,6 +65,7 @@ runs in the [live examples](https://eboye.github.io/eboye-vue-grid/), each with 
 | A totals row (sum, avg, …)                        | `aggregationFeature`              | column `aggregate: 'sum' \| 'avg' \| 'min' \| 'max' \| 'count' \| fn`; `totals` (or `'top'`)                                                                                                   |
 | Group rows by a column ("by status, then city")   | `rowGroupingFeature`              | `v-model:group-by="['status', 'city']"`, `groups-expanded`; column `groupable: true` (header menu), `groupValue: (row) => …` (e.g. month); `aggregate` shows per group                         |
 | Download CSV, copy rows / cells (Ctrl+C)          | `exportFeature`                   | `grid.exportCsv()`, `getCsv()`, `copyRows()`, `@copy`; column `exportValue`, `exportable: false`                                                                                               |
+| Row / selection counts, sum of the selected rows  | `statusBarFeature`                | `status-bar` (or `{ summary: ['total'], aggregates?: ['sum', 'avg'] }`); `#status-bar="{ rowCount, selectedCount, summary, … }"`                                                               |
 | Arrow-key navigation (ARIA grid)                  | `keyboardNavigationFeature`       | —                                                                                                                                                                                              |
 | Remember column layout                            | —                                 | `storage="orders-grid"` (localStorage key)                                                                                                                                                     |
 | Cell type (money, date, badge, link, …)           | —                                 | `renderer: currencyRenderer` etc. (list below)                                                                                                                                                 |
@@ -519,7 +520,7 @@ only sees stylesheet rules. Density:
 
 ---
 
-# @nocopypaste/vue-grid 0.4.3 — API reference
+# @nocopypaste/vue-grid 0.5.0 — API reference
 
 > Generated from the TypeScript sources (`scripts/gen-agent.mjs`). Machine-readable: `agent/api.json`, `agent/grid-config.schema.json`.
 
@@ -545,6 +546,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `selectionFeature` | Row selection: the `selectable` prop (multi or single), `v-model:selected`, `selection-mode` (cascade through sub-grids), `is-row-selectable`, Space on a row, shift-click (or Shift+Space) for a range, the select-all checkbox, `prune-selection`, and with server data a "select all N matching rows" banner (`v-model:select-all-matching`; it loads on demand, its own chunk). | `selectable` `selectionMode` `isRowSelectable` `pruneSelection` `selected` `selectAllMatching` |  |
 | `serverDataFeature` | Server data: the `dataSource` prop. The grid sends sort, filters and page to your function, cancels superseded requests, and shows loading, error and retry states. | `dataSource` |  |
 | `sortingFeature` | Sorting: the sort button on `sortable` column headers, the sort items of the header menu and, with `sort-mode="client"`, sorting the rows in the browser. |  | `sortable` `sortValue` `sortFn` |
+| `statusBarFeature` | A status bar under the grid (`status-bar`): how many rows pass the filters ("84 of 200 rows"), how many are selected, how many filters are on (with Clear), and with `{ summary: ['total'] }` the sum and average of those columns over the selected rows, as the cells show them. The `#status-bar` slot replaces its content. Its component loads on demand (own chunk). | `statusBar` |  |
 | `subGridsFeature` | Sub-grids: nested child rows in a CSS `subgrid`, from `sub-rows` (synchronous) or `load-sub-rows` (lazy, cached, with loading / error / retry). Detail rows (`#detail` slot) don't need it. | `subRows` `loadSubRows` `hasSubRows` |  |
 | `virtualScrollingFeature` | Virtual scrolling: `:virtual="{ rowHeight, overscan?, detailHeight? }"` renders only the rows in view (plus `overscan`), so tens of thousands of rows stay fast — sub-grids and detail rows included, inside the same CSS grid / subgrid layout. Without it, `virtual` is ignored and every row renders. | `virtual` |  |
 
@@ -558,6 +560,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `features` | `readonly GridFeature[]` |  |  | Opt-in features for this grid (added to the app-wide `createVueGrid({ features })`): `sortingFeature`, `filteringFeature`, `serverDataFeature`, `paginationFeature`, or `allFeatures`. Read once, when the grid is created. |
 | `dataSource` | `DataSource<T>` |  | `serverDataFeature` | Server data: called with the current query (sort, filters, search, page) whenever it changes. The grid cancels superseded requests, shows loading and errors, and sorts / filters / pages nothing itself. |
 | `pagination` | `boolean \| { pageSizes?: number[] }` | `false` | `paginationFeature` | Built-in pagination under the grid (server-side with `dataSource`, client-side otherwise). |
+| `statusBar` | `boolean \| StatusBarOptions` |  | `statusBarFeature` | A status bar under the grid (status bar feature): rows that pass the filters ("84 of 200 rows"), selected rows, active filters with Clear; `{ summary: ['total'] }` adds the sum and average of those columns over the selected rows. `#status-bar` replaces its content. |
 | `sortMode` | `'controlled' \| 'client'` | `'controlled'` |  | `controlled` (default): a header click only updates `v-model:sort` (sort on the server or in your own code). `client`: the grid sorts the rows itself. Ignored with `dataSource`. |
 | `filterMode` | `'client' \| 'controlled'` | `'client'` | `filteringFeature` | `client` (default): the grid filters its rows. `controlled`: it only emits `update:filters`. |
 | `filterRow` | `boolean` | `false` | `filteringFeature` | Show the filter row: an input under each filterable column's header. |
@@ -635,6 +638,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `group-<key>` | `{ value: unknown; count: number; rows: readonly T[]; column: ColumnDef<T>; group: RowGroup<T> }` | The value of a group row grouped by this column (row grouping feature): `#group-<key>`. |
 | `detail` | `{ row: T; rowKey: RowKey; depth: number }` | Expandable detail row under a row: any content, even another grid. |
 | `empty` |  | Shown when there are no rows. |
+| `status-bar` | `StatusBarScope` | The status bar's content (status bar feature): replaces the counts and the summary. |
 | `loading` |  | Shown while loading with no rows yet. |
 | `sub-rows-loading` | `{ row: T }` | Shown while a row's lazy children load. |
 | `toolbar` | `{ columns: readonly ColumnDef<T>[]; columnState: ColumnState; setColumnState: (state: ColumnState) => void; filters: FilterState; setFilters: (state: FilterState) => void; clearFilters: () => void; activeFilterCount: number; selected: readonly RowKey[]; selectedCount: number; selectAllMatching: boolean; clearSelection: () => void }` | Above the grid: put a search box, column menu, filter summary or batch actions here. |
@@ -1305,6 +1309,7 @@ an opt-in feature:
 | `aggregationFeature`        | Column `aggregate` (`sum`, `avg`, `min`, `max`, `count`, a function) and `totals`: a sticky totals row over the filtered rows                                                                                                                                                                                                           |
 | `rowGroupingFeature`        | `v-model:group-by`: rows grouped by one or more columns into collapsible group rows with the value, row count and aggregates; Group by / Ungroup in the header menu for `groupable` columns                                                                                                                                             |
 | `exportFeature`             | `exportCsv()` / `getCsv()` / `copyRows()`, Ctrl/⌘+C for the selected rows or the focused cell, the `copy` event; column `exportValue` / `exportable`                                                                                                                                                                                    |
+| `statusBarFeature`          | `status-bar`: a bar under the grid with the rows that pass the filters, the selected rows, the active filters (with Clear), and `{ summary: [keys] }` columns' sum and average over the selected rows; the `#status-bar` slot                                                                                                           |
 
 ```ts
 // per grid
@@ -1337,43 +1342,44 @@ what you import.
 
   | File            | What                                                                                                                                    | gzip   |
   | --------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-  | `base.css`      | Structure only: grid layout, subgrid, sticky header and pins, tree indent, popover placement, virtual rows, pinned rows, truncation     | 2.2 kB |
-  | `theme.css`     | The default look on top of `base.css`: `--vg-*` tokens, colours, dark mode, densities, spacing, borders, typography, shadows, animation | 3.3 kB |
-  | `core.css`      | `base.css` + `theme.css`                                                                                                                | 5.1 kB |
+  | `base.css`      | Structure only: grid layout, subgrid, sticky header and pins, tree indent, popover placement, virtual rows, pinned rows, truncation     | 2.3 kB |
+  | `theme.css`     | The default look on top of `base.css`: `--vg-*` tokens, colours, dark mode, densities, spacing, borders, typography, shadows, animation | 3.6 kB |
+  | `core.css`      | `base.css` + `theme.css`                                                                                                                | 5.4 kB |
   | `renderers.css` | Styles for the cell renderers (other than text); uses the theme's tokens                                                                | 2.2 kB |
-  | `style.css`     | All of the above                                                                                                                        | 6.6 kB |
+  | `style.css`     | All of the above                                                                                                                        | 7.0 kB |
 
   For a fully custom look, import only `base.css` (and `renderers.css` if you use renderers)
   and style the `.vg-*` classes yourself. See [Theming](#theming).
 
 | Import (minified / gzip, Vue excluded)                                       | Initial chunk      |
 | ---------------------------------------------------------------------------- | ------------------ |
-| `VGrid` (no features)                                                        | 39.0 kB / 13.6 kB  |
-| `VGrid` + `sortingFeature`                                                   | 39.8 kB / 13.9 kB  |
-| `VGrid` + `filteringFeature`                                                 | 49.7 kB / 17.4 kB  |
-| `VGrid` + `serverDataFeature`                                                | 40.4 kB / 14.2 kB  |
-| `VGrid` + `paginationFeature`                                                | 39.2 kB / 13.7 kB  |
-| `VGrid` + `selectionFeature`                                                 | 43.2 kB / 15.1 kB  |
-| `VGrid` + `subGridsFeature`                                                  | 41.4 kB / 14.5 kB  |
-| `VGrid` + `menusFeature`                                                     | 49.6 kB / 17.2 kB  |
-| `VGrid` + `columnReorderFeature`                                             | 42.7 kB / 14.9 kB  |
-| `VGrid` + `columnPinningFeature`                                             | 41.2 kB / 14.5 kB  |
-| `VGrid` + `virtualScrollingFeature`                                          | 44.8 kB / 15.8 kB  |
-| `VGrid` + `columnVisibilityFeature`                                          | 39.2 kB / 13.7 kB  |
-| `VGrid` + `keyboardNavigationFeature`                                        | 41.5 kB / 14.5 kB  |
-| `VGrid` + `columnResizingFeature`                                            | 41.8 kB / 14.7 kB  |
-| `VGrid` + `columnGroupsFeature`                                              | 40.3 kB / 14.1 kB  |
-| `VGrid` + `rowPinningFeature`                                                | 44.0 kB / 15.0 kB  |
-| `VGrid` + `aggregationFeature`                                               | 44.2 kB / 15.1 kB  |
-| `VGrid` + `rowGroupingFeature`                                               | 48.6 kB / 16.4 kB  |
-| `VGrid` + `exportFeature`                                                    | 42.8 kB / 15.1 kB  |
-| `VGrid` + `allFeatures` + `VGridSearch`                                      | 102.8 kB / 34.7 kB |
-| `VGrid` + `currencyRenderer`                                                 | 40.4 kB / 14.1 kB  |
-| `VGrid` + `VGridPagination` + `VGridColumnMenu`                              | 45.8 kB / 15.9 kB  |
+| `VGrid` (no features)                                                        | 40.3 kB / 14.0 kB  |
+| `VGrid` + `sortingFeature`                                                   | 41.0 kB / 14.3 kB  |
+| `VGrid` + `filteringFeature`                                                 | 50.9 kB / 17.8 kB  |
+| `VGrid` + `serverDataFeature`                                                | 41.6 kB / 14.6 kB  |
+| `VGrid` + `paginationFeature`                                                | 40.4 kB / 14.1 kB  |
+| `VGrid` + `selectionFeature`                                                 | 44.4 kB / 15.4 kB  |
+| `VGrid` + `subGridsFeature`                                                  | 42.6 kB / 14.8 kB  |
+| `VGrid` + `menusFeature`                                                     | 50.7 kB / 17.5 kB  |
+| `VGrid` + `columnReorderFeature`                                             | 44.0 kB / 15.2 kB  |
+| `VGrid` + `columnPinningFeature`                                             | 43.2 kB / 15.0 kB  |
+| `VGrid` + `virtualScrollingFeature`                                          | 46.0 kB / 16.2 kB  |
+| `VGrid` + `columnVisibilityFeature`                                          | 40.4 kB / 14.0 kB  |
+| `VGrid` + `keyboardNavigationFeature`                                        | 43.0 kB / 15.0 kB  |
+| `VGrid` + `columnResizingFeature`                                            | 43.5 kB / 15.2 kB  |
+| `VGrid` + `columnGroupsFeature`                                              | 41.6 kB / 14.5 kB  |
+| `VGrid` + `rowPinningFeature`                                                | 45.2 kB / 15.3 kB  |
+| `VGrid` + `aggregationFeature`                                               | 45.4 kB / 15.4 kB  |
+| `VGrid` + `rowGroupingFeature`                                               | 50.0 kB / 16.9 kB  |
+| `VGrid` + `exportFeature`                                                    | 44.0 kB / 15.5 kB  |
+| `VGrid` + `statusBarFeature`                                                 | 42.6 kB / 14.9 kB  |
+| `VGrid` + `allFeatures` + `VGridSearch`                                      | 106.9 kB / 36.0 kB |
+| `VGrid` + `currencyRenderer`                                                 | 41.6 kB / 14.5 kB  |
+| `VGrid` + `VGridPagination` + `VGridColumnMenu`                              | 47.0 kB / 16.2 kB  |
 | `sortRows` only                                                              | 0.7 kB / 0.4 kB    |
 | `toCsv` only                                                                 | 1.1 kB / 0.6 kB    |
-| everything                                                                   | 147.4 kB / 47.2 kB |
-| `validateGridConfig` (`@nocopypaste/vue-grid/agent`, never in an app bundle) | 63.7 kB / 17.1 kB  |
+| everything                                                                   | 151.7 kB / 48.5 kB |
+| `validateGridConfig` (`@nocopypaste/vue-grid/agent`, never in an app bundle) | 69.7 kB / 18.9 kB  |
 
 With `filteringFeature`, the filter popover body and the filter-row editors are **on-demand
 chunks**: they load the first time a popover opens or `filter-row` is on. With
@@ -2093,6 +2099,35 @@ const columns = [
 Without the grid: `toCsv(rows, columns, { delimiter, header, guard })` writes CSV from any rows
 and column definitions (raw values, `exportValue`, `exportable`); `toDelimited(table)`,
 `plainText(value)` and `guardFormula(text)` are its parts.
+
+## Status bar
+
+`statusBarFeature` adds a bar under the grid, like a spreadsheet's:
+
+```vue
+<VGrid
+  v-model:selected="selected"
+  :rows="orders"
+  :columns="columns"
+  row-key="id"
+  selectable
+  :status-bar="{ summary: ['total'] }"
+  :features="[statusBarFeature, selectionFeature, filteringFeature]"
+/>
+<!-- 84 of 200 rows · 3 selected · 1 filter Clear          Total: Sum €917.03 Average €305.68 -->
+```
+
+- **Counts**: the top-level rows that pass the filters, on every page (`84 of 200 rows`, or the
+  server's `total` with a data source), the selected rows, and the active filters with a **Clear**
+  button.
+- **Summary**: `summary` lists column keys; while rows are selected, the bar shows each column's
+  sum and average over them (`aggregates: ['sum', 'avg', 'min', 'max']` picks), formatted
+  like the column's cells. Selected child rows count too. With "select all N matching rows" on
+  (server data) the summary hides: only the loaded page is known.
+- **Your own content**: the `#status-bar` slot gets `{ rowCount, totalRowCount, selectedCount,
+allSelected, filterCount, summary, clearFilters }` and replaces the default content.
+- The bar is a `group` labelled "Grid status"; style it with `.vg-status-bar`. Its component loads
+  on demand (own chunk).
 
 ## Virtual scrolling
 

@@ -54,6 +54,7 @@ export interface Order {
 23. [Pinned rows and totals](#23-pinned-rows-and-totals)
 24. [Row grouping](#24-row-grouping)
 25. [Export and copy](#25-export-and-copy)
+26. [Status bar](#26-status-bar)
 
 ---
 
@@ -2171,3 +2172,45 @@ const copied = ref('')
   too), `values` (`raw`, `formatted`), `header`, `totals`, `delimiter`, `guard`.
 - Text that a spreadsheet would run as a formula (`=…`, `+…`, `@…`) gets a leading `'`.
 - Without a grid: `toCsv(rows, columns)`.
+
+---
+
+## 26. Status bar
+
+Counts under the grid, and the sum and average of the selected rows (needs `statusBarFeature`):
+
+```vue
+<VGrid
+  v-model:selected="selected"
+  :rows="orders"
+  :columns="columns"
+  row-key="id"
+  selectable
+  :status-bar="{ summary: ['total'] }"
+  :features="[statusBarFeature, selectionFeature, filteringFeature]"
+/>
+<!-- 84 of 200 rows · 3 selected · 1 filter Clear          Total: Sum €917.03 Average €305.68 -->
+```
+
+- **Counts**: the top-level rows that pass the filters, on every page (`84 of 200 rows`, or the
+  server's `total` with a data source), the selected rows, and the active filters with a **Clear**
+  button.
+- **Summary**: `summary` lists column keys; while rows are selected, the bar shows each column's
+  sum and average over them (`aggregates: ['sum', 'avg', 'min', 'max']` picks), formatted
+  like the column's cells. Selected child rows count too. With "select all N matching rows" on
+  (server data) the summary hides: only the loaded page is known.
+- **Your own content**: the `#status-bar` slot gets `{ rowCount, totalRowCount, selectedCount,
+allSelected, filterCount, summary, clearFilters }` and replaces the default content.
+- The bar is a `group` labelled "Grid status"; style it with `.vg-status-bar`. Its component loads
+  on demand (own chunk).
+
+A custom bar with the same numbers:
+
+```vue
+<VGrid … status-bar>
+  <template #status-bar="{ rowCount, selectedCount, clearFilters, filterCount }">
+    {{ rowCount }} orders<template v-if="selectedCount">, {{ selectedCount }} ticked</template>
+    <button v-if="filterCount" @click="clearFilters()">Show all</button>
+  </template>
+</VGrid>
+```

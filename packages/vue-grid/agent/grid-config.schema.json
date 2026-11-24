@@ -41,6 +41,7 @@
           "selectionFeature",
           "serverDataFeature",
           "sortingFeature",
+          "statusBarFeature",
           "subGridsFeature",
           "virtualScrollingFeature"
         ]
@@ -60,6 +61,9 @@
         }
       ],
       "description": "Built-in pagination under the grid (server-side with `dataSource`, client-side otherwise)."
+    },
+    "statusBar": {
+      "description": "A status bar under the grid (status bar feature): rows that pass the filters (\"84 of 200 rows\"), selected rows, active filters with Clear; `{ summary: ['total'] }` adds the sum and average of those columns over the selected rows. `#status-bar` replaces its content."
     },
     "sortMode": {
       "enum": [

@@ -434,6 +434,46 @@ export interface CopyEvent<T = any> {
   columns: readonly ColumnDef<T>[]
 }
 
+/** An aggregate the status bar can show for the selected rows. */
+export type StatusBarAggregate = 'sum' | 'avg' | 'min' | 'max'
+
+/** The `status-bar` prop's options (status bar feature). */
+export interface StatusBarOptions {
+  /**
+   * Column keys to summarise over the selected rows, like a spreadsheet's status bar: e.g.
+   * `['stake']` shows "Stake: Sum €1,234.50 Average €123.45" while rows are selected.
+   */
+  summary?: string[]
+  /** What to show for each `summary` column. Default `['sum', 'avg']`. */
+  aggregates?: StatusBarAggregate[]
+}
+
+/** One `summary` column of the status bar: its aggregates over the selected rows. */
+export interface StatusBarSummary {
+  key: string
+  /** The column's header (or key). */
+  label: string
+  /** Each aggregate with its value and the text shown (formatted like the column's cells). */
+  items: { name: StatusBarAggregate; value: unknown; text: string }[]
+}
+
+/** The `#status-bar` slot's props (status bar feature). */
+export interface StatusBarScope {
+  /** Top-level rows that pass the filters, on every page (the server's `total` with a data source). */
+  rowCount: number
+  /** Top-level rows before filtering; undefined with a data source. */
+  totalRowCount: number | undefined
+  /** Selected rows (with "select all matching", the server's total). */
+  selectedCount: number
+  /** "Select all N matching rows" is on (server data). */
+  allSelected: boolean
+  /** Active column filters, plus one for the quick search. */
+  filterCount: number
+  /** The `summary` columns over the selected rows (empty when none are selected). */
+  summary: StatusBarSummary[]
+  clearFilters: () => void
+}
+
 // ── Features (opt-in, tree-shakeable) ─────────────────────────────────────────────────────────
 // A grid only gets the features you register — per grid (`<VGrid :features>`) or app-wide
 // (`createVueGrid({ features })`) — and only those reach your bundle.
@@ -531,7 +571,14 @@ export interface ExportFeature {
   readonly feature: 'export'
   useExport: typeof import('./composables/useGridExport').useGridExport
 }
+export interface StatusBarFeature {
+  readonly feature: 'statusBar'
+  useStatusBar: typeof import('./composables/useStatusBar').useStatusBar
+  /** The status bar's default content. */
+  StatusBar: Component
+}
 export type GridFeature =
+  | StatusBarFeature
   | ExportFeature
   | RowGroupingFeature
   | AggregationFeature

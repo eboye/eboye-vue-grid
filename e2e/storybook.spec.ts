@@ -12,12 +12,14 @@ interface IndexEntry {
 }
 
 test('every story and docs page renders without errors', async ({ page, request }) => {
-  test.setTimeout(240_000)
+  test.setTimeout(60_000)
   const index = (await (await request.get(`${base}/index.json`)).json()) as {
     entries: Record<string, IndexEntry>
   }
   const entries = Object.values(index.entries)
   expect(entries.length).toBeGreaterThan(0)
+  // The walk grows with every story: about 1 s each, more on a cold Storybook or a busy machine.
+  test.setTimeout(Math.max(240_000, entries.length * 2_500))
 
   const failures: string[] = []
   for (const entry of entries) {

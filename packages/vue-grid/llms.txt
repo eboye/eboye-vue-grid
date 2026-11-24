@@ -1,6 +1,6 @@
 # @nocopypaste/vue-grid
 
-> A Vue 3 data grid laid out with CSS Grid and `subgrid`. A plain grid is a read-only table (13.6 kB gzip); sorting, filtering, server data, pagination, selection, sub-grids, menus, column pinning / reordering / resizing / visibility / groups, pinned rows, totals, row grouping, CSV export and copy, virtual scrolling and keyboard navigation are opt-in features, and 29 cell renderers are opt-in imports. Typed end to end, accessible, themeable with CSS variables, mobile and touch ready.
+> A Vue 3 data grid laid out with CSS Grid and `subgrid`. A plain grid is a read-only table (14.0 kB gzip); sorting, filtering, server data, pagination, selection, sub-grids, menus, column pinning / reordering / resizing / visibility / groups, pinned rows, totals, row grouping, CSV export and copy, a status bar, virtual scrolling and keyboard navigation are opt-in features, and 29 cell renderers are opt-in imports. Typed end to end, accessible, themeable with CSS variables, mobile and touch ready.
 
 Read AGENTS.md first: it lists the rules that cause silent bugs when skipped (register features, pass renderer definitions, `sort-mode="client"`, bounded height), a "which feature for what" table and copy-paste recipes. Validate a grid config with `validateGridConfig()` from `@nocopypaste/vue-grid/agent`.
 

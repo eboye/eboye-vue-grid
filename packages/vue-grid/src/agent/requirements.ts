@@ -22,6 +22,7 @@ export type FeatureId =
   | 'aggregation'
   | 'rowGrouping'
   | 'export'
+  | 'statusBar'
 
 /** Grid props (and `v-model`s) that need a feature. */
 export const propFeatures: Readonly<Record<string, FeatureId>> = {
@@ -55,6 +56,7 @@ export const propFeatures: Readonly<Record<string, FeatureId>> = {
   aggregates: 'aggregation',
   groupBy: 'rowGrouping',
   groupsExpanded: 'rowGrouping',
+  statusBar: 'statusBar',
 }
 
 /** Column options that need a feature. */

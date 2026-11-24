@@ -79,9 +79,10 @@ const toggleGroup = (key: string) =>
     totals
     :virtual="{ rowHeight: 40 }"
     storage="site-hero-columns"
+    :status-bar="{ summary: ['stake'] }"
     aria-label="Bets"
   >
-    <template #toolbar="{ columnState, setColumnState, selectedCount }">
+    <template #toolbar="{ columnState, setColumnState }">
       <VGridSearch placeholder="Search 500 bets…" />
       <span class="demo-toolbar-group" role="group" aria-label="Group by">
         <button
@@ -104,7 +105,6 @@ const toggleGroup = (key: string) =>
       <button type="button" class="vg-button" @click="grid?.exportCsv({ filename: 'bets.csv' })">
         CSV
       </button>
-      <span v-if="selectedCount" class="demo-muted">{{ selectedCount }} selected</span>
     </template>
   </VGrid>
 </template>

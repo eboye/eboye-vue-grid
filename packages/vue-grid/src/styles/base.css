@@ -477,6 +477,22 @@
     align-items: center;
     justify-content: space-between;
   }
+  /* Status bar (status bar feature): counts on the left, the selection summary on the right. */
+  .vg-status-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .vg-status-item {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+  }
+  .vg-status-summary {
+    display: flex;
+    flex-wrap: wrap;
+    margin-inline-start: auto;
+  }
   .vg-pagination-pages {
     display: flex;
     flex-wrap: wrap;

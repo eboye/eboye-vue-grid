@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.5.0 — 2026-11-24
+
+**Status bar** (`statusBarFeature`): `status-bar` adds a bar under the grid with the rows that pass
+the filters (`84 of 200 rows`, or the server's `total`), the selected rows, and the active filters
+with a Clear button. `{ summary: ['stake'] }` adds, like a spreadsheet, the sum and average of
+those columns over the selected rows (`aggregates` picks sum, average, min, max), formatted like
+the column's cells; selected child rows count too. The `#status-bar` slot replaces the content
+(`rowCount`, `totalRowCount`, `selectedCount`, `allSelected`, `filterCount`, `summary`,
+`clearFilters`). Its component loads on demand; a grid without the feature grows by 0.1 kB gzip.
+New exported types `StatusBarOptions`, `StatusBarScope`, `StatusBarSummary`, `StatusBarAggregate`.
+
+Docs: the bundle sizes in the READMEs are measured again (a plain grid is 14.0 kB gzip; the
+numbers had last been taken at 0.3.0).
+
 ## 0.4.3 — 2026-11-24
 
 **Server data: a failed request no longer leaves the old rows looking current.** When a
