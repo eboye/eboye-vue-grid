@@ -516,7 +516,7 @@ Tokens: `--vg-*` (see README → Theming). Dark mode follows `color-scheme`. Den
 
 ---
 
-# @nocopypaste/vue-grid 0.4.0 — API reference
+# @nocopypaste/vue-grid 0.4.1 — API reference
 
 > Generated from the TypeScript sources (`scripts/gen-agent.mjs`). Machine-readable: `agent/api.json`, `agent/grid-config.schema.json`.
 

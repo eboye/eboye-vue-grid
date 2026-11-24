@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.4.1 — 2026-11-24
 
 **Accessibility**, found by a new axe-core check (WCAG 2.1 A / AA) of every story, light and dark,
 now run in CI:
