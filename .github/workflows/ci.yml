@@ -48,7 +48,9 @@ jobs:
       - run: npm ci
       - name: Install ${{ matrix.browser }}
         run: npx playwright install --with-deps ${{ matrix.browser }}
-      # The playground and Storybook run the library from source: no build needed.
+      # The playground and Storybook run the library from source, but Vue's compiler reads prop
+      # types imported from `@nocopypaste/vue-grid` from the built `.d.ts` files.
+      - run: npm run build
       - name: Run
         run: |
           config=e2e/playwright.config.ts
