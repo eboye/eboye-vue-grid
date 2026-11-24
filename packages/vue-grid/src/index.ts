@@ -26,6 +26,7 @@ export {
 export { nextSort, sortRows, compareValues } from './core/sort'
 export { aggregateRows, aggregateValues } from './core/aggregate'
 export { groupRows, isRowGroup, type RowGroup, type GroupRowsOptions } from './core/grouping'
+export { toCsv, toDelimited, plainText, guardFormula, type ToCsvOptions } from './core/csv'
 export { patchRows, type RowPatches, type PatchRowsOptions } from './core/patch'
 export type { DataSource, DataSourceResult, GridQuery } from './composables/useDataSource'
 export {

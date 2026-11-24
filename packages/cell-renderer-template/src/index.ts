@@ -18,7 +18,7 @@ export const ratingRenderer = defineCellRenderer<RatingOptions>({
   align: 'start',
   // Used by `sortMode="client"` so ratings sort numerically.
   sortValue: (value) => (value === null || value === undefined ? null : Number(value)),
-  // Plain-text form (tooltips, exports, accessibility).
+  // Plain-text form: what Ctrl+C and formatted CSV exports copy (export feature).
   format: (value, options) => `${Number(value ?? 0)} of ${options.max ?? 5}`,
 })
 

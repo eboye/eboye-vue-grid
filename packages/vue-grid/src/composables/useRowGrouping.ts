@@ -124,8 +124,8 @@ export function useRowGrouping<T>(opts: RowGroupingOptions<T>) {
       isRowSelectable: (row: any) =>
         isRowGroup(row) ? base.selectMode.value === 'multi' && selectableKeys(row).length > 0 : base.isRowSelectable(row),
       rowCheckState: (row: any) => (isRowGroup(row) ? checkState(row) : base.rowCheckState(row)),
-      toggleRow: (row: any) => {
-        if (!isRowGroup(row)) return base.toggleRow(row)
+      toggleRow: (row: any, range?: boolean) => {
+        if (!isRowGroup(row)) return base.toggleRow(row, range)
         if (base.selectMode.value !== 'multi') return
         const keys = selectableKeys(row)
         const next = new Set(opts.selected.value)
@@ -149,5 +149,5 @@ export function useRowGrouping<T>(opts: RowGroupingOptions<T>) {
     any: () => active.value,
   }
 
-  return { by, active, groups, isExpanded, toggle, setAll, expandedKeys, isGrouped, keyOf, expanded, tree, preparer, extend, menu }
+  return { by, active, groups, isGroup: isRowGroup as (row: unknown) => boolean, isExpanded, toggle, setAll, expandedKeys, isGrouped, keyOf, expanded, tree, preparer, extend, menu }
 }

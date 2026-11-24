@@ -186,6 +186,13 @@ export interface ColumnDef<T = any, R extends RendererRef = RendererName> {
    * as text (or with the `#group-<key>` slot).
    */
   groupValue?: (row: T) => unknown
+  /**
+   * The value exports and copying use (export feature), e.g. a plain id for a link or an object.
+   * Wins over the cell value and the renderer's text.
+   */
+  exportValue?: (row: T) => unknown
+  /** Included in CSV exports and copied rows (export feature)? Default `true`; set `false` on action columns. */
+  exportable?: boolean
   /** Extra classes for the column's body cells (or a function of the row). */
   cellClass?: ClassValue | ((row: T) => ClassValue)
   /** Extra classes for the column's header cell. */
@@ -232,8 +239,12 @@ export interface CellRendererDefinition<O = any> {
   align?: Align
   /** Sort key derived from the cell value (used in client sort mode). */
   sortValue?: (value: unknown, options: O) => unknown
-  /** Plain-text form of the value (tooltips, accessibility, exports). */
-  format?: (value: unknown, options: O, ctx: FormatContext) => string
+  /**
+   * Plain-text form of the value, as the cell shows it: what copying and formatted exports use
+   * (export feature). `options` are the column's: resolve `(value, row)` option functions with
+   * `row`. Without it the value is copied as is.
+   */
+  format?: (value: unknown, options: O, ctx: FormatContext, row?: unknown) => string
   /** Default filter type for columns using this renderer (default `text`). */
   filterType?: FilterType
 }
@@ -350,6 +361,49 @@ export interface VGridExposed {
   reloadSubRows(key?: RowKey): void
   /** Pins a top-level row above or below the body, or unpins it (`null`). Row pinning feature. */
   pinRow(key: RowKey, side: 'top' | 'bottom' | null): void
+  /** Clears the selection, "all matching rows" included. Selection feature. */
+  clearSelection(): void
+  /** The rows as CSV text: the filtered, sorted rows, visible columns, raw values. Export feature. */
+  getCsv(options?: ExportOptions): string
+  /** Downloads the rows as a CSV file (`filename`, default `export.csv`; UTF-8 with a BOM). Export feature. */
+  exportCsv(options?: ExportOptions & { filename?: string; bom?: boolean }): void
+  /**
+   * Copies rows to the clipboard as tab-separated text (pastes as cells into spreadsheets): the
+   * selected rows by default, as displayed, no header. Resolves `false` if nothing was copied.
+   * Export feature.
+   */
+  copyRows(options?: ExportOptions): Promise<boolean>
+}
+
+/** Which rows, columns and values an export or copy takes (export feature). */
+export interface ExportOptions {
+  /**
+   * `filtered` (default for exports): the rows that pass the filters, sorted, on every page.
+   * `all`: filters ignored. `page`: the current page. `selected` (default for `copyRows`).
+   */
+  rows?: 'filtered' | 'all' | 'page' | 'selected'
+  /** Also the known child rows (sub-grids), each after its parent. Default `false`. */
+  children?: boolean
+  /** Column keys, in order (hidden columns too). Default: the visible columns without `exportable: false`. */
+  columns?: string[]
+  /** `raw` (default for exports): the cell values. `formatted` (default for copying): as the cells show them. */
+  values?: 'raw' | 'formatted'
+  /** A header line. Default `true` for exports, `false` for copying. */
+  header?: boolean
+  /** A last line with the totals row (aggregation feature). Default `false`. */
+  totals?: boolean
+  /** Field separator. Default `,` for CSV, a tab for copying. */
+  delimiter?: string
+  /** Prefix text a spreadsheet would run as a formula (`=…`, `+…`, `@…`) with `'`. Default `true`. */
+  guard?: boolean
+}
+
+/** Something was copied to the clipboard (export feature): rows (`copyRows`, Ctrl+C) or one cell. */
+export interface CopyEvent<T = any> {
+  kind: 'rows' | 'cell'
+  text: string
+  rows: readonly T[]
+  columns: readonly ColumnDef<T>[]
 }
 
 // ── Features (opt-in, tree-shakeable) ─────────────────────────────────────────────────────────
@@ -380,6 +434,8 @@ export interface SelectionFeature {
   readonly feature: 'selection'
   useSelection: typeof import('./composables/useGridSelection').useGridSelection
   Checkbox: Component
+  /** Server data: the "select all N matching rows" banner. */
+  Banner: Component
 }
 export interface SubGridsFeature {
   readonly feature: 'subGrids'
@@ -442,7 +498,12 @@ export interface RowGroupingFeature {
   /** The cells of a group row. */
   GroupCells: Component
 }
+export interface ExportFeature {
+  readonly feature: 'export'
+  useExport: typeof import('./composables/useGridExport').useGridExport
+}
 export type GridFeature =
+  | ExportFeature
   | RowGroupingFeature
   | AggregationFeature
   | RowPinningFeature

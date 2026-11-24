@@ -14,13 +14,14 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `columnReorderFeature` | Column reordering: drag a header (mouse, pen, touch), Alt+←/→ on a focused header, and the header menu's Move left / Move right. Columns opt out with `reorderable: false`. The order is part of `v-model:column-state` and persisted with `storage`; `<VGridColumnMenu>` works without it. |  | `reorderable` |
 | `columnResizingFeature` | Column resizing: drag a header's edge (mouse, pen, touch), use ←/→ on the focused edge (Alt+Shift+←/→ on a header with keyboard navigation), or double-click the edge to fit the content. `minWidth` / `maxWidth` bound it; columns opt out with `resizable: false`. Widths are kept in `columnState.widths` and persisted with `storage`. The header menu gains Fit width / Reset width. |  | `maxWidth` `resizable` |
 | `columnVisibilityFeature` | Column visibility: `hidden: true` columns, `columnState.hidden` (persisted with `storage`), the header menu's Hide column item and `<VGridColumnMenu>`'s checkboxes. Columns opt out with `hideable: false`. Without it, every column shows. |  | `hidden` `hideable` |
+| `exportFeature` | CSV export and copying: `grid.exportCsv()` downloads the filtered, sorted rows as a CSV file, `grid.getCsv()` returns the text, `grid.copyRows()` copies rows as tab-separated text, and Ctrl/⌘+C copies the selected rows, else the focused cell, as displayed. Columns can set `exportValue` and `exportable: false`. Without it those methods only warn. |  | `exportValue` `exportable` |
 | `filteringFeature` | Filtering: header funnels with typed filter popovers on `filterable` columns, the filter row, `<VGridSearch>`, the filter items of the header menu, `v-model:filters` and filter persistence. The popover body and the filter-row editors load on demand (own chunks). | `filterMode` `filterRow` `filterStorage` `noMatchText` `filters` | `filterable` `filter` `filterValue` `filterFn` `filterComponent` `searchable` |
 | `keyboardNavigationFeature` | Keyboard navigation (the ARIA grid pattern): the grid is one tab stop, arrow keys / Home / End / PageUp / PageDown move between cells, Enter activates a cell's control, Space selects a row, →/← expand and collapse, Alt+←/→ move a column, ContextMenu / Shift+F10 open the cell menu. Without it the grid is an ARIA `table`: its own controls (sort buttons, expanders, checkboxes, filter buttons) sit in the normal Tab order instead. |  |  |
 | `menusFeature` | Context menus: the built-in header menu (sort, filter, pin, move, hide, reset, your own items via `header-menu`) and body-cell menus (`context-menu`), opened by right-click, the ContextMenu key or Shift+F10. Without it the browser's own menu shows. The standalone `<VGridMenu>` and the `actions-menu` renderer don't need it. | `contextMenu` `headerMenu` |  |
 | `paginationFeature` | Built-in pagination: the `pagination` prop and `v-model:page` / `v-model:page-size`. Pages the client rows, or asks the `dataSource` for pages. The pager loads on demand (own chunk). Not needed for the standalone `<VGridPagination>` component. | `pagination` `page` `pageSize` |  |
 | `rowGroupingFeature` | Row grouping: `v-model:group-by="['region', 'status']"` groups the rows by those columns into collapsible group rows with their value, row count and the aggregates of columns with an `aggregate`. Columns with `groupable: true` get Group by / Ungroup items in the header menu. Without it, `group-by` is ignored. | `groupsExpanded` `groupBy` | `groupable` `groupValue` |
 | `rowPinningFeature` | Pinned rows: `v-model:pinned-rows` (`{ top, bottom }` row keys), `pinned-top-rows` / `pinned-bottom-rows` (extra rows that aren't in the data) and the `pinRow()` method. Pinned rows stay in view (sticky) under the header or at the bottom while the body scrolls, and aren't filtered, sorted or paged. Without it, those options are ignored. | `pinnedTopRows` `pinnedBottomRows` `pinnedRows` |  |
-| `selectionFeature` | Row selection: the `selectable` prop (multi or single), `v-model:selected`, `selection-mode` (cascade through sub-grids), `is-row-selectable`, Space on a row and the select-all checkbox. | `selectable` `selectionMode` `isRowSelectable` `selected` |  |
+| `selectionFeature` | Row selection: the `selectable` prop (multi or single), `v-model:selected`, `selection-mode` (cascade through sub-grids), `is-row-selectable`, Space on a row, shift-click (or Shift+Space) for a range, the select-all checkbox, `prune-selection`, and with server data a "select all N matching rows" banner (`v-model:select-all-matching`; it loads on demand, its own chunk). | `selectable` `selectionMode` `isRowSelectable` `pruneSelection` `selected` `selectAllMatching` |  |
 | `serverDataFeature` | Server data: the `dataSource` prop. The grid sends sort, filters and page to your function, cancels superseded requests, and shows loading, error and retry states. | `dataSource` |  |
 | `sortingFeature` | Sorting: the sort button on `sortable` column headers, the sort items of the header menu and, with `sort-mode="client"`, sorting the rows in the browser. |  | `sortable` `sortValue` `sortFn` |
 | `subGridsFeature` | Sub-grids: nested child rows in a CSS `subgrid`, from `sub-rows` (synchronous) or `load-sub-rows` (lazy, cached, with loading / error / retry). Detail rows (`#detail` slot) don't need it. | `subRows` `loadSubRows` `hasSubRows` |  |
@@ -44,6 +45,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `selectable` | `boolean \| 'single'` | `false` | `selectionFeature` | A selection column: `true` = multi-select (with select-all), `'single'` = one row. |
 | `selectionMode` | `'cascade' \| 'independent'` | `'cascade'` | `selectionFeature` | `cascade` (default): selecting a parent selects its children. `independent`: rows alone. |
 | `isRowSelectable` | `(row: T) => boolean` |  | `selectionFeature` | Rows that can't be selected get a disabled checkbox. |
+| `pruneSelection` | `boolean` | `false` | `selectionFeature` | Drop selected keys whose rows are no longer in the data (after a reload, a delete, a new server page). Default: keys are kept, so a selection can span server pages. |
 | `subRows` | `(row: T) => T[] \| undefined \| null` |  | `subGridsFeature` | Synchronous child rows of a row: shown in a nested sub-grid when expanded. |
 | `loadSubRows` | `(row: T) => Promise<T[]>` |  | `subGridsFeature` | Lazy child rows, loaded on first expand (cached, with loading / error / retry). |
 | `hasSubRows` | `(row: T) => boolean` |  | `subGridsFeature` | With `loadSubRows`: which rows get an expander (default: every row). |
@@ -85,6 +87,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `v-model:pageSize` | `number` | `25` | `paginationFeature` | Rows per page. Needs the pagination feature. |
 | `v-model:pinnedRows` | `PinnedRowsState \| null` | `null` | `rowPinningFeature` | Top-level rows pinned above / below the body, by key: `{ top, bottom }`. Needs the row pinning feature. |
 | `v-model:groupBy` | `readonly string[] \| string \| null` | `null` | `rowGroupingFeature` | Column keys to group the rows by, outermost first (`['region', 'status']`, or one key). Group rows show the value, the row count and the columns' aggregates. Needs the row grouping feature. |
+| `v-model:selectAllMatching` | `boolean` | `false` | `selectionFeature` | Server data: every row matching the query is selected, not just the loaded ones (set from the "Select all N rows" banner; ends when filters change or a row is unticked). Act on the query then, not on `selected`. Needs the selection feature. |
 
 ## Events
 
@@ -98,6 +101,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `sub-rows-error` | `[event: { row: T; error: unknown }]` | `loadSubRows` rejected for a row. |
 | `context-action` | `[event: ContextActionEvent<T>]` | An item of the body-cell context menu was chosen. |
 | `header-action` | `[event: HeaderActionEvent<T>]` | A custom item of the header menu was chosen (built-in items act by themselves). |
+| `copy` | `[event: CopyEvent<T>]` | Rows or a cell were copied to the clipboard (export feature: `copyRows()`, Ctrl/⌘+C). |
 
 ## Slots
 
@@ -111,7 +115,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `empty` |  | Shown when there are no rows. |
 | `loading` |  | Shown while loading with no rows yet. |
 | `sub-rows-loading` | `{ row: T }` | Shown while a row's lazy children load. |
-| `toolbar` | `{ columns: readonly ColumnDef<T>[]; columnState: ColumnState; setColumnState: (state: ColumnState) => void; filters: FilterState; setFilters: (state: FilterState) => void; clearFilters: () => void; activeFilterCount: number }` | Above the grid: put a search box, column menu or filter summary here. |
+| `toolbar` | `{ columns: readonly ColumnDef<T>[]; columnState: ColumnState; setColumnState: (state: ColumnState) => void; filters: FilterState; setFilters: (state: FilterState) => void; clearFilters: () => void; activeFilterCount: number; selected: readonly RowKey[]; selectedCount: number; selectAllMatching: boolean; clearSelection: () => void }` | Above the grid: put a search box, column menu, filter summary or batch actions here. |
 
 ## Exposed methods (`ref<VGridExposed>()`)
 
@@ -129,6 +133,10 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `reload` | `Promise<void>` | `serverDataFeature` | Re-runs the `dataSource` with the current query; lazily loaded child rows load again too. |
 | `reloadSubRows` | `void` |  | Forgets lazily loaded child rows (one row's, or all): expanded rows load them again. |
 | `pinRow` | `void` | `rowPinningFeature` | Pins a top-level row above or below the body, or unpins it (`null`). Row pinning feature. |
+| `clearSelection` | `void` |  | Clears the selection, "all matching rows" included. Selection feature. |
+| `getCsv` | `string` |  | The rows as CSV text: the filtered, sorted rows, visible columns, raw values. Export feature. |
+| `exportCsv` | `void` |  | Downloads the rows as a CSV file (`filename`, default `export.csv`; UTF-8 with a BOM). Export feature. |
+| `copyRows` | `Promise<boolean>` |  | Copies rows to the clipboard as tab-separated text (pastes as cells into spreadsheets): the selected rows by default, as displayed, no header. Resolves `false` if nothing was copied. Export feature. |
 
 ## `ColumnDef<T>`
 
@@ -166,6 +174,8 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `aggregate` | `AggregateName \| AggregateFn<T>` | `aggregationFeature` | The column's value in the totals row (aggregation feature): `'sum' \| 'avg' \| 'min' \| 'max'` over the cell values (empty values skipped), `'count'` of rows, or a function of the values and the rows. Shown with the column's renderer (`count` as a plain number). |
 | `groupable` | `boolean` | `rowGroupingFeature` | The header menu offers Group by / Ungroup for this column (row grouping feature). Any column can be grouped through `v-model:group-by`; this only adds the menu items. |
 | `groupValue` | `(row: T) => unknown` | `rowGroupingFeature` | The value rows are grouped by (row grouping feature), e.g. `(row) => row.placedAt.slice(0, 7)` for months. Default: the cell value, shown with the column's renderer; a `groupValue` is shown as text (or with the `#group-<key>` slot). |
+| `exportValue` | `(row: T) => unknown` | `exportFeature` | The value exports and copying use (export feature), e.g. a plain id for a link or an object. Wins over the cell value and the renderer's text. |
+| `exportable` | `boolean` | `exportFeature` | Included in CSV exports and copied rows (export feature)? Default `true`; set `false` on action columns. |
 | `cellClass` | `ClassValue \| ((row: T) => ClassValue)` |  | Extra classes for the column's body cells (or a function of the row). |
 | `headerClass` | `ClassValue` |  | Extra classes for the column's header cell. |
 

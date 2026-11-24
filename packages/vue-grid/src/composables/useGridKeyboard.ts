@@ -150,7 +150,8 @@ export function useGridKeyboard(root: Ref<HTMLElement | undefined>, opts: GridKe
       case ' ': {
         const checkbox = cell.parentElement?.querySelector<HTMLInputElement>('.vg-checkbox input')
         if (checkbox && !isHeader) {
-          checkbox.click()
+          // Shift+Space selects a range, like a shift-click
+          checkbox.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, shiftKey: event.shiftKey }))
           event.preventDefault()
         }
         return

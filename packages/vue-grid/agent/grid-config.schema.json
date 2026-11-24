@@ -31,6 +31,7 @@
           "columnReorderFeature",
           "columnResizingFeature",
           "columnVisibilityFeature",
+          "exportFeature",
           "filteringFeature",
           "keyboardNavigationFeature",
           "menusFeature",
@@ -107,6 +108,10 @@
     },
     "isRowSelectable": {
       "description": "Rows that can't be selected get a disabled checkbox."
+    },
+    "pruneSelection": {
+      "type": "boolean",
+      "description": "Drop selected keys whose rows are no longer in the data (after a reload, a delete, a new server page). Default: keys are kept, so a selection can span server pages."
     },
     "subRows": {
       "description": "Synchronous child rows of a row: shown in a nested sub-grid when expanded."
@@ -405,6 +410,10 @@
         }
       ],
       "description": "Column keys to group the rows by, outermost first (`['region', 'status']`, or one key). Group rows show the value, the row count and the columns' aggregates. Needs the row grouping feature."
+    },
+    "selectAllMatching": {
+      "type": "boolean",
+      "description": "Server data: every row matching the query is selected, not just the loaded ones (set from the \"Select all N rows\" banner; ends when filters change or a row is unticked). Act on the query then, not on `selected`. Needs the selection feature."
     }
   },
   "required": [
@@ -621,6 +630,13 @@
         },
         "groupValue": {
           "description": "The value rows are grouped by (row grouping feature), e.g. `(row) => row.placedAt.slice(0, 7)` for months. Default: the cell value, shown with the column's renderer; a `groupValue` is shown as text (or with the `#group-<key>` slot)."
+        },
+        "exportValue": {
+          "description": "The value exports and copying use (export feature), e.g. a plain id for a link or an object. Wins over the cell value and the renderer's text."
+        },
+        "exportable": {
+          "type": "boolean",
+          "description": "Included in CSV exports and copied rows (export feature)? Default `true`; set `false` on action columns."
         },
         "cellClass": {
           "description": "Extra classes for the column's body cells (or a function of the row)."

@@ -21,6 +21,7 @@ export type FeatureId =
   | 'rowPinning'
   | 'aggregation'
   | 'rowGrouping'
+  | 'export'
 
 /** Grid props (and `v-model`s) that need a feature. */
 export const propFeatures: Readonly<Record<string, FeatureId>> = {
@@ -30,6 +31,8 @@ export const propFeatures: Readonly<Record<string, FeatureId>> = {
   pageSize: 'pagination',
   selectable: 'selection',
   selected: 'selection',
+  pruneSelection: 'selection',
+  selectAllMatching: 'selection',
   selectionMode: 'selection',
   isRowSelectable: 'selection',
   subRows: 'subGrids',
@@ -75,6 +78,8 @@ export const columnFeatures: Readonly<Record<string, FeatureId>> = {
   aggregate: 'aggregation',
   groupable: 'rowGrouping',
   groupValue: 'rowGrouping',
+  exportValue: 'export',
+  exportable: 'export',
 }
 
 /**
@@ -88,6 +93,7 @@ export const optOuts: ReadonlySet<string> = new Set([
   'resizable',
   'searchable',
   'headerMenu',
+  'exportable',
 ])
 
 /** The export name of a feature: `sorting` → `sortingFeature`. */

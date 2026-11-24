@@ -15,6 +15,7 @@ import NumberCell from './NumberCell.vue'
 import StatusCell from './StatusCell.vue'
 import TextCell from './TextCell.vue'
 import { textRenderer } from './text'
+import { booleanText, changeText, chipText, currencyText, dateText, dateTimeText, listText, numberText, statusText } from './plainText'
 import ToggleTextCell from './ToggleTextCell.vue'
 import ButtonGroupCell from './ButtonGroupCell.vue'
 import CheckboxCell from './CheckboxCell.vue'
@@ -108,6 +109,7 @@ export const numberRenderer = /*#__PURE__*/ defineCellRenderer<NumberOptions>({
   component: NumberCell,
   align: 'end',
   sortValue: numericSort,
+  format: numberText,
 })
 /** Numbers that always show their sign (+ / −). With `clickable`, emits `click`. */
 export const signedNumberRenderer = /*#__PURE__*/ defineCellRenderer<NumberOptions & { signed?: boolean }>({
@@ -117,6 +119,7 @@ export const signedNumberRenderer = /*#__PURE__*/ defineCellRenderer<NumberOptio
   defaults: { signed: true },
   align: 'end',
   sortValue: numericSort,
+  format: numberText,
 })
 /** Money in a fixed or per-row currency (default: the grid's `currency`). With `clickable`, emits `click`. */
 export const currencyRenderer = /*#__PURE__*/ defineCellRenderer<CurrencyOptions>({
@@ -125,6 +128,7 @@ export const currencyRenderer = /*#__PURE__*/ defineCellRenderer<CurrencyOptions
   component: CurrencyCell,
   align: 'end',
   sortValue: numericSort,
+  format: currencyText,
 })
 /** A rise or fall: the value with an up / down arrow, green or red. */
 export const changeRenderer = /*#__PURE__*/ defineCellRenderer<ChangeOptions>({
@@ -133,20 +137,22 @@ export const changeRenderer = /*#__PURE__*/ defineCellRenderer<ChangeOptions>({
   component: ChangeCell,
   align: 'end',
   sortValue: numericSort,
+  format: changeText,
 })
 /** A calendar day, in the grid's locale and time zone (date-only strings never shift a day). */
-export const dateRenderer = /*#__PURE__*/ defineCellRenderer<DateOptions>({ name: 'date', component: DateCell, sortValue: dateSort, filterType: 'date' })
+export const dateRenderer = /*#__PURE__*/ defineCellRenderer<DateOptions>({ name: 'date', component: DateCell, sortValue: dateSort, filterType: 'date', format: dateText })
 /** Date and time, on two lines by default. */
 export const dateTimeRenderer = /*#__PURE__*/ defineCellRenderer<DateTimeOptions>({
   name: 'datetime',
   filterType: 'date',
   component: DateTimeCell,
   sortValue: dateSort,
+  format: dateTimeText,
 })
 /** Yes / no as text labels or icons. */
-export const booleanRenderer = /*#__PURE__*/ defineCellRenderer<BooleanOptions>({ name: 'boolean', component: BooleanCell, filterType: 'boolean' })
+export const booleanRenderer = /*#__PURE__*/ defineCellRenderer<BooleanOptions>({ name: 'boolean', component: BooleanCell, filterType: 'boolean', format: booleanText })
 /** A coloured status badge (tone from a map, a function or a constant). With `clickable`, emits `click`. */
-export const statusRenderer = /*#__PURE__*/ defineCellRenderer<StatusOptions>({ name: 'status', component: StatusCell, filterType: 'set' })
+export const statusRenderer = /*#__PURE__*/ defineCellRenderer<StatusOptions>({ name: 'status', component: StatusCell, filterType: 'set', format: statusText })
 /** A safe link (http(s), mailto, tel only), or a `<RouterLink>` with `to` when vue-router is installed. */
 export const linkRenderer = /*#__PURE__*/ defineCellRenderer<LinkOptions>({ name: 'link', component: LinkCell })
 /** An icon component, fixed or picked per row. */
@@ -179,6 +185,7 @@ export const chipRenderer = /*#__PURE__*/ defineCellRenderer<ChipOptions>({
     value !== null && typeof value === 'object'
       ? ((value as Record<string, unknown>).label ?? (value as Record<string, unknown>).name ?? null)
       : value,
+  format: chipText,
 })
 const booleanSort = (value: unknown) => (value === null || value === undefined ? null : value ? 1 : 0)
 /** A controlled checkbox, with a tooltip when disabled. Emits `change` with the requested state. */
@@ -228,6 +235,7 @@ export const listRenderer = /*#__PURE__*/ defineCellRenderer<ListOptions>({
   name: 'list',
   component: ListCell,
   sortValue: (value) => (Array.isArray(value) ? value.length : null),
+  format: listText,
 })
 
 /**

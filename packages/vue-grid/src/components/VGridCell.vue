@@ -120,7 +120,7 @@ function onClick(event: MouseEvent) {
         :indeterminate="grid.rowCheckState(row) === 'some'"
         :disabled="!grid.isRowSelectable(row)"
         label="Select row"
-        @toggle="grid.toggleRow(row)"
+        @toggle="(range: boolean) => grid.toggleRow(row, range)"
       />
     </template>
     <template v-else>

@@ -9,7 +9,6 @@ import {
   type ComputedRef,
   type Ref,
 } from 'vue'
-import { isRowGroup } from '../core/grouping'
 import { buildLayout, locateRow, visibleSpan, type LevelLayout } from '../core/virtual'
 import type { RowKey, VirtualOptions } from '../types'
 import type { SubRowEntry } from './useSubRows'
@@ -32,6 +31,8 @@ export interface VirtualRowsOptions<T> {
   /** Tree mode: a factory for a snapshot of the sub-row cache; null without sub-grids. */
   subRows: () => ((keyOf: (row: T) => RowKey) => SubRowsSnapshot<T>) | null
   hasDetail: () => boolean
+  /** Rows that never have a detail row (group rows of the row grouping feature). */
+  isGroup?: () => ((row: T) => boolean) | undefined
   rowExpandable: () => ((row: T) => boolean) | undefined
   /** Filters and sorts a child level (its reactive inputs read once per layout pass). */
   preparer: () => (rows: readonly T[]) => readonly T[]
@@ -206,6 +207,7 @@ export function useVirtualRows<T>(opts: VirtualRowsOptions<T>) {
     const expandedKeys = opts.expanded()
     const tree = opts.subRows()?.(key) ?? null
     const detail = opts.hasDetail()
+    const isGroup = opts.isGroup?.()
     const rowExpandable = opts.rowExpandable()
     void heights.size // any new or changed height re-runs the layout
     const measured = toRaw(heights)
@@ -219,7 +221,7 @@ export function useVirtualRows<T>(opts: VirtualRowsOptions<T>) {
       prepare: opts.preparer(),
       isExpanded: (row) => expandedKeys.has(rawKey(row)) && expandable(row),
       // group rows (row grouping) have no detail row
-      detailHeight: (row, k) => (detail && !isRowGroup(row) ? (measured.get(`d:${String(k)}`) ?? detailEstimate) : 0),
+      detailHeight: (row, k) => (detail && !isGroup?.(row) ? (measured.get(`d:${String(k)}`) ?? detailEstimate) : 0),
       subRows: (row) => {
         if (!tree) return undefined
         const state = tree.state(row)

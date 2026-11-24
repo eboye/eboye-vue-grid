@@ -38,6 +38,12 @@
     align-items: center;
     justify-content: flex-end;
   }
+  .vg-selection-banner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+  }
 
   .vg-viewport {
     position: relative;

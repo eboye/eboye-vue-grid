@@ -102,7 +102,7 @@ function onLabelClick(event: MouseEvent) {
         :indeterminate="grid.rowCheckState(group) === 'some'"
         :disabled="!grid.isRowSelectable(group)"
         label="Select group"
-        @toggle="grid.toggleRow(group)"
+        @toggle="(range: boolean) => grid.toggleRow(group, range)"
       />
     </template>
     <template v-else-if="part.kind === 'label'">

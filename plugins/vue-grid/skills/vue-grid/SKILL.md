@@ -1,6 +1,6 @@
 ---
 name: vue-grid
-description: Use when building, changing or debugging a data table / data grid with @nocopypaste/vue-grid (`<VGrid>`) in a Vue 3 app — columns, cell renderers, sorting, filtering, server data, pagination, selection, sub-grids, detail rows, virtual scrolling, pinned columns or rows, totals, row grouping, menus, theming — or when a VGrid option "does nothing". Gives the rules that prevent silent failures, the exact API via the vue-grid MCP tools, and a validate-then-verify workflow.
+description: Use when building, changing or debugging a data table / data grid with @nocopypaste/vue-grid (`<VGrid>`) in a Vue 3 app — columns, cell renderers, sorting, filtering, server data, pagination, selection, sub-grids, detail rows, virtual scrolling, pinned columns or rows, totals, row grouping, CSV export / copy to clipboard, menus, theming — or when a VGrid option "does nothing". Gives the rules that prevent silent failures, the exact API via the vue-grid MCP tools, and a validate-then-verify workflow.
 ---
 
 # Building with @nocopypaste/vue-grid

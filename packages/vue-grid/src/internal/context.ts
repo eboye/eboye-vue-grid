@@ -82,7 +82,8 @@ export interface GridContext {
   Checkbox: Component | undefined
   isRowSelectable(row: any): boolean
   rowCheckState(row: any): SelectionSummary
-  toggleRow(row: any): void
+  /** `range`: Shift was held — select from the last toggled row to this one. */
+  toggleRow(row: any, range?: boolean): void
   // presentation & events
   isHighlighted(key: RowKey): boolean
   rowClass(row: any, index: number): ClassValue

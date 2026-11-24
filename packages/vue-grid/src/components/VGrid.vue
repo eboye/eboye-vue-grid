@@ -56,6 +56,7 @@ import type {
   FilterStateStorage,
   ColumnStateStorage,
   ContextActionEvent,
+  CopyEvent,
   Density,
   GridPart,
   HeaderActionEvent,
@@ -113,6 +114,11 @@ const props = withDefaults(
     selectionMode?: 'cascade' | 'independent'
     /** Rows that can't be selected get a disabled checkbox. */
     isRowSelectable?: (row: T) => boolean
+    /**
+     * Drop selected keys whose rows are no longer in the data (after a reload, a delete, a new
+     * server page). Default: keys are kept, so a selection can span server pages.
+     */
+    pruneSelection?: boolean
     /** Synchronous child rows of a row: shown in a nested sub-grid when expanded. */
     subRows?: (row: T) => T[] | undefined | null
     /** Lazy child rows, loaded on first expand (cached, with loading / error / retry). */
@@ -187,6 +193,7 @@ const props = withDefaults(
     noMatchText: 'No rows match the current filters.',
     selectable: false,
     selectionMode: 'cascade',
+    pruneSelection: false,
     rowClickable: false,
     virtual: false,
     loading: false,
@@ -218,6 +225,12 @@ const pinnedRows = defineModel<PinnedRowsState | null>('pinnedRows', { default: 
  * show the value, the row count and the columns' aggregates. Needs the row grouping feature.
  */
 const groupBy = defineModel<readonly string[] | string | null>('groupBy', { default: null })
+/**
+ * Server data: every row matching the query is selected, not just the loaded ones (set from the
+ * "Select all N rows" banner; ends when filters change or a row is unticked). Act on the query
+ * then, not on `selected`. Needs the selection feature.
+ */
+const selectAllMatching = defineModel<boolean>('selectAllMatching', { default: false })
 
 const emit = defineEmits<{
   /** The combined query (sort, filters, search, page) — on mount and whenever it changes. */
@@ -236,6 +249,8 @@ const emit = defineEmits<{
   'context-action': [event: ContextActionEvent<T>]
   /** A custom item of the header menu was chosen (built-in items act by themselves). */
   'header-action': [event: HeaderActionEvent<T>]
+  /** Rows or a cell were copied to the clipboard (export feature: `copyRows()`, Ctrl/⌘+C). */
+  copy: [event: CopyEvent<T>]
 }>()
 
 defineSlots<{
@@ -268,7 +283,7 @@ defineSlots<{
   loading?: () => unknown
   /** Shown while a row's lazy children load. */
   'sub-rows-loading'?: (scope: { row: T }) => unknown
-  /** Above the grid: put a search box, column menu or filter summary here. */
+  /** Above the grid: put a search box, column menu, filter summary or batch actions here. */
   toolbar?: (scope: {
     columns: readonly ColumnDef<T>[]
     columnState: ColumnState
@@ -278,6 +293,14 @@ defineSlots<{
     clearFilters: () => void
     /** Active column filters + search. */
     activeFilterCount: number
+    /** Keys of the selected rows (selection feature). */
+    selected: readonly RowKey[]
+    /** How many rows are selected: every matching row with `selectAllMatching`. */
+    selectedCount: number
+    /** Every row matching the query is selected (server data, "Select all N rows"). */
+    selectAllMatching: boolean
+    /** Clears the selection (and "all matching"). */
+    clearSelection: () => void
   }) => unknown
 }>()
 
@@ -285,10 +308,10 @@ const slots = useSlots()
 const config = inject(GRID_CONFIG_KEY, undefined)
 const root = shallowRef<HTMLElement>()
 
-provide(
-  FORMAT_CONTEXT_KEY,
-  computed(() => resolveFormatContext({ locale: props.locale, currency: props.currency, timeZone: props.timeZone }, config)),
+const formatContext = computed(() =>
+  resolveFormatContext({ locale: props.locale, currency: props.currency, timeZone: props.timeZone }, config),
 )
+provide(FORMAT_CONTEXT_KEY, formatContext)
 
 const getKey = (row: T) => resolveRowKey(row, props.rowKey)
 
@@ -624,6 +647,11 @@ const sel =features.selection?.useSelection<T>({
   children: childrenOf,
   visibleChildren: (row) => (childrenOf(row) ?? []).filter((kid) => !filt || filt.isVisible(kid)),
   walk,
+  view: () => ({ rows: windowRows.value, ctx: context }),
+  prune: () => props.pruneSelection,
+  allMatching: selectAllMatching,
+  matchingTotal: () => (serverMode.value ? ds?.total.value : undefined),
+  matchKey: () => JSON.stringify(filterState.value),
 })
 const allState = computed(() => sel?.allState.value ?? 'none')
 const hasSelectableRows = computed(() => !!sel?.selectableKeys.value.length)
@@ -701,7 +729,10 @@ const keyboard = features.keyboardNavigation?.useGridKeyboard(root, {
       }
     : undefined,
 })
-const onKeyDown = (event: KeyboardEvent) => keyboard?.onKeyDown(event)
+const onKeyDown = (event: KeyboardEvent) => {
+  keyboard?.onKeyDown(event)
+  exporter?.onKeyDown(event)
+}
 const onFocusIn = (event: FocusEvent) => keyboard?.onFocusIn(event)
 /** ARIA grid with keyboard navigation; a plain table (and tabbable controls) without it. */
 const gridRole = computed(() => (!keyboardNav ? 'table' : context.treeMode.value ? 'treegrid' : 'grid'))
@@ -808,6 +839,7 @@ const virt = features.virtualScrolling?.useVirtualRows<T>({
     return grouping ? grouping.tree(tree) : tree
   },
   hasDetail: () => hasDetail.value,
+  isGroup: () => (grouping?.active.value ? grouping.isGroup : undefined),
   rowExpandable: () => props.rowExpandable,
   preparer: () => {
     const visible = filt?.visibleKeys.value ?? null
@@ -842,6 +874,24 @@ watch(
   },
   { immediate: true },
 )
+
+// ── Export & copy ───────────────────────────────────────────────────────────────────────────
+const exporter = features.export?.useExport<T>({
+  columns: () => resolvedColumns.value,
+  allColumns: () => props.columns,
+  resolve: resolveRenderer,
+  format: () => formatContext.value,
+  getKey,
+  isGroup: (row) => !!grouping?.isGroup(row),
+  rows: (which) =>
+    which === 'page' ? windowRows.value : sortRowsFn(which === 'all' ? sourceRows.value : filteredTopRows.value),
+  children: childrenOf,
+  prepare: (rows, filtered) => (filtered ? prepareRows : sortRowsFn)(rows),
+  selected,
+  extraRows: () => [...(props.pinnedTopRows ?? []), ...(props.pinnedBottomRows ?? [])],
+  totals: () => !!totals?.at.value && { values: totals.values.value, label: props.totalsLabel },
+  onCopy: (event) => emit('copy', event),
+})
 
 if (process.env.NODE_ENV !== 'production') {
   watchEffect(() => {
@@ -883,6 +933,8 @@ if (process.env.NODE_ENV !== 'production') {
     if (!features.rowPinning && (pinnedRows.value || props.pinnedTopRows || props.pinnedBottomRows))
       missing('rowPinning', '`pinned-rows` / `pinned-top-rows` / `pinned-bottom-rows`')
     if (!features.aggregation && props.totals) missing('aggregation', '`totals`')
+    const exportCol = props.columns.find((c) => c.exportValue)?.key
+    if (!features.export && exportCol) missing('export', `Column "${exportCol}" has an \`exportValue\`; that`)
     const groupKeys = groupBy.value == null ? [] : typeof groupBy.value === 'string' ? [groupBy.value] : groupBy.value
     if (!features.rowGrouping && groupKeys.length) missing('rowGrouping', '`group-by`')
     const unknownGroup = groupKeys.find((k) => !props.columns.some((c) => c.key === k))
@@ -935,7 +987,7 @@ const context: GridContext = {
   Checkbox: features.selection?.Checkbox,
   isRowSelectable: (row) => sel?.isRowSelectable(row) ?? false,
   rowCheckState: (row) => sel?.rowCheckState(row) ?? 'none',
-  toggleRow: (row) => sel?.toggleRow(row),
+  toggleRow: (row, range) => sel?.toggleRow(row, range),
   isHighlighted: (key) => highlighted.value.has(key),
   rowClass: (row, index) => props.rowClass?.(row, index),
   rowClickable: computed(() => props.rowClickable),
@@ -1010,6 +1062,20 @@ function setFilters(state: FilterState) {
   else if (process.env.NODE_ENV !== 'production') warnOnce('feature:filtering', 'setFilters() needs the filtering feature (filteringFeature).')
 }
 const clearFilters = () => filt?.clearAll()
+/** Clears the selection, "all matching" included. */
+const clearSelection = () => sel?.clear()
+
+/** The export feature's methods; without it they warn (dev) and do nothing. */
+function viaExport<K extends 'getCsv' | 'exportCsv' | 'copyRows'>(name: K): VGridExposed[K] {
+  return ((options?: object) => {
+    if (exporter) return (exporter[name] as (o?: object) => unknown)(options)
+    if (process.env.NODE_ENV !== 'production') warnOnce('feature:export', `${name}() needs the export feature (exportFeature).`)
+    return name === 'getCsv' ? '' : name === 'copyRows' ? Promise.resolve(false) : undefined
+  }) as VGridExposed[K]
+}
+const getCsv = viaExport('getCsv')
+const exportCsv = viaExport('exportCsv')
+const copyRows = viaExport('copyRows')
 
 defineExpose<VGridExposed>({
   scrollToTop,
@@ -1024,6 +1090,10 @@ defineExpose<VGridExposed>({
   reload,
   reloadSubRows,
   pinRow,
+  getCsv,
+  exportCsv,
+  copyRows,
+  clearSelection,
 })
 </script>
 
@@ -1039,8 +1109,19 @@ defineExpose<VGridExposed>({
         :set-filters="setFilters"
         :clear-filters="clearFilters"
         :active-filter-count="activeFilterCount"
+        :selected="selected"
+        :selected-count="sel?.count.value ?? 0"
+        :select-all-matching="selectAllMatching"
+        :clear-selection="clearSelection"
       />
     </div>
+    <component
+      :is="features.selection.Banner"
+      v-if="features.selection && sel?.banner.value"
+      v-bind="sel.banner.value"
+      @select-all="selectAllMatching = true"
+      @clear="clearSelection"
+    />
     <div class="vg-viewport">
       <div v-if="isLoading" class="vg-progress" aria-hidden="true" />
       <div

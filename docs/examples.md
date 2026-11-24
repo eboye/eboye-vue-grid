@@ -52,6 +52,7 @@ export interface Order {
 22. [Pure helpers](#22-pure-helpers)
 23. [Pinned rows and totals](#23-pinned-rows-and-totals)
 24. [Row grouping](#24-row-grouping)
+25. [Export and copy](#25-export-and-copy)
 
 ---
 
@@ -118,7 +119,7 @@ you leave out the renderer styles.
 
 Out of the box `<VGrid>` is a plain table. Sorting, filtering, server data, pagination,
 selection, sub-grids, context menus, column reordering, resizing, pinning, visibility and grouping,
-pinned rows, totals, row grouping, virtual scrolling and keyboard navigation are
+pinned rows, totals, row grouping, CSV export and copy, virtual scrolling and keyboard navigation are
 opt-in features, and only the ones you import are bundled:
 
 ```ts
@@ -151,6 +152,7 @@ app.use(createVueGrid({ features: allFeatures })) // all of them
 | `rowPinningFeature` | `v-model:pinned-rows`, `pinRow()`, `pinned-top-rows` / `pinned-bottom-rows` |
 | `aggregationFeature` | column `aggregate`, `totals`, `totals-label`, `aggregates` |
 | `rowGroupingFeature` | `v-model:group-by`, `groups-expanded`, column `groupable` / `groupValue`, `#group-<key>` |
+| `exportFeature` | `exportCsv()` / `getCsv()` / `copyRows()`, Ctrl/⌘+C, `@copy`, column `exportValue` / `exportable` |
 
 Without its feature, an option does nothing and a dev warning names the feature to add. A grid
 reads `features` once when it is created.
@@ -869,6 +871,39 @@ const selected = ref<RowKey[]>([])
   and shows the parent as indeterminate when only some children are selected;
   `selection-mode="independent"` treats every row on its own.
 - Keyboard: Space on a focused row toggles it.
+- Shift-click a checkbox (or Shift+Space) to select every row on screen between the last toggled
+  row and this one.
+
+### Batch actions
+
+The `#toolbar` slot gets the selection, so the action bar sits in the grid:
+
+```vue
+<VGrid v-model:selected="selected" selectable prune-selection :rows="rows" :columns="columns" row-key="id">
+  <template #toolbar="{ selected, selectedCount, clearSelection }">
+    <template v-if="selectedCount">
+      <strong>{{ selectedCount }} selected</strong>
+      <button @click="refund(selected).then(clearSelection)">Refund</button>
+      <button @click="clearSelection()">Clear</button>
+    </template>
+  </template>
+</VGrid>
+```
+
+- `prune-selection` drops keys whose rows left `rows` (after the refund removes them, a reload,
+  or a new server page). Without it keys stay, so a selection can span server pages.
+- `grid.clearSelection()` does the same as the slot's `clearSelection`.
+
+With a `data-source`, ticking the header selects the loaded page and a banner offers *Select all
+N rows*; that sets `v-model:select-all-matching`:
+
+```vue
+<VGrid v-model:selected="selected" v-model:select-all-matching="allMatching" selectable
+       :data-source="fetchOrders" pagination :columns="columns" row-key="id" @query-change="(q) => (query = q)" />
+<button @click="allMatching ? refundMatching(query) : refund(selected)">Refund</button>
+```
+
+Unticking a row, changing the filters or *Clear selection* ends "all matching".
 
 ---
 
@@ -1916,6 +1951,7 @@ import {
   aggregateRows, // aggregateRows(rows, columns) → { total: 1234, … } for columns with an `aggregate`
   groupRows, // groupRows(rows, { columns: [statusCol], allColumns: columns }) → nested RowGroup[]
   isRowGroup,
+  toCsv, // toCsv(rows, columns) → CSV text (raw values, `exportValue`, quoting, formula guard)
 } from '@nocopypaste/vue-grid'
 
 // client-side paging + sorting
@@ -2012,3 +2048,48 @@ const groupBy = ref(['status', 'city'])
 - A group's checkbox selects every row in it. Works with virtual scrolling.
 - The label sits in the first visible column and runs across the columns after it up to the first
   one with an `aggregate`, so give that first column some width.
+
+---
+
+## 25. Export and copy
+
+Download CSV, copy rows and cells (`exportFeature`):
+
+```vue
+<script setup lang="ts">
+const grid = ref<VGridExposed>()
+const columns = [
+  col({ key: 'customer', field: 'customer.name' }),
+  col({ key: 'total', renderer: currencyRenderer, aggregate: 'sum' }),
+  col({ key: 'invoice', renderer: linkRenderer, exportValue: (o) => o.invoiceNo }),
+  col({ key: 'actions', renderer: actionsMenuRenderer, exportable: false }),
+]
+const copied = ref('')
+</script>
+
+<template>
+  <button @click="grid?.exportCsv({ filename: 'orders.csv', totals: true })">Download CSV</button>
+  <button @click="grid?.copyRows()">Copy selected rows</button>
+  <button @click="grid?.copyRows({ rows: 'filtered', header: true, values: 'raw' })">Copy all, raw</button>
+  <VGrid
+    ref="grid"
+    :rows="orders"
+    :columns="columns"
+    row-key="id"
+    selectable
+    totals
+    :features="[exportFeature, selectionFeature, aggregationFeature, keyboardNavigationFeature]"
+    @copy="(e) => (copied = `${e.kind === 'cell' ? 'Cell' : `${e.rows.length} rows`} copied`)"
+  />
+</template>
+```
+
+- `exportCsv` / `getCsv`: the filtered, sorted rows on every page, the visible columns, raw values
+  (numbers, ISO dates), a header line, `,`. The file is UTF-8 with a BOM for Excel.
+- `copyRows` and Ctrl/⌘+C: the selected rows as displayed (`€1,234.50`, `03/01/2026`, status
+  labels), tab-separated, no header: they paste as cells into a spreadsheet. With no row
+  selected, Ctrl/⌘+C copies the focused cell (`keyboardNavigationFeature` makes cells focusable).
+- Options: `rows` (`filtered`, `all`, `page`, `selected`), `children`, `columns` (keys, hidden ones
+  too), `values` (`raw`, `formatted`), `header`, `totals`, `delimiter`, `guard`.
+- Text that a spreadsheet would run as a formula (`=…`, `+…`, `@…`) gets a leading `'`.
+- Without a grid: `toCsv(rows, columns)`.

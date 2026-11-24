@@ -11,6 +11,27 @@ group checkbox. Columns with `groupable: true` get Group by / Ungroup in the hea
 `expandAll()` / `collapseAll()` include groups. `validateGridConfig()` checks `group-by` keys.
 `groupRows()` and `isRowGroup()` are exported.
 
+**CSV export and copy** (`exportFeature`): `grid.exportCsv()` downloads the filtered, sorted
+rows as CSV (UTF-8 with a BOM), `grid.getCsv()` returns the text, `grid.copyRows()` copies rows as
+tab-separated text that pastes as cells into spreadsheets, and Ctrl/⌘+C copies the selected rows,
+else the focused cell, as displayed (`copy` event). Options pick the rows (`filtered`, `all`,
+`page`, `selected`, plus sub-grid `children`), columns, raw or formatted values, header, totals and
+delimiter. Fields are quoted per RFC 4180 and formula-like text is guarded. New column options
+`exportValue` and `exportable`; `toCsv()` writes CSV without a grid.
+
+**Selection for batch actions**: shift-click a row checkbox (or Shift+Space) to select a range in
+display order; the `#toolbar` slot gets `selected`, `selectedCount`, `selectAllMatching` and
+`clearSelection()` for a batch-action bar; `grid.clearSelection()`; `prune-selection` drops keys
+whose rows left the data; with server data, a banner offers "Select all N rows" once the page is
+selected (`v-model:select-all-matching`), ending when the filters change or a row is unticked.
+
+Renderers: number, signed number, currency, change, date, date-time, boolean, status, chip and
+list now have a plain-text `format` (what copying shows); a renderer's `format` also receives the
+row.
+
+Copying (the text cell's copy button too) falls back to the browser's copy command where the
+Clipboard API is missing or refused, e.g. on pages served over plain http.
+
 Docs: the generated API reference no longer inserts stray `;` into multi-line column option
 descriptions.
 
