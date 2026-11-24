@@ -359,8 +359,9 @@ const groupBy = ref(['status'])
 ```
 
 Groups start collapsed (`groups-expanded` to open them); the group label sits in the first
-visible column, so keep that column wide enough (or give the next columns no `aggregate`, so the
-label runs across them). `#group-<key>="{ value, count }"` renders a group's value yourself.
+visible column and runs across the next ones up to the first with an `aggregate`. In a narrow
+column it drops the column name and ellipsizes the value (full label as tooltip), so give it room
+where the value matters. `#group-<key>="{ value, count }"` renders a group's value yourself.
 
 ### CSV export and copy
 

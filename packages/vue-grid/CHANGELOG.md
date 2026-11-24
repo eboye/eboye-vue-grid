@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+Row grouping fixes:
+
+- **Keyboard:** ↑ / ↓ / PageUp / PageDown move by column, not by cell index, and keep their
+  column across a group row whose label spans several columns. Before, ↑ from Stake onto a group
+  row could land on another column's aggregate.
+- **Narrow first column:** the label used to give its room to the column name, leaving the value
+  invisible ("City 27" on every group). Now, under 12rem, the column name is dropped and the value
+  ellipsized; the count stays, and the whole label is the cell's tooltip. The label no longer
+  widens a narrow first column.
+
 Docs: every renderer option (141) and every field of the public types (event payloads, menu
 items, `createVueGrid` config, sort and pinned-row state) now has a description, in the editor's
 hover help, the API reference, the JSON Schema and the MCP server's tools; a test keeps it that

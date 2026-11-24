@@ -139,6 +139,64 @@ test('keyboard: arrow keys expand and collapse a group from its label cell', asy
   await expect(page.locator(':focus')).toHaveAttribute('data-col-key', 'id')
 })
 
+test('keyboard: ↑/↓ keep the column across a group row whose label spans several columns', async ({
+  page,
+}) => {
+  await story(page, 'by-status')
+  const groups = grid(page).locator(':scope > .vg-rowgroup')
+  await groups.nth(1).locator('.vg-expander').click() // the second group, so a group row sits above its rows
+  const firstRow = grid(page).locator(':scope > .vg-subgrid > .vg-row').first()
+  const focused = page.locator(':focus')
+
+  // a data cell in the Stake column → up onto the group row: its Stake cell (the aggregate)
+  await firstRow.locator('[data-col-key="stake"]').click()
+  await page.keyboard.press('ArrowUp')
+  await expect(focused).toHaveAttribute('data-col-key', 'stake')
+  await expect(focused.locator('xpath=..')).toHaveClass(/vg-rowgroup/)
+  await page.keyboard.press('ArrowDown')
+  await expect(focused).toHaveAttribute('data-col-key', 'stake')
+
+  // a column inside the label's span → the label cell, and back down to the same column
+  await firstRow.locator('[data-col-key="city"]').click()
+  await page.keyboard.press('ArrowUp')
+  await expect(focused).toHaveClass(/vg-rowgroup-cell/)
+  await page.keyboard.press('ArrowDown')
+  await expect(focused).toHaveAttribute('data-col-key', 'city')
+
+  // across a whole group row, from one group's last row to the next group's first row
+  const lastRow = grid(page).locator(':scope > .vg-subgrid > .vg-row').last()
+  await lastRow.locator('[data-col-key="placedAt"]').click()
+  await page.keyboard.press('ArrowDown') // the next group row's Placed cell
+  await expect(focused).toHaveAttribute('data-col-key', 'placedAt')
+  await page.keyboard.press('ArrowUp')
+  await expect(focused).toHaveAttribute('data-col-key', 'placedAt')
+})
+
+test('a narrow first column: the value stays visible, the count inside the cell, the full label as tooltip', async ({
+  page,
+}) => {
+  await story(page, 'narrow-first-column')
+  const cell = grid(page).locator(':scope > .vg-rowgroup .vg-rowgroup-cell').first()
+  const m = await cell.evaluate((el) => {
+    const r = el.getBoundingClientRect()
+    const box = (sel: string) => el.querySelector(sel)!.getBoundingClientRect()
+    return {
+      value: box('.vg-rowgroup-value').width,
+      countRight: box('.vg-rowgroup-count').right - r.right,
+      name: box('.vg-rowgroup-name').width,
+    }
+  })
+  expect(m.value).toBeGreaterThan(16) // the city is (partly) readable, not squeezed to nothing
+  expect(m.countRight).toBeLessThanOrEqual(1) // the count fits in the cell
+  expect(m.name).toBeLessThan(1) // under 12rem the column name is dropped
+  // on every group row: whole or not at all, never a fragment (short values leave spare pixels)
+  const names = await grid(page)
+    .locator(':scope > .vg-rowgroup .vg-rowgroup-name')
+    .evaluateAll((els) => els.map((e) => e.getBoundingClientRect().width))
+  expect(names.every((w) => w === 0)).toBe(true)
+  await expect(cell).toHaveAttribute('title', /^City: .+ \(\d+\)$/)
+})
+
 test('virtual: 10,000 grouped rows render in a window and scroll to the end', async ({ page }) => {
   await story(page, 'virtual')
   expect(await grid(page).locator('.vg-row').count()).toBeLessThan(120)

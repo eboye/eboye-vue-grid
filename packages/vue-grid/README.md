@@ -831,6 +831,11 @@ const groupBy = ref(['status', 'city'])
   an `aggregate`; those show the group's own aggregate. The `group-<key>` slot renders the value
   yourself (`{ value, count, rows, column, group }`); `total-<key>` also renders group cells
   (with `group` set). Empty values form a `(blank)` group, last.
+- **In a narrow column** (a fixed-width first column followed by an aggregate) the label never
+  widens the column: under 12rem the column name is dropped, then the value is cut with an
+  ellipsis; the count stays. The whole label (“City: Novi Sad (12)”) is the cell's tooltip.
+- **Keyboard.** ↑ / ↓ keep their column across a group row, even though its label spans several:
+  from Stake up onto a group row lands on its Stake aggregate, and back down on Stake.
 - **Order, filters, pages.** Groups follow the filters and are ordered by value, descending when
   the grid is sorted descending by the grouped column; sorting by any other column orders the
   rows inside each group. Pagination pages the top-level groups. With server data, the rows of

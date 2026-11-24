@@ -708,6 +708,10 @@
     background: var(--vg-rowgroup-bg);
     font-weight: var(--vg-rowgroup-font-weight);
   }
+  /* spacing comes from the name and count themselves (base.css), not the cell gap */
+  .vg-rowgroup-label {
+    gap: 0;
+  }
   .vg-rowgroup-name {
     color: var(--vg-color-text-muted);
     font-weight: 400;

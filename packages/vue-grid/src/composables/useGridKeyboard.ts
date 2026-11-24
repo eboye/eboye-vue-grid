@@ -38,19 +38,40 @@ export function useGridKeyboard(root: Ref<HTMLElement | undefined>, opts: GridKe
     lastCell = cell
   }
 
+  /** Columns a cell covers: a group row's label spans several (`aria-colspan`). */
+  const spanOf = (cell: Element) => Number(cell.getAttribute('aria-colspan')) || 1
+
+  /**
+   * ↑ / ↓ / PageUp / PageDown keep the column they started in, even through a cell spanning
+   * several: from Placed, up onto a group row's wide label and down again lands on Placed.
+   */
+  let sticky: { cell: HTMLElement; col: number } | null = null
+
   function position(cell: HTMLElement) {
     const allRows = rows()
     const row = cell.parentElement
     const rowIndex = row ? allRows.indexOf(row) : -1
-    const colIndex = row ? cellsOf(row).indexOf(cell) : -1
-    return { allRows, rowIndex, colIndex }
+    const cells = row ? cellsOf(row) : []
+    const colIndex = cells.indexOf(cell)
+    let col = 0
+    for (let i = 0; i < colIndex; i++) col += spanOf(cells[i]!)
+    if (sticky?.cell === cell) col = sticky.col
+    return { allRows, rowIndex, colIndex, col }
   }
 
-  function cellAt(allRows: HTMLElement[], rowIndex: number, colIndex: number) {
+  /** The cell covering column `col` (counting spans) in a row; a row with fewer: its last cell. */
+  function cellAt(allRows: HTMLElement[], rowIndex: number, col: number) {
     const row = allRows[rowIndex]
     if (!row) return undefined
     const cells = cellsOf(row)
-    return cells[Math.min(colIndex, cells.length - 1)]
+    let start = 0
+    let found = cells[0]
+    for (const cell of cells) {
+      if (start > col) break
+      found = cell
+      start += spanOf(cell)
+    }
+    return found
   }
 
   function onFocusIn(event: FocusEvent) {
@@ -67,7 +88,7 @@ export function useGridKeyboard(root: Ref<HTMLElement | undefined>, opts: GridKe
   function onKeyDown(event: KeyboardEvent) {
     const cell = event.target as HTMLElement
     if (!cell.matches?.(CELL)) return
-    const { allRows, rowIndex, colIndex } = position(cell)
+    const { allRows, rowIndex, colIndex, col } = position(cell)
     if (rowIndex < 0) return
     const isHeader = cell.getAttribute('role') === 'columnheader'
 
@@ -102,6 +123,7 @@ export function useGridKeyboard(root: Ref<HTMLElement | undefined>, opts: GridKe
 
     const expander = cell.querySelector<HTMLButtonElement>(':scope .vg-expander')
     let next: HTMLElement | undefined
+    let vertical = false
     switch (event.key) {
       case 'ArrowRight':
         if (expander && expander.getAttribute('aria-expanded') === 'false') {
@@ -120,10 +142,12 @@ export function useGridKeyboard(root: Ref<HTMLElement | undefined>, opts: GridKe
         next = cellsOf(allRows[rowIndex]!)[colIndex - 1]
         break
       case 'ArrowDown':
-        next = cellAt(allRows, rowIndex + 1, colIndex)
+        next = cellAt(allRows, rowIndex + 1, col)
+        vertical = true
         break
       case 'ArrowUp':
-        next = cellAt(allRows, rowIndex - 1, colIndex)
+        next = cellAt(allRows, rowIndex - 1, col)
+        vertical = true
         break
       case 'Home':
         next = ctrl ? cellAt(allRows, 0, 0) : cellsOf(allRows[rowIndex]!)[0]
@@ -135,10 +159,12 @@ export function useGridKeyboard(root: Ref<HTMLElement | undefined>, opts: GridKe
         break
       }
       case 'PageDown':
-        next = cellAt(allRows, Math.min(allRows.length - 1, rowIndex + 10), colIndex)
+        next = cellAt(allRows, Math.min(allRows.length - 1, rowIndex + 10), col)
+        vertical = true
         break
       case 'PageUp':
-        next = cellAt(allRows, Math.max(0, rowIndex - 10), colIndex)
+        next = cellAt(allRows, Math.max(0, rowIndex - 10), col)
+        vertical = true
         break
       case 'Enter': {
         const inner = cell.querySelector<HTMLElement>(isHeader ? '.vg-sort' : FOCUSABLE)
@@ -168,6 +194,7 @@ export function useGridKeyboard(root: Ref<HTMLElement | undefined>, opts: GridKe
     if (next) {
       event.preventDefault()
       focusCell(next)
+      sticky = vertical ? { cell: next, col } : null
     }
   }
 

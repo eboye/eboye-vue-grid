@@ -82,6 +82,26 @@ export const ByMonth: Story = {
   }),
 }
 
+/**
+ * The label in a narrow first column: `#` is a fixed `7rem` and the next column has an aggregate,
+ * so the label can't run across empty cells. The column name gives way first, then the value
+ * ellipsizes; the count always shows, and the whole label is the cell's tooltip.
+ */
+export const NarrowFirstColumn: Story = {
+  args: {
+    columns: [
+      { ...groupColumns.find((c) => c.key === 'id')!, width: '7rem' },
+      groupColumns.find((c) => c.key === 'stake')!,
+      ...groupColumns.filter((c) => c.key !== 'id' && c.key !== 'stake'),
+    ],
+  },
+  render: (args) => ({
+    components: { VGrid },
+    setup: () => ({ args, groupBy: ref<string[]>(['city']) }),
+    template,
+  }),
+}
+
 /** 10,000 rows grouped by city in a virtual window: only the rows in view render, groups included. */
 export const Virtual: Story = {
   args: { rows: makeBets(10_000, 3), virtual: { rowHeight: 40 }, groupsExpanded: true },

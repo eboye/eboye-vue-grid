@@ -2100,7 +2100,10 @@ const groupBy = ref(['status', 'city'])
 - `groupValue` groups by a derived value (here the month); empty values form a `(blank)` group.
 - A group's checkbox selects every row in it. Works with virtual scrolling.
 - The label sits in the first visible column and runs across the columns after it up to the first
-  one with an `aggregate`, so give that first column some width.
+  one with an `aggregate`. In a narrow column it drops the column name, then ellipsizes the value
+  (the whole label is its tooltip).
+- ↑ / ↓ keep their column across group rows: from Stake up onto a group row lands on its Stake
+  aggregate.
 
 ---
 

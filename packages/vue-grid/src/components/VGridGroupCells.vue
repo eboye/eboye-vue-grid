@@ -65,6 +65,18 @@ const groupColumn = computed(() => grid.columns.value.find((c) => c.key === prop
 const groupSlot = computed(() => grid.slots[`group-${props.group.column.key}`])
 const expanded = computed(() => grid.isExpanded(props.group.key))
 const firstRow = computed(() => props.group.rows[0])
+/** The whole label as text, the label cell's tooltip: “City: Novi Sad (12)”. */
+const labelText = computed(() => {
+  const { value, column } = props.group
+  const col = groupColumn.value
+  const format_ = col?.definition?.format
+  const text = blank.value
+    ? '(blank)'
+    : !column.groupValue && format_ && format
+      ? format_(value, col.options, format.value, firstRow.value)
+      : String(value)
+  return `${column.header ?? column.key}: ${text} (${count.value})`
+})
 
 const cellClass = (column: ResolvedColumn) =>
   typeof column.def.cellClass === 'function' ? undefined : column.def.cellClass
@@ -86,6 +98,7 @@ function onLabelClick(event: MouseEvent) {
     :tabindex="grid.rovingTabindex"
     :data-col-key="part.column.key"
     :aria-colspan="part.span > 1 ? part.span : undefined"
+    :title="part.kind === 'label' ? labelText : undefined"
     :class="[
       'vg-cell',
       `vg-align-${part.kind === 'label' ? 'start' : part.column.align}`,

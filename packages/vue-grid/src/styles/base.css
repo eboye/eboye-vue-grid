@@ -199,22 +199,38 @@
   .vg-expander[aria-expanded='true'] .vg-expander-icon {
     transform: rotate(90deg);
   }
-  /* Row grouping: the label cell toggles its group; value and count sit side by side. */
+  /*
+   * Row grouping: the label cell toggles its group; name, value and count sit side by side. The
+   * column name is shown whole or not at all (under 12rem the cell drops it); then the value is
+   * cut with an ellipsis, and the count keeps its size. The full label is the cell's tooltip.
+   * The cell is an inline-size container, so a long label never widens its columns.
+   */
   .vg-rowgroup-cell {
+    container-type: inline-size;
     cursor: pointer;
   }
   .vg-rowgroup-label {
-    gap: 0.5rem;
     white-space: nowrap;
   }
+  .vg-rowgroup-name {
+    flex: none;
+    margin-inline-end: 0.5rem;
+  }
+  @container (width < 12rem) {
+    .vg-rowgroup-name {
+      display: none;
+    }
+  }
   .vg-rowgroup-value {
-    display: inline-flex;
+    display: block;
+    flex: 0 1 auto;
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
   }
   .vg-rowgroup-count {
     flex: none;
+    margin-inline-start: 0.5rem;
   }
   .vg-subgrid {
     grid-column: 1 / -1;
