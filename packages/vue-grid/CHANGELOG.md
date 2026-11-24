@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+
+**Accessibility**, found by a new axe-core check (WCAG 2.1 A / AA) of every story, light and dark,
+now run in CI:
+
+- The column resize grip (a focusable `separator`) announces the column's width
+  (`aria-valuenow`, `aria-valuetext`).
+- Nested sub-grids no longer put a `rowgroup` inside a `rowgroup`.
+- Rows carry `aria-expanded` only in a `treegrid`; in a plain grid or table the expander button
+  already does, and on a row it isn't valid ARIA.
+- A `toggle-text` button with no text is named after its column.
+- Soft status badges (`status`, `details`) and the group row count meet the 4.5:1 contrast
+  ratio: the tone text is a little darker (light) or lighter (dark).
+
 ## 0.4.0 — 2026-11-24
 
 **Pinned columns on phones** (column pinning feature): while the pinned columns together would

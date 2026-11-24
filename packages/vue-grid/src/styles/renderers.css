@@ -29,6 +29,14 @@
     font-size: 0.8125em;
     white-space: nowrap;
   }
+  /*
+   * Soft (default) badges: the tone's own colour on a tint of itself falls just short of WCAG AA
+   * (4.5:1) at this size, so the text is the tone a fifth of the way towards the text colour.
+   */
+  .vg-status-badge:not(.vg-status-solid, .vg-status-outline) {
+    color: color-mix(in srgb, var(--_vg-tone, currentColor) 80%, var(--vg-color-text));
+    background: color-mix(in srgb, var(--_vg-tone, currentColor) 12%, transparent);
+  }
   .vg-status-dot {
     width: 0.5rem;
     height: 0.5rem;

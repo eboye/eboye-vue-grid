@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { onBeforeUnmount, shallowRef, watch } from 'vue'
 import { useInternalGrid } from '../internal/context'
 
 /** The grip on a header's end edge (column resizing feature): drag, double-click, or ←/→ when focused. */
@@ -19,14 +20,40 @@ function onKeyDown(event: KeyboardEvent) {
   event.preventDefault()
   event.stopPropagation()
 }
+
+// A focusable separator is a range: screen readers announce the column's width as its value.
+const handle = shallowRef<HTMLElement>()
+const width = shallowRef(0)
+let observer: ResizeObserver | undefined
+watch(
+  handle,
+  (el) => {
+    observer?.disconnect()
+    const cell = el?.parentElement
+    if (!cell) return
+    width.value = Math.round(cell.getBoundingClientRect().width)
+    if (typeof ResizeObserver === 'undefined') return
+    observer = new ResizeObserver(
+      () => (width.value = Math.round(cell.getBoundingClientRect().width)),
+    )
+    observer.observe(cell)
+  },
+  { flush: 'post' },
+)
+onBeforeUnmount(() => observer?.disconnect())
 </script>
 
 <template>
   <span
+    ref="handle"
     class="vg-resize-handle"
     role="separator"
     aria-orientation="vertical"
     :aria-label="`Resize ${label}`"
+    :aria-valuenow="width"
+    aria-valuemin="0"
+    :aria-valuemax="Math.max(width, 10000)"
+    :aria-valuetext="`${width} pixels wide`"
     :tabindex="grid.keyboardNav ? -1 : 0"
     @pointerdown="resize.start($event, columnKey)"
     @click.stop

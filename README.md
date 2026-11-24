@@ -50,6 +50,8 @@
 - **Accessible.** With `keyboardNavigationFeature`: `grid` / `treegrid` semantics and full keyboard
   navigation (cells, headers, menus, column reordering). Without it: an ARIA `table` whose controls
   sit in the normal Tab order. Either way: `aria-sort`, focus management, screen-reader labels.
+  Every Storybook story is checked with axe-core against WCAG 2.1 A / AA, in light and dark mode,
+  on every push.
 - **Yours to style.** Everything sits in `@layer vue-grid` and reads `--vg-*` tokens, so your CSS and
   Tailwind utilities win without `!important`. Or skip the default theme: `base.css` is the grid's
   structure alone, ready for your own styles.

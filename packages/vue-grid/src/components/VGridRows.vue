@@ -102,7 +102,9 @@ watchEffect(() => {
       :data-group-level="item.group?.level"
       :style="depth ? { '--vg-depth': depth } : undefined"
       :aria-level="grid.keyboardNav && grid.treeMode.value ? depth + 1 : undefined"
-      :aria-expanded="item.expandable ? item.expanded : undefined"
+      :aria-expanded="
+        item.expandable && grid.keyboardNav && grid.treeMode.value ? item.expanded : undefined
+      "
       :aria-selected="grid.keyboardNav ? item.selected : undefined"
       :aria-rowindex="
         item.virtual
@@ -151,7 +153,7 @@ watchEffect(() => {
           grid.treeMode.value && (grid.subRowState(item.row) || grid.children(item.row)?.length)
         "
         :ref="layout ? virtual?.measureSubgrid : undefined"
-        role="rowgroup"
+        :role="depth ? 'none' : 'rowgroup'"
         :class="['vg-subgrid', grid.ui.value.subgrid]"
         :data-depth="depth + 1"
         :data-subgrid-for="String(item.key)"

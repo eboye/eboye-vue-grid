@@ -39,7 +39,8 @@ body {
 
 .sb-note {
   font-size: 0.875rem;
-  opacity: 0.75;
+  /* muted, not transparent: opacity would also dim the buttons inside below WCAG AA contrast */
+  color: light-dark(#4b5563, #9ca3af);
   margin-block: 0.75rem 0;
   /* long JSON dumps and wide option rows wrap on phones instead of widening the page */
   max-width: 100%;

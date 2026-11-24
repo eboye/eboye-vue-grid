@@ -23,6 +23,7 @@ const highlighted = computed(
     type="button"
     :class="['vg-toggle-text', 'vg-link-button', { 'vg-toggle-text-on': highlighted }]"
     :aria-pressed="highlighted"
+    :aria-label="text ? undefined : (column.header ?? column.key)"
     @click="emit('action', 'toggle', value)"
   >
     {{ text }}

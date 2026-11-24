@@ -993,6 +993,11 @@ the filter popover, filter-row editors and pager are separate chunks loaded on f
 
 ## Keyboard
 
+Every Storybook story is checked with axe-core against WCAG 2.1 A / AA, in light and dark mode,
+in CI (`e2e/a11y.storybook.spec.ts`). Rows expose `aria-expanded` and `aria-level` in a `treegrid`;
+in a plain `grid` or `table` the expander button carries `aria-expanded`. A column's resize grip is
+a focusable `separator` whose value is the column's width.
+
 Without `keyboardNavigationFeature` the grid is an ARIA `table`. The scroll area is one Tab stop,
 and the grid's own controls (sort buttons, expanders, checkboxes, filter buttons) follow in the
 normal Tab order.
