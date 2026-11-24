@@ -1,6 +1,6 @@
 {
   "package": "@nocopypaste/vue-grid",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "component": "VGrid",
   "props": [
     {
@@ -317,6 +317,13 @@
       "default": "false",
       "description": "Groups start expanded (row grouping feature). Default: collapsed.",
       "feature": "rowGrouping"
+    },
+    {
+      "name": "multiSort",
+      "type": "boolean",
+      "required": false,
+      "description": "Multi-column sort (sorting feature): Shift-click (or Shift+Enter) on a header adds it as the next key, Shift-click again turns it descending, then removes it. `v-model:sorts` holds every key, `v-model:sort` the first; server queries get `sorts` too.",
+      "feature": "sorting"
     }
   ],
   "models": [
@@ -325,6 +332,13 @@
       "type": "SortState | null",
       "default": "null",
       "description": "Sort state: a header click cycles asc → desc → none. Header UI needs the sorting feature."
+    },
+    {
+      "name": "sorts",
+      "type": "SortState[]",
+      "default": "[]",
+      "description": "Every sort key, the first one first (`multi-sort`). `sort` is the first of them.",
+      "feature": "sorting"
     },
     {
       "name": "columnState",
@@ -1052,7 +1066,10 @@
       "id": "sorting",
       "export": "sortingFeature",
       "description": "Sorting: the sort button on `sortable` column headers, the sort items of the header menu and, with `sort-mode=\"client\"`, sorting the rows in the browser.",
-      "props": [],
+      "props": [
+        "multiSort",
+        "sorts"
+      ],
       "columnOptions": [
         "sortable",
         "sortValue",

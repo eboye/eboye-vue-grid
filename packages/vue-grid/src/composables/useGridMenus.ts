@@ -32,6 +32,11 @@ export interface GridMenusOptions<T> {
   columnState: () => ColumnState
   setColumnState: (state: ColumnState) => void
   sort: Ref<SortState | null>
+  /** Every sort key (multi-column sort), the first one first. */
+  sorts: () => readonly SortState[]
+  setSorts: (sorts: SortState[]) => void
+  /** `multi-sort` is on: the menu can add a column as a further key. */
+  multiSort: () => boolean
   /** Whether a column can be sorted (the sorting feature is on and the column is `sortable`). */
   sortable: (column: ColumnDef<T>) => boolean
   /** Whether the pin items show (the pinning feature is on and the column is `pinnable`). */
@@ -170,19 +175,37 @@ export function useGridMenus<T>(opts: GridMenusOptions<T>) {
     const state = opts.columnState()
     const out: MenuItem[] = []
     if (opts.sortable(column)) {
-      const dir = opts.sort.value?.key === column.key ? opts.sort.value.dir : null
+      const list = opts.sorts()
+      const mine = list.find((s) => s.key === column.key)
+      // Sorted by this column alone, in this direction.
+      const only = (dir: string) => list.length === 1 && mine?.dir === dir
       out.push(
         {
           name: 'vg:sort-asc',
           label: m.sortAscending ?? 'Sort ascending',
-          disabled: dir === 'asc',
+          disabled: only('asc'),
         },
         {
           name: 'vg:sort-desc',
           label: m.sortDescending ?? 'Sort descending',
-          disabled: dir === 'desc',
+          disabled: only('desc'),
         },
-        { name: 'vg:sort-clear', label: m.clearSort ?? 'Clear sort', disabled: !dir },
+      )
+      if (opts.multiSort() && list.length && !(list.length === 1 && mine))
+        out.push(
+          {
+            name: 'vg:sort-then-asc',
+            label: m.thenSortAscending ?? 'Then sort ascending',
+            disabled: mine?.dir === 'asc',
+          },
+          {
+            name: 'vg:sort-then-desc',
+            label: m.thenSortDescending ?? 'Then sort descending',
+            disabled: mine?.dir === 'desc',
+          },
+        )
+      out.push(
+        { name: 'vg:sort-clear', label: m.clearSort ?? 'Clear sort', disabled: !mine },
         SEPARATOR,
       )
     }
@@ -285,13 +308,21 @@ export function useGridMenus<T>(opts: GridMenusOptions<T>) {
     const columns = opts.columns()
     switch (name) {
       case 'vg:sort-asc':
-        opts.sort.value = { key: column.key, dir: 'asc' }
-        break
       case 'vg:sort-desc':
-        opts.sort.value = { key: column.key, dir: 'desc' }
+        opts.setSorts([{ key: column.key, dir: name === 'vg:sort-asc' ? 'asc' : 'desc' }])
         break
+      case 'vg:sort-then-asc':
+      case 'vg:sort-then-desc': {
+        const dir = name === 'vg:sort-then-asc' ? 'asc' : 'desc'
+        opts.setSorts([
+          ...opts.sorts().filter((s) => s.key !== column.key),
+          { key: column.key, dir },
+        ])
+        break
+      }
       case 'vg:sort-clear':
-        opts.sort.value = null
+        // This column's key (the others stay).
+        opts.setSorts(opts.sorts().filter((s) => s.key !== column.key))
         break
       case 'vg:pin-left':
       case 'vg:pin-right':

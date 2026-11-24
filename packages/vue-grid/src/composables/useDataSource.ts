@@ -6,7 +6,10 @@ import type { SortState } from '../types'
 
 /** Everything a backend needs to produce the rows the grid shows. */
 export interface GridQuery {
+  /** The sort (with `multi-sort`, its first key). */
   sort: SortState | null
+  /** With `multi-sort`: every sort key, the first one first (absent without it). */
+  sorts?: SortState[]
   filters: FilterState
   /** 1-based; with `pageSize: null` (no pagination) always 1. */
   page: number

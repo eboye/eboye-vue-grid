@@ -1,4 +1,4 @@
-# @nocopypaste/vue-grid 0.8.0 — API reference
+# @nocopypaste/vue-grid 0.9.0 — API reference
 
 > Generated from the TypeScript sources (`scripts/gen-agent.mjs`). Machine-readable: `agent/api.json`, `agent/grid-config.schema.json`.
 
@@ -24,7 +24,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `selectionFeature` | Row selection: the `selectable` prop (multi or single), `v-model:selected`, `selection-mode` (cascade through sub-grids), `is-row-selectable`, Space on a row, shift-click (or Shift+Space) for a range, the select-all checkbox, `prune-selection`, and with server data a "select all N matching rows" banner (`v-model:select-all-matching`; it loads on demand, its own chunk). | `selectable` `selectionMode` `isRowSelectable` `pruneSelection` `selected` `selectAllMatching` |  |
 | `serverDataFeature` | Server data: the `dataSource` prop. The grid sends sort, filters and page to your function, cancels superseded requests, and shows loading, error and retry states. | `dataSource` |  |
 | `serverGroupingFeature` | Row grouping with server data: with `group-by` and a `data-source`, the query carries `groupBy` and `groupPath`, the server answers with groups (value, count, aggregates), and each group's contents load when it expands. A group's checkbox selects it by query (`v-model:selected-groups`), without loading its rows. Needs the row grouping and server data features too. Without it, a grouped server grid groups only the rows it has loaded. | `selectedGroups` |  |
-| `sortingFeature` | Sorting: the sort button on `sortable` column headers, the sort items of the header menu and, with `sort-mode="client"`, sorting the rows in the browser. |  | `sortable` `sortValue` `sortFn` |
+| `sortingFeature` | Sorting: the sort button on `sortable` column headers, the sort items of the header menu and, with `sort-mode="client"`, sorting the rows in the browser. | `multiSort` `sorts` | `sortable` `sortValue` `sortFn` |
 | `statusBarFeature` | A status bar under the grid (`status-bar`): how many rows pass the filters ("84 of 200 rows"), how many are selected, how many filters are on (with Clear), and with `{ summary: ['total'] }` the sum and average of those columns over the selected rows, as the cells show them. The `#status-bar` slot replaces its content. Its component loads on demand (own chunk). | `statusBar` |  |
 | `subGridsFeature` | Sub-grids: nested child rows in a CSS `subgrid`, from `sub-rows` (synchronous) or `load-sub-rows` (lazy, cached, with loading / error / retry). Detail rows (`#detail` slot) don't need it. | `subRows` `loadSubRows` `hasSubRows` |  |
 | `virtualScrollingFeature` | Virtual scrolling: `:virtual="{ rowHeight, overscan?, detailHeight? }"` renders only the rows in view (plus `overscan`), so tens of thousands of rows stay fast — sub-grids and detail rows included, inside the same CSS grid / subgrid layout. Without it, `virtual` is ignored and every row renders. | `virtual` |  |
@@ -79,12 +79,14 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `totalsLabel` | `string` |  | `aggregationFeature` | The totals row's label, in its first column (unless that column has an aggregate). Default: `messages.total`, else `Total`. |
 | `aggregates` | `Record<string, unknown>` |  | `aggregationFeature` | Totals row values by column key, instead of computing them (e.g. totals from a server). |
 | `groupsExpanded` | `boolean` | `false` | `rowGroupingFeature` | Groups start expanded (row grouping feature). Default: collapsed. |
+| `multiSort` | `boolean` |  | `sortingFeature` | Multi-column sort (sorting feature): Shift-click (or Shift+Enter) on a header adds it as the next key, Shift-click again turns it descending, then removes it. `v-model:sorts` holds every key, `v-model:sort` the first; server queries get `sorts` too. |
 
 ## `v-model`s
 
 | Model | Type | Default | Needs | Description |
 |---|---|---|---|---|
 | `v-model:sort` | `SortState \| null` | `null` |  | Sort state: a header click cycles asc → desc → none. Header UI needs the sorting feature. |
+| `v-model:sorts` | `SortState[]` | `[]` | `sortingFeature` | Every sort key, the first one first (`multi-sort`). `sort` is the first of them. |
 | `v-model:columnState` | `ColumnState \| undefined` | `undefined` |  | Column order, hidden columns, runtime pins and resized widths (persisted with `storage`). |
 | `v-model:expanded` | `RowKey[]` | `[]` |  | Keys of expanded rows (sub-grids and detail rows). |
 | `v-model:selected` | `RowKey[]` | `[]` | `selectionFeature` | Keys of selected rows. Needs the selection feature. |

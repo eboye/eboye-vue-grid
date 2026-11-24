@@ -58,6 +58,8 @@ export const propFeatures: Readonly<Record<string, FeatureId>> = {
   groupBy: 'rowGrouping',
   groupsExpanded: 'rowGrouping',
   selectedGroups: 'serverGrouping',
+  multiSort: 'sorting',
+  sorts: 'sorting',
   statusBar: 'statusBar',
 }
 

@@ -118,8 +118,15 @@
     opacity: 0.35;
   }
   [aria-sort='ascending'] .vg-sort-up,
-  [aria-sort='descending'] .vg-sort-down {
+  [aria-sort='descending'] .vg-sort-down,
+  [data-sort-dir='asc'] .vg-sort-up,
+  [data-sort-dir='desc'] .vg-sort-down {
     opacity: 1;
+  }
+  /* Multi-column sort: the key's position. */
+  .vg-sort-index {
+    display: inline-grid;
+    place-items: center;
   }
   .vg-cell {
     display: flex;

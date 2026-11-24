@@ -6,7 +6,8 @@ import { RenderSlot } from '../internal/RenderSlot'
 import type { SortState } from '../types'
 
 const props = defineProps<{
-  sort: SortState | null | undefined
+  /** The sort keys, the first one first. */
+  sorts: readonly SortState[]
   allState: SelectionSummary
   hasSelectableRows: boolean
   dragging: string | null
@@ -15,7 +16,8 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  sort: [key: string]
+  /** `add`: Shift was held (multi-column sort adds the column). */
+  sort: [key: string, add: boolean]
   toggleAll: []
   dragStart: [event: PointerEvent, key: string]
   headerClick: [event: MouseEvent]
@@ -26,10 +28,17 @@ const m = useMessages()
 const parts = useParts()
 const part = (name: Parameters<typeof partOn>[1]) => partOn(parts.value, name)
 
+/** A column's place in the sort (0-based) and direction, if it is sorted. */
+function sortOf(col: ResolvedColumn) {
+  const i = props.sorts.findIndex((s) => s.key === col.key)
+  return i < 0 ? undefined : { index: i, dir: props.sorts[i]!.dir }
+}
+/** `aria-sort` goes on one column only (the first key), as the ARIA grid pattern has it. */
 function ariaSort(col: ResolvedColumn) {
   if (!grid.sortable(col.def)) return undefined
-  if (props.sort?.key !== col.key) return 'none'
-  return props.sort.dir === 'asc' ? 'ascending' : 'descending'
+  const s = sortOf(col)
+  if (!s || s.index > 0) return 'none'
+  return s.dir === 'asc' ? 'ascending' : 'descending'
 }
 </script>
 
@@ -46,13 +55,14 @@ function ariaSort(col: ResolvedColumn) {
       :tabindex="grid.rovingTabindex"
       :data-col-key="col.key"
       :aria-sort="ariaSort(col)"
+      :data-sort-dir="grid.sortable(col.def) ? sortOf(col)?.dir : undefined"
       :title="col.def.headerTooltip"
       :class="[
         'vg-header-cell',
         `vg-align-${col.align}`,
         {
           'vg-header-select': col.kind === 'select',
-          'vg-sorted': grid.sortable(col.def) && sort?.key === col.key,
+          'vg-sorted': grid.sortable(col.def) && !!sortOf(col),
           'vg-reorderable': col.kind === 'data' && canReorder(col.key),
           'vg-dragging': dragging === col.key,
           'vg-drop-before': dropTarget?.key === col.key && dropTarget.side === 'before',
@@ -90,7 +100,8 @@ function ariaSort(col: ResolvedColumn) {
           type="button"
           class="vg-sort"
           :tabindex="grid.rovingTabindex"
-          @click="emit('sort', col.key)"
+          @click="emit('sort', col.key, $event.shiftKey)"
+          @keydown.enter.shift.prevent="emit('sort', col.key, true)"
         >
           <span class="vg-header-label">
             <RenderSlot
@@ -104,6 +115,13 @@ function ariaSort(col: ResolvedColumn) {
             <path class="vg-sort-up" d="M4.5 6.5 8 3l3.5 3.5" />
             <path class="vg-sort-down" d="M4.5 9.5 8 13l3.5-3.5" />
           </svg>
+          <component
+            :is="grid.SortMarker"
+            v-if="grid.SortMarker && sorts.length > 1 && sortOf(col)"
+            :position="sortOf(col)!.index + 1"
+            :count="sorts.length"
+            :dir="sortOf(col)!.dir"
+          />
         </button>
         <span v-else class="vg-header-label">
           <RenderSlot

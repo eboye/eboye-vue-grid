@@ -11,7 +11,11 @@ import { makeBets, statusTones, type Bet } from '../data'
 
 const rows = makeBets(200, 13)
 const filters = ref<FilterState | null>(null)
-const sort = ref<SortState | null>({ key: 'stake', dir: 'desc' })
+// `multi-sort`: Shift-click a header to sort by it next (1, 2… on the headers).
+const sorts = ref<SortState[]>([
+  { key: 'city', dir: 'asc' },
+  { key: 'stake', dir: 'desc' },
+])
 
 // The filter type follows the renderer: currency → number, date → date, boolean → yes / no,
 // status → a value list; `filter` picks another.
@@ -50,12 +54,13 @@ const columns = [
 <template>
   <VGrid
     v-model:filters="filters"
-    v-model:sort="sort"
+    v-model:sorts="sorts"
     class="demo-tall"
     :rows="rows"
     :columns="columns"
     row-key="id"
     sort-mode="client"
+    multi-sort
     filter-row
     aria-label="Bets"
   >
@@ -72,5 +77,6 @@ const columns = [
       </button>
     </template>
   </VGrid>
+  <p class="demo-log">v-model:sorts = {{ JSON.stringify(sorts) }}</p>
   <p class="demo-log">v-model:filters = {{ JSON.stringify(filters) }}</p>
 </template>

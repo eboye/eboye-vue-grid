@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.9.0 — 2026-11-24
+
+**Multi-column sort** (`sortingFeature`): with `multi-sort`, Shift-click a header (Shift+Enter on
+a focused one) to sort by it after the others: ascending, descending, then removed; a plain click
+still sorts by that column alone. `v-model:sorts` holds every key (`sort` stays the first, and
+setting it from outside makes it the only one). Headers show each column's number; `aria-sort` stays
+on the first key and screen readers hear “sorted 2 of 3, descending” for the others. The header
+menu gains **Then sort ascending / descending**, and its Clear sort drops only that column. A
+`dataSource` gets every key in `query.sorts` (only with `multi-sort`). Row groups follow their own
+column's key wherever it is in the list. New exports: `sortRowsBy(rows, keys)`, `nextSorts(sorts,
+key)`, `type SortKey`; `GridQuery.sorts`; messages `thenSortAscending`, `thenSortDescending`,
+`sortPosition(position, dir)`. The logic lives in `sortingFeature`: a plain grid grows by 0.2 kB
+gzip (to 15.0), a grid with sorting by 0.9 kB (to 16.0).
+
 ## 0.8.0 — 2026-11-24
 
 **Server-side row grouping** (`serverGroupingFeature`, with `rowGroupingFeature` and

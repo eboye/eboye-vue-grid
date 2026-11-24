@@ -36,12 +36,13 @@ export const pages: Page[] = [
     title: 'Sorting and filtering',
     section: 'Data',
     summary:
-      'Typed column filters in header popovers, a filter row with shorthand (> 100, 50..200), a value list with counts, and an accent-insensitive quick search.',
+      'Sorting by one column or several (Shift-click), typed column filters in header popovers, a filter row with shorthand (> 100, 50..200), a value list with counts, and an accent-insensitive quick search.',
     try: [
       'Type > 300 in the Stake filter cell.',
       'Open the funnel on City and tick a few values.',
       'Search “nis”: it matches Niš.',
-      'Click a header to sort; click again to reverse.',
+      'Click a header to sort by it alone; click again to reverse.',
+      'Shift-click Placed: it becomes sort key 3. Shift-click again to reverse it, a third time to drop it.',
     ],
     docs: '13. Filtering',
     files: ['FilteringDemo'],

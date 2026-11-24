@@ -1,6 +1,6 @@
 {
   "name": "@nocopypaste/vue-grid",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "description": "CSS-Grid based data grid for Vue 3 with opt-in features, pluggable cell renderers, sub-grids and CSS-variable theming — documented for coding agents (AGENTS.md, llms.txt, JSON Schema, validator).",
   "license": "MIT",
   "type": "module",

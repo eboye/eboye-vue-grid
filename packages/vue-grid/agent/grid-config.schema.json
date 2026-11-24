@@ -282,6 +282,10 @@
       "type": "boolean",
       "description": "Groups start expanded (row grouping feature). Default: collapsed."
     },
+    "multiSort": {
+      "type": "boolean",
+      "description": "Multi-column sort (sorting feature): Shift-click (or Shift+Enter) on a header adds it as the next key, Shift-click again turns it descending, then removes it. `v-model:sorts` holds every key, `v-model:sort` the first; server queries get `sorts` too."
+    },
     "sort": {
       "anyOf": [
         {
@@ -306,6 +310,27 @@
         }
       ],
       "description": "Sort state: a header click cycles asc → desc → none. Header UI needs the sorting feature."
+    },
+    "sorts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "The sorted column’s `key`."
+          },
+          "dir": {
+            "description": "`asc` or `desc`."
+          }
+        },
+        "required": [
+          "key",
+          "dir"
+        ],
+        "additionalProperties": false
+      },
+      "description": "Every sort key, the first one first (`multi-sort`). `sort` is the first of them."
     },
     "columnState": {
       "anyOf": [

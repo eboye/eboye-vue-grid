@@ -76,8 +76,11 @@ export interface GroupRowsOptions<T> {
   columns: readonly ColumnDef<T>[]
   /** Every column: the ones with an `aggregate` get group aggregates. */
   allColumns: readonly ColumnDef<T>[]
-  /** Groups of the sorted column follow its direction; other groups are ascending. */
-  sort?: SortState | null
+  /**
+   * Groups of a sorted column follow its direction; other groups are ascending. One sort, or every
+   * key of a multi-column sort.
+   */
+  sort?: SortState | readonly SortState[] | null
 }
 
 /**
@@ -102,7 +105,8 @@ export function groupRows<T>(rows: readonly T[], opts: GroupRowsOptions<T>): Row
       if (bucket) bucket.rows.push(row)
       else buckets.set(id, { value, rows: [row] })
     }
-    const dir = opts.sort?.key === column.key && opts.sort.dir === 'desc' ? -1 : 1
+    const sorts = Array.isArray(opts.sort) ? opts.sort : opts.sort ? [opts.sort as SortState] : []
+    const dir = sorts.find((s) => s.key === column.key)?.dir === 'desc' ? -1 : 1
     const ordered = [...buckets.entries()].sort(([, a], [, b]) => {
       const blankA = isBlank(a.value)
       const blankB = isBlank(b.value)

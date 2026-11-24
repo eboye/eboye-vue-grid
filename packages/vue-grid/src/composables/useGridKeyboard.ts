@@ -169,7 +169,15 @@ export function useGridKeyboard(root: Ref<HTMLElement | undefined>, opts: GridKe
       case 'Enter': {
         const inner = cell.querySelector<HTMLElement>(isHeader ? '.vg-sort' : FOCUSABLE)
         if (inner) {
-          if (isHeader) inner.click()
+          // Shift+Enter on a header: a Shift-click (multi-column sort adds the column)
+          if (isHeader)
+            inner.dispatchEvent(
+              new MouseEvent('click', {
+                bubbles: true,
+                cancelable: true,
+                shiftKey: event.shiftKey,
+              }),
+            )
           else inner.focus()
         } else if (!isHeader) {
           cell.click()

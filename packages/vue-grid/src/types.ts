@@ -531,6 +531,9 @@ export interface StatusBarScope {
 export interface SortingFeature {
   readonly feature: 'sorting'
   sortRows: typeof import('./core/sort').sortRows
+  useSorting: typeof import('./composables/useSorting').useSorting
+  /** A header's place in a multi-column sort. */
+  SortMarker: Component
 }
 export interface FilteringFeature {
   readonly feature: 'filtering'
@@ -739,6 +742,15 @@ export interface GridMessages {
   sortDescending?: string
   /** Default `Clear sort`. */
   clearSort?: string
+  /** Multi-column sort: the header menu item that adds a column ascending. Default `Then sort ascending`. */
+  thenSortAscending?: string
+  /** Default `Then sort descending`. */
+  thenSortDescending?: string
+  /**
+   * Multi-column sort, for screen readers on a sorted header. Default
+   * `` `, sorted ${position} of ${count}, ascending` `` (`count`: how many keys).
+   */
+  sortPosition?: (position: number, dir: 'asc' | 'desc') => string
   /** The header menu item that opens the column's filter. Default `Filter…`. */
   filterMenu?: string
   /** Default `Clear filter`. */

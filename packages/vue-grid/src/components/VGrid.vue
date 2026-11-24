@@ -205,6 +205,12 @@ const props = withDefaults(
     aggregates?: Record<string, unknown>
     /** Groups start expanded (row grouping feature). Default: collapsed. */
     groupsExpanded?: boolean
+    /**
+     * Multi-column sort (sorting feature): Shift-click (or Shift+Enter) on a header adds it as the
+     * next key, Shift-click again turns it descending, then removes it. `v-model:sorts` holds every
+     * key, `v-model:sort` the first; server queries get `sorts` too.
+     */
+    multiSort?: boolean
   }>(),
   {
     rows: () => [],
@@ -227,6 +233,8 @@ const props = withDefaults(
 
 /** Sort state: a header click cycles asc → desc → none. Header UI needs the sorting feature. */
 const sort = defineModel<SortState | null>('sort', { default: null })
+/** Every sort key, the first one first (`multi-sort`). `sort` is the first of them. */
+const sorts = defineModel<SortState[]>('sorts', { default: () => [] })
 /** Column order, hidden columns, runtime pins and resized widths (persisted with `storage`). */
 const columnState = defineModel<ColumnState | undefined>('columnState', { default: undefined })
 /** Keys of expanded rows (sub-grids and detail rows). */
@@ -550,41 +558,36 @@ const headerRows = computed(() => (hasGroups.value ? 2 : 1))
 const sortable = (col: ColumnDef<T>) => !!features.sorting && !!col.sortable
 
 const unsorted = (rows: readonly T[]) => rows as T[]
-/** The client-side sort as a function, with its reactive inputs read once (for many levels). */
-function makeSorter(): (rows: readonly T[]) => T[] {
-  const state = sort.value
-  const sorting = features.sorting
-  if (!sorting || !clientSort.value || !state) return unsorted
-  const col = props.columns.find((c) => c.key === state.key)
-  if (!col) return unsorted
+/** A column's value to sort by: its `sortValue`, its renderer's, or the cell value. */
+function sortValueOf(col: ColumnDef<T>): (row: T) => unknown {
+  if (col.sortValue) return col.sortValue
   // Resolved from the column itself, not from the visible columns: sorting by a hidden column still
   // uses its renderer's sort value, and resizing or reordering columns doesn't re-sort every row.
   const { definition, fallback } = resolveRenderer(col)
+  if (!definition?.sortValue) return (row) => getCellValue(row, col)
   const options = fallback
     ? {}
-    : { ...(definition?.defaults as object), ...(col.rendererOptions as object) }
-  const getter =
-    col.sortValue ??
-    (definition?.sortValue
-      ? (row: T) => definition.sortValue!(getCellValue(row, col), options)
-      : (row: T) => getCellValue(row, col))
-  return (rows) => sorting.sortRows(rows, state.dir, getter, col.sortFn)
+    : { ...(definition.defaults as object), ...(col.rendererOptions as object) }
+  return (row) => definition.sortValue!(getCellValue(row, col), options)
 }
-
-function sortRowsFn(rows: readonly T[]): T[] {
-  return makeSorter()(rows)
-}
-
-function onSort(key: string) {
-  if (!features.sorting) return
-  const current = sort.value
-  sort.value =
-    !current || current.key !== key
-      ? { key, dir: 'asc' }
-      : current.dir === 'asc'
-        ? { key, dir: 'desc' }
-        : null
-}
+const sorting = features.sorting?.useSorting<T>({
+  sort,
+  sorts,
+  multiSort: () => !!props.multiSort,
+  client: () => clientSort.value,
+  columns: () => props.columns,
+  valueOf: sortValueOf,
+})
+/** The client-side sort as a function, with its reactive inputs read once (for many levels). */
+const makeSorter = () => sorting?.sorter() ?? unsorted
+const sortRowsFn = (rows: readonly T[]): T[] => makeSorter()(rows)
+/** The sort keys in effect (just `sort` without the sorting feature). */
+const sortList = computed<SortState[]>(
+  () => sorting?.list.value ?? (sort.value ? [sort.value] : []),
+)
+const setSorts = (next: SortState[]) => sorting?.set(next)
+/** A header click: sort by that column alone; with Shift (`multi-sort`), add it as the next key. */
+const onSort = (key: string, add = false) => sorting?.onSort(key, add)
 
 // ── Expansion & sub-rows ────────────────────────────────────────────────────────────────────
 const sub = features.subGrids?.useSubRows<T>({
@@ -690,7 +693,8 @@ const serverGroupBy = computed<string[] | undefined>(() => {
   return known.length ? known : undefined
 })
 const query = computed<GridQuery>(() => ({
-  sort: sort.value,
+  sort: sortList.value[0] ?? null,
+  ...(props.multiSort ? { sorts: sortList.value } : {}),
   filters: filterState.value,
   page: paginated.value ? currentPage.value : 1,
   pageSize: paginated.value ? currentPageSize.value : null,
@@ -717,7 +721,7 @@ const reloadSubRows = (key?: RowKey) => sub?.clear(key)
 
 // A new sort or filter starts again at page 1.
 watch(
-  () => JSON.stringify([sort.value, filterState.value]),
+  () => JSON.stringify([sortList.value, filterState.value]),
   () => {
     if (page.value !== 1) page.value = 1
   },
@@ -776,7 +780,7 @@ const grouping = features.rowGrouping?.useRowGrouping<T>({
   setGroupBy: (keys) => (groupBy.value = keys),
   columns: () => props.columns,
   rows: () => topRows.value,
-  sort: () => (features.sorting ? sort.value : null),
+  sort: () => (features.sorting ? sortList.value : []),
   expandedByDefault: () => props.groupsExpanded,
   selected,
   cascade: () => cascadeSelection.value,
@@ -924,6 +928,9 @@ const menus = features.menus?.useMenus<T>({
   columnState: () => effectiveState.value,
   setColumnState,
   sort,
+  sorts: () => sortList.value,
+  setSorts,
+  multiSort: () => !!props.multiSort,
   sortable,
   pinnable: canPin,
   reorderable: (col) => canReorder(col.key),
@@ -1207,6 +1214,7 @@ const context: GridContext = {
   getKey,
   sortRows: prepareRows,
   sortable,
+  SortMarker: features.sorting?.SortMarker,
   resize: resize && {
     Handle: features.columnResizing!.Handle,
     can: canResize,
@@ -1470,7 +1478,7 @@ defineExpose<VGridExposed>({
       >
         <component :is="features.columnGroups.GroupRow" v-if="hasGroups && features.columnGroups" />
         <VGridHeader
-          :sort="sort"
+          :sorts="sortList"
           :all-state="allState"
           :has-selectable-rows="hasSelectableRows"
           :dragging="drag?.dragging.value ?? null"

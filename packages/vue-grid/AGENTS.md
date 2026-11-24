@@ -48,6 +48,7 @@ runs in the [live examples](https://eboye.github.io/eboye-vue-grid/), each with 
 | The user wants…                                   | Feature(s)                                                            | Props / column options                                                                                                                                                                         |
 | ------------------------------------------------- | --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Click a header to sort                            | `sortingFeature`                                                      | column `sortable: true`; `sort-mode="client"` (or handle `v-model:sort`)                                                                                                                       |
+| Sort by several columns ("city, then stake")      | `sortingFeature`                                                      | `multi-sort`, `v-model:sorts="[{ key, dir }, …]"`; Shift-click adds a column; server: `query.sorts`                                                                                            |
 | Filters per column, a filter row, quick search    | `filteringFeature`                                                    | column `filterable: true` (`filter: 'text' \| 'number' \| 'date' \| 'boolean' \| 'set'`); `filter-row`; `<VGridSearch />` in `#toolbar`                                                        |
 | Pages                                             | `paginationFeature`                                                   | `pagination` (or `{ pageSizes: [10, 25, 50] }`), `v-model:page`, `v-model:page-size`                                                                                                           |
 | Backend sorting / filtering / paging              | `serverDataFeature` (+ the above)                                     | `:data-source="(query, { signal }) => Promise<{ rows, total }>"`                                                                                                                               |
@@ -501,6 +502,7 @@ only sees stylesheet rules. Density:
 ## Pitfalls
 
 - Nothing sorts → `sort-mode="client"` missing (or `sortingFeature` missing).
+- Shift-click sorts by one column only → add `multi-sort`, and bind `v-model:sorts` (not `sort`) to read every key; a `dataSource` reads `query.sorts`.
 - Columns are squeezed / the page scrolls sideways → give `width`s (`minmax(8rem, 1fr)`); the grid
   scrolls horizontally inside itself when columns are wider than it.
 - Grid grows forever / no sticky header → no bounded height.

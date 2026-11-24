@@ -178,34 +178,34 @@ what you import.
 
 | Import (minified / gzip, Vue excluded)                                       | Initial chunk      |
 | ---------------------------------------------------------------------------- | ------------------ |
-| `VGrid` (no features)                                                        | 43.1 kB / 14.8 kB  |
-| `VGrid` + `sortingFeature`                                                   | 43.8 kB / 15.1 kB  |
-| `VGrid` + `filteringFeature`                                                 | 53.8 kB / 18.6 kB  |
-| `VGrid` + `serverDataFeature`                                                | 44.5 kB / 15.4 kB  |
-| `VGrid` + `paginationFeature`                                                | 43.2 kB / 14.8 kB  |
-| `VGrid` + `selectionFeature`                                                 | 47.2 kB / 16.2 kB  |
-| `VGrid` + `subGridsFeature`                                                  | 45.4 kB / 15.6 kB  |
-| `VGrid` + `menusFeature`                                                     | 53.9 kB / 18.4 kB  |
-| `VGrid` + `columnReorderFeature`                                             | 46.7 kB / 16.0 kB  |
-| `VGrid` + `columnPinningFeature`                                             | 46.0 kB / 15.8 kB  |
-| `VGrid` + `virtualScrollingFeature`                                          | 48.8 kB / 17.0 kB  |
-| `VGrid` + `columnVisibilityFeature`                                          | 43.2 kB / 14.8 kB  |
-| `VGrid` + `keyboardNavigationFeature`                                        | 45.8 kB / 15.8 kB  |
-| `VGrid` + `columnResizingFeature`                                            | 46.3 kB / 16.0 kB  |
-| `VGrid` + `columnGroupsFeature`                                              | 44.4 kB / 15.2 kB  |
-| `VGrid` + `rowPinningFeature`                                                | 48.0 kB / 16.1 kB  |
-| `VGrid` + `aggregationFeature`                                               | 48.2 kB / 16.2 kB  |
-| `VGrid` + `rowGroupingFeature`                                               | 53.8 kB / 18.3 kB  |
-| `VGrid` + `exportFeature`                                                    | 48.0 kB / 16.7 kB  |
-| `VGrid` + `statusBarFeature`                                                 | 45.5 kB / 15.7 kB  |
-| `VGrid` + `serverGroupingFeature`                                            | 46.2 kB / 15.9 kB  |
-| `VGrid` + `allFeatures` + `VGridSearch`                                      | 115.0 kB / 38.6 kB |
-| `VGrid` + `currencyRenderer`                                                 | 44.4 kB / 15.2 kB  |
-| `VGrid` + `VGridPagination` + `VGridColumnMenu`                              | 50.3 kB / 17.2 kB  |
+| `VGrid` (no features)                                                        | 43.7 kB / 15.0 kB  |
+| `VGrid` + `sortingFeature`                                                   | 46.4 kB / 16.0 kB  |
+| `VGrid` + `filteringFeature`                                                 | 54.5 kB / 18.9 kB  |
+| `VGrid` + `serverDataFeature`                                                | 45.2 kB / 15.6 kB  |
+| `VGrid` + `paginationFeature`                                                | 43.9 kB / 15.1 kB  |
+| `VGrid` + `selectionFeature`                                                 | 47.9 kB / 16.5 kB  |
+| `VGrid` + `subGridsFeature`                                                  | 46.1 kB / 15.8 kB  |
+| `VGrid` + `menusFeature`                                                     | 55.0 kB / 18.8 kB  |
+| `VGrid` + `columnReorderFeature`                                             | 47.4 kB / 16.3 kB  |
+| `VGrid` + `columnPinningFeature`                                             | 46.7 kB / 16.1 kB  |
+| `VGrid` + `virtualScrollingFeature`                                          | 49.5 kB / 17.2 kB  |
+| `VGrid` + `columnVisibilityFeature`                                          | 43.9 kB / 15.1 kB  |
+| `VGrid` + `keyboardNavigationFeature`                                        | 46.5 kB / 16.0 kB  |
+| `VGrid` + `columnResizingFeature`                                            | 47.0 kB / 16.3 kB  |
+| `VGrid` + `columnGroupsFeature`                                              | 45.0 kB / 15.5 kB  |
+| `VGrid` + `rowPinningFeature`                                                | 48.7 kB / 16.3 kB  |
+| `VGrid` + `aggregationFeature`                                               | 48.9 kB / 16.5 kB  |
+| `VGrid` + `rowGroupingFeature`                                               | 54.6 kB / 18.6 kB  |
+| `VGrid` + `exportFeature`                                                    | 48.7 kB / 16.9 kB  |
+| `VGrid` + `statusBarFeature`                                                 | 46.2 kB / 16.0 kB  |
+| `VGrid` + `serverGroupingFeature`                                            | 46.8 kB / 16.2 kB  |
+| `VGrid` + `allFeatures` + `VGridSearch`                                      | 118.3 kB / 39.8 kB |
+| `VGrid` + `currencyRenderer`                                                 | 45.1 kB / 15.5 kB  |
+| `VGrid` + `VGridPagination` + `VGridColumnMenu`                              | 51.0 kB / 17.5 kB  |
 | `sortRows` only                                                              | 0.7 kB / 0.4 kB    |
 | `toCsv` only                                                                 | 1.1 kB / 0.6 kB    |
-| everything                                                                   | 168.7 kB / 54.0 kB |
-| `validateGridConfig` (`@nocopypaste/vue-grid/agent`, never in an app bundle) | 72.9 kB / 19.8 kB  |
+| everything                                                                   | 171.9 kB / 55.2 kB |
+| `validateGridConfig` (`@nocopypaste/vue-grid/agent`, never in an app bundle) | 73.4 kB / 20.0 kB  |
 
 With `filteringFeature`, the filter popover body and the filter-row editors are **on-demand
 chunks**: they load the first time a popover opens or `filter-row` is on. With
@@ -230,6 +230,8 @@ chunks that on-demand imports share with the entry, even when nothing uses them.
 | `columns`                            | `ColumnDef<T>[]`                                                                                                             | —                  | See below.                                                                                                                                                                                                                  |
 | `rowKey`                             | `keyof T \| (row) => string \| number`                                                                                       | —                  | Stable unique id; all row state is keyed by it.                                                                                                                                                                             |
 | `v-model:sort`                       | `{ key, dir: 'asc' \| 'desc' } \| null`                                                                                      | `null`             | Header click cycles asc → desc → none. Needs `sortingFeature` for the header UI.                                                                                                                                            |
+| `multiSort`                          | `boolean`                                                                                                                    | `false`            | Shift-click (Shift+Enter) a header to sort by it next; `v-model:sorts` holds every key. See [Sorting](#sorting).                                                                                                            |
+| `v-model:sorts`                      | `SortState[]`                                                                                                                | `[]`               | Every sort key, the first one first (with `multiSort`). `sort` follows its first key.                                                                                                                                       |
 | `sortMode`                           | `'controlled' \| 'client'`                                                                                                   | `'controlled'`     | `controlled` only emits (server-side sorting). Ignored with `dataSource`.                                                                                                                                                   |
 | `v-model:filters`                    | `FilterState \| null`                                                                                                        | `null`             | `{ columns: Record<key, ColumnFilter>, search }`. Needs `filteringFeature` (as do the next four). See [Filtering](#filtering).                                                                                              |
 | `filterMode`                         | `'client' \| 'controlled'`                                                                                                   | `'client'`         | `controlled` only emits (server-side filtering). Ignored with `dataSource`.                                                                                                                                                 |
@@ -502,7 +504,7 @@ typeahead move through items; focus returns to the cell on close.
 ### Column headers
 
 Right-clicking a header opens a built-in menu: **Sort ascending / descending / Clear sort** (sortable
-columns), **Pin left / Pin right / Unpin**, **Move left / right**, **Hide column**, **Reset columns**.
+columns; with `multi-sort` also **Then sort ascending / descending**, and Clear sort drops only that column), **Pin left / Pin right / Unpin**, **Move left / right**, **Hide column**, **Reset columns**.
 Pin items need `columnPinningFeature`, move items `columnReorderFeature`, Hide column `columnVisibilityFeature`. Runtime pins are stored in column state (`columnState.pinned`) and persisted with `storage`.
 
 ```vue
@@ -528,6 +530,47 @@ The same component powers the `actions-menu` renderer and is exported for add-on
 <VGridMenu id="row-menu" anchor-name="--row-menu" :items="items" @select="(item) => …" />
 <!-- or imperatively: menuRef.value.openAt(element | { x, y }) -->
 ```
+
+## Sorting
+
+A `sortable` column (with `sortingFeature`) sorts on a header click: ascending, descending, none.
+`v-model:sort` holds `{ key, dir }`. The grid sorts the rows itself with `sort-mode="client"`;
+otherwise it only updates `sort` (or asks the `dataSource`). Values sort by type (numbers, dates,
+text with `localeCompare`), a renderer can define its sort value, and a column can override it with
+`sortValue: (row) => …` or `sortFn: (a, b) => …`. Empty values sort last in both directions.
+
+**Several columns.** With `multi-sort`, Shift-click a header (Shift+Enter on a focused one) to sort
+by it after the others: ascending, then descending, then removed. A plain click still sorts by that
+column alone. The headers show each column's number (1, 2, …); `aria-sort` stays on the first key, as
+the ARIA grid pattern has it, and screen readers hear the rest as “sorted 2 of 3, descending”. The
+header menu adds **Then sort ascending / descending**.
+
+```vue
+<script setup lang="ts">
+import { VGrid, sortingFeature, type SortState } from '@nocopypaste/vue-grid'
+const sorts = ref<SortState[]>([
+  { key: 'city', dir: 'asc' },
+  { key: 'stake', dir: 'desc' },
+])
+</script>
+
+<template>
+  <VGrid
+    v-model:sorts="sorts"
+    multi-sort
+    sort-mode="client"
+    :rows
+    :columns
+    row-key="id"
+    :features="[sortingFeature]"
+  />
+</template>
+```
+
+`v-model:sort` keeps working beside it: it is the first key, and setting it from outside makes it
+the only one. A `dataSource` gets every key in `query.sorts` (only with `multi-sort`; `query.sort`
+is still the first). Row groups follow their own column's key wherever it is in the list.
+`sortRowsBy(rows, keys)` and `nextSorts(sorts, key)` sort and cycle without a grid.
 
 ## Filtering
 
@@ -674,7 +717,7 @@ import {
 } from '@nocopypaste/vue-grid'
 
 const fetchBets: DataSource<Bet> = async (query, { signal }) => {
-  // query: { sort: { key, dir } | null, filters: FilterState, page: number, pageSize: number | null }
+  // query: { sort: { key, dir } | null, sorts?: SortState[] (multi-sort), filters: FilterState, page: number, pageSize: number | null }
   const res = await fetch('/api/bets', { method: 'POST', body: JSON.stringify(query), signal })
   if (!res.ok) throw new Error(res.statusText)
   return res.json() // { rows: Bet[], total?: number }
@@ -1144,7 +1187,7 @@ and the grid's own controls (sort buttons, expanders, checkboxes, filter buttons
 normal Tab order.
 
 With `keyboardNavigationFeature` it is an ARIA `grid` (`treegrid` with sub-grids). The grid is one tab stop. Arrow keys move between cells (header, rows, sub-grid rows, detail rows),
-`Home`/`End`, `Ctrl+Home`/`Ctrl+End`, `PageUp`/`PageDown`; `ContextMenu` / `Shift+F10` opens the context menu. `Enter` sorts a header or activates the
+`Home`/`End`, `Ctrl+Home`/`Ctrl+End`, `PageUp`/`PageDown`; `ContextMenu` / `Shift+F10` opens the context menu. `Enter` sorts a header (`Shift+Enter` adds it with `multi-sort`) or activates the
 cell's control; `Space` toggles row selection; `→`/`←` on a tree cell expands/collapses; `Alt+←/→` on a
 header moves the column; `Alt+Shift+←/→` on a header resizes it (with `columnResizingFeature`).
 

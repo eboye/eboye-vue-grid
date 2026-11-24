@@ -40,7 +40,8 @@ A working example of each feature, complete component source included:
 - `const col = createColumnHelper<Row>()` and `col({ … })` for typed columns.
 - Import renderer definitions and pass them (`renderer: currencyRenderer`), not strings.
 - List every needed feature in `:features="[…]"` (or app-wide in `createVueGrid({ features })`).
-- `row-key`, a bounded height, `sort-mode="client"` when the grid should sort rows itself.
+- `row-key`, a bounded height, `sort-mode="client"` when the grid should sort rows itself;
+  `multi-sort` + `v-model:sorts` to sort by several columns (Shift-click).
 - Editable renderers are controlled: handle `@cell-action` and update the data.
 
 ## 5. Validate the config

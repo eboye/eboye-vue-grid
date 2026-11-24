@@ -19,7 +19,8 @@ export interface RowGroupingOptions<T> {
   columns: () => readonly ColumnDef<T>[]
   /** The rows to group: filtered and sorted. */
   rows: () => readonly T[]
-  sort: () => SortState | null
+  /** The sort keys (multi-column sort: every key). */
+  sort: () => readonly SortState[]
   /** The `groups-expanded` prop: groups start expanded. */
   expandedByDefault: () => boolean
   /** The selected row keys (a group's checkbox selects its rows). */

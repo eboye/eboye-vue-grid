@@ -138,7 +138,7 @@ app.use(createVueGrid({ features: allFeatures })) // all of them
 
 | Feature                     | Needed for                                                                                           |
 | --------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `sortingFeature`            | `sortable` columns, `v-model:sort` header UI, `sort-mode="client"`                                   |
+| `sortingFeature`            | `sortable` columns, `v-model:sort` header UI, `sort-mode="client"`, `multi-sort` / `v-model:sorts`   |
 | `filteringFeature`          | `filterable` columns, `filter-row`, `<VGridSearch>`, `v-model:filters`, `filter-storage`             |
 | `serverDataFeature`         | `data-source`                                                                                        |
 | `paginationFeature`         | `pagination`, `v-model:page`, `v-model:page-size`                                                    |
@@ -762,6 +762,33 @@ const columns = [
 
 Clicking a header (or Enter on a focused header, or the header menu) cycles ascending → descending →
 none. Nulls always sort last. Sub-rows are sorted within their level.
+
+### Several columns (`multi-sort`)
+
+```vue
+<script setup lang="ts">
+const sorts = ref<SortState[]>([
+  { key: 'status', dir: 'asc' },
+  { key: 'total', dir: 'desc' },
+])
+</script>
+
+<template>
+  <VGrid
+    v-model:sorts="sorts"
+    multi-sort
+    sort-mode="client"
+    :rows="rows"
+    :columns="columns"
+    row-key="id"
+  />
+</template>
+```
+
+Shift-click a header (Shift+Enter on a focused one, or **Then sort ascending / descending** in the
+header menu) to sort by it after the others; again to reverse it, a third time to drop it. A plain
+click sorts by that column alone. Headers show 1, 2, …; `sort` stays the first key. With a
+`dataSource`, `query.sorts` holds every key. Without a grid: `sortRowsBy(rows, keys)`.
 
 ### Server-side (`controlled`, the default)
 

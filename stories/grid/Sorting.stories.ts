@@ -102,3 +102,25 @@ export const ServerSide: Story = {
       <div class="sb-frame"><VGrid v-bind="args" v-model:sort="sort" :rows="data" :loading="loading" /></div>`,
   }),
 }
+
+/**
+ * `multi-sort`: Shift-click (or Shift+Enter on a focused header) adds a column as the next sort key;
+ * Shift-click again turns it descending, then removes it. A plain click sorts by that column alone.
+ * `v-model:sorts` holds every key; numbers in the headers show their order. Right-click a header for
+ * Then sort ascending / descending.
+ */
+export const MultiColumn: Story = {
+  render: (args) => ({
+    components: { VGrid },
+    setup: () => ({
+      args,
+      sorts: ref<SortState[]>([
+        { key: 'city', dir: 'asc' },
+        { key: 'stake', dir: 'desc' },
+      ]),
+    }),
+    template: `
+      <p class="sb-note" data-testid="sorts">sorts = {{ JSON.stringify(sorts) }}</p>
+      <div class="sb-frame"><VGrid v-bind="args" v-model:sorts="sorts" sort-mode="client" multi-sort /></div>`,
+  }),
+}
