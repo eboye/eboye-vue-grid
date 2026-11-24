@@ -1407,7 +1407,8 @@ const fetchBets: DataSource<Bet> = async (query, { signal }) => {
   sorting, filtering or slicing them.
 - New sorts and filters go back to page 1.
 - The grid shows a progress bar while a request runs, and _Couldn't load the rows._ with a
-  _Retry_ button when one fails.
+  _Retry_ button when one fails: in place of the rows, or, when rows were already shown, above
+  them (they stay, marked as being from before) until the next request.
 - After a mutation, call `grid.value?.reload()`, which also reloads expanded lazy children
   (`grid.value?.reloadSubRows(key)` reloads just one row's). Live field updates go through
   `grid.value?.patchLoadedRows([{ id, status: 'Won' }])`.

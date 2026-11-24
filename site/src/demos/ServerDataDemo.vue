@@ -8,7 +8,6 @@ import {
   type DataSource,
   type FilterOption,
   type GridQuery,
-  type VGridExposed,
 } from '@nocopypaste/vue-grid'
 import { makeBets, statusTones, type Bet } from '../data'
 
@@ -18,13 +17,6 @@ const db = makeBets(500, 21)
 const requests = ref<{ id: number; query: string; state: string }[]>([])
 let failNext = false
 const failNextRequest = () => (failNext = true)
-
-const grid = ref<VGridExposed>()
-const loadError = ref('')
-async function retry() {
-  loadError.value = ''
-  await grid.value?.reload()
-}
 let seq = 0
 
 const valueOf = (row: Bet, key: string) =>
@@ -130,10 +122,8 @@ const columns = [
 </script>
 
 <template>
-  <!-- A failed request keeps the rows already shown and emits load-error; the grid shows its own
-       Retry only when it has no rows to show. -->
+  <!-- A failed request keeps the rows already shown, with a notice and Retry (and emits load-error). -->
   <VGrid
-    ref="grid"
     :columns="columns"
     :data-source="dataSource"
     row-key="id"
@@ -141,18 +131,12 @@ const columns = [
     :pagination="{ pageSizes: [10, 25, 50] }"
     :page-size="10"
     aria-label="Bets from the server"
-    @load-error="loadError = String($event)"
-    @query-change="loadError = ''"
   >
     <template #toolbar>
       <VGridSearch placeholder="Search player or city…" />
       <button type="button" class="vg-button vg-button-ghost" @click="failNextRequest">
         Fail next request
       </button>
-      <span v-if="loadError" class="demo-error" role="alert">
-        {{ loadError }}
-        <button type="button" class="vg-button" @click="retry">Retry</button>
-      </span>
     </template>
   </VGrid>
   <ol class="demo-requests" aria-label="Requests, newest first">

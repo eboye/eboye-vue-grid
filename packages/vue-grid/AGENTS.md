@@ -215,7 +215,7 @@ const fetchOrders: DataSource<Order> = async (query, { signal }) => {
     body: JSON.stringify(query),
     signal,
   })
-  if (!res.ok) throw new Error(res.statusText) // emits load-error; Retry shows if no rows are on screen
+  if (!res.ok) throw new Error(res.statusText) // the grid shows the error with Retry, emits load-error
   return res.json() as Promise<{ rows: Order[]; total: number }>
 }
 ```

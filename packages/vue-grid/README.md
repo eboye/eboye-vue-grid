@@ -685,8 +685,10 @@ const fetchBets: DataSource<Bet> = async (query, { signal }) => {
 
 - **Cancellation.** A new query aborts the previous request through `signal`, and a late response
   from a superseded request is ignored, so fast typing never shows stale rows.
-- **States.** The grid shows a progress bar while loading. If the function throws, it shows
-  _Couldn't load the rows._ with a _Retry_ button and emits `load-error`.
+- **States.** The grid shows a progress bar while loading. If the function throws, it emits
+  `load-error` and shows _Couldn't load the rows._ with a _Retry_ button: in place of the rows
+  when there are none, or above the rows from before (_These are from before._), which stay on
+  screen. The next request clears it. The notice is `.vg-load-error-banner` (`role="alert"`).
 - **Paging.** `pagination` adds the pager and sends `page` / `pageSize`; return `total` so the
   pager knows how many pages there are. Without `pagination`, `pageSize` is `null` (fetch
   everything). The page resets to 1 when sort or filters change.

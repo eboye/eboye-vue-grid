@@ -1,4 +1,4 @@
-# @nocopypaste/vue-grid 0.4.2 — API reference
+# @nocopypaste/vue-grid 0.4.3 — API reference
 
 > Generated from the TypeScript sources (`scripts/gen-agent.mjs`). Machine-readable: `agent/api.json`, `agent/grid-config.schema.json`.
 
@@ -95,7 +95,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | Event | Payload | Description |
 |---|---|---|
 | `query-change` | `[query: GridQuery]` | The combined query (sort, filters, search, page) — on mount and whenever it changes. |
-| `load-error` | `[error: unknown]` | A `dataSource` call failed (the grid shows an error with Retry). |
+| `load-error` | `[error: unknown]` | A `dataSource` call failed. The grid shows an error with Retry, above the rows from before if any. |
 | `row-click` | `[row: T, event: MouseEvent \| KeyboardEvent]` | A row was clicked (not on a link, button or input inside it, nor a `clickable` column). |
 | `cell-click` | `[event: CellClickEvent<T>]` | A cell of a `clickable: true` column was clicked. |
 | `cell-action` | `[event: CellActionEvent<T>]` | A renderer emitted an action (buttons, toggles, menus, edit, copy). |

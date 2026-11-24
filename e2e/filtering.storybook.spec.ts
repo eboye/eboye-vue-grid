@@ -215,9 +215,46 @@ test.describe('server data', () => {
     await page.getByTestId('fail').click()
     await header(page, 'id').locator('.vg-sort').click()
     await expect(requests(page).first()).toHaveAttribute('data-status', 'error')
-    // rows from before stay; the next load succeeds
-    await header(page, 'id').locator('.vg-sort').click()
+    // no city ticked, so no rows: the empty row says it, with Retry
+    const empty = page.locator('.vg-load-error')
+    await expect(empty).toContainText("Couldn't load the rows")
+    await empty.getByRole('button', { name: 'Retry' }).click()
     await expect(requests(page).first()).toHaveAttribute('data-status', 'ok')
+    await expect(empty).toBeHidden()
+  })
+
+  test('a failed request with rows on screen keeps them, with a notice and Retry', async ({
+    page,
+  }) => {
+    await story(page, 'grid-server-data--data-source')
+    await expect(requests(page).first()).toHaveAttribute('data-status', 'ok')
+    const firstPlayer = await page
+      .locator('.vg-row > [data-col-key="player"]')
+      .first()
+      .textContent()
+
+    await page.getByTestId('fail').click()
+    await header(page, 'stake').locator('.vg-sort').click()
+    await expect(requests(page).first()).toHaveAttribute('data-status', 'error')
+    const notice = page.locator('.vg-load-error-banner')
+    await expect(notice).toBeVisible()
+    await expect(notice).toHaveAttribute('role', 'alert')
+    await expect(notice).toContainText("Couldn't load the rows. These are from before.")
+    // the rows from before are still there
+    await expect(page.locator('.vg-row > [data-col-key="player"]').first()).toHaveText(firstPlayer!)
+
+    await notice.getByRole('button', { name: 'Retry' }).click()
+    await expect(requests(page).first()).toHaveAttribute('data-status', 'ok')
+    await expect(requests(page).first()).toContainText('sort stake asc')
+    await expect(notice).toBeHidden()
+
+    // another failure, then a query that succeeds: the notice goes away by itself
+    await page.getByTestId('fail').click()
+    await header(page, 'stake').locator('.vg-sort').click()
+    await expect(notice).toBeVisible()
+    await header(page, 'stake').locator('.vg-sort').click()
+    await expect(requests(page).first()).toHaveAttribute('data-status', 'ok')
+    await expect(notice).toBeHidden()
   })
 
   test('query-change event: the app fetches by itself', async ({ page }) => {

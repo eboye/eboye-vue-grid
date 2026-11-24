@@ -106,13 +106,17 @@
   .vg-toolbar {
     gap: var(--vg-gap);
   }
-  .vg-selection-banner {
+  .vg-selection-banner,
+  .vg-load-error-banner {
     gap: 0.5rem;
     padding: 0.5rem var(--vg-cell-padding-x);
     border-radius: var(--vg-radius);
     background: color-mix(in srgb, var(--vg-color-accent) 10%, var(--vg-color-surface));
     color: var(--vg-color-text);
     font-size: var(--vg-font-size);
+  }
+  .vg-load-error-banner {
+    background: color-mix(in srgb, var(--vg-color-danger) 12%, var(--vg-color-surface));
   }
 
   .vg-viewport {

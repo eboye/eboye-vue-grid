@@ -240,7 +240,7 @@ const selectAllMatching = defineModel<boolean>('selectAllMatching', { default: f
 const emit = defineEmits<{
   /** The combined query (sort, filters, search, page) — on mount and whenever it changes. */
   'query-change': [query: GridQuery]
-  /** A `dataSource` call failed (the grid shows an error with Retry). */
+  /** A `dataSource` call failed. The grid shows an error with Retry, above the rows from before if any. */
   'load-error': [error: unknown]
   /** A row was clicked (not on a link, button or input inside it, nor a `clickable` column). */
   'row-click': [row: T, event: MouseEvent | KeyboardEvent]
@@ -1245,6 +1245,12 @@ defineExpose<VGridExposed>({
       @select-all="selectAllMatching = true"
       @clear="clearSelection"
     />
+    <!-- A failed request keeps the rows already shown: say they're out of date. (With no rows, the
+         empty row says it instead.) The next request clears it. -->
+    <div v-if="loadError && windowRows.length" class="vg-load-error-banner" role="alert">
+      <span>Couldn't load the rows. These are from before.</span>
+      <button type="button" class="vg-link-button" @click="reload()">Retry</button>
+    </div>
     <div class="vg-viewport">
       <div v-if="isLoading" class="vg-progress" aria-hidden="true" />
       <div

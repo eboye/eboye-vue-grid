@@ -1,6 +1,6 @@
 {
   "package": "@nocopypaste/vue-grid",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "component": "VGrid",
   "props": [
     {
@@ -381,7 +381,7 @@
     {
       "name": "load-error",
       "payload": "[error: unknown]",
-      "description": "A `dataSource` call failed (the grid shows an error with Retry)."
+      "description": "A `dataSource` call failed. The grid shows an error with Retry, above the rows from before if any."
     },
     {
       "name": "row-click",

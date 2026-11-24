@@ -215,7 +215,7 @@ const fetchOrders: DataSource<Order> = async (query, { signal }) => {
     body: JSON.stringify(query),
     signal,
   })
-  if (!res.ok) throw new Error(res.statusText) // emits load-error; Retry shows if no rows are on screen
+  if (!res.ok) throw new Error(res.statusText) // the grid shows the error with Retry, emits load-error
   return res.json() as Promise<{ rows: Order[]; total: number }>
 }
 ```
@@ -519,7 +519,7 @@ only sees stylesheet rules. Density:
 
 ---
 
-# @nocopypaste/vue-grid 0.4.2 — API reference
+# @nocopypaste/vue-grid 0.4.3 — API reference
 
 > Generated from the TypeScript sources (`scripts/gen-agent.mjs`). Machine-readable: `agent/api.json`, `agent/grid-config.schema.json`.
 
@@ -616,7 +616,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | Event | Payload | Description |
 |---|---|---|
 | `query-change` | `[query: GridQuery]` | The combined query (sort, filters, search, page) — on mount and whenever it changes. |
-| `load-error` | `[error: unknown]` | A `dataSource` call failed (the grid shows an error with Retry). |
+| `load-error` | `[error: unknown]` | A `dataSource` call failed. The grid shows an error with Retry, above the rows from before if any. |
 | `row-click` | `[row: T, event: MouseEvent \| KeyboardEvent]` | A row was clicked (not on a link, button or input inside it, nor a `clickable` column). |
 | `cell-click` | `[event: CellClickEvent<T>]` | A cell of a `clickable: true` column was clicked. |
 | `cell-action` | `[event: CellActionEvent<T>]` | A renderer emitted an action (buttons, toggles, menus, edit, copy). |
@@ -1859,8 +1859,10 @@ const fetchBets: DataSource<Bet> = async (query, { signal }) => {
 
 - **Cancellation.** A new query aborts the previous request through `signal`, and a late response
   from a superseded request is ignored, so fast typing never shows stale rows.
-- **States.** The grid shows a progress bar while loading. If the function throws, it shows
-  _Couldn't load the rows._ with a _Retry_ button and emits `load-error`.
+- **States.** The grid shows a progress bar while loading. If the function throws, it emits
+  `load-error` and shows _Couldn't load the rows._ with a _Retry_ button: in place of the rows
+  when there are none, or above the rows from before (_These are from before._), which stay on
+  screen. The next request clears it. The notice is `.vg-load-error-banner` (`role="alert"`).
 - **Paging.** `pagination` adds the pager and sends `page` / `pageSize`; return `total` so the
   pager knows how many pages there are. Without `pagination`, `pageSize` is `null` (fetch
   everything). The page resets to 1 when sort or filters change.

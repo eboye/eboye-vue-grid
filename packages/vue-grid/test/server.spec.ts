@@ -140,6 +140,55 @@ describe('dataSource (server rows)', () => {
     expect(shownIds(w)).toEqual([1, 2])
   })
 
+  it('a failed request with rows on screen keeps them and shows a notice with Retry', async () => {
+    let fail = false
+    const source = vi.fn<DataSource<Row>>(async (query) => {
+      if (fail) throw new Error('boom')
+      return { rows: all.slice(0, query.sort ? 3 : 2) }
+    })
+    const w = mount(VGrid, {
+      props: { dataSource: source, columns, rowKey: 'id' },
+    })
+    await flushPromises()
+    expect(w.find('.vg-load-error-banner').exists()).toBe(false)
+
+    fail = true
+    await w.setProps({ sort: { key: 'score', dir: 'asc' } })
+    await flushPromises()
+    expect(w.emitted('load-error')).toHaveLength(1)
+    expect(shownIds(w)).toEqual([1, 2]) // the rows from before stay
+    const banner = w.find('.vg-load-error-banner')
+    expect(banner.attributes('role')).toBe('alert')
+    expect(banner.text()).toContain("Couldn't load")
+    expect(w.find('.vg-load-error').exists()).toBe(false) // not the empty-state message
+
+    fail = false
+    await banner.find('button').trigger('click')
+    await flushPromises()
+    expect(w.find('.vg-load-error-banner').exists()).toBe(false)
+    expect(shownIds(w)).toEqual([1, 2, 3])
+  })
+
+  it('the notice goes away when the next query succeeds', async () => {
+    let fail = false
+    const source: DataSource<Row> = async () => {
+      if (fail) throw new Error('boom')
+      return { rows: all.slice(0, 2) }
+    }
+    const w = mount(VGrid, {
+      props: { dataSource: source, columns, rowKey: 'id' },
+    })
+    await flushPromises()
+    fail = true
+    await w.setProps({ sort: { key: 'score', dir: 'asc' } })
+    await flushPromises()
+    expect(w.find('.vg-load-error-banner').exists()).toBe(true)
+    fail = false
+    await w.setProps({ sort: { key: 'score', dir: 'desc' } })
+    await flushPromises()
+    expect(w.find('.vg-load-error-banner').exists()).toBe(false)
+  })
+
   it('patchLoadedRows patches server rows', async () => {
     const api = backend()
     const w = mount(VGrid, { props: { dataSource: api.source, columns, rowKey: 'id' } })

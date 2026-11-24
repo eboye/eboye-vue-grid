@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.3 — 2026-11-24
+
+**Server data: a failed request no longer leaves the old rows looking current.** When a
+`dataSource` request failed while rows were on screen, the grid kept them and emitted
+`load-error`, but showed nothing, so the rows looked up to date (the _Couldn't load the rows_ /
+_Retry_ message only appeared with no rows to show). Now a notice above the grid says _Couldn't
+load the rows. These are from before._ with a _Retry_ button (`.vg-load-error-banner`,
+`role="alert"`, themed like the selection banner in the danger tone). The next request, a retry or
+a new sort, filter or page, clears it.
+
 ## 0.4.2 — 2026-11-24
 
 **Fix: theme colours in production builds that rewrite `light-dark()`.** Lightning CSS (the CSS

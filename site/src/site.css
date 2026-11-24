@@ -443,13 +443,6 @@ select.demo-input {
   background: var(--site-code-bg);
   font-size: 0.78rem;
 }
-.demo-error {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: light-dark(#b91c1c, #f87171);
-  font-size: 0.88rem;
-}
 .demo-requests {
   margin: 0.75rem 0 0;
   padding: 0;

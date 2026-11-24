@@ -54,7 +54,7 @@ export const pages: Page[] = [
       'Give the grid an async dataSource: it asks for every sort, filter, search and page change, cancels superseded requests, and shows loading and errors with a Retry.',
     try: [
       'Click a header twice quickly: the first request is aborted.',
-      'Press “Fail next request”, then change the page: the rows stay, the error shows, Retry loads it.',
+      'Press “Fail next request”, then sort: the rows stay, a notice says they’re out of date, Retry loads them.',
     ],
     docs: '14. Server data',
     files: ['ServerDataDemo'],

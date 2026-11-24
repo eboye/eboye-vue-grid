@@ -38,7 +38,8 @@
     align-items: center;
     justify-content: flex-end;
   }
-  .vg-selection-banner {
+  .vg-selection-banner,
+  .vg-load-error-banner {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
