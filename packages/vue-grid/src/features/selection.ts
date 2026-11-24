@@ -13,5 +13,7 @@ export const selectionFeature: SelectionFeature = {
   feature: 'selection',
   useSelection: useGridSelection,
   Checkbox: VGridCheckbox,
-  Banner: /*#__PURE__*/ defineAsyncComponent(() => import('../components/VGridSelectionBanner.vue')),
+  Banner: /*#__PURE__*/ defineAsyncComponent(
+    () => import('../components/VGridSelectionBanner.vue'),
+  ),
 }

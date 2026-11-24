@@ -15,7 +15,11 @@ const toSpec = (line: LineInput): LineSpec =>
 
 const lines = computed(() => {
   const raw = props.options.lines ? props.options.lines(props.value, props.row) : props.value
-  const list = Array.isArray(raw) ? (raw as LineInput[]) : raw === null || raw === undefined || raw === '' ? [] : [raw as LineInput]
+  const list = Array.isArray(raw)
+    ? (raw as LineInput[])
+    : raw === null || raw === undefined || raw === ''
+      ? []
+      : [raw as LineInput]
   const bold = new Set(props.options.boldLines ?? [])
   return list.map((line, index) => {
     const spec = toSpec(line)
@@ -42,7 +46,10 @@ const external = computed(() => props.options.target === '_blank')
 </script>
 
 <template>
-  <span v-if="lines.length" :class="['vg-multi-line', { 'vg-multi-line-wrap': options.ellipsis === false }]">
+  <span
+    v-if="lines.length"
+    :class="['vg-multi-line', { 'vg-multi-line-wrap': options.ellipsis === false }]"
+  >
     <span
       v-for="line in lines"
       :key="line.index"
@@ -68,9 +75,15 @@ const external = computed(() => props.options.target === '_blank')
         <path v-if="line.trend === 'up'" d="M5 1.5 9 7.5H1z" />
         <path v-else d="M5 8.5 1 2.5h8z" />
       </svg>
-      <component :is="RouterLink" v-if="line.kind === 'router'" class="vg-link" :to="line.to" :target="options.target" :rel="external ? 'noopener noreferrer' : undefined">{{
-        line.text
-      }}</component>
+      <component
+        :is="RouterLink"
+        v-if="line.kind === 'router'"
+        class="vg-link"
+        :to="line.to"
+        :target="options.target"
+        :rel="external ? 'noopener noreferrer' : undefined"
+        >{{ line.text }}</component
+      >
       <a
         v-else-if="line.kind === 'link'"
         class="vg-link"
@@ -90,5 +103,7 @@ const external = computed(() => props.options.target === '_blank')
       <template v-else>{{ line.text }}</template>
     </span>
   </span>
-  <span v-else-if="options.placeholder" class="vg-text vg-text-muted">{{ options.placeholder }}</span>
+  <span v-else-if="options.placeholder" class="vg-text vg-text-muted">{{
+    options.placeholder
+  }}</span>
 </template>

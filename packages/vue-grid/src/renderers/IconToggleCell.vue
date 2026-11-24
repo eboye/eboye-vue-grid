@@ -7,7 +7,9 @@ import { StarFilledIcon, StarIcon } from './parts/icons'
 const props = defineProps<CellRendererProps<unknown, unknown, IconToggleOptions>>()
 const emit = defineEmits<CellRendererEmits>()
 
-const active = computed(() => (props.options.active ? !!props.options.active(props.value, props.row) : !!props.value))
+const active = computed(() =>
+  props.options.active ? !!props.options.active(props.value, props.row) : !!props.value,
+)
 const icon = computed(() => {
   const { icon: off, activeIcon: on } = props.options
   const chosen = active.value ? (on ?? (off ? off : StarFilledIcon)) : (off ?? StarIcon)
@@ -20,7 +22,11 @@ const disabled = computed(() => !!resolveOption(props.options.disabled, props.va
 <template>
   <button
     type="button"
-    :class="['vg-icon-button', 'vg-icon-toggle', active && `vg-tone-${options.activeTone ?? 'warning'}`]"
+    :class="[
+      'vg-icon-button',
+      'vg-icon-toggle',
+      active && `vg-tone-${options.activeTone ?? 'warning'}`,
+    ]"
     :aria-pressed="active"
     :aria-label="label"
     :title="label"

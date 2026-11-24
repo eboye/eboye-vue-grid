@@ -7,5 +7,13 @@ import './playground.css'
 import App from './App.vue'
 
 createApp(App)
-  .use(createVueGrid({ renderers: [...allRenderers, ratingRenderer], features: allFeatures, locale: 'en-US', currency: 'EUR', timeZone: 'UTC' }))
+  .use(
+    createVueGrid({
+      renderers: [...allRenderers, ratingRenderer],
+      features: allFeatures,
+      locale: 'en-US',
+      currency: 'EUR',
+      timeZone: 'UTC',
+    }),
+  )
   .mount('#app')

@@ -49,7 +49,9 @@ onBeforeUnmount(() => stopTracking())
 
 const isAction = (item: MenuItem): item is MenuAction => !('separator' in item)
 const enabledItems = () =>
-  Array.from(menu.value?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]:not(:disabled)') ?? [])
+  Array.from(
+    menu.value?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]:not(:disabled)') ?? [],
+  )
 
 function releaseAnchor() {
   if (anchoredElement?.style.getPropertyValue('anchor-name') === ownAnchor) {
@@ -96,11 +98,15 @@ function onToggle(event: Event) {
       placement.value = props.placement
     }
     // Placed, followed and hidden by CSS; JS only where the browser can't (see trackAnchor).
-    if (fallbackTarget && menu.value) stopTracking = trackAnchor(menu.value, fallbackTarget, placement.value)
+    if (fallbackTarget && menu.value)
+      stopTracking = trackAnchor(menu.value, fallbackTarget, placement.value)
     nextTick(() => enabledItems()[0]?.focus({ preventScroll: true }))
     emit('open')
   } else {
-    const focusInside = !document.activeElement || document.activeElement === document.body || menu.value?.contains(document.activeElement)
+    const focusInside =
+      !document.activeElement ||
+      document.activeElement === document.body ||
+      menu.value?.contains(document.activeElement)
     if (focusInside && returnFocus?.isConnected) returnFocus.focus({ preventScroll: true })
     stopTracking()
     releaseAnchor()
@@ -136,7 +142,9 @@ function onKeydown(event: KeyboardEvent) {
       if (event.key.length !== 1 || event.ctrlKey || event.metaKey || event.altKey) return
       const ch = event.key.toLowerCase()
       const order = [...list.slice(index + 1), ...list.slice(0, index + 1)]
-      order.find((b) => b.textContent?.trim().toLowerCase().startsWith(ch))?.focus({ preventScroll: true })
+      order
+        .find((b) => b.textContent?.trim().toLowerCase().startsWith(ch))
+        ?.focus({ preventScroll: true })
     }
   }
   event.preventDefault()
@@ -183,7 +191,12 @@ defineExpose({ id: menuId, openAt, close, isOpen })
         :class="['vg-menu-item', item.tone && `vg-tone-${item.tone}`]"
         @click="choose(item)"
       >
-        <component :is="toRaw(item.icon)" v-if="item.icon" class="vg-menu-icon" aria-hidden="true" />
+        <component
+          :is="toRaw(item.icon)"
+          v-if="item.icon"
+          class="vg-menu-icon"
+          aria-hidden="true"
+        />
         <span class="vg-menu-label">{{ item.label }}</span>
         <span v-if="item.hint" class="vg-menu-hint">{{ item.hint }}</span>
       </button>

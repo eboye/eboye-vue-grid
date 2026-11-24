@@ -60,17 +60,17 @@
 
 ## Features
 
-| Area | What you get |
-|---|---|
-| **Data** | Plain row objects · partial updates that re-render only changed cells, with an optional change highlight · client or server (controlled) sorting · selection (multi, single, cascading, shift-click ranges, a batch-action bar in the toolbar, "select all N matching" with server data) · built-in or standalone pagination · 10,000+ rows with virtual scrolling, sub-grids and detail rows included |
-| **Filtering** | Typed column filters in header popovers (text, number, date, yes / no, value list with counts, your own component) · optional filter row with shorthand (`>10`, `5..20`, `-5..-1`, `100..`, `1,5`) · quick search · case- and accent-insensitive · date-only values are calendar days in every time zone · tree-aware · persisted to `localStorage` |
-| **Server data** | A `dataSource(query, { signal })` function: the grid sends sort, filters and page, cancels superseded requests, and shows loading, error and retry states · or a single `query-change` event if you fetch yourself · backend-loaded value lists |
-| **Columns** | Pin left / right (also at runtime) · drag or keyboard reordering · drag-to-resize with fit-to-content · grouped headers · show / hide picker · any CSS grid track as width · layout persisted to `localStorage` or your own storage |
-| **Rows** | Nested sub-grids (sync or lazy-loaded, with retry; `reloadSubRows()`) · detail rows with any content, including another grid · cascading selection that follows lazily loaded children · pinned rows that stay above or below the body · a sticky totals row (sum, avg, min, max, count or your own aggregate) · row grouping by one or more columns, with counts and per-group aggregates, from `v-model:group-by` or the header menu · row highlighting and classes |
-| **Export** | CSV download or text of the filtered, sorted rows (or all, the page, the selection), raw or as displayed, with totals · Ctrl/⌘+C copies the selected rows (pastes as cells into spreadsheets) or the focused cell · formula-injection guard · works over plain http |
-| **Menus** | Right-click menus for cells and headers (sort, pin, move, hide, reset, your own items) · `⋯` actions menu · keyboard: ContextMenu / Shift+F10, arrows, typeahead |
-| **Cells** | 29 renderers (below) · slots for any cell or header · your own renderers as typed add-ons |
-| **Theming** | CSS variables for colours, spacing, radii, typography · dark mode · three densities · `ui` prop for utility classes |
+| Area            | What you get                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Data**        | Plain row objects · partial updates that re-render only changed cells, with an optional change highlight · client or server (controlled) sorting · selection (multi, single, cascading, shift-click ranges, a batch-action bar in the toolbar, "select all N matching" with server data) · built-in or standalone pagination · 10,000+ rows with virtual scrolling, sub-grids and detail rows included                                                                |
+| **Filtering**   | Typed column filters in header popovers (text, number, date, yes / no, value list with counts, your own component) · optional filter row with shorthand (`>10`, `5..20`, `-5..-1`, `100..`, `1,5`) · quick search · case- and accent-insensitive · date-only values are calendar days in every time zone · tree-aware · persisted to `localStorage`                                                                                                                   |
+| **Server data** | A `dataSource(query, { signal })` function: the grid sends sort, filters and page, cancels superseded requests, and shows loading, error and retry states · or a single `query-change` event if you fetch yourself · backend-loaded value lists                                                                                                                                                                                                                       |
+| **Columns**     | Pin left / right (also at runtime) · drag or keyboard reordering · drag-to-resize with fit-to-content · grouped headers · show / hide picker · any CSS grid track as width · layout persisted to `localStorage` or your own storage                                                                                                                                                                                                                                   |
+| **Rows**        | Nested sub-grids (sync or lazy-loaded, with retry; `reloadSubRows()`) · detail rows with any content, including another grid · cascading selection that follows lazily loaded children · pinned rows that stay above or below the body · a sticky totals row (sum, avg, min, max, count or your own aggregate) · row grouping by one or more columns, with counts and per-group aggregates, from `v-model:group-by` or the header menu · row highlighting and classes |
+| **Export**      | CSV download or text of the filtered, sorted rows (or all, the page, the selection), raw or as displayed, with totals · Ctrl/⌘+C copies the selected rows (pastes as cells into spreadsheets) or the focused cell · formula-injection guard · works over plain http                                                                                                                                                                                                   |
+| **Menus**       | Right-click menus for cells and headers (sort, pin, move, hide, reset, your own items) · `⋯` actions menu · keyboard: ContextMenu / Shift+F10, arrows, typeahead                                                                                                                                                                                                                                                                                                      |
+| **Cells**       | 29 renderers (below) · slots for any cell or header · your own renderers as typed add-ons                                                                                                                                                                                                                                                                                                                                                                             |
+| **Theming**     | CSS variables for colours, spacing, radii, typography · dark mode · three densities · `ui` prop for utility classes                                                                                                                                                                                                                                                                                                                                                   |
 
 ### 29 cell renderers
 
@@ -80,7 +80,11 @@ its `rendererOptions`. Options are typed against the renderer, and most also acc
 [API reference](packages/vue-grid/README.md#built-in-renderers) lists every option.
 
 ```ts
-col({ key: 'total', renderer: currencyRenderer, rendererOptions: { currency: 'EUR', clickable: true } })
+col({
+  key: 'total',
+  renderer: currencyRenderer,
+  rendererOptions: { currency: 'EUR', clickable: true },
+})
 ```
 
 #### Text and numbers
@@ -220,7 +224,7 @@ col({ key: 'total', renderer: currencyRenderer, rendererOptions: { currency: 'EU
 
 #### Actions and editing
 
-Editable controls are *controlled*: they show your data and emit the requested change through
+Editable controls are _controlled_: they show your data and emit the requested change through
 `@cell-action`, and your app updates the row.
 
 <table>
@@ -319,7 +323,12 @@ import {
   type SortState,
 } from '@nocopypaste/vue-grid'
 
-interface Order { id: number; customer: string; total: number; status: 'Paid' | 'Open' }
+interface Order {
+  id: number
+  customer: string
+  total: number
+  status: 'Paid' | 'Open'
+}
 
 const rows = ref<Order[]>([
   { id: 1, customer: 'Ana', total: 1234.5, status: 'Paid' },
@@ -388,7 +397,7 @@ about 9× slower here and shifted column widths.
 
 - Virtual scrolling (`virtualScrollingFeature`) renders the rows in view plus `overscan`, at every
   level of the tree. Off-screen siblings become spacers. Children stay inside their parent's CSS
-  `subgrid`, so the DOM keeps the same structure as without virtual scrolling. *Expand all* on a
+  `subgrid`, so the DOM keeps the same structure as without virtual scrolling. _Expand all_ on a
   14,000-row tree keeps about 24 rows in the DOM.
 - Layout is one pass over the visible tree, run only when rows, expansion or measured heights
   change. Scrolling does a binary search per level, never a walk over all rows. On a 5,000-row
@@ -438,29 +447,29 @@ about 9× slower here and shifted column widths.
 Measured by bundling small apps against the published build for production with Rolldown, the
 bundler in Vite (minified / gzip, Vue excluded; the entry plus every chunk it loads up front):
 
-| You import | Initial chunk |
-|---|---|
-| `VGrid` (no features) | 39.0 kB / 13.6 kB |
-| `VGrid` + `sortingFeature` | 39.8 kB / 13.9 kB |
-| `VGrid` + `filteringFeature` | 49.7 kB / 17.4 kB |
-| `VGrid` + `selectionFeature` | 43.2 kB / 15.1 kB |
-| `VGrid` + `subGridsFeature` | 41.4 kB / 14.5 kB |
-| `VGrid` + `menusFeature` | 49.6 kB / 17.2 kB |
-| `VGrid` + `columnReorderFeature` | 42.7 kB / 14.9 kB |
-| `VGrid` + `columnPinningFeature` | 41.2 kB / 14.5 kB |
-| `VGrid` + `virtualScrollingFeature` | 44.8 kB / 15.8 kB |
-| `VGrid` + `columnVisibilityFeature` | 39.2 kB / 13.7 kB |
-| `VGrid` + `keyboardNavigationFeature` | 41.5 kB / 14.5 kB |
-| `VGrid` + `columnResizingFeature` | 41.8 kB / 14.7 kB |
-| `VGrid` + `columnGroupsFeature` | 40.3 kB / 14.1 kB |
-| `VGrid` + `rowPinningFeature` | 44.0 kB / 15.0 kB |
-| `VGrid` + `aggregationFeature` | 44.2 kB / 15.1 kB |
-| `VGrid` + `rowGroupingFeature` | 48.6 kB / 16.4 kB |
-| `VGrid` + `exportFeature` | 42.8 kB / 15.1 kB |
-| `VGrid` + `allFeatures` + `VGridSearch` | 102.8 kB / 34.7 kB |
-| `VGrid` + `currencyRenderer` | 40.4 kB / 14.1 kB |
-| everything | 147.4 kB / 47.2 kB |
-| `validateGridConfig` (`@nocopypaste/vue-grid/agent`, never in an app bundle) | 63.7 kB / 17.1 kB |
+| You import                                                                   | Initial chunk      |
+| ---------------------------------------------------------------------------- | ------------------ |
+| `VGrid` (no features)                                                        | 39.0 kB / 13.6 kB  |
+| `VGrid` + `sortingFeature`                                                   | 39.8 kB / 13.9 kB  |
+| `VGrid` + `filteringFeature`                                                 | 49.7 kB / 17.4 kB  |
+| `VGrid` + `selectionFeature`                                                 | 43.2 kB / 15.1 kB  |
+| `VGrid` + `subGridsFeature`                                                  | 41.4 kB / 14.5 kB  |
+| `VGrid` + `menusFeature`                                                     | 49.6 kB / 17.2 kB  |
+| `VGrid` + `columnReorderFeature`                                             | 42.7 kB / 14.9 kB  |
+| `VGrid` + `columnPinningFeature`                                             | 41.2 kB / 14.5 kB  |
+| `VGrid` + `virtualScrollingFeature`                                          | 44.8 kB / 15.8 kB  |
+| `VGrid` + `columnVisibilityFeature`                                          | 39.2 kB / 13.7 kB  |
+| `VGrid` + `keyboardNavigationFeature`                                        | 41.5 kB / 14.5 kB  |
+| `VGrid` + `columnResizingFeature`                                            | 41.8 kB / 14.7 kB  |
+| `VGrid` + `columnGroupsFeature`                                              | 40.3 kB / 14.1 kB  |
+| `VGrid` + `rowPinningFeature`                                                | 44.0 kB / 15.0 kB  |
+| `VGrid` + `aggregationFeature`                                               | 44.2 kB / 15.1 kB  |
+| `VGrid` + `rowGroupingFeature`                                               | 48.6 kB / 16.4 kB  |
+| `VGrid` + `exportFeature`                                                    | 42.8 kB / 15.1 kB  |
+| `VGrid` + `allFeatures` + `VGridSearch`                                      | 102.8 kB / 34.7 kB |
+| `VGrid` + `currencyRenderer`                                                 | 40.4 kB / 14.1 kB  |
+| everything                                                                   | 147.4 kB / 47.2 kB |
+| `validateGridConfig` (`@nocopypaste/vue-grid/agent`, never in an app bundle) | 63.7 kB / 17.1 kB  |
 
 With `filteringFeature`, the filter popover body and the filter-row editors load on demand. With
 `paginationFeature`, the pager does too, and with `selectionFeature` the "select all N rows" banner.
@@ -480,14 +489,14 @@ matrix is in the [API reference](packages/vue-grid/README.md#browser-support).
 
 ## Documentation
 
-| Resource | What it covers |
-|---|---|
-| [Examples cookbook](docs/examples.md) | Task-by-task guide with copy-paste snippets for every feature |
-| [API reference](packages/vue-grid/README.md) | Props, events, slots, column options, every renderer option, CSS tokens |
-| **Storybook** — `npm run storybook` | A story per feature and per renderer, live controls, generated prop tables, dark mode |
-| **Playground** — `npm run dev` | Every feature on one page |
-| [Add-on template](packages/cell-renderer-template) | A publishable third-party renderer (star rating) to copy |
-| [AGENTS.md](packages/vue-grid/AGENTS.md) | The guide for coding agents: rules, feature / renderer choice, recipes, pitfalls |
+| Resource                                           | What it covers                                                                        |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| [Examples cookbook](docs/examples.md)              | Task-by-task guide with copy-paste snippets for every feature                         |
+| [API reference](packages/vue-grid/README.md)       | Props, events, slots, column options, every renderer option, CSS tokens               |
+| **Storybook** — `npm run storybook`                | A story per feature and per renderer, live controls, generated prop tables, dark mode |
+| **Playground** — `npm run dev`                     | Every feature on one page                                                             |
+| [Add-on template](packages/cell-renderer-template) | A publishable third-party renderer (star rating) to copy                              |
+| [AGENTS.md](packages/vue-grid/AGENTS.md)           | The guide for coding agents: rules, feature / renderer choice, recipes, pitfalls      |
 
 ## For coding agents
 
@@ -523,7 +532,7 @@ npm install
 npm run dev              # playground → http://localhost:5180
 npm run storybook        # Storybook  → http://localhost:6006
 npm test                 # unit tests (Vitest)
-npm run typecheck && npm run lint
+npm run typecheck && npm run lint && npm run format:check   # npm run format fixes formatting
 npm run build            # both packages → dist/
 npm run e2e              # browser tests, Chromium + Firefox (first time: npx playwright install chromium firefox);
                          # E2E_WEBKIT=1 adds WebKit (CI runs all three on every push and pull request)
@@ -535,15 +544,15 @@ npm run screenshots      # re-shoot the renderer gallery → docs/media/renderer
 <details>
 <summary>Repository layout</summary>
 
-| Path | |
-|---|---|
-| [`packages/vue-grid`](packages/vue-grid) | The library, `@nocopypaste/vue-grid` |
-| [`packages/cell-renderer-template`](packages/cell-renderer-template) | Boilerplate third-party renderer add-on |
-| `stories/`, `.storybook/` | Storybook |
-| `playground/` | Demo app; target of the browser tests |
-| `e2e/` | Playwright tests driving the playground and Storybook with real mouse and keyboard |
-| `docs/` | Examples cookbook, showcase media, renderer screenshots, design notes |
-| `scripts/` | Showcase recorder, renderer gallery screenshots |
+| Path                                                                 |                                                                                    |
+| -------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| [`packages/vue-grid`](packages/vue-grid)                             | The library, `@nocopypaste/vue-grid`                                               |
+| [`packages/cell-renderer-template`](packages/cell-renderer-template) | Boilerplate third-party renderer add-on                                            |
+| `stories/`, `.storybook/`                                            | Storybook                                                                          |
+| `playground/`                                                        | Demo app; target of the browser tests                                              |
+| `e2e/`                                                               | Playwright tests driving the playground and Storybook with real mouse and keyboard |
+| `docs/`                                                              | Examples cookbook, showcase media, renderer screenshots, design notes              |
+| `scripts/`                                                           | Showcase recorder, renderer gallery screenshots                                    |
 
 </details>
 

@@ -3,8 +3,17 @@ import { toDate, toNumber } from '../renderers/format'
 /** The kinds of built-in column filters. */
 export type FilterType = 'text' | 'number' | 'date' | 'boolean' | 'set'
 
-export type TextFilterOp = 'contains' | 'notContains' | 'equals' | 'notEquals' | 'startsWith' | 'endsWith' | 'empty' | 'notEmpty'
-export type NumberFilterOp = 'eq' | 'ne' | 'lt' | 'lte' | 'gt' | 'gte' | 'between' | 'empty' | 'notEmpty'
+export type TextFilterOp =
+  | 'contains'
+  | 'notContains'
+  | 'equals'
+  | 'notEquals'
+  | 'startsWith'
+  | 'endsWith'
+  | 'empty'
+  | 'notEmpty'
+export type NumberFilterOp =
+  'eq' | 'ne' | 'lt' | 'lte' | 'gt' | 'gte' | 'between' | 'empty' | 'notEmpty'
 export type DateFilterOp = 'on' | 'before' | 'after' | 'between' | 'empty' | 'notEmpty'
 
 export interface TextFilter {
@@ -42,7 +51,8 @@ export interface CustomFilter {
   value: unknown
 }
 
-export type ColumnFilter = TextFilter | NumberFilter | DateFilter | BooleanFilter | SetFilter | CustomFilter
+export type ColumnFilter =
+  TextFilter | NumberFilter | DateFilter | BooleanFilter | SetFilter | CustomFilter
 
 /** The grid's filter model (`v-model:filters`). */
 export interface FilterState {
@@ -92,7 +102,8 @@ const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFin
 /** One number in the filter row: an optional minus, digits, an optional `.` or `,` decimal part. */
 const NUM = '-?\\d+(?:[.,]\\d+)?'
 const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/
-const isBlank = (v: unknown) => v === null || v === undefined || v === '' || (Array.isArray(v) && !v.length)
+const isBlank = (v: unknown) =>
+  v === null || v === undefined || v === '' || (Array.isArray(v) && !v.length)
 
 /** Lower-cased, accent-free text for forgiving matching (`"nis"` finds `"Niš"`). */
 export function foldText(value: unknown): string {
@@ -143,19 +154,33 @@ const pad = (n: number) => String(n).padStart(2, '0')
  * (`2026-01-05`) is a calendar day, not an instant, so it is returned as is in every time zone.
  */
 export function dayKey(value: unknown, timeZone?: string): string | null {
-  if (typeof value === 'string' && DATE_ONLY.test(value.trim())) return toDate(value) ? value.trim() : null
+  if (typeof value === 'string' && DATE_ONLY.test(value.trim()))
+    return toDate(value) ? value.trim() : null
   const d = toDate(value)
   if (!d) return null
   if (!timeZone) return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
   let f = dayFormats.get(timeZone)
-  if (!f) dayFormats.set(timeZone, (f = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit', timeZone })))
+  if (!f)
+    dayFormats.set(
+      timeZone,
+      (f = new Intl.DateTimeFormat('en-CA', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        timeZone,
+      })),
+    )
   const parts = f.formatToParts(d)
   const get = (t: string) => parts.find((p) => p.type === t)?.value ?? ''
   return `${get('year')}-${get('month')}-${get('day')}`
 }
 
 /** Does a single cell value pass a built-in filter? (`custom` filters need the column's `filterFn`.) */
-export function matchesFilter(value: unknown, filter: ColumnFilter, opts: { timeZone?: string } = {}): boolean {
+export function matchesFilter(
+  value: unknown,
+  filter: ColumnFilter,
+  opts: { timeZone?: string } = {},
+): boolean {
   if (!isFilterActive(filter)) return true
   switch (filter.type) {
     case 'text': {
@@ -241,20 +266,38 @@ export function parseQuickFilter(type: FilterType, input: string): ColumnFilter 
   if (!s || (type !== 'text' && s.length > 64)) return undefined
   if (type === 'number') {
     const num = (t: string | undefined) => (t === undefined ? null : Number(t.replace(',', '.')))
-    const range = new RegExp(`^(${NUM})?\\s*(?:\\.\\.|–|—|(?<=\\d)\\s*-(?=\\s*-?\\d))\\s*(${NUM})?$`).exec(s)
+    const range = new RegExp(
+      `^(${NUM})?\\s*(?:\\.\\.|–|—|(?<=\\d)\\s*-(?=\\s*-?\\d))\\s*(${NUM})?$`,
+    ).exec(s)
     if (range && (range[1] !== undefined || range[2] !== undefined))
       return { type: 'number', op: 'between', value: num(range[1]), to: num(range[2]) }
     const m = new RegExp(`^(>=|<=|!=|<>|=|>|<)?\\s*(${NUM})$`).exec(s)
     if (!m) return undefined
-    const op = ({ '>=': 'gte', '<=': 'lte', '!=': 'ne', '<>': 'ne', '=': 'eq', '>': 'gt', '<': 'lt' } as const)[m[1] as '>'] ?? 'eq'
+    const op =
+      (
+        {
+          '>=': 'gte',
+          '<=': 'lte',
+          '!=': 'ne',
+          '<>': 'ne',
+          '=': 'eq',
+          '>': 'gt',
+          '<': 'lt',
+        } as const
+      )[m[1] as '>'] ?? 'eq'
     return { type: 'number', op, value: num(m[2]) }
   }
   if (type === 'date') {
     const range = /^(\d{4}-\d{2}-\d{2})?\s*\.\.\s*(\d{4}-\d{2}-\d{2})?$/.exec(s)
-    if (range && (range[1] || range[2])) return { type: 'date', op: 'between', value: range[1], to: range[2] }
+    if (range && (range[1] || range[2]))
+      return { type: 'date', op: 'between', value: range[1], to: range[2] }
     const m = /^(>|<)?\s*(\d{4}-\d{2}-\d{2})$/.exec(s)
     if (!m) return undefined
-    return { type: 'date', op: m[1] === '>' ? 'after' : m[1] === '<' ? 'before' : 'on', value: m[2] }
+    return {
+      type: 'date',
+      op: m[1] === '>' ? 'after' : m[1] === '<' ? 'before' : 'on',
+      value: m[2],
+    }
   }
   return { type: 'text', op: 'contains', value: s }
 }
@@ -265,7 +308,10 @@ export function quickFilterText(filter: ColumnFilter | undefined): string {
   if (filter.type === 'text') return filter.op === 'contains' ? (filter.value ?? '') : ''
   if (filter.type === 'number') {
     if (filter.op === 'between') return `${filter.value ?? ''}..${filter.to ?? ''}`
-    const sym = { eq: '', ne: '!=', lt: '<', lte: '<=', gt: '>', gte: '>=' } as Record<string, string>
+    const sym = { eq: '', ne: '!=', lt: '<', lte: '<=', gt: '>', gte: '>=' } as Record<
+      string,
+      string
+    >
     return filter.op in sym ? `${sym[filter.op]}${filter.value ?? ''}` : ''
   }
   if (filter.type === 'date') {
@@ -307,8 +353,17 @@ export function localFilterStorage(key: string): FilterStateStorage {
         const raw = globalThis.localStorage?.getItem(key)
         if (!raw) return null
         const parsed = JSON.parse(raw) as Partial<FilterState>
-        if (!parsed || typeof parsed !== 'object' || typeof parsed.columns !== 'object' || !parsed.columns) return null
-        return { columns: parsed.columns as Record<string, ColumnFilter>, search: typeof parsed.search === 'string' ? parsed.search : '' }
+        if (
+          !parsed ||
+          typeof parsed !== 'object' ||
+          typeof parsed.columns !== 'object' ||
+          !parsed.columns
+        )
+          return null
+        return {
+          columns: parsed.columns as Record<string, ColumnFilter>,
+          search: typeof parsed.search === 'string' ? parsed.search : '',
+        }
       } catch {
         return null
       }

@@ -12,13 +12,19 @@ const text = computed(() => {
   return props.value === null || props.value === undefined ? '' : String(props.value)
 })
 const disabled = computed(() => !!resolveOption(props.options.disabled, props.value, props.row))
-const label = computed(() => `${props.options.label ?? 'Edit'} ${props.column.header ?? props.column.key}`.trim())
+const label = computed(() =>
+  `${props.options.label ?? 'Edit'} ${props.column.header ?? props.column.key}`.trim(),
+)
 </script>
 
 <template>
   <span class="vg-edit">
     <span
-      :class="['vg-text', 'vg-text-ellipsis', { 'vg-text-bold': options.bold, 'vg-text-muted': !text }]"
+      :class="[
+        'vg-text',
+        'vg-text-ellipsis',
+        { 'vg-text-bold': options.bold, 'vg-text-muted': !text },
+      ]"
       :title="text || undefined"
       >{{ text || options.placeholder || '' }}</span
     >

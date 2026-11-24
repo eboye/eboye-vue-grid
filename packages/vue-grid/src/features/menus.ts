@@ -8,4 +8,8 @@ import type { MenusFeature } from '../types'
  * or Shift+F10. Without it the browser's own menu shows. The standalone `<VGridMenu>` and the
  * `actions-menu` renderer don't need it.
  */
-export const menusFeature: MenusFeature = { feature: 'menus', useMenus: useGridMenus, Menu: VGridMenu }
+export const menusFeature: MenusFeature = {
+  feature: 'menus',
+  useMenus: useGridMenus,
+  Menu: VGridMenu,
+}

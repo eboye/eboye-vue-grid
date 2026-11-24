@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
-import { isFilterActive, parseQuickFilter, quickFilterText, type ColumnFilter, type FilterType } from '../core/filter'
+import {
+  isFilterActive,
+  parseQuickFilter,
+  quickFilterText,
+  type ColumnFilter,
+  type FilterType,
+} from '../core/filter'
 import type { ColumnDef, ColumnFilterOptions } from '../types'
 
 /** The filter-row editor of one column (inside its header cell). */
@@ -14,8 +20,17 @@ const emit = defineEmits<{ 'update:modelValue': [filter: ColumnFilter | undefine
 const title = computed(() => props.column.header ?? props.column.key)
 const placeholder = computed(
   () =>
-    (typeof props.column.filter === 'object' ? (props.column.filter as ColumnFilterOptions).placeholder : undefined) ??
-    { text: 'Filter…', number: '> 10, 5..20', date: '> 2026-01-01', boolean: '', set: '', custom: '' }[props.type],
+    (typeof props.column.filter === 'object'
+      ? (props.column.filter as ColumnFilterOptions).placeholder
+      : undefined) ??
+    {
+      text: 'Filter…',
+      number: '> 10, 5..20',
+      date: '> 2026-01-01',
+      boolean: '',
+      set: '',
+      custom: '',
+    }[props.type],
 )
 
 // Text shorthand: local while typing (debounced), synced from the model when it changes elsewhere.
@@ -32,14 +47,24 @@ onBeforeUnmount(() => window.clearTimeout(timer))
 function onInput(value: string) {
   text.value = value
   window.clearTimeout(timer)
-  timer = window.setTimeout(() => emit('update:modelValue', parseQuickFilter(props.type as FilterType, value)), 200)
+  timer = window.setTimeout(
+    () => emit('update:modelValue', parseQuickFilter(props.type as FilterType, value)),
+    200,
+  )
 }
 /** A filter set in the popover that the shorthand can't express (e.g. "does not contain"). */
-const advanced = computed(() => isFilterActive(props.modelValue) && !quickFilterText(props.modelValue))
+const advanced = computed(
+  () => isFilterActive(props.modelValue) && !quickFilterText(props.modelValue),
+)
 
-const boolValue = computed(() => (props.modelValue?.type === 'boolean' ? String(props.modelValue.value) : 'any'))
+const boolValue = computed(() =>
+  props.modelValue?.type === 'boolean' ? String(props.modelValue.value) : 'any',
+)
 function setBool(v: string) {
-  emit('update:modelValue', v === 'any' ? undefined : { type: 'boolean', value: v === 'null' ? null : v === 'true' })
+  emit(
+    'update:modelValue',
+    v === 'any' ? undefined : { type: 'boolean', value: v === 'null' ? null : v === 'true' },
+  )
 }
 const summary = computed(() => {
   const f = props.modelValue
@@ -53,7 +78,13 @@ const stop = (e: Event) => e.stopPropagation()
 
 <template>
   <div class="vg-filter-input" @pointerdown="stop" @click="stop" @keydown="stop">
-    <button v-if="advanced" type="button" class="vg-input vg-filter-summary" :aria-label="`${title}: edit filter`" @click="emit('open')">
+    <button
+      v-if="advanced"
+      type="button"
+      class="vg-input vg-filter-summary"
+      :aria-label="`${title}: edit filter`"
+      @click="emit('open')"
+    >
       Custom filter
     </button>
     <input
@@ -80,7 +111,13 @@ const stop = (e: Event) => e.stopPropagation()
       <option value="false">No</option>
       <option value="null">Empty</option>
     </select>
-    <button v-else type="button" class="vg-input vg-filter-summary" :aria-label="`Filter ${title}: ${summary}`" @click="emit('open')">
+    <button
+      v-else
+      type="button"
+      class="vg-input vg-filter-summary"
+      :aria-label="`Filter ${title}: ${summary}`"
+      @click="emit('open')"
+    >
       {{ summary }}
     </button>
   </div>

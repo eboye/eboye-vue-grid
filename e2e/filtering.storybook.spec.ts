@@ -16,7 +16,9 @@ test.describe('client filtering', () => {
     await page.evaluate(() => localStorage.clear())
   })
 
-  test('funnel: hidden until hover, popover anchored under it with focus in the search box; value list filters', async ({ page }) => {
+  test('funnel: hidden until hover, popover anchored under it with focus in the search box; value list filters', async ({
+    page,
+  }) => {
     const total = await rows(page).count()
     const funnel = header(page, 'status').locator('.vg-filter-button')
     await expect(funnel).toHaveCSS('opacity', '0')
@@ -45,36 +47,44 @@ test.describe('client filtering', () => {
     await expect(funnel).toHaveAttribute('aria-label', /active/)
   })
 
-  test('number condition in the popover (keyboard), filter row shorthand, quick search, clear all', async ({ page }) => {
+  test('number condition in the popover (keyboard), filter row shorthand, quick search, clear all', async ({
+    page,
+  }) => {
     await header(page, 'stake').hover()
     await header(page, 'stake').locator('.vg-filter-button').click()
     const popover = page.locator('.vg-filter-popover:popover-open')
     await popover.getByLabel('Stake: condition').selectOption('gte')
     await popover.getByLabel('Stake: value').fill('300')
-    await expect.poll(async () => {
-      const stakes = await page.locator('.vg-row > [data-col-key="stake"]').allTextContents()
-      return stakes.length > 0 && stakes.every((s) => Number(s.replace(/[^\d.]/g, '')) >= 300)
-    }).toBe(true)
+    await expect
+      .poll(async () => {
+        const stakes = await page.locator('.vg-row > [data-col-key="stake"]').allTextContents()
+        return stakes.length > 0 && stakes.every((s) => Number(s.replace(/[^\d.]/g, '')) >= 300)
+      })
+      .toBe(true)
     await page.keyboard.press('Escape')
     // the filter row reflects the popover's condition as shorthand
     await expect(header(page, 'stake').locator('.vg-filter-input input')).toHaveValue('>=300')
 
     // filter row: type shorthand for the date column
     await header(page, 'placedAt').locator('.vg-filter-input input').fill('>2026-06-01')
-    await expect.poll(async () => {
-      const dates = await page.locator('.vg-row > [data-col-key="placedAt"]').allTextContents()
-      return dates.every((d) => {
-        const [m, day, y] = d.trim().split('/').map(Number)
-        return new Date(Date.UTC(y!, m! - 1, day!)) > new Date(Date.UTC(2026, 5, 1))
+    await expect
+      .poll(async () => {
+        const dates = await page.locator('.vg-row > [data-col-key="placedAt"]').allTextContents()
+        return dates.every((d) => {
+          const [m, day, y] = d.trim().split('/').map(Number)
+          return new Date(Date.UTC(y!, m! - 1, day!)) > new Date(Date.UTC(2026, 5, 1))
+        })
       })
-    }).toBe(true)
+      .toBe(true)
 
     // quick search (accent-insensitive) across visible columns
     await page.getByLabel('Search rows').fill('dorde')
-    await expect.poll(async () => {
-      const players = await page.locator('.vg-row > [data-col-key="player"]').allTextContents()
-      return players.length === 0 || players.every((p) => p.includes('Đorđ'))
-    }).toBe(true)
+    await expect
+      .poll(async () => {
+        const players = await page.locator('.vg-row > [data-col-key="player"]').allTextContents()
+        return players.length === 0 || players.every((p) => p.includes('Đorđ'))
+      })
+      .toBe(true)
     await expect(page.getByTestId('count')).toHaveText('3 active')
 
     await page.getByRole('button', { name: 'Clear all' }).click()
@@ -83,10 +93,18 @@ test.describe('client filtering', () => {
     await expect(page.getByLabel('Search rows')).toHaveValue('')
   })
 
-  test('boolean select, no-match message with Clear filters, header menu items', async ({ page }) => {
+  test('boolean select, no-match message with Clear filters, header menu items', async ({
+    page,
+  }) => {
     const total = await rows(page).count()
     await header(page, 'verified').locator('.vg-filter-input select').selectOption('false')
-    await expect.poll(async () => (await page.locator('.vg-row > [data-col-key="verified"]').allTextContents()).every((t) => t === 'No')).toBe(true)
+    await expect
+      .poll(async () =>
+        (await page.locator('.vg-row > [data-col-key="verified"]').allTextContents()).every(
+          (t) => t === 'No',
+        ),
+      )
+      .toBe(true)
 
     await header(page, 'player').locator('.vg-filter-input input').fill('zzzz-no-such-player')
     await expect(page.locator('.vg-no-match')).toContainText('No rows match')
@@ -111,7 +129,9 @@ test.describe('client filtering', () => {
     await page.reload()
     await page.locator('[role="grid"]').waitFor()
     await header(page, 'player').locator('.vg-filter-input input').fill('Ana')
-    await expect.poll(() => page.evaluate(() => localStorage.getItem('storybook-filters-demo'))).toContain('Ana')
+    await expect
+      .poll(() => page.evaluate(() => localStorage.getItem('storybook-filters-demo')))
+      .toContain('Ana')
     await page.reload()
     await page.locator('[role="grid"]').waitFor()
     await expect(header(page, 'player').locator('.vg-filter-input input')).toHaveValue('Ana')
@@ -124,18 +144,22 @@ test.describe('client filtering', () => {
   test('sub-grid: a parent stays when a child matches', async ({ page }) => {
     await story(page, 'grid-filtering--sub-grids')
     await header(page, 'name').locator('.vg-filter-input input').fill('Draw')
-    await expect.poll(() => page.locator('.vg-row').evaluateAll((els) => els.map((e) => (e as HTMLElement).dataset.rowKey))).toEqual([
-      'fb',
-      'fb-1x2',
-      'fb-1x2-d',
-    ])
+    await expect
+      .poll(() =>
+        page
+          .locator('.vg-row')
+          .evaluateAll((els) => els.map((e) => (e as HTMLElement).dataset.rowKey)),
+      )
+      .toEqual(['fb', 'fb-1x2', 'fb-1x2-d'])
   })
 })
 
 test.describe('server data', () => {
   const requests = (page: Page) => page.getByTestId('requests').locator('li')
 
-  test('sort, filter, search and pages go to the backend; superseded requests are aborted', async ({ page }) => {
+  test('sort, filter, search and pages go to the backend; superseded requests are aborted', async ({
+    page,
+  }) => {
     await story(page, 'grid-server-data--data-source')
     await expect(requests(page).first()).toHaveAttribute('data-status', 'ok')
     await expect(requests(page).first()).toContainText('page 1/10')
@@ -145,11 +169,16 @@ test.describe('server data', () => {
     await header(page, 'stake').locator('.vg-sort').click()
     await expect(requests(page).first()).toContainText('sort stake asc')
     await expect(requests(page).first()).toHaveAttribute('data-status', 'ok')
-    const stakes = (await page.locator('.vg-row > [data-col-key="stake"]').allTextContents()).map((s) => Number(s.replace(/[^\d.]/g, '')))
+    const stakes = (await page.locator('.vg-row > [data-col-key="stake"]').allTextContents()).map(
+      (s) => Number(s.replace(/[^\d.]/g, '')),
+    )
     expect(stakes).toEqual([...stakes].sort((a, b) => a - b))
 
     // page 2
-    await page.locator('.vg-grid-pagination').getByRole('button', { name: 'Page 2', exact: true }).click()
+    await page
+      .locator('.vg-grid-pagination')
+      .getByRole('button', { name: 'Page 2', exact: true })
+      .click()
     await expect(requests(page).first()).toContainText('page 2/10')
 
     // typing in the filter row quickly: earlier requests get aborted, the last one wins, page resets
@@ -158,7 +187,9 @@ test.describe('server data', () => {
     await expect(requests(page).first()).toContainText('player')
     await expect(requests(page).first()).toContainText('page 1/10')
     await expect(requests(page).first()).toHaveAttribute('data-status', 'ok')
-    expect(await page.getByTestId('requests').locator('[data-status="aborted"]').count()).toBeGreaterThan(0)
+    expect(
+      await page.getByTestId('requests').locator('[data-status="aborted"]').count(),
+    ).toBeGreaterThan(0)
     const players = await page.locator('.vg-row > [data-col-key="player"]').allTextContents()
     expect(players.length).toBeGreaterThan(0)
     expect(players.every((p) => p.toLowerCase().includes('ana'))).toBe(true) // case-insensitive: Ivana too
@@ -196,6 +227,12 @@ test.describe('server data', () => {
     await expect(page.getByTestId('last-query')).toContainText('sort stake asc')
     await header(page, 'stake').locator('.vg-filter-input input').fill('>400')
     await expect(page.getByTestId('last-query')).toContainText('stake')
-    await expect.poll(async () => (await page.locator('.vg-row > [data-col-key="stake"]').allTextContents()).every((s) => Number(s.replace(/[^\d.]/g, '')) > 400)).toBe(true)
+    await expect
+      .poll(async () =>
+        (await page.locator('.vg-row > [data-col-key="stake"]').allTextContents()).every(
+          (s) => Number(s.replace(/[^\d.]/g, '')) > 400,
+        ),
+      )
+      .toBe(true)
   })
 })

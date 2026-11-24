@@ -3,19 +3,25 @@ import type { ColumnDef, ColumnState, PinSide } from '../types'
 type PinGroup = PinSide | 'none'
 
 /** The column's pin side after applying runtime overrides from column state. */
-export function effectivePin(col: Pick<ColumnDef, 'key' | 'pinned'>, state?: Pick<ColumnState, 'pinned'>): PinSide | undefined {
+export function effectivePin(
+  col: Pick<ColumnDef, 'key' | 'pinned'>,
+  state?: Pick<ColumnState, 'pinned'>,
+): PinSide | undefined {
   const override = state?.pinned?.[col.key]
   if (override !== undefined) return override ?? undefined
   return col.pinned
 }
 
-const pinGroup = (col: Pick<ColumnDef, 'key' | 'pinned'> | undefined, state?: ColumnState): PinGroup =>
-  (col && effectivePin(col, state)) ?? 'none'
+const pinGroup = (
+  col: Pick<ColumnDef, 'key' | 'pinned'> | undefined,
+  state?: ColumnState,
+): PinGroup => (col && effectivePin(col, state)) ?? 'none'
 
 /** A plausible grid track (`240px`, `12rem`, `minmax(…)`) — not junk from storage that breaks the template. */
-const isTrack = (v: unknown): v is string => typeof v === 'string' && v.length <= 64 && /^[\w\s.,%()+\-*/]+$/.test(v)
+const isTrack = (v: unknown): v is string =>
+  typeof v === 'string' && v.length <= 64 && /^[\w\s.,%()+\-*/]+$/.test(v)
 
-const isPinValue =(v: unknown): v is PinSide | null => v === 'left' || v === 'right' || v === null
+const isPinValue = (v: unknown): v is PinSide | null => v === 'left' || v === 'right' || v === null
 
 /**
  * Reconciles (possibly stale or persisted) column state with the current column definitions:
@@ -39,7 +45,9 @@ export function normalizeColumnState(
     ? [
         ...new Set([
           ...state.hidden.filter((k) => known.has(k)),
-          ...(Array.isArray(state?.order) ? columns.filter((c) => c.hidden && !storedKnown.has(c.key)).map((c) => c.key) : []),
+          ...(Array.isArray(state?.order)
+            ? columns.filter((c) => c.hidden && !storedKnown.has(c.key)).map((c) => c.key)
+            : []),
         ]),
       ]
     : columns.filter((c) => c.hidden).map((c) => c.key)
@@ -72,7 +80,10 @@ export function setColumnWidth(state: ColumnState, key: string, width: string | 
 }
 
 /** Visible columns in display order: left-pinned, unpinned, right-pinned (each group keeps user order). */
-export function visibleColumns<T>(columns: readonly ColumnDef<T>[], state: ColumnState): ColumnDef<T>[] {
+export function visibleColumns<T>(
+  columns: readonly ColumnDef<T>[],
+  state: ColumnState,
+): ColumnDef<T>[] {
   const byKey = new Map(columns.map((c) => [c.key, c]))
   const hidden = new Set(state.hidden)
   const ordered = state.order

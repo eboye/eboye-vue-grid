@@ -23,7 +23,9 @@ const props = withDefaults(
 
 const grid = useInternalGrid()
 
-const value = computed(() => (props.column.kind === 'data' ? getCellValue(props.row, props.column.def) : undefined))
+const value = computed(() =>
+  props.column.kind === 'data' ? getCellValue(props.row, props.column.def) : undefined,
+)
 
 // ── Change highlight ──────────────────────────────────────────────────────────────────────
 // The animation is pure CSS; this only notices a changed value and flips `data-vg-flash`
@@ -67,18 +69,32 @@ function onAction(name: string, payload?: unknown) {
 
 function onContextMenu(event: MouseEvent) {
   if (props.column.kind !== 'data') return
-  grid.onCellContextMenu(props.row, props.rowKey, props.column, event, event.currentTarget as HTMLElement)
+  grid.onCellContextMenu(
+    props.row,
+    props.rowKey,
+    props.column,
+    event,
+    event.currentTarget as HTMLElement,
+  )
 }
 
 function onPointerDown(event: PointerEvent) {
   if (props.column.kind !== 'data' || event.pointerType !== 'touch') return
-  grid.onCellPointerDown?.(props.row, props.rowKey, props.column, event, event.currentTarget as HTMLElement)
+  grid.onCellPointerDown?.(
+    props.row,
+    props.rowKey,
+    props.column,
+    event,
+    event.currentTarget as HTMLElement,
+  )
 }
 
 function onClick(event: MouseEvent) {
   if (props.column.kind !== 'data') return
   // Clicks on interactive content (links, buttons, inputs) belong to that content.
-  const interactive = (event.target as Element).closest('a, button, input, select, textarea, label, summary, [role="menu"]')
+  const interactive = (event.target as Element).closest(
+    'a, button, input, select, textarea, label, summary, [role="menu"]',
+  )
   if (interactive && (event.currentTarget as Element).contains(interactive)) return
   if (props.column.def.clickable) grid.onCellClick(props.row, props.rowKey, props.column, event)
   else grid.onRowClick(props.row, props.rowKey, event)
@@ -124,7 +140,10 @@ function onClick(event: MouseEvent) {
       />
     </template>
     <template v-else>
-      <span v-if="column.isTree && (grid.treeMode.value || grid.hasDetail.value)" class="vg-tree-gutter">
+      <span
+        v-if="column.isTree && (grid.treeMode.value || grid.hasDetail.value)"
+        class="vg-tree-gutter"
+      >
         <button
           v-if="expandable"
           type="button"
@@ -135,7 +154,14 @@ function onClick(event: MouseEvent) {
           @click.stop="grid.toggleExpanded(row)"
         >
           <svg viewBox="0 0 16 16" aria-hidden="true" class="vg-expander-icon">
-            <path d="M6 3.5 10.5 8 6 12.5" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+            <path
+              d="M6 3.5 10.5 8 6 12.5"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.75"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
           </svg>
         </button>
       </span>

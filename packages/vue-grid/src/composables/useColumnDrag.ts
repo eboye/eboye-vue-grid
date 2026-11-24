@@ -25,7 +25,9 @@ export function useColumnDrag(opts: ColumnDragOptions) {
   let suppressClick = false
 
   function headerAt(x: number, y: number, grid: Element | null): HTMLElement | null {
-    const el = document.elementFromPoint(x, y)?.closest<HTMLElement>('[data-col-key][role="columnheader"]')
+    const el = document
+      .elementFromPoint(x, y)
+      ?.closest<HTMLElement>('[data-col-key][role="columnheader"]')
     return el && grid && el.closest('.vg') === grid ? el : null
   }
 
@@ -64,7 +66,8 @@ export function useColumnDrag(opts: ColumnDragOptions) {
         },
         end(e, moved) {
           el.removeAttribute('data-vg-held')
-          if (e && moved && dragging.value && target.value) opts.onDrop(dragging.value, target.value.key)
+          if (e && moved && dragging.value && target.value)
+            opts.onDrop(dragging.value, target.value.key)
           else if (e && !moved) opts.onHold?.(key, el, x, y)
           start = null
           dragging.value = null
@@ -93,7 +96,10 @@ export function useColumnDrag(opts: ColumnDragOptions) {
       return
     }
     const rect = over.getBoundingClientRect()
-    target.value = { key: overKey, side: event.clientX < rect.left + rect.width / 2 ? 'before' : 'after' }
+    target.value = {
+      key: overKey,
+      side: event.clientX < rect.left + rect.width / 2 ? 'before' : 'after',
+    }
   }
 
   function onPointerUp(event: PointerEvent) {

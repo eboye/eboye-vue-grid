@@ -3,7 +3,13 @@ import { config, mount } from '@vue/test-utils'
 import { h, nextTick, reactive } from 'vue'
 import VGridComponent from '../src/components/VGrid.vue'
 import { aggregateRows, aggregateValues } from '../src/core/aggregate'
-import { aggregationFeature, rowPinningFeature, selectionFeature, sortingFeature, virtualScrollingFeature } from '../src/features'
+import {
+  aggregationFeature,
+  rowPinningFeature,
+  selectionFeature,
+  sortingFeature,
+  virtualScrollingFeature,
+} from '../src/features'
 import { createVueGrid } from '../src/registry/plugin'
 import { allRenderers } from '../src/renderers'
 import type { ColumnDef, VGridExposed } from '../src/types'
@@ -40,7 +46,7 @@ function mountBare(props: Record<string, unknown>) {
   }
 }
 
-const bodyNames =(w: ReturnType<typeof mount>) =>
+const bodyNames = (w: ReturnType<typeof mount>) =>
   w.findAll('.vg > .vg-row > [data-col-key="name"]').map((c) => c.text())
 const pinnedNames = (w: ReturnType<typeof mount>, side: 'top' | 'bottom') =>
   w.findAll(`.vg-pinned-${side} > .vg-row > [data-col-key="name"]`).map((c) => c.text())
@@ -90,9 +96,13 @@ describe('totals row (aggregation feature)', () => {
     expect(total.attributes('aria-label')).toBe('Total')
 
     // filters narrow the totals
-    await w.setProps({ filters: { columns: { name: { type: 'text', op: 'contains', value: 'a' } }, search: '' } })
+    await w.setProps({
+      filters: { columns: { name: { type: 'text', op: 'contains', value: 'a' } }, search: '' },
+    })
     expect(bodyNames(w)).toEqual(['Bravo', 'Alpha', 'Charlie', 'Delta'])
-    await w.setProps({ filters: { columns: { name: { type: 'text', op: 'contains', value: 'ar' } }, search: '' } })
+    await w.setProps({
+      filters: { columns: { name: { type: 'text', op: 'contains', value: 'ar' } }, search: '' },
+    })
     expect(bodyNames(w)).toEqual(['Charlie'])
     expect(w.find('.vg-row-total [data-col-key="amount"]').text()).toBe('5.5')
   })
@@ -101,12 +111,18 @@ describe('totals row (aggregation feature)', () => {
     const w = mount(VGrid, {
       props: {
         rows,
-        columns: [{ key: 'name', aggregate: 'count' }, { key: 'amount', aggregate: 'avg' }, { key: 'when' }],
+        columns: [
+          { key: 'name', aggregate: 'count' },
+          { key: 'amount', aggregate: 'avg' },
+          { key: 'when' },
+        ],
         rowKey: 'id',
         totals: 'top',
         totalsLabel: 'Sum',
       },
-      slots: { 'total-amount': ({ value }: { value: number }) => h('i', `avg ${value.toFixed(2)}`) },
+      slots: {
+        'total-amount': ({ value }: { value: number }) => h('i', `avg ${value.toFixed(2)}`),
+      },
     })
     const total = w.find('.vg-pinned-top > .vg-row-total')
     expect(total.find('[data-col-key="name"]').text()).toBe('4')
@@ -126,7 +142,9 @@ describe('totals row (aggregation feature)', () => {
   })
 
   it('totals rows take no clicks or menus, and a selection column shows no checkbox', async () => {
-    const w = mount(VGrid, { props: { rows, columns, rowKey: 'id', totals: true, selectable: true, rowClickable: true } })
+    const w = mount(VGrid, {
+      props: { rows, columns, rowKey: 'id', totals: true, selectable: true, rowClickable: true },
+    })
     await w.find('.vg-row-total [data-col-key="amount"]').trigger('click')
     expect(w.emitted('row-click')).toBeUndefined()
     expect(w.find('.vg-row-total .vg-checkbox').exists()).toBe(false)
@@ -224,7 +242,11 @@ describe('pinned rows (row pinning feature)', () => {
   })
 
   it('virtual mode: aria-rowindex counts the pinned rows around the body', () => {
-    const many = Array.from({ length: 50 }, (_, i) => ({ id: i + 1, name: `Row ${i + 1}`, amount: i }))
+    const many = Array.from({ length: 50 }, (_, i) => ({
+      id: i + 1,
+      name: `Row ${i + 1}`,
+      amount: i,
+    }))
     const w = mount(VGrid, {
       props: {
         rows: many,
@@ -244,7 +266,13 @@ describe('pinned rows (row pinning feature)', () => {
 
   it('without the feature, pinned rows are ignored', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const w = mountBare({ rows, columns, rowKey: 'id', pinnedRows: { top: [1] }, features: [sortingFeature] })
+    const w = mountBare({
+      rows,
+      columns,
+      rowKey: 'id',
+      pinnedRows: { top: [1] },
+      features: [sortingFeature],
+    })
     expect(w.find('.vg-pinned-rows').exists()).toBe(false)
     expect(bodyNames(w)).toEqual(['Bravo', 'Alpha', 'Charlie', 'Delta'])
     expect(warn.mock.calls.some(([m]) => String(m).includes('rowPinning'))).toBe(true)
@@ -252,7 +280,13 @@ describe('pinned rows (row pinning feature)', () => {
   })
 
   it('each feature is enough on its own', () => {
-    const a = mountBare({ rows, columns, rowKey: 'id', totals: true, features: [aggregationFeature] })
+    const a = mountBare({
+      rows,
+      columns,
+      rowKey: 'id',
+      totals: true,
+      features: [aggregationFeature],
+    })
     expect(a.find('.vg-row-total').exists()).toBe(true)
     const b = mountBare({
       rows,

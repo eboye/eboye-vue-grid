@@ -1,6 +1,7 @@
 export type PageItem = number | 'ellipsis'
 
-const range = (from: number, to: number) => Array.from({ length: to - from + 1 }, (_, i) => from + i)
+const range = (from: number, to: number) =>
+  Array.from({ length: to - from + 1 }, (_, i) => from + i)
 
 /** Page buttons with a constant item count (`siblings * 2 + 5`) once pages overflow. */
 export function pageItems(page: number, pageCount: number, siblings = 1): PageItem[] {

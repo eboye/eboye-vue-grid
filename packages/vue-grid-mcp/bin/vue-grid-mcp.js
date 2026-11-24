@@ -18,12 +18,17 @@ if (!command) {
   const config = JSON.parse(readFileSync(arg === '-' ? 0 : arg, 'utf8'))
   const { validateGridConfig } = await loadDocs()
   const { ok, diagnostics } = validateGridConfig(config)
-  for (const d of diagnostics) console.log(`${d.severity.padEnd(7)} ${d.path || '(config)'}: ${d.message}${d.fix ? `\n        fix: ${d.fix}` : ''}`)
+  for (const d of diagnostics)
+    console.log(
+      `${d.severity.padEnd(7)} ${d.path || '(config)'}: ${d.message}${d.fix ? `\n        fix: ${d.fix}` : ''}`,
+    )
   console.log(ok ? `\nOK (${diagnostics.length} note(s))` : '\nNOT OK')
   process.exit(ok ? 0 : 1)
 } else if (command === 'guide') {
   process.stdout.write((await loadDocs()).files['AGENTS.md'])
 } else {
-  console.error(`unknown command "${command}" (commands: validate <file>, guide; none = MCP server)`)
+  console.error(
+    `unknown command "${command}" (commands: validate <file>, guide; none = MCP server)`,
+  )
   process.exit(2)
 }

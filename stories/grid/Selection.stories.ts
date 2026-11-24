@@ -112,7 +112,8 @@ export const BatchActions: Story = {
     setup() {
       const rows = ref<Bet[]>(makeBets(40, 4))
       const selected = ref<RowKey[]>([])
-      const remove = (keys: readonly RowKey[]) => (rows.value = rows.value.filter((r) => !keys.includes(r.id)))
+      const remove = (keys: readonly RowKey[]) =>
+        (rows.value = rows.value.filter((r) => !keys.includes(r.id)))
       return { args, rows, selected, remove }
     },
     template: `
@@ -142,7 +143,11 @@ export const SelectAllMatching: Story = {
     components: { VGrid },
     setup() {
       const db = makeBets(240, 8)
-      const dataSource = async (q: { page: number; pageSize: number | null; filters: { search: string } }) => {
+      const dataSource = async (q: {
+        page: number
+        pageSize: number | null
+        filters: { search: string }
+      }) => {
         await new Promise((r) => setTimeout(r, 150))
         const term = q.filters.search?.toLowerCase() ?? ''
         const rows = term ? db.filter((b) => b.player.name.toLowerCase().includes(term)) : db

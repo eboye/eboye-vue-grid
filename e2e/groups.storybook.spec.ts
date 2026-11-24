@@ -5,7 +5,8 @@ const base = process.env.STORYBOOK_URL ?? 'http://localhost:6006'
 const header = (page: Page, key: string) => page.locator(`.vg-header > [data-col-key="${key}"]`)
 const group = (page: Page, label: string) => page.locator('.vg-group-cell', { hasText: label })
 const box = async (l: ReturnType<Page['locator']>) => (await l.first().boundingBox())!
-const labels = (page: Page) => page.locator('.vg-group-cell').evaluateAll((els) => els.map((e) => e.textContent?.trim()))
+const labels = (page: Page) =>
+  page.locator('.vg-group-cell').evaluateAll((els) => els.map((e) => e.textContent?.trim()))
 
 /** A group cell covers exactly its columns' header cells. */
 async function expectSpans(page: Page, label: string, keys: string[]) {
@@ -22,7 +23,9 @@ test.beforeEach(async ({ page }) => {
   await page.locator('#storybook-root .vg-header-groups').waitFor()
 })
 
-test('group cells span their columns; a pin boundary splits a group; ungrouped columns get empty cells', async ({ page }) => {
+test('group cells span their columns; a pin boundary splits a group; ungrouped columns get empty cells', async ({
+  page,
+}) => {
   expect(await labels(page)).toEqual(['Bet', 'Customer', 'Money', '', 'Odds'])
   await expectSpans(page, 'Bet', ['id', 'player'])
   await expectSpans(page, 'Customer', ['city', 'verified'])
@@ -31,7 +34,9 @@ test('group cells span their columns; a pin boundary splits a group; ungrouped c
   await expect(group(page, 'Money')).toHaveAttribute('aria-colspan', '2')
 })
 
-test('sticky: the group row and the column headers stay stacked while scrolling; pinned groups stay', async ({ page }) => {
+test('sticky: the group row and the column headers stay stacked while scrolling; pinned groups stay', async ({
+  page,
+}) => {
   const scroller = page.locator('#storybook-root .vg')
   const groupY = (await box(group(page, 'Money'))).y
   await scroller.hover()
@@ -78,11 +83,14 @@ test('keyboard navigation skips the group row', async ({ page }) => {
   const scroller = page.locator('#storybook-root .vg')
   await scroller.focus()
   const focusedKey = () => page.evaluate(() => document.activeElement?.getAttribute('data-col-key'))
-  const isGroup = () => page.evaluate(() => document.activeElement?.classList.contains('vg-group-cell'))
+  const isGroup = () =>
+    page.evaluate(() => document.activeElement?.classList.contains('vg-group-cell'))
   expect(await isGroup()).toBe(false)
   expect(await focusedKey()).toBeTruthy() // a column header cell
   await page.keyboard.press('ArrowUp') // nothing above the column headers
   expect(await isGroup()).toBe(false)
   await page.keyboard.press('ArrowDown')
-  await expect.poll(() => page.evaluate(() => document.activeElement?.getAttribute('role'))).toBe('gridcell')
+  await expect
+    .poll(() => page.evaluate(() => document.activeElement?.getAttribute('role')))
+    .toBe('gridcell')
 })

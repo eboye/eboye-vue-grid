@@ -36,12 +36,20 @@ export function toDate(value: unknown): Date | null {
   return null
 }
 
-export function formatNumber(value: unknown, ctx: FormatContext, options: Intl.NumberFormatOptions = {}): string {
+export function formatNumber(
+  value: unknown,
+  ctx: FormatContext,
+  options: Intl.NumberFormatOptions = {},
+): string {
   const n = toNumber(value)
   return n === null ? '' : numberFormat(ctx.locale, options).format(n)
 }
 
-export function formatSigned(value: unknown, ctx: FormatContext, options: Intl.NumberFormatOptions = {}): string {
+export function formatSigned(
+  value: unknown,
+  ctx: FormatContext,
+  options: Intl.NumberFormatOptions = {},
+): string {
   return formatNumber(value, ctx, { signDisplay: 'exceptZero', ...options })
 }
 
@@ -51,10 +59,18 @@ export function formatCurrency(
   currency?: string,
   options: Intl.NumberFormatOptions = {},
 ): string {
-  return formatNumber(value, ctx, { style: 'currency', currency: currency ?? ctx.currency, ...options })
+  return formatNumber(value, ctx, {
+    style: 'currency',
+    currency: currency ?? ctx.currency,
+    ...options,
+  })
 }
 
-export function formatDate(value: unknown, ctx: FormatContext, options: Intl.DateTimeFormatOptions = {}): string {
+export function formatDate(
+  value: unknown,
+  ctx: FormatContext,
+  options: Intl.DateTimeFormatOptions = {},
+): string {
   const d = toDate(value)
   if (!d) return ''
   const opts: Intl.DateTimeFormatOptions = { ...options }
@@ -64,8 +80,16 @@ export function formatDate(value: unknown, ctx: FormatContext, options: Intl.Dat
   return dateFormat(ctx.locale, opts).format(d)
 }
 
-export const DATE_DEFAULT: Intl.DateTimeFormatOptions = { year: 'numeric', month: '2-digit', day: '2-digit' }
-export const TIME_DEFAULT: Intl.DateTimeFormatOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit' }
+export const DATE_DEFAULT: Intl.DateTimeFormatOptions = {
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+}
+export const TIME_DEFAULT: Intl.DateTimeFormatOptions = {
+  hour: '2-digit',
+  minute: '2-digit',
+  second: '2-digit',
+}
 
 /** Only http(s), mailto, tel and relative URLs are rendered as links (blocks `javascript:` etc.). */
 export function safeHref(href: unknown): string | undefined {
@@ -99,7 +123,11 @@ export function readableTextColor(color: string): '#000' | '#fff' {
   const rgb = /^rgba?\(\s*(\d+)[\s,]+(\d+)[\s,]+(\d+)/i.exec(color.trim())
   if (hex) {
     const full = hex.length === 3 ? [...hex].map((c) => c + c).join('') : hex
-    ;[r, g, b] = [0, 2, 4].map((i) => parseInt(full.slice(i, i + 2), 16)) as [number, number, number]
+    ;[r, g, b] = [0, 2, 4].map((i) => parseInt(full.slice(i, i + 2), 16)) as [
+      number,
+      number,
+      number,
+    ]
   } else if (rgb) {
     ;[r, g, b] = [rgb[1], rgb[2], rgb[3]].map(Number) as [number, number, number]
   } else {
@@ -119,7 +147,8 @@ export function resolveImageSrc(src: unknown, baseUrl?: string): string | undefi
   if (typeof src !== 'string' || !src.trim()) return undefined
   const s = src.trim()
   if (/^data:image\//i.test(s)) return s
-  if (/^[a-z][a-z0-9+.-]*:/i.test(s) || s.startsWith('//')) return /^https?:/i.test(s) ? s : undefined
+  if (/^[a-z][a-z0-9+.-]*:/i.test(s) || s.startsWith('//'))
+    return /^https?:/i.test(s) ? s : undefined
   if (!baseUrl) return s
   return `${baseUrl.replace(/\/+$/, '')}/${s.replace(/^\/+/, '')}`
 }
@@ -129,7 +158,8 @@ export type JsonTokenType = 'key' | 'string' | 'number' | 'boolean' | 'null' | '
 /** Splits pretty-printed JSON into typed tokens (rendered as text nodes, never as HTML). */
 export function tokenizeJson(text: string): { type: JsonTokenType; text: string }[] {
   const out: { type: JsonTokenType; text: string }[] = []
-  const re = /("(?:\\.|[^"\\])*")(\s*:)?|\b(true|false)\b|\bnull\b|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?/g
+  const re =
+    /("(?:\\.|[^"\\])*")(\s*:)?|\b(true|false)\b|\bnull\b|-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?/g
   let last = 0
   for (let m = re.exec(text); m; m = re.exec(text)) {
     if (m.index > last) out.push({ type: 'punct', text: text.slice(last, m.index) })

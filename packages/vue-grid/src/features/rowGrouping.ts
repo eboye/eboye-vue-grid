@@ -8,4 +8,8 @@ import type { RowGroupingFeature } from '../types'
  * `aggregate`. Columns with `groupable: true` get Group by / Ungroup items in the header menu.
  * Without it, `group-by` is ignored.
  */
-export const rowGroupingFeature: RowGroupingFeature = { feature: 'rowGrouping', useRowGrouping, GroupCells: VGridGroupCells }
+export const rowGroupingFeature: RowGroupingFeature = {
+  feature: 'rowGrouping',
+  useRowGrouping,
+  GroupCells: VGridGroupCells,
+}

@@ -18,7 +18,10 @@ describe('agent API reference (generated)', () => {
   it('is up to date with the sources', () => {
     // fails when a prop, column option, renderer or doc comment changed without `npm run gen:agent`
     expect(() =>
-      execFileSync(process.execPath, ['scripts/gen-agent.mjs', '--check'], { cwd: root, stdio: 'pipe' }),
+      execFileSync(process.execPath, ['scripts/gen-agent.mjs', '--check'], {
+        cwd: root,
+        stdio: 'pipe',
+      }),
     ).not.toThrow()
   })
 
@@ -28,21 +31,34 @@ describe('agent API reference (generated)', () => {
   })
 
   it('documents every prop, model, event, slot and column option', () => {
-    const undocumented = [...api.props, ...api.models, ...api.events, ...api.slots, ...api.column, ...api.methods]
+    const undocumented = [
+      ...api.props,
+      ...api.models,
+      ...api.events,
+      ...api.slots,
+      ...api.column,
+      ...api.methods,
+    ]
       .filter((m) => !m.description)
       .map((m) => m.name)
     expect(undocumented).toEqual([])
   })
 
   it('documents every renderer option and every field of the public types', () => {
-    const options = api.renderers.flatMap((r) => r.options.filter((o) => !o.description).map((o) => `${r.name}.${o.name}`))
-    const fields = Object.entries(api.types).flatMap(([type, ms]) => ms.filter((m) => !m.description).map((m) => `${type}.${m.name}`))
+    const options = api.renderers.flatMap((r) =>
+      r.options.filter((o) => !o.description).map((o) => `${r.name}.${o.name}`),
+    )
+    const fields = Object.entries(api.types).flatMap(([type, ms]) =>
+      ms.filter((m) => !m.description).map((m) => `${type}.${m.name}`),
+    )
     expect([...options, ...fields]).toEqual([])
   })
 
   it('ships the agent files in the package', () => {
     const pkg = JSON.parse(readFileSync(`${root}/package.json`, 'utf8'))
-    expect(pkg.files).toEqual(expect.arrayContaining(['AGENTS.md', 'llms.txt', 'llms-full.txt', 'agent']))
+    expect(pkg.files).toEqual(
+      expect.arrayContaining(['AGENTS.md', 'llms.txt', 'llms-full.txt', 'agent']),
+    )
     expect(pkg.exports['./agent']).toBeTruthy()
     const schema = JSON.parse(readFileSync(`${root}/agent/grid-config.schema.json`, 'utf8'))
     expect(schema.required).toEqual(['columns', 'rowKey'])
@@ -80,7 +96,10 @@ describe('validateGridConfig', () => {
   it('catches unknown column options and renderer options, with suggestions', () => {
     const r = validateGridConfig({
       ...base,
-      columns: [{ key: 'a', sortabel: true, rendererOptions: { elipsis: true } }, { key: 'b', renderer: 'currency', rendererOptions: { curency: 'EUR' } }],
+      columns: [
+        { key: 'a', sortabel: true, rendererOptions: { elipsis: true } },
+        { key: 'b', renderer: 'currency', rendererOptions: { curency: 'EUR' } },
+      ],
     })
     expect(find(r.diagnostics, 'columns[0].sortabel')[0]!.fix).toMatch(/`sortable`/)
     expect(find(r.diagnostics, 'columns[0].rendererOptions.elipsis')[0]!.fix).toMatch(/`ellipsis`/)
@@ -88,19 +107,55 @@ describe('validateGridConfig', () => {
   })
 
   it('warns when an option needs a feature that is not registered', () => {
-    const r = validateGridConfig({ ...base, features: [], selectable: true, columns: [{ key: 'a', pinned: 'left', sortable: true }] })
+    const r = validateGridConfig({
+      ...base,
+      features: [],
+      selectable: true,
+      columns: [{ key: 'a', pinned: 'left', sortable: true }],
+    })
     const fixes = r.diagnostics.filter((d) => d.severity === 'warning').map((d) => d.fix)
-    expect(fixes).toEqual(expect.arrayContaining([expect.stringMatching(/selectionFeature/), expect.stringMatching(/columnPinningFeature/), expect.stringMatching(/sortingFeature/)]))
+    expect(fixes).toEqual(
+      expect.arrayContaining([
+        expect.stringMatching(/selectionFeature/),
+        expect.stringMatching(/columnPinningFeature/),
+        expect.stringMatching(/sortingFeature/),
+      ]),
+    )
     // opt-outs don't need the feature
-    expect(validateGridConfig({ ...base, totals: false, columns: [{ key: 'a', pinnable: false, resizable: false }] }).diagnostics).toEqual([])
+    expect(
+      validateGridConfig({
+        ...base,
+        totals: false,
+        columns: [{ key: 'a', pinnable: false, resizable: false }],
+      }).diagnostics,
+    ).toEqual([])
     // allFeatures covers everything
-    expect(validateGridConfig({ ...base, features: ['allFeatures'], columns: [{ key: 'a', pinned: 'left', group: 'G' }] }).ok).toBe(true)
+    expect(
+      validateGridConfig({
+        ...base,
+        features: ['allFeatures'],
+        columns: [{ key: 'a', pinned: 'left', group: 'G' }],
+      }).ok,
+    ).toBe(true)
   })
 
   it('flags unknown and unregistered renderers', () => {
-    const r = validateGridConfig({ ...base, renderers: [], columns: [{ key: 'a', renderer: 'currency' }, { key: 'b', renderer: 'curency' }] })
-    expect(find(r.diagnostics, 'columns[0].renderer')[0]).toMatchObject({ severity: 'warning', fix: expect.stringMatching(/currencyRenderer/) })
-    expect(find(r.diagnostics, 'columns[1].renderer')[0]).toMatchObject({ severity: 'error', fix: expect.stringMatching(/`currency`/) })
+    const r = validateGridConfig({
+      ...base,
+      renderers: [],
+      columns: [
+        { key: 'a', renderer: 'currency' },
+        { key: 'b', renderer: 'curency' },
+      ],
+    })
+    expect(find(r.diagnostics, 'columns[0].renderer')[0]).toMatchObject({
+      severity: 'warning',
+      fix: expect.stringMatching(/currencyRenderer/),
+    })
+    expect(find(r.diagnostics, 'columns[1].renderer')[0]).toMatchObject({
+      severity: 'error',
+      fix: expect.stringMatching(/`currency`/),
+    })
   })
 
   it('checks value types and enums', () => {
@@ -116,7 +171,9 @@ describe('validateGridConfig', () => {
     expect(find(r.diagnostics, 'columns[0].aggregate')[0]!.severity).toBe('error')
     expect(find(r.diagnostics, 'props.selectable').some((d) => /string/.test(d.message))).toBe(true)
     expect(find(r.diagnostics, 'props.density')[0]!.severity).toBe('error')
-    expect(find(r.diagnostics, 'props.virtual').some((d) => /rowHeight/.test(d.fix ?? ''))).toBe(true)
+    expect(find(r.diagnostics, 'props.virtual').some((d) => /rowHeight/.test(d.fix ?? ''))).toBe(
+      true,
+    )
   })
 
   it('accepts template spellings (kebab-case, v-model:, :prop, @event) and flags unknown ones', () => {
@@ -127,7 +184,7 @@ describe('validateGridConfig', () => {
       ':sort-mode': 'client',
       '@row-click': true,
       '@rowclick': true,
-      'filterRows': true,
+      filterRows: true,
       features: [...base.features, 'rowPinningFeature'],
     })
     expect(r.diagnostics.map((d) => d.path)).toEqual(['@rowclick', 'props.filterRows'])
@@ -139,9 +196,19 @@ describe('validateGridConfig', () => {
     expect(find(controlled.diagnostics, 'props.sortMode')[0]!.fix).toMatch(/sort-mode="client"/)
     const noAggregates = validateGridConfig({ ...base, columns: [{ key: 'a' }] })
     expect(find(noAggregates.diagnostics, 'props.totals')[0]!.severity).toBe('warning')
-    const virtualPaged = validateGridConfig({ ...base, features: ['allFeatures'], virtual: { rowHeight: 40 }, pagination: true })
+    const virtualPaged = validateGridConfig({
+      ...base,
+      features: ['allFeatures'],
+      virtual: { rowHeight: 40 },
+      pagination: true,
+    })
     expect(find(virtualPaged.diagnostics, 'props.pagination')[0]!.message).toMatch(/ignored/)
-    const both = validateGridConfig({ ...base, features: ['allFeatures'], dataSource: () => null, rows: [] })
+    const both = validateGridConfig({
+      ...base,
+      features: ['allFeatures'],
+      dataSource: () => null,
+      rows: [],
+    })
     expect(find(both.diagnostics, 'props.rows')[0]!.severity).toBe('warning')
   })
 

@@ -10,7 +10,9 @@ const story = async (page: Page, id: string) => {
 const header = (page: Page, key: string) => page.locator(`.vg-header > [data-col-key="${key}"]`)
 const players = (page: Page) => page.locator('.vg-row > [data-col-key="player"]').allTextContents()
 
-test('no features: a plain table; clicking a sortable header does nothing; no funnels, filter row or pager', async ({ page }) => {
+test('no features: a plain table; clicking a sortable header does nothing; no funnels, filter row or pager', async ({
+  page,
+}) => {
   await story(page, 'grid-features--no-features')
   const before = await players(page)
   await header(page, 'player').hover()
@@ -57,10 +59,15 @@ test('selection, sub-grids and menus, feature by feature', async ({ page }) => {
   await expect(menu.getByRole('menuitem', { name: /Sort/ })).toHaveCount(0) // sorting not on
 })
 
-test('column reorder, pinning and visibility: ignored without their features, working with them', async ({ page }) => {
+test('column reorder, pinning and visibility: ignored without their features, working with them', async ({
+  page,
+}) => {
   await story(page, 'grid-features--columns')
   const scroller = page.locator('#storybook-root .vg')
-  const keys = () => page.locator('.vg-header > [data-col-key]').evaluateAll((els) => els.map((e) => e.getAttribute('data-col-key')))
+  const keys = () =>
+    page
+      .locator('.vg-header > [data-col-key]')
+      .evaluateAll((els) => els.map((e) => e.getAttribute('data-col-key')))
   const box = async (key: string) => (await header(page, key).boundingBox())!
   const scrollBy = async (dx: number) => {
     await scroller.evaluate((el) => (el.scrollLeft = 0))
@@ -119,7 +126,9 @@ test('column reorder, pinning and visibility: ignored without their features, wo
   await expect(header(page, 'city')).toHaveCount(0)
 })
 
-test('virtual scrolling: all rows render without the feature, a scrolling window with it', async ({ page }) => {
+test('virtual scrolling: all rows render without the feature, a scrolling window with it', async ({
+  page,
+}) => {
   await story(page, 'grid-features--virtual-scrolling')
   const rows = page.locator('#storybook-root .vg-row')
   await expect(rows).toHaveCount(2000)
@@ -139,19 +148,26 @@ test('virtual scrolling: all rows render without the feature, a scrolling window
     const first = Number(await rows.first().getAttribute('aria-rowindex'))
     return first - top / 40
   }
-  await expect.poll(async () => {
-    const d = await offBy()
-    return d > -10 && d < 2
-  }).toBe(true)
+  await expect
+    .poll(async () => {
+      const d = await offBy()
+      return d > -10 && d < 2
+    })
+    .toBe(true)
   expect(await rows.count()).toBeLessThan(40)
 })
 
-test('keyboard navigation: a table with tabbable controls without it, an arrow-key grid with it', async ({ page }) => {
+test('keyboard navigation: a table with tabbable controls without it, an arrow-key grid with it', async ({
+  page,
+}) => {
   await story(page, 'grid-features--opt-in')
   await page.getByLabel('sortingFeature').check()
   const scroller = page.locator('#storybook-root .vg')
   await expect(scroller).toHaveAttribute('role', 'table')
-  await expect(page.locator('.vg-row').first().locator('[data-col-key="player"]')).toHaveAttribute('role', 'cell')
+  await expect(page.locator('.vg-row').first().locator('[data-col-key="player"]')).toHaveAttribute(
+    'role',
+    'cell',
+  )
 
   // Tab walks through the grid's own controls; arrow keys do nothing
   await scroller.focus()
@@ -159,7 +175,10 @@ test('keyboard navigation: a table with tabbable controls without it, an arrow-k
   const firstSort = page.locator('.vg-header .vg-sort').first()
   await expect(firstSort).toBeFocused()
   await page.keyboard.press('Enter')
-  await expect(page.locator('.vg-header > [data-col-key]').first()).toHaveAttribute('aria-sort', 'ascending')
+  await expect(page.locator('.vg-header > [data-col-key]').first()).toHaveAttribute(
+    'aria-sort',
+    'ascending',
+  )
   await page.keyboard.press('ArrowDown')
   await expect(firstSort).toBeFocused()
 
@@ -176,7 +195,10 @@ test('keyboard navigation: a table with tabbable controls without it, an arrow-k
   await expect(page.locator('.vg-row').first().locator('[role="gridcell"]').nth(1)).toBeFocused()
   await page.keyboard.press('ArrowUp')
   await page.keyboard.press('Enter') // sorts the focused header
-  await expect(page.locator('.vg-header > [data-col-key]').nth(1)).toHaveAttribute('aria-sort', 'ascending')
+  await expect(page.locator('.vg-header > [data-col-key]').nth(1)).toHaveAttribute(
+    'aria-sort',
+    'ascending',
+  )
 })
 
 test('opting in, feature by feature', async ({ page }) => {

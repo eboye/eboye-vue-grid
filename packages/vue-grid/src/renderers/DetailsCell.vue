@@ -14,12 +14,20 @@ const trigger = shallowRef<HTMLButtonElement>()
 const panel = shallowRef<HTMLElement>()
 
 const label = computed(() =>
-  props.options.label ? props.options.label(props.value, props.row) : props.value == null ? '' : String(props.value),
+  props.options.label
+    ? props.options.label(props.value, props.row)
+    : props.value == null
+      ? ''
+      : String(props.value),
 )
 const tone = computed(() => resolveTone(props.options.tone, props.value, props.row) ?? 'neutral')
 const items = computed(() => props.options.items?.(props.value, props.row) ?? [])
-const title = computed(() => resolveOption(props.options.title, props.value, props.row) ?? props.column.header ?? '')
-const triggerLabel = computed(() => `${props.options.triggerLabel ?? 'Details'}${title.value ? `: ${title.value}` : ''}`)
+const title = computed(
+  () => resolveOption(props.options.title, props.value, props.row) ?? props.column.header ?? '',
+)
+const triggerLabel = computed(
+  () => `${props.options.triggerLabel ?? 'Details'}${title.value ? `: ${title.value}` : ''}`,
+)
 
 let stopTracking = () => {}
 onBeforeUnmount(() => stopTracking())
@@ -35,7 +43,9 @@ function onToggle(event: Event) {
 
 <template>
   <span v-if="label || items.length" class="vg-details">
-    <span v-if="label" :class="['vg-status-badge', 'vg-status-soft', `vg-tone-${tone}`]">{{ label }}</span>
+    <span v-if="label" :class="['vg-status-badge', 'vg-status-soft', `vg-tone-${tone}`]">{{
+      label
+    }}</span>
     <template v-if="items.length">
       <button
         ref="trigger"
@@ -65,7 +75,13 @@ function onToggle(event: Event) {
       >
         <header class="vg-details-header">
           <strong>{{ title }}</strong>
-          <button type="button" class="vg-icon-button" aria-label="Close" :popovertarget="panelId" popovertargetaction="hide">
+          <button
+            type="button"
+            class="vg-icon-button"
+            aria-label="Close"
+            :popovertarget="panelId"
+            popovertargetaction="hide"
+          >
             <CrossIcon />
           </button>
         </header>
@@ -75,9 +91,15 @@ function onToggle(event: Event) {
               {{ item.label }}
               <span v-if="item.detail" class="vg-details-detail">{{ item.detail }}</span>
             </span>
-            <span v-if="item.value" :class="['vg-status-badge', 'vg-status-soft', `vg-tone-${safeTone(item.tone) ?? 'neutral'}`]">{{
-              item.value
-            }}</span>
+            <span
+              v-if="item.value"
+              :class="[
+                'vg-status-badge',
+                'vg-status-soft',
+                `vg-tone-${safeTone(item.tone) ?? 'neutral'}`,
+              ]"
+              >{{ item.value }}</span
+            >
           </li>
         </ul>
       </div>

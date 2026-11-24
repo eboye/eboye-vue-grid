@@ -8,14 +8,18 @@ import ValueBadge from './parts/ValueBadge.vue'
 const props = defineProps<CellRendererProps<unknown, unknown, TextOptions>>()
 const emit = defineEmits<CellRendererEmits>()
 
-const isEmpty = computed(() => props.value === null || props.value === undefined || props.value === '')
+const isEmpty = computed(
+  () => props.value === null || props.value === undefined || props.value === '',
+)
 const text = computed(() => {
   const v = props.value
   if (isEmpty.value) return props.options.placeholder ?? ''
   return typeof v === 'object' ? JSON.stringify(v) : String(v)
 })
 
-const secondary = computed(() => (isEmpty.value ? null : props.options.secondary?.(props.value, props.row)))
+const secondary = computed(() =>
+  isEmpty.value ? null : props.options.secondary?.(props.value, props.row),
+)
 const fullText = computed(() => (secondary.value ? `${text.value} ${secondary.value}` : text.value))
 
 const tooltip = computed(() => {
@@ -37,7 +41,10 @@ const textClass = computed(() => [
     [`vg-tone-${tone.value}`]: tone.value,
   },
 ])
-const textStyle = computed(() => ({ maxWidth: props.options.maxWidth, '--vg-text-lines': props.options.lines }))
+const textStyle = computed(() => ({
+  maxWidth: props.options.maxWidth,
+  '--vg-text-lines': props.options.lines,
+}))
 
 const badge = computed(() => props.options.badge?.(props.value, props.row) || null)
 const icon = computed(() => {
@@ -45,7 +52,9 @@ const icon = computed(() => {
   return spec ? { ...spec, icon: toRaw(spec.icon) } : null
 })
 const copyText = computed(() =>
-  props.options.copyable && !isEmpty.value ? (props.options.copyValue?.(props.value, props.row) ?? fullText.value) : '',
+  props.options.copyable && !isEmpty.value
+    ? (props.options.copyValue?.(props.value, props.row) ?? fullText.value)
+    : '',
 )
 // Plain text keeps a single span; adornments (icon, badge, secondary text, copy) wrap it.
 const adorned = computed(() => !!(badge.value || icon.value || secondary.value || copyText.value))

@@ -32,4 +32,8 @@ export const PencilIcon = strokeIcon('VgPencilIcon', ['M4 20h4L19 9l-4-4L4 16v4z
 const star = 'M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z'
 export const StarIcon = strokeIcon('VgStarIcon', [star])
 export const StarFilledIcon = strokeIcon('VgStarFilledIcon', [star], true)
-export const InfoIcon = strokeIcon('VgInfoIcon', ['M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z', 'M12 11v5', 'M12 8h.01'])
+export const InfoIcon = strokeIcon('VgInfoIcon', [
+  'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z',
+  'M12 11v5',
+  'M12 8h.01',
+])

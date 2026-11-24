@@ -5,13 +5,15 @@ import { transform } from 'lightningcss'
 import type { Plugin } from 'vite'
 import { defineConfig } from 'vitest/config'
 
-const css = (name: string) => readFileSync(fileURLToPath(new URL(`./src/styles/${name}`, import.meta.url)), 'utf8')
+const css = (name: string) =>
+  readFileSync(fileURLToPath(new URL(`./src/styles/${name}`, import.meta.url)), 'utf8')
 /**
  * Minified with Lightning CSS — no `targets`, so nothing is transpiled or prefixed: modern syntax
  * (`light-dark()`, anchor positioning, `@layer`, container queries) ships as written. ~25% smaller
  * gzipped than the commented sources.
  */
-const minify = (code: string, filename: string) => transform({ filename, code: Buffer.from(code), minify: true }).code.toString()
+const minify = (code: string, filename: string) =>
+  transform({ filename, code: Buffer.from(code), minify: true }).code.toString()
 
 /**
  * Ships the styles as standalone, un-hashed files (each inlined, no @import at runtime):

@@ -1,7 +1,14 @@
 <script setup lang="ts">
 // The grid with base.css only (no theme): structure must hold on its own. See e2e/unstyled.spec.ts.
 import { ref } from 'vue'
-import { VGrid, allFeatures, numberRenderer, type ColumnDef, type RowKey, type SortState } from '@nocopypaste/vue-grid'
+import {
+  VGrid,
+  allFeatures,
+  numberRenderer,
+  type ColumnDef,
+  type RowKey,
+  type SortState,
+} from '@nocopypaste/vue-grid'
 
 interface Row {
   id: number
@@ -25,7 +32,20 @@ const rows: Row[] = Array.from({ length: 60 }, (_, i) => ({
   c: 'Charlie',
   d: 'Delta',
   children:
-    i < 3 ? [{ id: 1000 + i, name: `Child of ${i + 1}`, city: 'Subotica', stake: 5, a: 'x', b: 'y', c: 'z', d: 'w' }] : undefined,
+    i < 3
+      ? [
+          {
+            id: 1000 + i,
+            name: `Child of ${i + 1}`,
+            city: 'Subotica',
+            stake: 5,
+            a: 'x',
+            b: 'y',
+            c: 'z',
+            d: 'w',
+          },
+        ]
+      : undefined,
 }))
 
 const columns: ColumnDef<Row>[] = [

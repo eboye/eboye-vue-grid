@@ -44,7 +44,8 @@ describe('VGrid rendering', () => {
     expect(headerTexts(w)).toEqual(['Name', 'Score', 'City'])
     expect(bodyTexts(w, 'city')).toEqual(['Beograd', 'Niš', 'Novi Sad'])
     expect(w.find('[data-col-key="score"] .vg-number').exists()).toBe(true)
-    expect(w.find('.vg').attributes('style')).toContain('--vg-columns: auto auto auto')  })
+    expect(w.find('.vg').attributes('style')).toContain('--vg-columns: auto auto auto')
+  })
 
   it('cell and header slots override rendering', () => {
     const w = mount(VGrid, {
@@ -73,7 +74,9 @@ describe('VGrid rendering', () => {
   })
 
   it('controlled sort mode does not reorder rows', async () => {
-    const w = mount(VGrid, { props: { rows, columns, rowKey: 'id', sort: { key: 'name', dir: 'asc' } } })
+    const w = mount(VGrid, {
+      props: { rows, columns, rowKey: 'id', sort: { key: 'name', dir: 'asc' } },
+    })
     expect(bodyTexts(w, 'name')).toEqual(['Bravo', 'alpha', 'Charlie'])
   })
 
@@ -104,7 +107,9 @@ describe('VGrid rendering', () => {
   it('never mutates the rows or columns props', async () => {
     const frozenRows = Object.freeze(rows.map((r) => Object.freeze({ ...r })))
     const frozenCols = Object.freeze(columns.map((c) => Object.freeze({ ...c })))
-    const w = mount(VGrid, { props: { rows: frozenRows, columns: frozenCols, rowKey: 'id', sortMode: 'client' } })
+    const w = mount(VGrid, {
+      props: { rows: frozenRows, columns: frozenCols, rowKey: 'id', sortMode: 'client' },
+    })
     await w.find('[data-col-key="name"] .vg-sort').trigger('click')
     expect(frozenRows.map((r) => r.id)).toEqual([1, 2, 3])
   })
@@ -114,20 +119,36 @@ describe('VGrid renderers registry', () => {
   const Stars = defineComponent({
     props: ['value', 'options', 'row', 'rowKey', 'rowIndex', 'depth', 'column'],
     emits: ['action'],
-    setup: (p, { emit }) => () =>
-      h('button', { class: 'stars', onClick: () => emit('action', 'rate', 3) }, `${p.value}/${p.options.max}`),
+    setup:
+      (p, { emit }) =>
+      () =>
+        h(
+          'button',
+          { class: 'stars', onClick: () => emit('action', 'rate', 3) },
+          `${p.value}/${p.options.max}`,
+        ),
   })
-  const stars = defineCellRenderer<{ max: number }>({ name: 'stars', component: Stars, defaults: { max: 5 } })
+  const stars = defineCellRenderer<{ max: number }>({
+    name: 'stars',
+    component: Stars,
+    defaults: { max: 5 },
+  })
 
   it('resolves plugin and local renderers, merges defaults, re-emits actions', async () => {
-    const cols: ColumnDef<Row>[] = [{ key: 'score', renderer: 'stars', rendererOptions: { max: 10 } }]
+    const cols: ColumnDef<Row>[] = [
+      { key: 'score', renderer: 'stars', rendererOptions: { max: 10 } },
+    ]
     const w = mount(VGrid, {
       props: { rows, columns: cols, rowKey: 'id' },
       global: { plugins: [createVueGrid({ renderers: [stars] })] },
     })
     expect(w.find('[data-row-key="1"] .stars').text()).toBe('20/10')
     await w.find('[data-row-key="1"] .stars').trigger('click')
-    expect(w.emitted('cell-action')?.[0]?.[0]).toMatchObject({ name: 'rate', payload: 3, rowKey: 1 })
+    expect(w.emitted('cell-action')?.[0]?.[0]).toMatchObject({
+      name: 'rate',
+      payload: 3,
+      rowKey: 1,
+    })
     expect(w.emitted('row-click')).toBeUndefined()
 
     const local = mount(VGrid, { props: { rows, columns: cols, rowKey: 'id', renderers: [stars] } })
@@ -136,7 +157,9 @@ describe('VGrid renderers registry', () => {
 
   it('falls back to text for unknown renderers with a dev warning', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-    const w = mount(VGrid, { props: { rows, columns: [{ key: 'name', renderer: 'nope' }], rowKey: 'id' } })
+    const w = mount(VGrid, {
+      props: { rows, columns: [{ key: 'name', renderer: 'nope' }], rowKey: 'id' },
+    })
     expect(bodyTexts(w, 'name')[0]).toBe('Bravo')
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('Unknown renderer "nope"'))
     warn.mockRestore()
@@ -153,9 +176,18 @@ describe('VGrid renderers registry', () => {
           rowKey: 'id',
           columns: [
             { key: 'name' }, // text: always available
-            { key: 'score', renderer: numberRenderer, rendererOptions: { format: { minimumFractionDigits: 1 } } },
+            {
+              key: 'score',
+              renderer: numberRenderer,
+              rendererOptions: { format: { minimumFractionDigits: 1 } },
+            },
             // unregistered name → plain text, the column's options are not handed to text
-            { key: 'city', field: 'owner.city', renderer: 'icon', rendererOptions: { icon: 'not-a-text-option' } },
+            {
+              key: 'city',
+              field: 'owner.city',
+              renderer: 'icon',
+              rendererOptions: { icon: 'not-a-text-option' },
+            },
           ],
         },
       })
@@ -166,7 +198,12 @@ describe('VGrid renderers registry', () => {
       expect(warn).toHaveBeenCalledWith(expect.stringContaining('register it by name'))
       // a locally registered name works too
       const local = mount(VGrid, {
-        props: { rows, rowKey: 'id', renderers: [numberRenderer], columns: [{ key: 'score', renderer: 'number' }] },
+        props: {
+          rows,
+          rowKey: 'id',
+          renderers: [numberRenderer],
+          columns: [{ key: 'score', renderer: 'number' }],
+        },
       })
       expect(local.find('[data-col-key="score"] .vg-number').exists()).toBe(true)
     } finally {
@@ -184,7 +221,12 @@ describe('VGrid renderers registry', () => {
       columns: [
         { key: 'name', renderer: Badge },
         { key: 'score', renderer: 'icon', rendererOptions: { icon: Icon } },
-        { key: 'city', renderer: 'action-button', value: () => 'Go', rendererOptions: { icon: Icon } },
+        {
+          key: 'city',
+          renderer: 'action-button',
+          value: () => 'Go',
+          rendererOptions: { icon: Icon },
+        },
       ] as ColumnDef<Row>[],
     })
     const w = mount(VGrid, { props: { rows, columns: state.columns, rowKey: 'id' } })
@@ -206,7 +248,11 @@ describe('VGrid column state', () => {
     })
     await nextTick()
     expect(headerTexts(w)).toEqual(['City', 'Name'])
-    expect(JSON.parse(localStorage.getItem('cols')!)).toEqual({ order: ['city', 'name', 'score'], hidden: ['score'], pinned: {} })
+    expect(JSON.parse(localStorage.getItem('cols')!)).toEqual({
+      order: ['city', 'name', 'score'],
+      hidden: ['score'],
+      pinned: {},
+    })
 
     const again = mount(VGrid, { props: { rows, columns, rowKey: 'id', storage: 'cols' } })
     expect(headerTexts(again)).toEqual(['City', 'Name'])
@@ -252,7 +298,13 @@ const tree: Row[] = [
     score: 1,
     owner: { city: 'A' },
     children: [
-      { id: 11, name: 'Child 1', score: 2, owner: { city: 'B' }, children: [{ id: 111, name: 'Grandchild', score: 3, owner: { city: 'C' } }] },
+      {
+        id: 11,
+        name: 'Child 1',
+        score: 2,
+        owner: { city: 'B' },
+        children: [{ id: 111, name: 'Grandchild', score: 3, owner: { city: 'C' } }],
+      },
       { id: 12, name: 'Child 2', score: 4, owner: { city: 'D' } },
     ],
   },
@@ -261,16 +313,23 @@ const tree: Row[] = [
 
 describe('VGrid sub-grids', () => {
   it('expands sync children into a subgrid, nested to any depth', async () => {
-    const w = mount(VGrid, { props: { rows: tree, columns, rowKey: 'id', subRows: (r: Row) => r.children } })
+    const w = mount(VGrid, {
+      props: { rows: tree, columns, rowKey: 'id', subRows: (r: Row) => r.children },
+    })
     expect(w.find('.vg').attributes('role')).toBe('treegrid')
     expect(w.find('[data-row-key="2"] .vg-expander').exists()).toBe(false)
     await w.find('[data-row-key="1"] .vg-expander').trigger('click')
     expect(w.emitted('update:expanded')?.at(-1)).toEqual([[1]])
     const sub = w.find('.vg-subgrid[data-subgrid-for="1"]')
     expect(sub.exists()).toBe(true)
-    expect(sub.findAll(':scope > .vg-row').map((r) => r.attributes('data-row-key'))).toEqual(['11', '12'])
+    expect(sub.findAll(':scope > .vg-row').map((r) => r.attributes('data-row-key'))).toEqual([
+      '11',
+      '12',
+    ])
     await w.find('[data-row-key="11"] .vg-expander').trigger('click')
-    expect(w.find('.vg-subgrid[data-subgrid-for="11"] [data-row-key="111"]').attributes('aria-level')).toBe('3')
+    expect(
+      w.find('.vg-subgrid[data-subgrid-for="11"] [data-row-key="111"]').attributes('aria-level'),
+    ).toBe('3')
   })
 
   it('loads async children with loading, error and retry', async () => {
@@ -280,7 +339,13 @@ describe('VGrid sub-grids', () => {
       return r.children ?? []
     })
     const w = mount(VGrid, {
-      props: { rows: tree, columns, rowKey: 'id', loadSubRows, hasSubRows: (r: Row) => !!r.children },
+      props: {
+        rows: tree,
+        columns,
+        rowKey: 'id',
+        loadSubRows,
+        hasSubRows: (r: Row) => !!r.children,
+      },
     })
     expect(w.find('[data-row-key="2"] .vg-expander').exists()).toBe(false)
     await w.find('[data-row-key="1"] .vg-expander').trigger('click')
@@ -299,7 +364,9 @@ describe('VGrid sub-grids', () => {
   it('renders detail rows from the #detail slot', async () => {
     const w = mount(VGrid, {
       props: { rows, columns, rowKey: 'id', rowExpandable: (r: Row) => r.id !== 2 },
-      slots: { detail: ({ row }: { row: Row }) => h('p', { class: 'detail' }, `Details of ${row.name}`) },
+      slots: {
+        detail: ({ row }: { row: Row }) => h('p', { class: 'detail' }, `Details of ${row.name}`),
+      },
     })
     expect(w.find('[data-row-key="2"] .vg-expander').exists()).toBe(false)
     await w.find('[data-row-key="3"] .vg-expander').trigger('click')
@@ -307,7 +374,9 @@ describe('VGrid sub-grids', () => {
   })
 
   it('expandAll / collapseAll', async () => {
-    const w = mount(VGrid, { props: { rows: tree, columns, rowKey: 'id', subRows: (r: Row) => r.children } })
+    const w = mount(VGrid, {
+      props: { rows: tree, columns, rowKey: 'id', subRows: (r: Row) => r.children },
+    })
     const api = w.vm as unknown as { expandAll(): void; collapseAll(): void }
     api.expandAll()
     await nextTick()
@@ -321,12 +390,21 @@ describe('VGrid sub-grids', () => {
 describe('VGrid selection', () => {
   it('cascades selection to children with a tri-state header', async () => {
     const w = mount(VGrid, {
-      props: { rows: tree, columns, rowKey: 'id', subRows: (r: Row) => r.children, selectable: true, expanded: [1, 11] },
+      props: {
+        rows: tree,
+        columns,
+        rowKey: 'id',
+        subRows: (r: Row) => r.children,
+        selectable: true,
+        expanded: [1, 11],
+      },
     })
     const header = () => w.find('.vg-header-select input').element as HTMLInputElement
     const rowBox = (key: number) => w.find(`[data-row-key="${key}"] .vg-checkbox input`)
     await rowBox(1).trigger('change')
-    expect(new Set(w.emitted('update:selected')?.at(-1)?.[0] as number[])).toEqual(new Set([1, 11, 111, 12]))
+    expect(new Set(w.emitted('update:selected')?.at(-1)?.[0] as number[])).toEqual(
+      new Set([1, 11, 111, 12]),
+    )
     expect(header().indeterminate).toBe(true)
     await rowBox(111).trigger('change')
     expect((rowBox(1).element as HTMLInputElement).indeterminate).toBe(true)
@@ -350,8 +428,15 @@ describe('VGrid selection', () => {
 
 describe('VGrid virtual mode', () => {
   it('renders a bounded window of rows', () => {
-    const many = Array.from({ length: 10_000 }, (_, i) => ({ id: i, name: `Row ${i}`, score: i, owner: { city: 'X' } }))
-    const w = mount(VGrid, { props: { rows: many, columns, rowKey: 'id', virtual: { rowHeight: 40, overscan: 5 } } })
+    const many = Array.from({ length: 10_000 }, (_, i) => ({
+      id: i,
+      name: `Row ${i}`,
+      score: i,
+      owner: { city: 'X' },
+    }))
+    const w = mount(VGrid, {
+      props: { rows: many, columns, rowKey: 'id', virtual: { rowHeight: 40, overscan: 5 } },
+    })
     const rendered = w.findAll('.vg-row')
     expect(rendered.length).toBeLessThan(60)
     expect(rendered[0]!.attributes('aria-rowindex')).toBe('2')
@@ -389,8 +474,16 @@ describe('VGrid virtual mode', () => {
   it('renders detail rows in virtual mode', () => {
     const rows = Array.from({ length: 1000 }, (_, i) => ({ id: i, name: `Row ${i}` }))
     const w = mount(VGrid, {
-      props: { rows, columns: [{ key: 'name' }], rowKey: 'id', virtual: { rowHeight: 40 }, expanded: [1] },
-      slots: { detail: '<template #detail="{ row }"><p class="d">Detail {{ row.id }}</p></template>' },
+      props: {
+        rows,
+        columns: [{ key: 'name' }],
+        rowKey: 'id',
+        virtual: { rowHeight: 40 },
+        expanded: [1],
+      },
+      slots: {
+        detail: '<template #detail="{ row }"><p class="d">Detail {{ row.id }}</p></template>',
+      },
     })
     expect(w.find('[data-detail-for="1"] .d').text()).toBe('Detail 1')
     expect(w.find('.vg').attributes('aria-rowcount')).toBe(String(1000 + 1 + 1))
@@ -406,17 +499,32 @@ describe('VGrid context menus', () => {
       { separator: true as const },
       { name: 'delete', label: 'Delete', tone: 'danger' as const },
     ])
-    const w = mount(VGrid, { props: { rows, columns, rowKey: 'id', contextMenu }, attachTo: document.body })
+    const w = mount(VGrid, {
+      props: { rows, columns, rowKey: 'id', contextMenu },
+      attachTo: document.body,
+    })
     const cell = w.find('[data-row-key="3"] > [data-col-key="city"]')
-    const event = new MouseEvent('contextmenu', { bubbles: true, cancelable: true, button: 2, clientX: 40, clientY: 50 })
+    const event = new MouseEvent('contextmenu', {
+      bubbles: true,
+      cancelable: true,
+      button: 2,
+      clientX: 40,
+      clientY: 50,
+    })
     cell.element.dispatchEvent(event)
     await flushPromises()
     expect(event.defaultPrevented).toBe(true)
-    expect(contextMenu).toHaveBeenCalledWith(expect.objectContaining({ rowKey: 3, value: 'Novi Sad' }))
+    expect(contextMenu).toHaveBeenCalledWith(
+      expect.objectContaining({ rowKey: 3, value: 'Novi Sad' }),
+    )
     expect(menuItems(w).map((b) => b.text())).toEqual(['Open Charlie', 'Delete'])
     expect(w.find('[role="menu"] [role="separator"]').exists()).toBe(true)
     await menuItems(w)[1]!.trigger('click')
-    expect(w.emitted('context-action')?.[0]?.[0]).toMatchObject({ name: 'delete', rowKey: 3, column: { key: 'city' } })
+    expect(w.emitted('context-action')?.[0]?.[0]).toMatchObject({
+      name: 'delete',
+      rowKey: 3,
+      column: { key: 'city' },
+    })
     w.unmount()
   })
 
@@ -432,7 +540,13 @@ describe('VGrid context menus', () => {
     const w = mount(VGrid, { props: { rows, columns, rowKey: 'id' }, attachTo: document.body })
     const openHeader = async (key: string) => {
       w.find(`[role="columnheader"][data-col-key="${key}"]`).element.dispatchEvent(
-        new MouseEvent('contextmenu', { bubbles: true, cancelable: true, button: 2, clientX: 10, clientY: 10 }),
+        new MouseEvent('contextmenu', {
+          bubbles: true,
+          cancelable: true,
+          button: 2,
+          clientX: 10,
+          clientY: 10,
+        }),
       )
       await flushPromises()
     }
@@ -444,11 +558,18 @@ describe('VGrid context menus', () => {
 
     await openHeader('score')
     expect(menuItems(w).map((b) => b.text())).toEqual([
-      'Sort ascending', 'Sort descending', 'Clear sort',
-      'Pin left', 'Pin right', 'Unpin',
-      'Move left', 'Move right',
-      'Fit width', 'Reset width',
-      'Hide column', 'Reset columns',
+      'Sort ascending',
+      'Sort descending',
+      'Clear sort',
+      'Pin left',
+      'Pin right',
+      'Unpin',
+      'Move left',
+      'Move right',
+      'Fit width',
+      'Reset width',
+      'Hide column',
+      'Reset columns',
     ])
     await click('Sort descending')
     expect(w.emitted('update:sort')?.at(-1)).toEqual([{ key: 'score', dir: 'desc' }])
@@ -459,8 +580,16 @@ describe('VGrid context menus', () => {
     expect(w.emitted('update:columnState')?.at(-1)?.[0]).toMatchObject({ pinned: { city: 'left' } })
 
     await openHeader('city')
-    expect(menuItems(w).find((b) => b.text() === 'Pin left')!.attributes('disabled')).toBeDefined()
-    expect(menuItems(w).find((b) => b.text() === 'Move right')!.attributes('disabled')).toBeDefined()
+    expect(
+      menuItems(w)
+        .find((b) => b.text() === 'Pin left')!
+        .attributes('disabled'),
+    ).toBeDefined()
+    expect(
+      menuItems(w)
+        .find((b) => b.text() === 'Move right')!
+        .attributes('disabled'),
+    ).toBeDefined()
     await click('Unpin')
 
     await openHeader('name')
@@ -483,16 +612,29 @@ describe('VGrid context menus', () => {
         rows,
         columns,
         rowKey: 'id',
-        headerMenu: ({ items }: { items: unknown[] }) => [{ name: 'copy', label: 'Copy column' }, { separator: true }, ...items],
+        headerMenu: ({ items }: { items: unknown[] }) => [
+          { name: 'copy', label: 'Copy column' },
+          { separator: true },
+          ...items,
+        ],
       },
       attachTo: document.body,
     })
     w.find('[role="columnheader"][data-col-key="name"]').element.dispatchEvent(
-      new MouseEvent('contextmenu', { bubbles: true, cancelable: true, button: 2, clientX: 5, clientY: 5 }),
+      new MouseEvent('contextmenu', {
+        bubbles: true,
+        cancelable: true,
+        button: 2,
+        clientX: 5,
+        clientY: 5,
+      }),
     )
     await flushPromises()
     await menuItems(w)[0]!.trigger('click')
-    expect(w.emitted('header-action')?.[0]?.[0]).toMatchObject({ name: 'copy', column: { key: 'name' } })
+    expect(w.emitted('header-action')?.[0]?.[0]).toMatchObject({
+      name: 'copy',
+      column: { key: 'name' },
+    })
     w.unmount()
 
     const off = mount(VGrid, { props: { rows, columns, rowKey: 'id', headerMenu: false } })
@@ -505,7 +647,13 @@ describe('VGrid context menus', () => {
 describe('VGridPagination', () => {
   it('renders pages and updates the model', async () => {
     const w = mount(VGridPagination, { props: { total: 250, page: 5, pageSize: 25 } })
-    expect(w.findAll('.vg-page:not(.vg-page-nav)').map((b) => b.text())).toEqual(['1', '4', '5', '6', '10'])
+    expect(w.findAll('.vg-page:not(.vg-page-nav)').map((b) => b.text())).toEqual([
+      '1',
+      '4',
+      '5',
+      '6',
+      '10',
+    ])
     expect(w.find('[aria-current="page"]').text()).toBe('5')
     expect(w.find('.vg-pagination-summary').text()).toBe('101–125 of 250')
     await w.find('[aria-label="Next page"]').trigger('click')

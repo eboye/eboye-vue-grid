@@ -8,4 +8,8 @@ import type { AggregationFeature } from '../types'
  * that pass the filters, on every page. `aggregates` supplies the values instead (e.g. from a
  * server). Without it, `aggregate` and `totals` are ignored.
  */
-export const aggregationFeature: AggregationFeature = { feature: 'aggregation', useTotals, PinnedRows: VGridPinnedRows }
+export const aggregationFeature: AggregationFeature = {
+  feature: 'aggregation',
+  useTotals,
+  PinnedRows: VGridPinnedRows,
+}

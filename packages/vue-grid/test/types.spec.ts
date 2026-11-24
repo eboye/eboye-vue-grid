@@ -14,8 +14,16 @@ const col = createColumnHelper<Order>()
 describe('typed renderer definitions on columns', () => {
   it('accepts valid options and rejects invalid ones', () => {
     const columns = [
-      col({ key: 'total', renderer: currencyRenderer, rendererOptions: { currency: 'EUR', clickable: true } }),
-      col({ key: 'status', renderer: statusRenderer, rendererOptions: { tone: { Paid: 'success' }, variant: 'outline' } }),
+      col({
+        key: 'total',
+        renderer: currencyRenderer,
+        rendererOptions: { currency: 'EUR', clickable: true },
+      }),
+      col({
+        key: 'status',
+        renderer: statusRenderer,
+        rendererOptions: { tone: { Paid: 'success' }, variant: 'outline' },
+      }),
       // @ts-expect-error — `currency` must be a string or a function, not a number
       col({ key: 'total', renderer: currencyRenderer, rendererOptions: { currency: 42 } }),
       // @ts-expect-error — unknown option for the status renderer

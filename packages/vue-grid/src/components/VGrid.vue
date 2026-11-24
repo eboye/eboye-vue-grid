@@ -17,12 +17,7 @@ import {
   watch,
   watchEffect,
 } from 'vue'
-import {
-  effectivePin,
-  gridTemplate,
-  normalizeColumnState,
-  visibleColumns,
-} from '../core/columns'
+import { effectivePin, gridTemplate, normalizeColumnState, visibleColumns } from '../core/columns'
 import type { RowGroup } from '../core/grouping'
 import { localStorageAdapter } from '../core/storage'
 import { getCellValue, resolveRowKey, type RowKeyGetter } from '../core/value'
@@ -71,7 +66,10 @@ import type {
 import VGridHeader from './VGridHeader.vue'
 import VGridRows from './VGridRows.vue'
 
-const NO_FILTERS: FilterState = Object.freeze({ columns: Object.freeze({}), search: '' }) as FilterState
+const NO_FILTERS: FilterState = Object.freeze({
+  columns: Object.freeze({}),
+  search: '',
+}) as FilterState
 
 const props = withDefaults(
   defineProps<{
@@ -266,7 +264,11 @@ defineSlots<{
   /** A column's header content: `#header-<key>`. */
   [key: `header-${string}`]: (scope: { column: ColumnDef<T> }) => unknown
   /** A column's cell in the totals row and in group rows (aggregation, row grouping); `group` in group rows. */
-  [key: `total-${string}`]: (scope: { value: unknown; column: ColumnDef<T>; group?: RowGroup<T> }) => unknown
+  [key: `total-${string}`]: (scope: {
+    value: unknown
+    column: ColumnDef<T>
+    group?: RowGroup<T>
+  }) => unknown
   /** The value of a group row grouped by this column (row grouping feature): `#group-<key>`. */
   [key: `group-${string}`]: (scope: {
     value: unknown
@@ -309,7 +311,10 @@ const config = inject(GRID_CONFIG_KEY, undefined)
 const root = shallowRef<HTMLElement>()
 
 const formatContext = computed(() =>
-  resolveFormatContext({ locale: props.locale, currency: props.currency, timeZone: props.timeZone }, config),
+  resolveFormatContext(
+    { locale: props.locale, currency: props.currency, timeZone: props.timeZone },
+    config,
+  ),
 )
 provide(FORMAT_CONTEXT_KEY, formatContext)
 
@@ -357,7 +362,9 @@ function setColumnState(next: ColumnState) {
 }
 
 // ── Renderers & resolved columns ────────────────────────────────────────────────────────────
-const registry = computed(() => createRendererRegistry([textRenderer], config?.renderers, props.renderers))
+const registry = computed(() =>
+  createRendererRegistry([textRenderer], config?.renderers, props.renderers),
+)
 
 const camel = (name: string) => name.replace(/-(\w)/g, (_, c: string) => c.toUpperCase())
 
@@ -369,7 +376,8 @@ function resolveRenderer(col: ColumnDef<T>): {
 } {
   const renderer = col.renderer ?? 'text'
   // A definition object (`renderer: currencyRenderer`) — the tree-shakeable form.
-  if (isRendererDefinition(renderer)) return { component: toRaw(renderer.component), definition: renderer }
+  if (isRendererDefinition(renderer))
+    return { component: toRaw(renderer.component), definition: renderer }
   // toRaw: columns kept in ref()/reactive() would otherwise hand Vue a reactive component.
   if (typeof renderer !== 'string') return { component: toRaw(renderer) }
   const definition = registry.value.get(renderer)
@@ -389,7 +397,13 @@ function resolveRenderer(col: ColumnDef<T>): {
 const virtualOptions = computed(() => (features.virtualScrolling ? props.virtual || false : false))
 const isVirtual = computed(() => !!virtualOptions.value)
 const selectMode = computed<false | 'multi' | 'single'>(() =>
-  !features.selection ? false : props.selectable === 'single' ? 'single' : props.selectable ? 'multi' : false,
+  !features.selection
+    ? false
+    : props.selectable === 'single'
+      ? 'single'
+      : props.selectable
+        ? 'multi'
+        : false,
 )
 
 const resolvedColumns = computed<ResolvedColumn[]>(() => {
@@ -418,7 +432,9 @@ const resolvedColumns = computed<ResolvedColumn[]>(() => {
       def,
       component,
       definition,
-      options: fallback ? {} : { ...(definition?.defaults as object), ...(def.rendererOptions as object) },
+      options: fallback
+        ? {}
+        : { ...(definition?.defaults as object), ...(def.rendererOptions as object) },
       align: def.align ?? definition?.align ?? 'start',
       pinned: effectivePin(def, state),
       pinEdge: false,
@@ -462,7 +478,9 @@ const template = computed(() => gridTemplate(sizedColumns.value.map((c) => c.def
 
 /** A row of column group headers is shown (column groups feature, some visible column grouped). */
 const hasGroups = computed(
-  () => !!features.columnGroups && resolvedColumns.value.some((c) => c.kind === 'data' && !!c.def.group),
+  () =>
+    !!features.columnGroups &&
+    resolvedColumns.value.some((c) => c.kind === 'data' && !!c.def.group),
 )
 /** Header rows above the body (1, or 2 with column groups): offsets `aria-rowindex`. */
 const headerRows = computed(() => (hasGroups.value ? 2 : 1))
@@ -481,7 +499,9 @@ function makeSorter(): (rows: readonly T[]) => T[] {
   // Resolved from the column itself, not from the visible columns: sorting by a hidden column still
   // uses its renderer's sort value, and resizing or reordering columns doesn't re-sort every row.
   const { definition, fallback } = resolveRenderer(col)
-  const options = fallback ? {} : { ...(definition?.defaults as object), ...(col.rendererOptions as object) }
+  const options = fallback
+    ? {}
+    : { ...(definition?.defaults as object), ...(col.rendererOptions as object) }
   const getter =
     col.sortValue ??
     (definition?.sortValue
@@ -497,7 +517,12 @@ function sortRowsFn(rows: readonly T[]): T[] {
 function onSort(key: string) {
   if (!features.sorting) return
   const current = sort.value
-  sort.value = !current || current.key !== key ? { key, dir: 'asc' } : current.dir === 'asc' ? { key, dir: 'desc' } : null
+  sort.value =
+    !current || current.key !== key
+      ? { key, dir: 'asc' }
+      : current.dir === 'asc'
+        ? { key, dir: 'desc' }
+        : null
 }
 
 // ── Expansion & sub-rows ────────────────────────────────────────────────────────────────────
@@ -547,7 +572,9 @@ const gridId = useId()
 // The quick search covers the visible columns. Kept stable while only widths, pins or order change,
 // so resizing a column doesn't re-run the search over every row.
 const searchColumns = computed<ColumnDef<T>[]>((prev) => {
-  const next = resolvedColumns.value.filter((c) => c.kind === 'data').map((c) => c.def as ColumnDef<T>)
+  const next = resolvedColumns.value
+    .filter((c) => c.kind === 'data')
+    .map((c) => c.def as ColumnDef<T>)
   return prev && prev.length === next.length && next.every((c) => prev.includes(c)) ? prev : next
 })
 const filt = features.filtering?.useFilters<T>({
@@ -602,7 +629,9 @@ const ds = features.serverData?.useDataSource<T>({
   onError: (error) => emit('load-error', error),
 })
 
-const sourceRows = computed<readonly T[]>(() => (serverMode.value && ds ? ds.rows.value : props.rows))
+const sourceRows = computed<readonly T[]>(() =>
+  serverMode.value && ds ? ds.rows.value : props.rows,
+)
 const isLoading = computed(() => props.loading || !!ds?.loading.value)
 const loadError = computed(() => (serverMode.value ? ds?.error.value : undefined))
 const reload = async () => {
@@ -636,8 +665,10 @@ function walk(rows: readonly T[], visit: (row: T) => void) {
 }
 
 // ── Selection ───────────────────────────────────────────────────────────────────────────────
-const cascadeSelection = computed(() => selectMode.value === 'multi' && props.selectionMode === 'cascade' && treeMode.value)
-const sel =features.selection?.useSelection<T>({
+const cascadeSelection = computed(
+  () => selectMode.value === 'multi' && props.selectionMode === 'cascade' && treeMode.value,
+)
+const sel = features.selection?.useSelection<T>({
   selected,
   mode: () => selectMode.value,
   cascade: () => cascadeSelection.value,
@@ -683,10 +714,18 @@ const canReorder = (key: string) =>
 
 const drag = reorder?.useColumnDrag({
   canDrag: canReorder,
-  canDrop: (from, to) => reorder.moveColumn(layoutColumns.value, effectiveState.value, from, to) !== effectiveState.value,
+  canDrop: (from, to) =>
+    reorder.moveColumn(layoutColumns.value, effectiveState.value, from, to) !==
+    effectiveState.value,
   onDrop: (from, to) => {
     const side = drag?.target.value?.side ?? 'before'
-    const next = reorder.moveColumnRelative(layoutColumns.value, effectiveState.value, from, to, side)
+    const next = reorder.moveColumnRelative(
+      layoutColumns.value,
+      effectiveState.value,
+      from,
+      to,
+      side,
+    )
     if (next !== effectiveState.value) setColumnState(next)
   },
   // Touch: a header held and released in place opens its menu (`menus` is set up below).
@@ -719,7 +758,9 @@ const keyboard = features.keyboardNavigation?.useGridKeyboard(root, {
   moveColumn(key, direction) {
     if (!moveColumnBy(key, direction)) return
     nextTick(() =>
-      keyboard?.focusCell(root.value?.querySelector<HTMLElement>(`.vg-header > [data-col-key="${CSS.escape(key)}"]`)),
+      keyboard?.focusCell(
+        root.value?.querySelector<HTMLElement>(`.vg-header > [data-col-key="${CSS.escape(key)}"]`),
+      ),
     )
   },
   resizeColumn: resize
@@ -735,7 +776,9 @@ const onKeyDown = (event: KeyboardEvent) => {
 }
 const onFocusIn = (event: FocusEvent) => keyboard?.onFocusIn(event)
 /** ARIA grid with keyboard navigation; a plain table (and tabbable controls) without it. */
-const gridRole = computed(() => (!keyboardNav ? 'table' : context.treeMode.value ? 'treegrid' : 'grid'))
+const gridRole = computed(() =>
+  !keyboardNav ? 'table' : context.treeMode.value ? 'treegrid' : 'grid',
+)
 
 // ── Context menus ───────────────────────────────────────────────────────────────────────────
 const menuRef = shallowRef<MenuHandle>()
@@ -750,7 +793,8 @@ const menus = features.menus?.useMenus<T>({
   reorderable: (col) => canReorder(col.key),
   hideColumn:
     features.columnVisibility &&
-    ((key) => setColumnState(features.columnVisibility!.setColumnHidden(effectiveState.value, key, true))),
+    ((key) =>
+      setColumnState(features.columnVisibility!.setColumnHidden(effectiveState.value, key, true))),
   resize: resize && {
     can: canResize,
     isResized: (key) => !!effectiveState.value.widths?.[key],
@@ -812,7 +856,8 @@ const pinnedTopCount = computed(() => pinnedItems.value.top.length)
 /** Pins a top-level row above or below the body (`null` unpins it). */
 function pinRow(key: RowKey, side: 'top' | 'bottom' | null) {
   if (pins) pins.pinRow(key, side)
-  else if (process.env.NODE_ENV !== 'production') warnOnce('feature:rowPinning', 'pinRow() needs the row pinning feature (rowPinningFeature).')
+  else if (process.env.NODE_ENV !== 'production')
+    warnOnce('feature:rowPinning', 'pinRow() needs the row pinning feature (rowPinningFeature).')
 }
 
 // ── Virtualisation ──────────────────────────────────────────────────────────────────────────
@@ -845,7 +890,8 @@ const virt = features.virtualScrolling?.useVirtualRows<T>({
     const visible = filt?.visibleKeys.value ?? null
     const sorter = makeSorter()
     const key = keyReader()
-    const prepare = (rows: readonly T[]) => sorter(visible ? rows.filter((row) => visible.has(key(toRaw(row)))) : rows)
+    const prepare = (rows: readonly T[]) =>
+      sorter(visible ? rows.filter((row) => visible.has(key(toRaw(row)))) : rows)
     return grouping ? grouping.preparer(prepare) : prepare
   },
 })
@@ -853,7 +899,9 @@ const onScroll = () => virt?.onScroll()
 /** Virtual mode: positions of every visible row, detail row and sub-grid. */
 const virtualLayout = computed(() => virt?.layout.value ?? null)
 /** Rows on all pages: the server's total, or the filtered client rows (top-level groups when grouped). */
-const totalRows = computed(() => (serverMode.value ? (ds?.total.value ?? sourceRows.value.length) : displayRows.value.length))
+const totalRows = computed(() =>
+  serverMode.value ? (ds?.total.value ?? sourceRows.value.length) : displayRows.value.length,
+)
 const windowRows = computed(() => {
   if (paginated.value && !serverMode.value) {
     const start = (currentPage.value - 1) * currentPageSize.value
@@ -865,10 +913,20 @@ const windowRows = computed(() => {
 // out-of-range page, or the server's total shrinks — and write it back, so the pager and the rows
 // agree. (Server mode: once a response has said how many rows there are.)
 watch(
-  [paginated, totalRows, currentPageSize, currentPage, () => page.value, () => !serverMode.value || ds?.total.value !== undefined],
+  [
+    paginated,
+    totalRows,
+    currentPageSize,
+    currentPage,
+    () => page.value,
+    () => !serverMode.value || ds?.total.value !== undefined,
+  ],
   ([on, total, size, current, raw, totalKnown]) => {
     if (!on) return
-    const last = totalKnown && Number.isFinite(total) ? Math.max(1, Math.ceil(total / size)) : Number.POSITIVE_INFINITY
+    const last =
+      totalKnown && Number.isFinite(total)
+        ? Math.max(1, Math.ceil(total / size))
+        : Number.POSITIVE_INFINITY
     const next = Math.min(current, last)
     if (raw !== next) page.value = next
   },
@@ -884,7 +942,9 @@ const exporter = features.export?.useExport<T>({
   getKey,
   isGroup: (row) => !!grouping?.isGroup(row),
   rows: (which) =>
-    which === 'page' ? windowRows.value : sortRowsFn(which === 'all' ? sourceRows.value : filteredTopRows.value),
+    which === 'page'
+      ? windowRows.value
+      : sortRowsFn(which === 'all' ? sourceRows.value : filteredTopRows.value),
   children: childrenOf,
   prepare: (rows, filtered) => (filtered ? prepareRows : sortRowsFn)(rows),
   selected,
@@ -899,7 +959,10 @@ if (process.env.NODE_ENV !== 'production') {
     for (const row of sourceRows.value) {
       const key = getKey(row)
       if (seen.has(key)) {
-        warnOnce(`dup:${String(key)}`, `Duplicate row key "${String(key)}". Row keys must be unique.`)
+        warnOnce(
+          `dup:${String(key)}`,
+          `Duplicate row key "${String(key)}". Row keys must be unique.`,
+        )
         break
       }
       seen.add(key)
@@ -914,36 +977,54 @@ if (process.env.NODE_ENV !== 'production') {
     )
   watchEffect(() => {
     const col = (flag: 'sortable' | 'filterable') => props.columns.find((c) => c[flag])?.key
-    if (!features.sorting && col('sortable')) missing('sorting', `Column "${col('sortable')}" is sortable; that`)
+    if (!features.sorting && col('sortable'))
+      missing('sorting', `Column "${col('sortable')}" is sortable; that`)
     if (!features.filtering && (col('filterable') || props.filterRow || filters.value))
       missing('filtering', 'Filtering (`filterable` columns, `filter-row`, `v-model:filters`)')
     if (!features.serverData && props.dataSource) missing('serverData', '`data-source`')
     if (!features.pagination && props.pagination) missing('pagination', '`pagination`')
     if (!features.virtualScrolling && props.virtual) missing('virtualScrolling', '`virtual`')
     if (!features.selection && props.selectable) missing('selection', '`selectable`')
-    if (!features.subGrids && (props.subRows || props.loadSubRows)) missing('subGrids', '`sub-rows` / `load-sub-rows`')
+    if (!features.subGrids && (props.subRows || props.loadSubRows))
+      missing('subGrids', '`sub-rows` / `load-sub-rows`')
     const groupedCol = props.columns.find((c) => c.group)?.key
-    if (!features.columnGroups && groupedCol) missing('columnGroups', `Column "${groupedCol}" has a \`group\`; that`)
+    if (!features.columnGroups && groupedCol)
+      missing('columnGroups', `Column "${groupedCol}" has a \`group\`; that`)
     const hiddenCol = props.columns.find((c) => c.hidden)?.key ?? columnState.value?.hidden?.[0]
-    if (!features.columnVisibility && hiddenCol) missing('columnVisibility', `Column "${hiddenCol}" is hidden; that`)
+    if (!features.columnVisibility && hiddenCol)
+      missing('columnVisibility', `Column "${hiddenCol}" is hidden; that`)
     const pinnedCol = props.columns.find((c) => c.pinned)?.key
-    if (!features.columnPinning && pinnedCol) missing('columnPinning', `Column "${pinnedCol}" is pinned; that`)
+    if (!features.columnPinning && pinnedCol)
+      missing('columnPinning', `Column "${pinnedCol}" is pinned; that`)
     if (!features.menus && (props.contextMenu || typeof props.headerMenu === 'function'))
       missing('menus', '`context-menu` / a `header-menu` function')
     if (!features.rowPinning && (pinnedRows.value || props.pinnedTopRows || props.pinnedBottomRows))
       missing('rowPinning', '`pinned-rows` / `pinned-top-rows` / `pinned-bottom-rows`')
     if (!features.aggregation && props.totals) missing('aggregation', '`totals`')
     const exportCol = props.columns.find((c) => c.exportValue)?.key
-    if (!features.export && exportCol) missing('export', `Column "${exportCol}" has an \`exportValue\`; that`)
-    const groupKeys = groupBy.value == null ? [] : typeof groupBy.value === 'string' ? [groupBy.value] : groupBy.value
+    if (!features.export && exportCol)
+      missing('export', `Column "${exportCol}" has an \`exportValue\`; that`)
+    const groupKeys =
+      groupBy.value == null
+        ? []
+        : typeof groupBy.value === 'string'
+          ? [groupBy.value]
+          : groupBy.value
     if (!features.rowGrouping && groupKeys.length) missing('rowGrouping', '`group-by`')
     const unknownGroup = groupKeys.find((k) => !props.columns.some((c) => c.key === k))
     if (features.rowGrouping && unknownGroup !== undefined)
-      warnOnce(`group-by:${unknownGroup}`, `\`group-by\` names "${unknownGroup}", which is not a column key; it is ignored.`)
+      warnOnce(
+        `group-by:${unknownGroup}`,
+        `\`group-by\` names "${unknownGroup}", which is not a column key; it is ignored.`,
+      )
   })
   watch(
     () => props.features,
-    () => warnOnce('features-changed', '`features` is read once, when the grid is created; changes are ignored.'),
+    () =>
+      warnOnce(
+        'features-changed',
+        '`features` is read once, when the grid is created; changes are ignored.',
+      ),
   )
 }
 
@@ -1013,15 +1094,29 @@ const context: GridContext = {
   },
   onRowClick: (row, _key, event) => emit('row-click', row, event),
   onCellClick: (row, rowKey, column, event) =>
-    emit('cell-click', { row, rowKey, column: column.def, value: getCellValue(row, column.def), event }),
+    emit('cell-click', {
+      row,
+      rowKey,
+      column: column.def,
+      value: getCellValue(row, column.def),
+      event,
+    }),
   onCellAction: (row, rowKey, column, name, payload) =>
     emit('cell-action', { name, payload, row, rowKey, column: column.def }),
   onCellContextMenu: (row, rowKey, column, event, el) =>
-    menus?.openCellMenu({ row, rowKey, column: column.def, value: getCellValue(row, column.def) }, event, el),
+    menus?.openCellMenu(
+      { row, rowKey, column: column.def, value: getCellValue(row, column.def) },
+      event,
+      el,
+    ),
   onHeaderContextMenu: (column, event, el) => menus?.openHeaderMenu(column.def, event, el),
   onCellPointerDown: menus
     ? (row, rowKey, column, event, el) =>
-        menus.holdCell({ row, rowKey, column: column.def, value: getCellValue(row, column.def) }, event, el)
+        menus.holdCell(
+          { row, rowKey, column: column.def, value: getCellValue(row, column.def) },
+          event,
+          el,
+        )
     : undefined,
 }
 grouping?.extend(context, features.rowGrouping!.GroupCells)
@@ -1034,7 +1129,9 @@ function scrollToTop() {
 
 function scrollToRow(key: RowKey) {
   if (virt?.scrollToKey(key)) return
-  const cell = root.value?.querySelector<HTMLElement>(`[data-row-key="${CSS.escape(String(key))}"] > .vg-cell`)
+  const cell = root.value?.querySelector<HTMLElement>(
+    `[data-row-key="${CSS.escape(String(key))}"] > .vg-cell`,
+  )
   cell?.scrollIntoView({ block: 'nearest' })
 }
 
@@ -1059,7 +1156,8 @@ function patchLoadedRows(patches: RowPatches<T>): number {
 
 function setFilters(state: FilterState) {
   if (filt) filt.setFilters(state)
-  else if (process.env.NODE_ENV !== 'production') warnOnce('feature:filtering', 'setFilters() needs the filtering feature (filteringFeature).')
+  else if (process.env.NODE_ENV !== 'production')
+    warnOnce('feature:filtering', 'setFilters() needs the filtering feature (filteringFeature).')
 }
 const clearFilters = () => filt?.clearAll()
 /** Clears the selection, "all matching" included. */
@@ -1069,7 +1167,8 @@ const clearSelection = () => sel?.clear()
 function viaExport<K extends 'getCsv' | 'exportCsv' | 'copyRows'>(name: K): VGridExposed[K] {
   return ((options?: object) => {
     if (exporter) return (exporter[name] as (o?: object) => unknown)(options)
-    if (process.env.NODE_ENV !== 'production') warnOnce('feature:export', `${name}() needs the export feature (exportFeature).`)
+    if (process.env.NODE_ENV !== 'production')
+      warnOnce('feature:export', `${name}() needs the export feature (exportFeature).`)
     return name === 'getCsv' ? '' : name === 'copyRows' ? Promise.resolve(false) : undefined
   }) as VGridExposed[K]
 }
@@ -1144,7 +1243,10 @@ defineExpose<VGridExposed>({
         :aria-busy="isLoading || undefined"
         :aria-rowcount="
           virtualLayout
-            ? virtualLayout.rowCount + headerRows + pinnedItems.top.length + pinnedItems.bottom.length
+            ? virtualLayout.rowCount +
+              headerRows +
+              pinnedItems.top.length +
+              pinnedItems.bottom.length
             : undefined
         "
         :aria-colcount="resolvedColumns.length"
@@ -1181,7 +1283,11 @@ defineExpose<VGridExposed>({
           <VGridRows :rows="windowRows" presorted :layout="virtualLayout ?? undefined" />
         </template>
         <div v-else role="row" class="vg-empty-row">
-          <div :role="context.cellRole" :tabindex="context.rovingTabindex" :class="['vg-empty', ui?.empty]">
+          <div
+            :role="context.cellRole"
+            :tabindex="context.rovingTabindex"
+            :class="['vg-empty', ui?.empty]"
+          >
             <slot v-if="isLoading" name="loading">Loading…</slot>
             <span v-else-if="loadError" class="vg-no-match vg-load-error" role="alert">
               Couldn't load the rows.
@@ -1189,7 +1295,9 @@ defineExpose<VGridExposed>({
             </span>
             <span v-else-if="(serverMode || rows.length) && activeFilterCount" class="vg-no-match">
               {{ noMatchText }}
-              <button type="button" class="vg-link-button" @click="clearFilters()">Clear filters</button>
+              <button type="button" class="vg-link-button" @click="clearFilters()">
+                Clear filters
+              </button>
             </span>
             <slot v-else name="empty">{{ emptyText }}</slot>
           </div>
@@ -1199,7 +1307,11 @@ defineExpose<VGridExposed>({
           v-if="PinnedRows && pinnedItems.bottom.length"
           position="bottom"
           :items="pinnedItems.bottom"
-          :aria-start="virtualLayout ? headerRows + pinnedItems.top.length + virtualLayout.rowCount + 1 : undefined"
+          :aria-start="
+            virtualLayout
+              ? headerRows + pinnedItems.top.length + virtualLayout.rowCount + 1
+              : undefined
+          "
         />
       </div>
     </div>

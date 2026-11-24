@@ -13,7 +13,13 @@ import {
   type FilterType,
 } from '../core/filter'
 import { getCellValue } from '../core/value'
-import type { CellRendererDefinition, ColumnDef, ColumnFilterOptions, FilterOption, RowKey } from '../types'
+import type {
+  CellRendererDefinition,
+  ColumnDef,
+  ColumnFilterOptions,
+  FilterOption,
+  RowKey,
+} from '../types'
 
 const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' })
 
@@ -40,12 +46,22 @@ export interface GridFiltersOptions<T> {
 
 /** Value-list options → the panel's entries. */
 export function toDistinct(options: readonly FilterOption[]): DistinctValue[] {
-  return options.map((o) => ({ key: setKey(o.value), label: o.label ?? (setKey(o.value) || '(Blanks)'), count: o.count ?? 0 }))
+  return options.map((o) => ({
+    key: setKey(o.value),
+    label: o.label ?? (setKey(o.value) || '(Blanks)'),
+    count: o.count ?? 0,
+  }))
 }
 
 /** Filter type of a column: explicit, else from its renderer, else `text`. `custom` with a filter component. */
-export function filterTypeOf(col: ColumnDef, definition: CellRendererDefinition | undefined): FilterType | 'custom' {
-  const explicit = typeof col.filter === 'string' ? col.filter : (col.filter as ColumnFilterOptions | undefined)?.type
+export function filterTypeOf(
+  col: ColumnDef,
+  definition: CellRendererDefinition | undefined,
+): FilterType | 'custom' {
+  const explicit =
+    typeof col.filter === 'string'
+      ? col.filter
+      : (col.filter as ColumnFilterOptions | undefined)?.type
   if (explicit) return explicit
   if (col.filterComponent) return 'custom'
   return definition?.filterType ?? 'text'
@@ -68,7 +84,9 @@ export function useGridFilters<T>(opts: GridFiltersOptions<T>) {
     if (!s) return emptyFilters()
     // Filters saved for columns that no longer exist are ignored (not counted, not sent to a server).
     const known = new Set(opts.columns().map((c) => c.key))
-    const columns = Object.fromEntries(Object.entries(s.columns ?? {}).filter(([key]) => known.has(key)))
+    const columns = Object.fromEntries(
+      Object.entries(s.columns ?? {}).filter(([key]) => known.has(key)),
+    )
     return { columns, search: s.search ?? '' }
   })
 
@@ -92,7 +110,8 @@ export function useGridFilters<T>(opts: GridFiltersOptions<T>) {
   const isActive = (key: string) => isFilterActive(state.value.columns[key])
   const activeCount = computed(() => activeFilterCount(state.value))
 
-  const valueOf = (row: T, col: ColumnDef<T>) => (col.filterValue ? col.filterValue(row) : getCellValue(row, col))
+  const valueOf = (row: T, col: ColumnDef<T>) =>
+    col.filterValue ? col.filterValue(row) : getCellValue(row, col)
 
   /** Does the row pass every column filter and the quick search? */
   const predicate = computed<((row: T) => boolean) | null>(() => {
@@ -108,7 +127,9 @@ export function useGridFilters<T>(opts: GridFiltersOptions<T>) {
     return (row: T) => {
       for (const [col, filter] of active) {
         const value = valueOf(row, col)
-        const ok = col.filterFn ? col.filterFn(row, filter, value) : matchesFilter(value, filter, { timeZone })
+        const ok = col.filterFn
+          ? col.filterFn(row, filter, value)
+          : matchesFilter(value, filter, { timeZone })
         if (!ok) return false
       }
       return !q || searchable.some((col) => foldText(valueOf(row, col)).includes(q))

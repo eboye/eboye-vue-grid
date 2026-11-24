@@ -7,7 +7,10 @@
 let supported: boolean | undefined
 
 export function supportsAnchorPositioning(): boolean {
-  supported ??= typeof CSS !== 'undefined' && typeof CSS.supports === 'function' && CSS.supports('anchor-name: --vg')
+  supported ??=
+    typeof CSS !== 'undefined' &&
+    typeof CSS.supports === 'function' &&
+    CSS.supports('anchor-name: --vg')
   return supported
 }
 
@@ -21,7 +24,11 @@ export type AnchorTarget = HTMLElement | { x: number; y: number }
 export type Placement = 'bottom-start' | 'bottom-end' | 'point'
 
 /** JS placement used only when CSS anchor positioning is unavailable. Flips to stay in the viewport. */
-export function placeWithoutAnchorSupport(floating: HTMLElement, target: AnchorTarget, placement: Placement) {
+export function placeWithoutAnchorSupport(
+  floating: HTMLElement,
+  target: AnchorTarget,
+  placement: Placement,
+) {
   const gap = 4
   const rect =
     target instanceof HTMLElement
@@ -31,8 +38,14 @@ export function placeWithoutAnchorSupport(floating: HTMLElement, target: AnchorT
   const vw = window.innerWidth
   const vh = window.innerHeight
 
-  let left = placement === 'bottom-end' ? rect.right - pop.width : placement === 'point' ? rect.left : rect.left
-  if (left + pop.width > vw - gap) left = placement === 'point' ? rect.left - pop.width : vw - gap - pop.width
+  let left =
+    placement === 'bottom-end'
+      ? rect.right - pop.width
+      : placement === 'point'
+        ? rect.left
+        : rect.left
+  if (left + pop.width > vw - gap)
+    left = placement === 'point' ? rect.left - pop.width : vw - gap - pop.width
   left = Math.max(gap, left)
 
   let top = rect.bottom + (placement === 'point' ? 0 : gap)
@@ -53,7 +66,11 @@ export function placeWithoutAnchorSupport(floating: HTMLElement, target: AnchorT
  *   own scroll container — feature detection can't tell.
  * Returns a cleanup function; call it when the popover closes.
  */
-export function trackAnchor(floating: HTMLElement, target: AnchorTarget, placement: Placement): () => void {
+export function trackAnchor(
+  floating: HTMLElement,
+  target: AnchorTarget,
+  placement: Placement,
+): () => void {
   const cleanups: (() => void)[] = []
 
   if (!supportsAnchorPositioning()) {

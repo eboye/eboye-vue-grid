@@ -10,7 +10,13 @@ const props = defineProps<CellRendererProps<unknown, unknown, SignedNumberOption
 const emit = defineEmits<CellRendererEmits>()
 const ctx = useGridContext()
 
-const formatted = computed(() => (props.options.signed ? formatSigned : formatNumber)(props.value, ctx.value, props.options.format))
+const formatted = computed(() =>
+  (props.options.signed ? formatSigned : formatNumber)(
+    props.value,
+    ctx.value,
+    props.options.format,
+  ),
+)
 const clickable = computed(() => !!resolveOption(props.options.clickable, props.value, props.row))
 </script>
 

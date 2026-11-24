@@ -7,17 +7,17 @@ cell-renderer addons, themeable through CSS custom properties.
 
 ## 1. Design principles
 
-| Concern | Approach |
-|---|---|
-| Data model | Plain row objects `T[]`; columns read via `field`/`value`; column state is separate and never touches data; props never mutated |
-| Cell rendering | Renderer registry (`defineCellRenderer`, plugin + local), plus per-column slots |
-| Layout cost | Pinned offsets measured with one `ResizeObserver` on header cells and exposed as CSS vars; nothing measured during render |
-| Row identity | All row state (selection, expansion, focus) keyed by `rowKey`, so it survives sorting and paging |
-| Expansion | One `expanded` model, two presentations: sub-rows (CSS subgrid) and a detail slot |
-| Accessibility | `role="grid"` semantics, `aria-sort`, real buttons, keyboard navigation, keyboard column reorder |
-| Selection | Computed state, tri-state select-all |
-| Safety | No `innerHTML` / `document.write`: JSON shown as text nodes / `<pre>` textContent and a recursive Vue tree component |
-| Styling | Plain CSS + `--vg-*` tokens in `@layer vue-grid`; locale/currency via props or `provide`; no design-system or store coupling |
+| Concern        | Approach                                                                                                                        |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Data model     | Plain row objects `T[]`; columns read via `field`/`value`; column state is separate and never touches data; props never mutated |
+| Cell rendering | Renderer registry (`defineCellRenderer`, plugin + local), plus per-column slots                                                 |
+| Layout cost    | Pinned offsets measured with one `ResizeObserver` on header cells and exposed as CSS vars; nothing measured during render       |
+| Row identity   | All row state (selection, expansion, focus) keyed by `rowKey`, so it survives sorting and paging                                |
+| Expansion      | One `expanded` model, two presentations: sub-rows (CSS subgrid) and a detail slot                                               |
+| Accessibility  | `role="grid"` semantics, `aria-sort`, real buttons, keyboard navigation, keyboard column reorder                                |
+| Selection      | Computed state, tri-state select-all                                                                                            |
+| Safety         | No `innerHTML` / `document.write`: JSON shown as text nodes / `<pre>` textContent and a recursive Vue tree component            |
+| Styling        | Plain CSS + `--vg-*` tokens in `@layer vue-grid`; locale/currency via props or `provide`; no design-system or store coupling    |
 
 ## 2. Packages & tooling
 
@@ -44,33 +44,40 @@ API, so not TS 7), ESLint (flat config) + Prettier, Vitest, Playwright.
 interface VGridProps<T> {
   rows: T[]
   columns: ColumnDef<T>[]
-  rowKey: keyof T | ((row: T) => RowKey)          // RowKey = string | number
+  rowKey: keyof T | ((row: T) => RowKey) // RowKey = string | number
   // v-model
-  sort?: SortState | null                         // { key: string; dir: 'asc' | 'desc' }
-  columnState?: ColumnState                       // { order: string[]; hidden: string[] }
+  sort?: SortState | null // { key: string; dir: 'asc' | 'desc' }
+  columnState?: ColumnState // { order: string[]; hidden: string[] }
   expanded?: RowKey[]
   selected?: RowKey[]
   // behaviour
-  sortMode?: 'controlled' | 'client'              // default 'controlled' (emit only)
-  selectable?: boolean | 'single'                 // adds the selection column
-  selectionMode?: 'cascade' | 'independent'       // sub-row selection propagation, default 'cascade'
+  sortMode?: 'controlled' | 'client' // default 'controlled' (emit only)
+  selectable?: boolean | 'single' // adds the selection column
+  selectionMode?: 'cascade' | 'independent' // sub-row selection propagation, default 'cascade'
   isRowSelectable?: (row: T) => boolean
   subRows?: (row: T) => T[] | undefined | null
   loadSubRows?: (row: T) => Promise<T[]>
-  hasSubRows?: (row: T) => boolean                // hint for lazy rows
-  rowExpandable?: (row: T) => boolean             // for #detail
+  hasSubRows?: (row: T) => boolean // hint for lazy rows
+  rowExpandable?: (row: T) => boolean // for #detail
   rowClickable?: boolean
   rowClass?: (row: T, index: number) => ClassValue
   highlightedRows?: RowKey[]
   virtual?: { rowHeight: number; overscan?: number } | false
-  storage?: ColumnStateStorage | string           // string = localStorage key
-  renderers?: CellRendererDefinition[]            // local registrations, override plugin ones
-  locale?: string; currency?: string; timeZone?: string
+  storage?: ColumnStateStorage | string // string = localStorage key
+  renderers?: CellRendererDefinition[] // local registrations, override plugin ones
+  locale?: string
+  currency?: string
+  timeZone?: string
   density?: 'compact' | 'cozy' | 'comfortable'
   loading?: boolean
   emptyText?: string
   ariaLabel?: string
-  ui?: Partial<Record<'root'|'header'|'headerCell'|'row'|'cell'|'subgrid'|'detail'|'empty', ClassValue>>
+  ui?: Partial<
+    Record<
+      'root' | 'header' | 'headerCell' | 'row' | 'cell' | 'subgrid' | 'detail' | 'empty',
+      ClassValue
+    >
+  >
 }
 ```
 
@@ -89,21 +96,21 @@ interface ColumnDef<T, R extends RendererName = RendererName> {
   key: string
   header?: string
   headerTooltip?: string
-  field?: string                      // dot path, e.g. 'user.name'
-  value?: (row: T) => unknown         // wins over field
-  renderer?: R | Component            // default 'text'
+  field?: string // dot path, e.g. 'user.name'
+  value?: (row: T) => unknown // wins over field
+  renderer?: R | Component // default 'text'
   rendererOptions?: RendererOptions<R>
-  width?: string                      // any grid track size, default 'auto'
+  width?: string // any grid track size, default 'auto'
   minWidth?: string
   align?: 'start' | 'center' | 'end'
   sortable?: boolean
   sortValue?: (row: T) => unknown
   sortFn?: (a: T, b: T) => number
   pinned?: 'left' | 'right'
-  hidden?: boolean                    // initial visibility
-  hideable?: boolean                  // default true
-  reorderable?: boolean               // default true
-  clickable?: boolean                 // emits cell-click instead of row-click
+  hidden?: boolean // initial visibility
+  hideable?: boolean // default true
+  reorderable?: boolean // default true
+  clickable?: boolean // emits cell-click instead of row-click
   cellClass?: ClassValue | ((row: T) => ClassValue)
   headerClass?: ClassValue
 }
@@ -113,8 +120,13 @@ interface ColumnDef<T, R extends RendererName = RendererName> {
 
 ```ts
 interface CellRendererProps<T = unknown, V = unknown, O = Record<string, unknown>> {
-  value: V; row: T; rowKey: RowKey; rowIndex: number; depth: number
-  column: ResolvedColumn<T>; options: O
+  value: V
+  row: T
+  rowKey: RowKey
+  rowIndex: number
+  depth: number
+  column: ResolvedColumn<T>
+  options: O
 }
 // renderer emits: action(name: string, payload?: unknown)
 
@@ -124,12 +136,14 @@ function defineCellRenderer<O>(def: {
   defaults?: Partial<O>
   align?: 'start' | 'center' | 'end'
   sortValue?: (value: unknown, options: O) => unknown
-  format?: (value: unknown, options: O, ctx: FormatContext) => string   // text form (tooltips, a11y)
+  format?: (value: unknown, options: O, ctx: FormatContext) => string // text form (tooltips, a11y)
 }): CellRendererDefinition<O>
 
 // typing renderer names/options for consumers:
 declare module '@nocopypaste/vue-grid' {
-  interface CellRendererRegistry { rating: { max?: number } }
+  interface CellRendererRegistry {
+    rating: { max?: number }
+  }
 }
 ```
 
@@ -158,14 +172,14 @@ action). Selection checkbox is built into the grid, not a renderer.
 - Root: `div.vg[role=grid]` with `display:grid; grid-template-columns: var(--vg-columns)`, computed
   from visible columns in current order (selection/expander columns prepended, `auto`/`min-content`).
 - Header row and body rows are `div[role=row]` with `display: contents`; cells `div[role=columnheader
-  |gridcell]`. Header cells `position: sticky; top: 0`.
+|gridcell]`. Header cells `position: sticky; top: 0`.
 - Pinned columns: one `ResizeObserver` on header cells → cumulative left/right offsets written as
   `--vg-pin-offset` on each column's cells via a per-column style object computed once per resize.
 - Row state (expanded, selected, loading sub-rows, errors) lives in `Set<RowKey>`-backed reactive
   state keyed by `rowKey`.
 - **Sub-rows (subgrid):** an expanded row with children renders, right after its row, a
   `div.vg-subgrid[role=rowgroup]` with `grid-column: 1 / -1; display: grid;
-  grid-template-columns: subgrid`, containing the children (recursively, any depth). Children use
+grid-template-columns: subgrid`, containing the children (recursively, any depth). Children use
   the parent's resolved columns, so reorder/hide/pin apply automatically. Depth exposed as
   `data-depth` and `--vg-depth`; the first data column is indented by
   `calc(var(--vg-depth) * var(--vg-subgrid-indent))`. Async `loadSubRows` runs on first expand, shows

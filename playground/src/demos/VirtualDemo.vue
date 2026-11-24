@@ -22,7 +22,9 @@ const columns = [
     <h2>Virtual scrolling — 10,000 rows</h2>
     <p>Only the visible window (plus overscan) is in the DOM.</p>
     <div class="pg-row">
-      <button class="pg-btn" type="button" data-testid="jump" @click="grid?.scrollToRow(5000)">Jump to #5000</button>
+      <button class="pg-btn" type="button" data-testid="jump" @click="grid?.scrollToRow(5000)">
+        Jump to #5000
+      </button>
     </div>
     <VGrid
       ref="grid"

@@ -10,7 +10,9 @@ const ci = !!process.env.CI
 export const projects: PlaywrightTestConfig['projects'] = [
   { name: 'chromium', use: { ...devices['Desktop Chrome'], viewport } },
   { name: 'firefox', use: { ...devices['Desktop Firefox'], viewport } },
-  ...(ci || process.env.E2E_WEBKIT ? [{ name: 'webkit', use: { ...devices['Desktop Safari'], viewport } }] : []),
+  ...(ci || process.env.E2E_WEBKIT
+    ? [{ name: 'webkit', use: { ...devices['Desktop Safari'], viewport } }]
+    : []),
 ]
 
 /** CI: retry flaky runs, fail on a stray `test.only`, report in the pull request too. */

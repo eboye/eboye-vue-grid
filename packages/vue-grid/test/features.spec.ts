@@ -40,7 +40,8 @@ const columns = [
   { key: 'name', sortable: true, filterable: true },
   { key: 'score', sortable: true, filterable: true },
 ]
-const names = (w: ReturnType<typeof mount>) => w.findAll('.vg-row [data-col-key="name"]').map((c) => c.text())
+const names = (w: ReturnType<typeof mount>) =>
+  w.findAll('.vg-row [data-col-key="name"]').map((c) => c.text())
 
 // These specs need a bare app: test/setup.ts registers every feature globally.
 let saved: typeof config.global.plugins
@@ -59,7 +60,15 @@ describe('features are opt-in', () => {
   it('without features: no sort buttons, funnels, filter row, data source or pager — and a dev hint', async () => {
     const dataSource = vi.fn(async () => ({ rows }))
     const w = mount(VGrid, {
-      props: { rows, columns, rowKey: 'id', sortMode: 'client', filterRow: true, pagination: true, pageSize: 2 },
+      props: {
+        rows,
+        columns,
+        rowKey: 'id',
+        sortMode: 'client',
+        filterRow: true,
+        pagination: true,
+        pageSize: 2,
+      },
     })
     await flushPromises()
     expect(w.find('.vg-sort').exists()).toBe(false)
@@ -83,7 +92,9 @@ describe('features are opt-in', () => {
     await flushPromises()
     expect(dataSource).not.toHaveBeenCalled()
     expect(server.find('.vg-row').exists()).toBe(false)
-    expect(warn.mock.calls.map((c: unknown[]) => String(c[0])).join('\n')).toContain('needs the serverData feature')
+    expect(warn.mock.calls.map((c: unknown[]) => String(c[0])).join('\n')).toContain(
+      'needs the serverData feature',
+    )
   })
 
   it('menus: none without the feature (the browser menu stays); with it, no sort / filter items unless those are on', async () => {
@@ -94,10 +105,14 @@ describe('features are opt-in', () => {
     expect(event.defaultPrevented).toBe(false)
     bare.unmount()
 
-    const plain = mount(VGrid, { props: { rows, columns, rowKey: 'id', features: [menusFeature] }, attachTo: document.body })
+    const plain = mount(VGrid, {
+      props: { rows, columns, rowKey: 'id', features: [menusFeature] },
+      attachTo: document.body,
+    })
     await plain.find('.vg-header [data-col-key="name"]').trigger('contextmenu')
     await flushPromises()
-    const labels = () => [...document.querySelectorAll('.vg-menu [role="menuitem"]')].map((e) => e.textContent?.trim())
+    const labels = () =>
+      [...document.querySelectorAll('.vg-menu [role="menuitem"]')].map((e) => e.textContent?.trim())
     expect(labels()).toContain('Reset columns') // the menu did open
     expect(labels()).not.toContain('Sort ascending')
     expect(labels()).not.toContain('Filter…')
@@ -109,7 +124,14 @@ describe('features are opt-in', () => {
       kids?: Node[]
     }
     const tree: Node[] = [{ id: 10, name: 'Group', score: 0, kids: [rows[0]!, rows[1]!] }]
-    const props = { rows: tree, columns, rowKey: 'id', selectable: true, subRows: (r: Node) => r.kids, expanded: [10] }
+    const props = {
+      rows: tree,
+      columns,
+      rowKey: 'id',
+      selectable: true,
+      subRows: (r: Node) => r.kids,
+      expanded: [10],
+    }
 
     const bare = mount(VGrid, { props })
     expect(bare.find('.vg-cell-select').exists()).toBe(false)
@@ -120,46 +142,69 @@ describe('features are opt-in', () => {
     expect(hints).toContain('needs the selection feature')
     expect(hints).toContain('needs the subGrids feature')
 
-    const full = mount(VGrid, { props: { ...props, features: [selectionFeature, subGridsFeature, keyboardNavigationFeature] } })
+    const full = mount(VGrid, {
+      props: { ...props, features: [selectionFeature, subGridsFeature, keyboardNavigationFeature] },
+    })
     expect(full.find('[role="treegrid"]').exists()).toBe(true)
     expect(full.findAll('.vg-subgrid .vg-row')).toHaveLength(2)
     await full.find('.vg-header [type="checkbox"]').setValue(true)
-    expect(((full.emitted('update:selected') as number[][][]).at(-1)![0]! as number[]).sort()).toEqual([1, 10, 2])
+    expect(
+      ((full.emitted('update:selected') as number[][][]).at(-1)![0]! as number[]).sort(),
+    ).toEqual([1, 10, 2])
   })
 
   it('column reorder and pinning: off without their features (pins ignored, no drag / move items)', async () => {
     const cols = [{ key: 'name', pinned: 'left' as const }, { key: 'score' }]
-    const headerKeys = (w: ReturnType<typeof mount>) => w.findAll('.vg-header > [data-col-key]').map((h) => h.attributes('data-col-key'))
-    const labels = () => [...document.querySelectorAll('.vg-menu [role="menuitem"]')].map((e) => e.textContent?.trim())
+    const headerKeys = (w: ReturnType<typeof mount>) =>
+      w.findAll('.vg-header > [data-col-key]').map((h) => h.attributes('data-col-key'))
+    const labels = () =>
+      [...document.querySelectorAll('.vg-menu [role="menuitem"]')].map((e) => e.textContent?.trim())
 
-    const bare = mount(VGrid, { props: { rows, columns: cols, rowKey: 'id', features: [menusFeature] }, attachTo: document.body })
+    const bare = mount(VGrid, {
+      props: { rows, columns: cols, rowKey: 'id', features: [menusFeature] },
+      attachTo: document.body,
+    })
     expect(bare.find('.vg-pin-left').exists()).toBe(false)
     expect(bare.find('.vg-reorderable').exists()).toBe(false)
-    await bare.find('.vg-header [data-col-key="name"]').trigger('keydown', { key: 'ArrowRight', altKey: true })
+    await bare
+      .find('.vg-header [data-col-key="name"]')
+      .trigger('keydown', { key: 'ArrowRight', altKey: true })
     expect(headerKeys(bare)).toEqual(['name', 'score'])
     await bare.find('.vg-header [data-col-key="name"]').trigger('contextmenu')
     await flushPromises()
     expect(labels()).toContain('Reset columns')
     expect(labels()).not.toContain('Pin left')
     expect(labels()).not.toContain('Move right')
-    expect(warn.mock.calls.map((c: unknown[]) => String(c[0])).join('\n')).toContain('needs the columnPinning feature')
+    expect(warn.mock.calls.map((c: unknown[]) => String(c[0])).join('\n')).toContain(
+      'needs the columnPinning feature',
+    )
     bare.unmount()
 
     const full = mount(VGrid, {
-      props: { rows, columns: cols, rowKey: 'id', features: [menusFeature, columnReorderFeature, columnPinningFeature] },
+      props: {
+        rows,
+        columns: cols,
+        rowKey: 'id',
+        features: [menusFeature, columnReorderFeature, columnPinningFeature],
+      },
       attachTo: document.body,
     })
     expect(full.find('.vg-header .vg-pin-left[data-col-key="name"]').exists()).toBe(true)
     expect(full.find('.vg-header [data-col-key="score"]').classes()).toContain('vg-reorderable')
     await full.find('.vg-header [data-col-key="score"]').trigger('contextmenu')
     await flushPromises()
-    expect(labels()).toEqual(expect.arrayContaining(['Pin left', 'Pin right', 'Move left', 'Move right']))
+    expect(labels()).toEqual(
+      expect.arrayContaining(['Pin left', 'Pin right', 'Move left', 'Move right']),
+    )
     full.unmount()
   })
 
   it('keyboard navigation: an ARIA table with tabbable controls without it; a roving-focus grid with it', async () => {
     const props = { rows, columns, rowKey: 'id', selectable: true }
-    const bare = mount(VGrid, { props: { ...props, features: [selectionFeature, sortingFeature] }, attachTo: document.body })
+    const bare = mount(VGrid, {
+      props: { ...props, features: [selectionFeature, sortingFeature] },
+      attachTo: document.body,
+    })
     expect(bare.find('.vg').attributes('role')).toBe('table')
     expect(bare.find('.vg-row [data-col-key="name"]').attributes('role')).toBe('cell')
     expect(bare.find('.vg-row [data-col-key="name"]').attributes('tabindex')).toBeUndefined()
@@ -187,8 +232,12 @@ describe('features are opt-in', () => {
   })
 
   it('column resizing: no handles and stored widths ignored without it; resize, persist and reset with it', async () => {
-    const cols = [{ key: 'name', width: '10rem' }, { key: 'score', resizable: false }]
-    const template = (w: ReturnType<typeof mount>) => (w.find('.vg').element as HTMLElement).style.getPropertyValue('--vg-columns')
+    const cols = [
+      { key: 'name', width: '10rem' },
+      { key: 'score', resizable: false },
+    ]
+    const template = (w: ReturnType<typeof mount>) =>
+      (w.find('.vg').element as HTMLElement).style.getPropertyValue('--vg-columns')
     const stored = { order: ['name', 'score'], hidden: [], widths: { name: '300px' } }
 
     const bare = mount(VGrid, { props: { rows, columns: cols, rowKey: 'id', columnState: stored } })
@@ -196,7 +245,13 @@ describe('features are opt-in', () => {
     expect(template(bare)).toBe('10rem auto') // the stored width is ignored
 
     const w = mount(VGrid, {
-      props: { rows, columns: cols, rowKey: 'id', columnState: stored, features: [columnResizingFeature, menusFeature] },
+      props: {
+        rows,
+        columns: cols,
+        rowKey: 'id',
+        columnState: stored,
+        features: [columnResizingFeature, menusFeature],
+      },
       attachTo: document.body,
     })
     expect(template(w)).toBe('300px auto')
@@ -212,11 +267,15 @@ describe('features are opt-in', () => {
     await w.setProps({ columnState: states.at(-1)![0] })
     await w.find('.vg-header [data-col-key="name"]').trigger('contextmenu')
     await flushPromises()
-    const reset = [...document.querySelectorAll<HTMLElement>('.vg-menu [role="menuitem"]')].find((e) => e.textContent?.trim() === 'Reset width')!
+    const reset = [...document.querySelectorAll<HTMLElement>('.vg-menu [role="menuitem"]')].find(
+      (e) => e.textContent?.trim() === 'Reset width',
+    )!
     expect(reset.hasAttribute('disabled')).toBe(false)
     reset.click()
     await flushPromises()
-    expect((w.emitted('update:columnState') as { widths?: unknown }[][]).at(-1)![0]!.widths).toBeUndefined()
+    expect(
+      (w.emitted('update:columnState') as { widths?: unknown }[][]).at(-1)![0]!.widths,
+    ).toBeUndefined()
     w.unmount()
   })
 
@@ -229,13 +288,24 @@ describe('features are opt-in', () => {
       { key: 'plain' as const, value: () => 'x' },
     ]
     const groups = (w: ReturnType<typeof mount>) =>
-      w.findAll('.vg-group-cell').map((c) => [c.text(), c.attributes('style')?.match(/grid-column: ([^;]+)/)?.[1]])
+      w
+        .findAll('.vg-group-cell')
+        .map((c) => [c.text(), c.attributes('style')?.match(/grid-column: ([^;]+)/)?.[1]])
 
     const bare = mount(VGrid, { props: { rows, columns: cols, rowKey: 'id' } })
     expect(bare.find('.vg-header-groups').exists()).toBe(false)
-    expect(warn.mock.calls.map((c: unknown[]) => String(c[0])).join('\n')).toContain('needs the columnGroups feature')
+    expect(warn.mock.calls.map((c: unknown[]) => String(c[0])).join('\n')).toContain(
+      'needs the columnGroups feature',
+    )
 
-    const w = mount(VGrid, { props: { rows, columns: cols, rowKey: 'id', features: [columnGroupsFeature, columnPinningFeature, columnVisibilityFeature] } })
+    const w = mount(VGrid, {
+      props: {
+        rows,
+        columns: cols,
+        rowKey: 'id',
+        features: [columnGroupsFeature, columnPinningFeature, columnVisibilityFeature],
+      },
+    })
     expect(w.find('.vg').classes()).toContain('vg-has-groups')
     // "Bet" is split by the pin boundary; "Odds" spans two columns; "plain" gets an empty cell
     expect(groups(w)).toEqual([
@@ -253,28 +323,42 @@ describe('features are opt-in', () => {
 
   it('column visibility: hidden columns show without the feature; hide works with it', async () => {
     const cols = [{ key: 'name' }, { key: 'score', hidden: true }]
-    const headerKeys = (w: ReturnType<typeof mount>) => w.findAll('.vg-header > [data-col-key]').map((h) => h.attributes('data-col-key'))
-    const labels = () => [...document.querySelectorAll('.vg-menu [role="menuitem"]')].map((e) => e.textContent?.trim())
+    const headerKeys = (w: ReturnType<typeof mount>) =>
+      w.findAll('.vg-header > [data-col-key]').map((h) => h.attributes('data-col-key'))
+    const labels = () =>
+      [...document.querySelectorAll('.vg-menu [role="menuitem"]')].map((e) => e.textContent?.trim())
 
-    const bare = mount(VGrid, { props: { rows, columns: cols, rowKey: 'id', features: [menusFeature] }, attachTo: document.body })
+    const bare = mount(VGrid, {
+      props: { rows, columns: cols, rowKey: 'id', features: [menusFeature] },
+      attachTo: document.body,
+    })
     expect(headerKeys(bare)).toEqual(['name', 'score'])
     await bare.find('.vg-header [data-col-key="name"]').trigger('contextmenu')
     await flushPromises()
     expect(labels()).toContain('Reset columns')
     expect(labels()).not.toContain('Hide column')
-    expect(warn.mock.calls.map((c: unknown[]) => String(c[0])).join('\n')).toContain('needs the columnVisibility feature')
+    expect(warn.mock.calls.map((c: unknown[]) => String(c[0])).join('\n')).toContain(
+      'needs the columnVisibility feature',
+    )
     // a stored hidden list is ignored too
     await bare.setProps({ columnState: { order: ['name', 'score'], hidden: ['name'] } })
     expect(headerKeys(bare)).toEqual(['name', 'score'])
     bare.unmount()
 
     const full = mount(VGrid, {
-      props: { rows, columns: [{ key: 'name' }, { key: 'score' }, { key: 'id' }], rowKey: 'id', features: [menusFeature, columnVisibilityFeature] },
+      props: {
+        rows,
+        columns: [{ key: 'name' }, { key: 'score' }, { key: 'id' }],
+        rowKey: 'id',
+        features: [menusFeature, columnVisibilityFeature],
+      },
       attachTo: document.body,
     })
     await full.find('.vg-header [data-col-key="score"]').trigger('contextmenu')
     await flushPromises()
-    const hide = [...document.querySelectorAll<HTMLElement>('.vg-menu [role="menuitem"]')].find((e) => e.textContent?.trim() === 'Hide column')!
+    const hide = [...document.querySelectorAll<HTMLElement>('.vg-menu [role="menuitem"]')].find(
+      (e) => e.textContent?.trim() === 'Hide column',
+    )!
     hide.click()
     await flushPromises()
     expect(headerKeys(full)).toEqual(['name', 'id'])
@@ -282,13 +366,19 @@ describe('features are opt-in', () => {
   })
 
   it('virtual scrolling: every row renders without the feature; only a window with it', async () => {
-    const many = Array.from({ length: 500 }, (_, i) => ({ id: i + 1, name: `Row ${i + 1}`, score: i }))
+    const many = Array.from({ length: 500 }, (_, i) => ({
+      id: i + 1,
+      name: `Row ${i + 1}`,
+      score: i,
+    }))
     const props = { rows: many, columns, rowKey: 'id', virtual: { rowHeight: 40 } }
     const bare = mount(VGrid, { props })
     expect(bare.findAll('.vg-row')).toHaveLength(500)
     expect(bare.find('.vg-spacer').exists()).toBe(false)
     expect(bare.find('.vg').classes()).not.toContain('vg-virtual')
-    expect(warn.mock.calls.map((c: unknown[]) => String(c[0])).join('\n')).toContain('needs the virtualScrolling feature')
+    expect(warn.mock.calls.map((c: unknown[]) => String(c[0])).join('\n')).toContain(
+      'needs the virtualScrolling feature',
+    )
 
     const virtual = mount(VGrid, { props: { ...props, features: [virtualScrollingFeature] } })
     expect(virtual.find('.vg').classes()).toContain('vg-virtual')
@@ -297,7 +387,9 @@ describe('features are opt-in', () => {
   })
 
   it('per grid: only the listed features are on', async () => {
-    const w = mount(VGrid, { props: { rows, columns, rowKey: 'id', sortMode: 'client', features: [sortingFeature] } })
+    const w = mount(VGrid, {
+      props: { rows, columns, rowKey: 'id', sortMode: 'client', features: [sortingFeature] },
+    })
     expect(w.findAll('.vg-sort')).toHaveLength(2)
     expect(w.find('.vg-filter-button').exists()).toBe(false)
     await w.find('[data-col-key="name"] .vg-sort').trigger('click')
@@ -307,13 +399,23 @@ describe('features are opt-in', () => {
   it('app-wide via createVueGrid, merged with the grid’s own', async () => {
     const dataSource = vi.fn(async () => ({ rows: rows.slice(0, 2), total: 3 }))
     const w = mount(VGrid, {
-      props: { dataSource, columns, rowKey: 'id', pagination: true, pageSize: 2, features: [paginationFeature] },
+      props: {
+        dataSource,
+        columns,
+        rowKey: 'id',
+        pagination: true,
+        pageSize: 2,
+        features: [paginationFeature],
+      },
       global: { plugins: [createVueGrid({ features: [serverDataFeature, filteringFeature] })] },
     })
     await flushPromises()
     await vi.dynamicImportSettled()
     await flushPromises()
-    expect(dataSource).toHaveBeenCalledWith(expect.objectContaining({ page: 1, pageSize: 2 }), expect.anything())
+    expect(dataSource).toHaveBeenCalledWith(
+      expect.objectContaining({ page: 1, pageSize: 2 }),
+      expect.anything(),
+    )
     expect(w.findAll('.vg-filter-button')).toHaveLength(2)
     expect(w.find('.vg-grid-pagination').exists()).toBe(true)
     expect(w.find('.vg-sort').exists()).toBe(false) // sorting not registered

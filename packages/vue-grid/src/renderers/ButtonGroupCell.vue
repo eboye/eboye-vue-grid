@@ -19,7 +19,11 @@ const buttons = computed(() => {
       v-for="b in buttons"
       :key="b.name"
       type="button"
-      :class="['vg-action-button', `vg-variant-${b.variant ?? 'outline'}`, b.tone && `vg-tone-${b.tone}`]"
+      :class="[
+        'vg-action-button',
+        `vg-variant-${b.variant ?? 'outline'}`,
+        b.tone && `vg-tone-${b.tone}`,
+      ]"
       :disabled="b.disabled"
       @click="emit('action', b.name, value)"
     >

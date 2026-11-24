@@ -2,7 +2,8 @@ import { expect, test, type Locator, type Page } from '@playwright/test'
 
 const demo = (page: Page, name: string) => page.locator(`[data-demo="${name}"]`)
 const headers = (scope: Locator) => scope.locator('.vg-header > [role="columnheader"]')
-const headerTexts = async (scope: Locator) => (await headers(scope).allInnerTexts()).map((t) => t.trim())
+const headerTexts = async (scope: Locator) =>
+  (await headers(scope).allInnerTexts()).map((t) => t.trim())
 const box = async (l: Locator) => {
   const b = await l.boundingBox()
   if (!b) throw new Error('no bounding box')
@@ -19,7 +20,8 @@ test.describe('sorting', () => {
   test('client sort cycles asc → desc → none with aria-sort', async ({ page }) => {
     const grid = demo(page, 'basic')
     const stakeHeader = grid.locator('[role="columnheader"][data-col-key="stake"]')
-    const firstStake = () => grid.locator('.vg-row').first().locator('[data-col-key="stake"]').innerText()
+    const firstStake = () =>
+      grid.locator('.vg-row').first().locator('[data-col-key="stake"]').innerText()
 
     await stakeHeader.getByRole('button').click()
     await expect(stakeHeader).toHaveAttribute('aria-sort', 'ascending')
@@ -27,7 +29,9 @@ test.describe('sorting', () => {
     await stakeHeader.getByRole('button').click()
     await expect(stakeHeader).toHaveAttribute('aria-sort', 'descending')
     const desc = await firstStake()
-    expect(parseFloat(asc.replace(/[^\d.]/g, ''))).toBeLessThan(parseFloat(desc.replace(/[^\d.]/g, '')))
+    expect(parseFloat(asc.replace(/[^\d.]/g, ''))).toBeLessThan(
+      parseFloat(desc.replace(/[^\d.]/g, '')),
+    )
     await stakeHeader.getByRole('button').click()
     await expect(stakeHeader).toHaveAttribute('aria-sort', 'none')
     await expect(grid.locator('.vg-row').first()).toHaveAttribute('data-row-key', '1')
@@ -36,14 +40,20 @@ test.describe('sorting', () => {
   test('controlled sort + pagination', async ({ page }) => {
     const grid = demo(page, 'pagination')
     await grid.getByRole('button', { name: 'Page 2' }).click()
-    await expect(grid.getByRole('button', { name: 'Page 2' })).toHaveAttribute('aria-current', 'page')
+    await expect(grid.getByRole('button', { name: 'Page 2' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    )
     await expect(grid.locator('.vg-row').first()).toHaveAttribute('data-row-key', '11')
     await expect(grid.locator('.vg-pagination-summary')).toHaveText('11–20 of 137')
     await grid.getByRole('button', { name: 'Last page' }).click()
     await expect(grid.locator('.vg-row')).toHaveCount(7)
     await grid.locator('select').selectOption('25')
     await expect(grid.locator('.vg-row')).toHaveCount(25)
-    await expect(grid.getByRole('button', { name: 'Page 1' })).toHaveAttribute('aria-current', 'page')
+    await expect(grid.getByRole('button', { name: 'Page 1' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    )
   })
 })
 
@@ -74,7 +84,10 @@ test.describe('layout', () => {
 
     const [id0, player0, city0] = [await box(id), await box(player), await box(city)]
     expect(player0.x).toBeCloseTo(id0.x + id0.width, 0) // second pinned column sits right after the first
-    expect((await box(open)).x + (await box(open)).width).toBeCloseTo(viewport.x + viewport.width, 0)
+    expect((await box(open)).x + (await box(open)).width).toBeCloseTo(
+      viewport.x + viewport.width,
+      0,
+    )
 
     await scroller.hover()
     await page.mouse.wheel(500, 0)
@@ -90,7 +103,9 @@ test.describe('layout', () => {
     expect(bodyId.x).toBeCloseTo(id0.x, 0)
   })
 
-  test('sub-grid child cells line up with parent columns (CSS subgrid), nested', async ({ page }) => {
+  test('sub-grid child cells line up with parent columns (CSS subgrid), nested', async ({
+    page,
+  }) => {
     const grid = demo(page, 'subgrid')
     await grid.locator('[data-row-key="fb"] .vg-expander').click()
     await grid.locator('[data-row-key="fb-1x2"] .vg-expander').click()
@@ -108,7 +123,8 @@ test.describe('layout', () => {
       }
     }
     // the tree column is indented per depth
-    const indent = async (key: string) => (await box(grid.locator(`[data-row-key="${key}"] > .vg-cell-tree .vg-cell-content`))).x
+    const indent = async (key: string) =>
+      (await box(grid.locator(`[data-row-key="${key}"] > .vg-cell-tree .vg-cell-content`))).x
     expect(await indent('fb-ou')).toBeGreaterThan(await indent('fb'))
     expect(await indent('fb-1x2-h')).toBeGreaterThan(await indent('fb-ou'))
 
@@ -133,10 +149,17 @@ test.describe('columns', () => {
     await page.keyboard.press('Escape')
     await expect(panel).toBeHidden()
     await page.reload()
-    await expect(demo(page, 'pinned').locator('[role="columnheader"][data-col-key="city"]')).toHaveCount(0)
+    await expect(
+      demo(page, 'pinned').locator('[role="columnheader"][data-col-key="city"]'),
+    ).toHaveCount(0)
     await demo(page, 'pinned').getByRole('button', { name: 'Columns' }).click()
-    await page.getByRole('dialog', { name: 'Columns' }).getByRole('button', { name: 'Reset columns' }).click()
-    await expect(demo(page, 'pinned').locator('[role="columnheader"][data-col-key="city"]')).toBeVisible()
+    await page
+      .getByRole('dialog', { name: 'Columns' })
+      .getByRole('button', { name: 'Reset columns' })
+      .click()
+    await expect(
+      demo(page, 'pinned').locator('[role="columnheader"][data-col-key="city"]'),
+    ).toBeVisible()
   })
 
   test('drag a header to reorder; order persists across reload', async ({ page }) => {
@@ -147,13 +170,23 @@ test.describe('columns', () => {
     await page.mouse.move(status.x + status.width / 2, status.y + status.height / 2)
     await page.mouse.down()
     await page.mouse.move(city.x + 20, city.y + city.height / 2, { steps: 8 })
-    await expect(grid.locator('[role="columnheader"][data-col-key="city"]')).toHaveClass(/vg-drop-before/)
+    await expect(grid.locator('[role="columnheader"][data-col-key="city"]')).toHaveClass(
+      /vg-drop-before/,
+    )
     await page.mouse.up()
-    await expect.poll(async () => (await headerTexts(grid)).slice(2, 5)).toEqual(['Status', 'City', 'Stake'])
+    await expect
+      .poll(async () => (await headerTexts(grid)).slice(2, 5))
+      .toEqual(['Status', 'City', 'Stake'])
     // body follows
-    await expect(grid.locator('.vg-row').first().locator('[role="gridcell"]').nth(2)).toHaveAttribute('data-col-key', 'status')
+    await expect(
+      grid.locator('.vg-row').first().locator('[role="gridcell"]').nth(2),
+    ).toHaveAttribute('data-col-key', 'status')
     await page.reload()
-    expect((await headerTexts(demo(page, 'pinned'))).slice(2, 5)).toEqual(['Status', 'City', 'Stake'])
+    expect((await headerTexts(demo(page, 'pinned'))).slice(2, 5)).toEqual([
+      'Status',
+      'City',
+      'Stake',
+    ])
   })
 
   test('a pinned column cannot be dropped into the unpinned group', async ({ page }) => {
@@ -172,7 +205,9 @@ test.describe('columns', () => {
     await grid.locator('[role="columnheader"][data-col-key="stake"]').click()
     await expect(grid.locator('[role="columnheader"][data-col-key="stake"]')).toBeFocused()
     await page.keyboard.press('Alt+ArrowLeft')
-    await expect.poll(async () => (await headerTexts(grid)).slice(2, 5)).toEqual(['City', 'Stake', 'Status'])
+    await expect
+      .poll(async () => (await headerTexts(grid)).slice(2, 5))
+      .toEqual(['City', 'Stake', 'Status'])
     await expect(grid.locator('[role="columnheader"][data-col-key="stake"]')).toBeFocused()
   })
 })
@@ -216,7 +251,11 @@ test.describe('selection', () => {
     await grid.locator('[data-row-key="fb"] .vg-expander').click()
     await grid.locator('[data-row-key="fb-ou"] .vg-checkbox input').click()
     await expect
-      .poll(() => grid.locator('[data-row-key="fb"] .vg-checkbox input').evaluate((el: HTMLInputElement) => el.indeterminate))
+      .poll(() =>
+        grid
+          .locator('[data-row-key="fb"] .vg-checkbox input')
+          .evaluate((el: HTMLInputElement) => el.indeterminate),
+      )
       .toBe(true)
 
     await header.click()
@@ -227,7 +266,9 @@ test.describe('selection', () => {
 
   test('rows that are not selectable have a disabled checkbox', async ({ page }) => {
     const grid = demo(page, 'detail')
-    const voidRow = grid.locator('.vg-row', { has: page.locator('.vg-status-badge', { hasText: 'Void' }) }).first()
+    const voidRow = grid
+      .locator('.vg-row', { has: page.locator('.vg-status-badge', { hasText: 'Void' }) })
+      .first()
     if (await voidRow.count()) await expect(voidRow.locator('.vg-checkbox input')).toBeDisabled()
     await grid.locator('[data-row-key="1"] .vg-checkbox input').click()
     await expect(grid.getByTestId('selected')).toHaveText('selected: 1')
@@ -272,7 +313,10 @@ test.describe('keyboard', () => {
     await page.keyboard.press('Tab')
     await expect(grid.locator('[role="columnheader"]').first()).toBeFocused()
     await page.keyboard.press('Enter')
-    await expect(grid.locator('[role="columnheader"]').first()).toHaveAttribute('aria-sort', 'ascending')
+    await expect(grid.locator('[role="columnheader"]').first()).toHaveAttribute(
+      'aria-sort',
+      'ascending',
+    )
   })
 })
 
@@ -300,20 +344,27 @@ test.describe('virtual scrolling', () => {
     const firstKey = await grid.locator('.vg-row').first().getAttribute('data-row-key')
     await scroller.hover()
     await page.mouse.wheel(0, -2000)
-    await expect.poll(() => grid.locator('.vg-row').first().getAttribute('data-row-key')).not.toBe(firstKey)
+    await expect
+      .poll(() => grid.locator('.vg-row').first().getAttribute('data-row-key'))
+      .not.toBe(firstKey)
   })
 })
 
 test.describe('renderers & events', () => {
   test('addon rating renderer emits an action instead of a row click', async ({ page }) => {
     const grid = demo(page, 'basic')
-    await grid.locator('[data-row-key="1"] [data-col-key="rating"]').getByRole('radio', { name: '4 of 5' }).click()
+    await grid
+      .locator('[data-row-key="1"] [data-col-key="rating"]')
+      .getByRole('radio', { name: '4 of 5' })
+      .click()
     await expect(page.getByTestId('log')).toHaveText('cell-action rate #1 4')
     await grid.locator('[data-row-key="1"] > [data-col-key="city"]').click()
     await expect(page.getByTestId('log')).toHaveText('row-click #1')
   })
 
-  test('actions menu opens above the grid, supports keyboard, emits the action', async ({ page }) => {
+  test('actions menu opens above the grid, supports keyboard, emits the action', async ({
+    page,
+  }) => {
     const grid = demo(page, 'basic')
     await grid.locator('[data-row-key="2"]').getByRole('button', { name: 'Actions' }).click()
     const menu = page.getByRole('menu')
@@ -333,7 +384,10 @@ test.describe('renderers & events', () => {
 
   test('json renderer shows escaped JSON in a modal dialog', async ({ page }) => {
     const grid = demo(page, 'basic')
-    await grid.locator('[data-row-key="1"] [data-col-key="meta"]').getByRole('button', { name: 'View' }).click()
+    await grid
+      .locator('[data-row-key="1"] [data-col-key="meta"]')
+      .getByRole('button', { name: 'View' })
+      .click()
     const dialog = page.locator('dialog[open]')
     await expect(dialog).toBeVisible()
     await expect(dialog.locator('pre')).toContainText('"channel"')
@@ -353,7 +407,12 @@ test.describe('theming', () => {
     await expect(defaultHeader).toHaveCSS('font-style', 'italic')
     await expect(defaultHeader).not.toHaveCSS('background-color', 'rgb(253, 242, 248)')
 
-    const cell = grid.getByTestId('default-grid').locator('.vg-row').first().locator('.vg-cell').first()
+    const cell = grid
+      .getByTestId('default-grid')
+      .locator('.vg-row')
+      .first()
+      .locator('.vg-cell')
+      .first()
     const cozy = (await box(cell)).height
     await grid.getByTestId('density').selectOption('compact')
     await expect.poll(async () => (await box(cell)).height).toBeLessThan(cozy)

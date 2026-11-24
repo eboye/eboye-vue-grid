@@ -11,15 +11,23 @@ const grid = (page: Page) => page.locator('#storybook-root .vg')
 const topGroups = (page: Page) =>
   grid(page)
     .locator(':scope > .vg-rowgroup .vg-rowgroup-label')
-    .evaluateAll((els) => els.map((e) => [...e.children].map((c) => c.textContent?.trim()).join(' ')))
+    .evaluateAll((els) =>
+      els.map((e) => [...e.children].map((c) => c.textContent?.trim()).join(' ')),
+    )
 const groupRow = (page: Page, value: string) =>
   grid(page)
     .locator('.vg-rowgroup')
-    .filter({ has: page.locator('.vg-rowgroup-value').filter({ hasText: new RegExp(`^\\s*${value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`) }) })
+    .filter({
+      has: page.locator('.vg-rowgroup-value').filter({
+        hasText: new RegExp(`^\\s*${value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`),
+      }),
+    })
     .first()
 const box = async (l: ReturnType<Page['locator']>) => (await l.boundingBox())!
 
-test('group rows: label spans the columns up to the first aggregate; clicking toggles the group', async ({ page }) => {
+test('group rows: label spans the columns up to the first aggregate; clicking toggles the group', async ({
+  page,
+}) => {
   await story(page, 'by-status')
   const groups = await topGroups(page)
   expect(groups.length).toBeGreaterThan(1)
@@ -60,8 +68,12 @@ test('header menu: Group by adds a level, Ungroup all removes them', async ({ pa
   await page.locator('.vg-header > [data-col-key="city"]').click({ button: 'right' })
   await page.getByRole('menuitem', { name: 'Group by City' }).click()
   await expect(page.locator('.sb-note strong')).toHaveText('status › city')
-  await groupRow(page, (await topGroups(page))[0]!.split(' ')[1]!).locator('.vg-expander').click()
-  await expect(grid(page).locator('.vg-subgrid > .vg-rowgroup').first().locator('.vg-rowgroup-name')).toHaveText('City')
+  await groupRow(page, (await topGroups(page))[0]!.split(' ')[1]!)
+    .locator('.vg-expander')
+    .click()
+  await expect(
+    grid(page).locator('.vg-subgrid > .vg-rowgroup').first().locator('.vg-rowgroup-name'),
+  ).toHaveText('City')
 
   await page.locator('.vg-header > [data-col-key="status"]').click({ button: 'right' })
   await page.getByRole('menuitem', { name: 'Ungroup all' }).click()
@@ -70,7 +82,9 @@ test('header menu: Group by adds a level, Ungroup all removes them', async ({ pa
   await expect(grid(page).locator(':scope > .vg-row')).toHaveCount(120)
 })
 
-test('sorting: the grouped column orders the groups, other columns order the rows inside', async ({ page }) => {
+test('sorting: the grouped column orders the groups, other columns order the rows inside', async ({
+  page,
+}) => {
   await story(page, 'by-status')
   const asc = await topGroups(page)
   const sortStatus = page.locator('.vg-header > [data-col-key="status"] .vg-sort')
@@ -90,7 +104,9 @@ test('sorting: the grouped column orders the groups, other columns order the row
   expect(stakes).toEqual([...stakes].sort((a, b) => b - a))
 })
 
-test('nested, expanded, with selection: a group checkbox selects every row in it', async ({ page }) => {
+test('nested, expanded, with selection: a group checkbox selects every row in it', async ({
+  page,
+}) => {
   await story(page, 'nested')
   const top = grid(page).locator(':scope > .vg-rowgroup').first()
   const sub = grid(page).locator(':scope > .vg-subgrid').first()
@@ -102,7 +118,9 @@ test('nested, expanded, with selection: a group checkbox selects every row in it
   await expect(top.locator('.vg-cell-select input')).toBeChecked()
   // unticking one row leaves the groups above it indeterminate
   await sub.locator('.vg-row:not(.vg-rowgroup) .vg-cell-select input').first().click()
-  expect(await top.locator('.vg-cell-select input').evaluate((i: HTMLInputElement) => i.indeterminate)).toBe(true)
+  expect(
+    await top.locator('.vg-cell-select input').evaluate((i: HTMLInputElement) => i.indeterminate),
+  ).toBe(true)
   // the totals row still sums every row
   await expect(page.locator('.vg-row-total')).toBeVisible()
 })
@@ -126,7 +144,9 @@ test('virtual: 10,000 grouped rows render in a window and scroll to the end', as
   expect(await grid(page).locator('.vg-row').count()).toBeLessThan(120)
   await grid(page).hover()
   await grid(page).evaluate((el) => (el.scrollTop = el.scrollHeight))
-  await expect.poll(() => grid(page).locator(':scope > .vg-subgrid .vg-row:not(.vg-rowgroup)').count()).toBeGreaterThan(0)
+  await expect
+    .poll(() => grid(page).locator(':scope > .vg-subgrid .vg-row:not(.vg-rowgroup)').count())
+    .toBeGreaterThan(0)
   // collapsing every group, from the top, leaves only the group rows: each collapse brings the next
   // group into the window
   await grid(page).evaluate((el) => (el.scrollTop = 0))
@@ -139,7 +159,9 @@ test('virtual: 10,000 grouped rows render in a window and scroll to the end', as
   await expect(grid(page).locator('.vg-row:not(.vg-rowgroup)')).toHaveCount(0)
   const groups = await topGroups(page)
   expect(groups).toHaveLength(collapsed)
-  expect(groups.reduce((n, g) => n + Number(g.split(' ').at(-1)!.replace(/\D/g, '')), 0)).toBe(10_000)
+  expect(groups.reduce((n, g) => n + Number(g.split(' ').at(-1)!.replace(/\D/g, '')), 0)).toBe(
+    10_000,
+  )
   // nothing left to scroll
   expect(await grid(page).evaluate((el) => el.scrollHeight <= el.clientHeight + 1)).toBe(true)
 })

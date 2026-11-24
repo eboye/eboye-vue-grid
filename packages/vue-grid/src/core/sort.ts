@@ -34,7 +34,11 @@ export function sortRows<T>(
   compare?: (a: T, b: T) => number,
 ): T[] {
   const sign = dir === 'asc' ? 1 : -1
-  const decorated = rows.map((row, index) => ({ row, index, value: compare ? undefined : getValue(row) }))
+  const decorated = rows.map((row, index) => ({
+    row,
+    index,
+    value: compare ? undefined : getValue(row),
+  }))
   decorated.sort((x, y) => {
     let result: number
     if (compare) {

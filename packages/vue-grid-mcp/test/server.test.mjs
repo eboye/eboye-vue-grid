@@ -18,7 +18,8 @@ function request(method, params) {
   child.stdin.write(JSON.stringify({ jsonrpc: '2.0', id, method, params }) + '\n')
   return new Promise((resolve) => pending.set(id, resolve))
 }
-const call = async (name, args = {}) => (await request('tools/call', { name, arguments: args })).result
+const call = async (name, args = {}) =>
+  (await request('tools/call', { name, arguments: args })).result
 
 before(() => {
   child = spawn(process.execPath, [bin], { stdio: ['pipe', 'pipe', 'pipe'] })
@@ -31,7 +32,11 @@ before(() => {
 after(() => child.kill())
 
 test('initialize negotiates the protocol and names the server', async () => {
-  const { result } = await request('initialize', { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'test', version: '0' } })
+  const { result } = await request('initialize', {
+    protocolVersion: '2025-06-18',
+    capabilities: {},
+    clientInfo: { name: 'test', version: '0' },
+  })
   assert.equal(result.protocolVersion, '2025-06-18')
   assert.equal(result.serverInfo.name, 'vue-grid')
   assert.match(result.instructions, /vue_grid_guide/)
@@ -43,7 +48,16 @@ test('initialize negotiates the protocol and names the server', async () => {
 
 test('lists five read-only tools with input schemas', async () => {
   const { result } = await request('tools/list')
-  assert.deepEqual(result.tools.map((t) => t.name), ['vue_grid_guide', 'vue_grid_api', 'vue_grid_renderer', 'vue_grid_search_docs', 'vue_grid_validate'])
+  assert.deepEqual(
+    result.tools.map((t) => t.name),
+    [
+      'vue_grid_guide',
+      'vue_grid_api',
+      'vue_grid_renderer',
+      'vue_grid_search_docs',
+      'vue_grid_validate',
+    ],
+  )
   for (const t of result.tools) {
     assert.equal(t.inputSchema.type, 'object')
     assert.equal(t.annotations.readOnlyHint, true)
@@ -58,9 +72,13 @@ test('guide returns AGENTS.md', async () => {
 test('api: index, a section entry, a search by name, and errors as tool results', async () => {
   const index = JSON.parse((await call('vue_grid_api')).content[0].text)
   assert.ok(index.sections.features.includes('sortingFeature'))
-  const agg = JSON.parse((await call('vue_grid_api', { section: 'column', name: 'aggregate' })).content[0].text)
+  const agg = JSON.parse(
+    (await call('vue_grid_api', { section: 'column', name: 'aggregate' })).content[0].text,
+  )
   assert.equal(agg.feature, 'aggregation')
-  const pinned = JSON.parse((await call('vue_grid_api', { name: 'v-model:pinned-rows' })).content[0].text)
+  const pinned = JSON.parse(
+    (await call('vue_grid_api', { name: 'v-model:pinned-rows' })).content[0].text,
+  )
   assert.equal(pinned[0].section, 'models')
   const bad = await call('vue_grid_api', { section: 'nope' })
   assert.equal(bad.isError, true)
@@ -76,15 +94,23 @@ test('renderer: details with an example, list, unknown', async () => {
 })
 
 test('search finds the relevant sections', async () => {
-  const text = (await call('vue_grid_search_docs', { query: 'lazy sub rows', limit: 3 })).content[0].text
+  const text = (await call('vue_grid_search_docs', { query: 'lazy sub rows', limit: 3 })).content[0]
+    .text
   assert.match(text, /load-sub-rows|loadSubRows/)
-  assert.match((await call('vue_grid_search_docs', { query: 'zzqqxx' })).content[0].text, /No section/)
+  assert.match(
+    (await call('vue_grid_search_docs', { query: 'zzqqxx' })).content[0].text,
+    /No section/,
+  )
 })
 
 test('validate returns diagnostics with fixes', async () => {
   const text = (
     await call('vue_grid_validate', {
-      config: { 'row-key': 'id', columns: [{ key: 'total', sortable: true, renderer: 'currency', with: '8rem' }], features: [] },
+      config: {
+        'row-key': 'id',
+        columns: [{ key: 'total', sortable: true, renderer: 'currency', with: '8rem' }],
+        features: [],
+      },
     })
   ).content[0].text
   assert.match(text, /^NOT OK/)
@@ -109,7 +135,10 @@ test('unknown methods and bad JSON are protocol errors', async () => {
 test('CLI: validate a config file', () => {
   const dir = mkdtempSync(join(tmpdir(), 'vgm-'))
   const file = join(dir, 'grid.json')
-  writeFileSync(file, JSON.stringify({ rowKey: 'id', columns: [{ key: 'a', width: 120 }], features: [] }))
+  writeFileSync(
+    file,
+    JSON.stringify({ rowKey: 'id', columns: [{ key: 'a', width: 120 }], features: [] }),
+  )
   const run = spawnSync(process.execPath, [bin, 'validate', file], { encoding: 'utf8' })
   assert.equal(run.status, 1)
   assert.match(run.stdout, /'120px'/)

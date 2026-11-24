@@ -16,7 +16,9 @@ const names = (page: Page) =>
     .locator(':scope > .vg-row > [data-col-key="player"]')
     .evaluateAll((els) => els.map((e) => e.textContent!.trim()))
 
-test('Download CSV: the filtered, sorted rows with a header, totals, a BOM, and no action column', async ({ page }) => {
+test('Download CSV: the filtered, sorted rows with a header, totals, a BOM, and no action column', async ({
+  page,
+}) => {
   await open(page)
   await page.locator('.vg-header [data-col-key="player"] .vg-sort').click() // sort by player
   const filter = page.locator('.vg-header [data-col-key="city"] input').first()
@@ -24,7 +26,10 @@ test('Download CSV: the filtered, sorted rows with a header, totals, a BOM, and 
   await expect.poll(async () => (await names(page)).length).toBeLessThan(40)
   const visible = await names(page)
 
-  const [download] = await Promise.all([page.waitForEvent('download'), page.locator('[data-test="download"]').click()])
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.locator('[data-test="download"]').click(),
+  ])
   expect(download.suggestedFilename()).toBe('bets.csv')
   const bytes = readFileSync((await download.path())!)
   expect([...bytes.subarray(0, 3)]).toEqual([0xef, 0xbb, 0xbf])
@@ -36,16 +41,21 @@ test('Download CSV: the filtered, sorted rows with a header, totals, a BOM, and 
   expect(lines.at(-1)).toMatch(/^Total,/)
 })
 
-test('Ctrl/⌘+C on a focused cell copies it as shown; with rows selected it copies the rows', async ({ page, browserName }) => {
+test('Ctrl/⌘+C on a focused cell copies it as shown; with rows selected it copies the rows', async ({
+  page,
+  browserName,
+}) => {
   // Chromium lets the test read the clipboard back; elsewhere the grid's `copy` event is the check
-  if (browserName === 'chromium') await page.context().grantPermissions(['clipboard-read', 'clipboard-write'])
+  if (browserName === 'chromium')
+    await page.context().grantPermissions(['clipboard-read', 'clipboard-write'])
   await open(page)
   const cell = grid(page).locator(':scope > .vg-row').first().locator('[data-col-key="stake"]')
   const shown = (await cell.textContent())!.trim()
   await cell.click()
   await page.keyboard.press(`${mod}+c`)
   await expect(copied(page)).toHaveText(`Cell: ${shown}`)
-  if (browserName === 'chromium') expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(shown)
+  if (browserName === 'chromium')
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(shown)
 
   const rows = grid(page).locator(':scope > .vg-row')
   await rows.nth(0).locator('.vg-cell-select input').click()
@@ -56,8 +66,11 @@ test('Ctrl/⌘+C on a focused cell copies it as shown; with rows selected it cop
   const text = (await copied(page).textContent())!.replace(/^2 rows: /, '')
   const first = text.split('\n')[0]!.split('\t')
   expect(first).toHaveLength(7) // every exportable column, tab-separated
-  expect(first[1]).toBe((await rows.nth(0).locator('[data-col-key="player"]').textContent())!.trim())
-  if (browserName === 'chromium') expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(text)
+  expect(first[1]).toBe(
+    (await rows.nth(0).locator('[data-col-key="player"]').textContent())!.trim(),
+  )
+  if (browserName === 'chromium')
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(text)
 })
 
 test('a text selection is copied by the browser, not replaced by the grid', async ({ page }) => {
@@ -74,7 +87,10 @@ test('a text selection is copied by the browser, not replaced by the grid', asyn
   await expect(copied(page)).toHaveText('')
 })
 
-test('the Copy button copies the selected rows; the preview shows formatted values', async ({ page, browserName }) => {
+test('the Copy button copies the selected rows; the preview shows formatted values', async ({
+  page,
+  browserName,
+}) => {
   await open(page)
   await grid(page).locator(':scope > .vg-row').nth(1).locator('.vg-cell-select input').click()
   // no clipboard permission here: headless Chromium refuses the Clipboard API, the fallback copies

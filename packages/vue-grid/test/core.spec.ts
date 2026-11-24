@@ -82,7 +82,12 @@ describe('columns', () => {
   })
 
   it('pins at the inner edge of the pin group and unpins', () => {
-    const c: ColumnDef[] = [{ key: 'a', pinned: 'left' }, { key: 'b' }, { key: 'c' }, { key: 'd', pinned: 'right' }]
+    const c: ColumnDef[] = [
+      { key: 'a', pinned: 'left' },
+      { key: 'b' },
+      { key: 'c' },
+      { key: 'd', pinned: 'right' },
+    ]
     const s = normalizeColumnState(c, null)
     const left = setColumnPinned(c, s, 'c', 'left')
     expect(left.pinned).toEqual({ c: 'left' })
@@ -246,7 +251,9 @@ describe('virtual', () => {
   })
 
   it('a loading or failed sub-grid is one status row', () => {
-    const l = layoutOf([node(1, [node(11)]), node(2)], [1], { subRows: () => ({ status: 'loading' }) })
+    const l = layoutOf([node(1, [node(11)]), node(2)], [1], {
+      subRows: () => ({ status: 'loading' }),
+    })
     expect(l.sub.get(1)).toEqual({ kind: 'status', status: 'loading', height: 30 })
     expect(Array.from(l.tops)).toEqual([0, 20 + 1 + 30, 20 + 31 + 20])
   })
@@ -284,7 +291,12 @@ describe('storage', () => {
 })
 
 describe('pinned offsets in CSS', () => {
-  const col = (key: string, pinned: 'left' | 'right' | undefined, width?: string, minWidth?: string) => ({ key, pinned, def: { width, minWidth } })
+  const col = (
+    key: string,
+    pinned: 'left' | 'right' | undefined,
+    width?: string,
+    minWidth?: string,
+  ) => ({ key, pinned, def: { width, minWidth } })
 
   it('sums definite widths into calc() per side; the outermost width is never needed', () => {
     expect(
@@ -296,7 +308,13 @@ describe('pinned offsets in CSS', () => {
         col('a', 'right', 'min-content'), // innermost right
         col('b', 'right', '120px'),
       ]),
-    ).toEqual({ sel: '0px', id: 'calc(var(--vg-select-column-width))', name: 'calc(var(--vg-select-column-width) + 4rem)', b: '0px', a: 'calc(120px)' })
+    ).toEqual({
+      sel: '0px',
+      id: 'calc(var(--vg-select-column-width))',
+      name: 'calc(var(--vg-select-column-width) + 4rem)',
+      b: '0px',
+      a: 'calc(120px)',
+    })
   })
 
   it('falls back (null) when an inner pinned column is content-sized', () => {

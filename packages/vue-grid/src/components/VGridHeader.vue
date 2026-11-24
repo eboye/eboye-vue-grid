@@ -30,7 +30,11 @@ function ariaSort(col: ResolvedColumn) {
 </script>
 
 <template>
-  <div role="row" :class="['vg-header', grid.ui.value.header]" @click.capture="emit('headerClick', $event)">
+  <div
+    role="row"
+    :class="['vg-header', grid.ui.value.header]"
+    @click.capture="emit('headerClick', $event)"
+  >
     <div
       v-for="col in grid.columns.value"
       :key="col.key"
@@ -60,7 +64,10 @@ function ariaSort(col: ResolvedColumn) {
       ]"
       :style="grid.pinStyle(col.key)"
       @pointerdown="col.kind === 'data' && emit('dragStart', $event, col.key)"
-      @contextmenu="col.kind === 'data' && grid.onHeaderContextMenu(col, $event, $event.currentTarget as HTMLElement)"
+      @contextmenu="
+        col.kind === 'data' &&
+        grid.onHeaderContextMenu(col, $event, $event.currentTarget as HTMLElement)
+      "
     >
       <template v-if="col.kind === 'select'">
         <component
@@ -82,7 +89,11 @@ function ariaSort(col: ResolvedColumn) {
           @click="emit('sort', col.key)"
         >
           <span class="vg-header-label">
-            <RenderSlot v-if="grid.slots[`header-${col.key}`]" :fn="grid.slots[`header-${col.key}`]" :scope="{ column: col.def }" />
+            <RenderSlot
+              v-if="grid.slots[`header-${col.key}`]"
+              :fn="grid.slots[`header-${col.key}`]"
+              :scope="{ column: col.def }"
+            />
             <template v-else>{{ col.def.header ?? col.key }}</template>
           </span>
           <svg class="vg-sort-icon" viewBox="0 0 16 16" aria-hidden="true">
@@ -91,7 +102,11 @@ function ariaSort(col: ResolvedColumn) {
           </svg>
         </button>
         <span v-else class="vg-header-label">
-          <RenderSlot v-if="grid.slots[`header-${col.key}`]" :fn="grid.slots[`header-${col.key}`]" :scope="{ column: col.def }" />
+          <RenderSlot
+            v-if="grid.slots[`header-${col.key}`]"
+            :fn="grid.slots[`header-${col.key}`]"
+            :scope="{ column: col.def }"
+          />
           <template v-else>{{ col.def.header ?? col.key }}</template>
         </span>
         <template v-if="grid.filters && col.def.filterable">

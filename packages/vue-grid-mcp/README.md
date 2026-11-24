@@ -23,13 +23,13 @@ Any MCP client (Cursor, VS Code, Windsurf, Claude Desktop…):
 
 ## Tools
 
-| Tool | What it returns |
-|---|---|
-| `vue_grid_guide` | `AGENTS.md`: the rules that prevent silent failures, which feature / renderer for what, recipes, pitfalls. Call it first. |
-| `vue_grid_api` `{ section?, name? }` | The generated API reference: props, v-models, events, slots, methods, `column` options, features, renderers, types — an index, a section, or one entry (with the feature it needs). |
-| `vue_grid_renderer` `{ name? }` | A renderer's options with types and a column example, or all renderers in one list. |
-| `vue_grid_search_docs` `{ query, limit? }` | The best matching sections of the guide, API reference and README. |
-| `vue_grid_validate` `{ config }` | Diagnostics for a grid config (props, `columns`, `features`, `renderers`): unknown names with did-you-mean, options whose feature is missing, unknown / unregistered renderers and options, wrong types, combinations that do nothing — each with a fix. |
+| Tool                                       | What it returns                                                                                                                                                                                                                                          |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `vue_grid_guide`                           | `AGENTS.md`: the rules that prevent silent failures, which feature / renderer for what, recipes, pitfalls. Call it first.                                                                                                                                |
+| `vue_grid_api` `{ section?, name? }`       | The generated API reference: props, v-models, events, slots, methods, `column` options, features, renderers, types — an index, a section, or one entry (with the feature it needs).                                                                      |
+| `vue_grid_renderer` `{ name? }`            | A renderer's options with types and a column example, or all renderers in one list.                                                                                                                                                                      |
+| `vue_grid_search_docs` `{ query, limit? }` | The best matching sections of the guide, API reference and README.                                                                                                                                                                                       |
+| `vue_grid_validate` `{ config }`           | Diagnostics for a grid config (props, `columns`, `features`, `renderers`): unknown names with did-you-mean, options whose feature is missing, unknown / unregistered renderers and options, wrong types, combinations that do nothing — each with a fix. |
 
 Resources: `vue-grid://AGENTS.md`, `vue-grid://api.md`, `vue-grid://README.md`,
 `vue-grid://api.json`, `vue-grid://grid-config.schema.json`.
@@ -44,8 +44,12 @@ npx @nocopypaste/vue-grid-mcp guide                # print AGENTS.md
 `grid.json` is the grid as data, e.g.:
 
 ```json
-{ "rowKey": "id", "features": ["sortingFeature"], "sortMode": "client",
-  "columns": [{ "key": "total", "renderer": "currencyRenderer", "sortable": true }] }
+{
+  "rowKey": "id",
+  "features": ["sortingFeature"],
+  "sortMode": "client",
+  "columns": [{ "key": "total", "renderer": "currencyRenderer", "sortable": true }]
+}
 ```
 
 ## Protocol

@@ -6,7 +6,11 @@ import { Grid as VGrid, type GridArgs } from '../support'
 
 /** Bet columns with an actions-style column left out of exports, and the stake summed. */
 const exportColumns = [
-  ...betColumns({ sortable: true }).map((c) => (c.key === 'stake' ? { ...c, aggregate: 'sum' as const, filterable: true } : { ...c, filterable: true })),
+  ...betColumns({ sortable: true }).map((c) =>
+    c.key === 'stake'
+      ? { ...c, aggregate: 'sum' as const, filterable: true }
+      : { ...c, filterable: true },
+  ),
   { key: 'note', header: '', width: 'min-content', exportable: false, value: () => '⋯' },
 ]
 
@@ -42,7 +46,8 @@ export const ExportAndCopy: Story = {
       const selected = ref<number[]>([])
       const copied = ref('')
       const preview = ref('')
-      const onCopy = (e: CopyEvent<Bet>) => (copied.value = `${e.kind === 'cell' ? 'Cell' : `${e.rows.length} rows`}: ${e.text}`)
+      const onCopy = (e: CopyEvent<Bet>) =>
+        (copied.value = `${e.kind === 'cell' ? 'Cell' : `${e.rows.length} rows`}: ${e.text}`)
       return { args, grid, selected, copied, preview, onCopy }
     },
     template: `

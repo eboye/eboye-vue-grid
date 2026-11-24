@@ -1,5 +1,10 @@
 import { nextTick, shallowRef, type Ref } from 'vue'
-import { effectivePin, normalizeColumnState, setColumnPinned, visibleColumns } from '../core/columns'
+import {
+  effectivePin,
+  normalizeColumnState,
+  setColumnPinned,
+  visibleColumns,
+} from '../core/columns'
 import type { AnchorTarget } from '../internal/anchor'
 import { holdEvent, isHoldEvent, touchHold } from '../internal/touchHold'
 import type {
@@ -98,7 +103,8 @@ function tidy(items: MenuItem[]): MenuItem[] {
 export function useGridMenus<T>(opts: GridMenusOptions<T>) {
   const items = shallowRef<MenuItem[]>([])
   const label = shallowRef('Row actions')
-  let target: { kind: 'cell'; ctx: CellContext<T> } | { kind: 'header'; column: ColumnDef<T> } | null = null
+  let target:
+    { kind: 'cell'; ctx: CellContext<T> } | { kind: 'header'; column: ColumnDef<T> } | null = null
 
   /**
    * Pointer right-click or touch hold → menu at the pointer; keyboard (ContextMenu key,
@@ -106,7 +112,9 @@ export function useGridMenus<T>(opts: GridMenusOptions<T>) {
    */
   function anchorFor(event: MouseEvent, el: HTMLElement): AnchorTarget {
     const fromPointer =
-      (event.isTrusted || isHoldEvent(event)) && event.button === 2 && (event.clientX !== 0 || event.clientY !== 0)
+      (event.isTrusted || isHoldEvent(event)) &&
+      event.button === 2 &&
+      (event.clientX !== 0 || event.clientY !== 0)
     return fromPointer ? { x: event.clientX, y: event.clientY } : el
   }
 
@@ -169,14 +177,23 @@ export function useGridMenus<T>(opts: GridMenusOptions<T>) {
     if (opts.filters && column.filterable) {
       out.push(
         { name: 'vg:filter', label: 'Filter…' },
-        { name: 'vg:filter-clear', label: 'Clear filter', disabled: !opts.filters.isActive(column.key) },
+        {
+          name: 'vg:filter-clear',
+          label: 'Clear filter',
+          disabled: !opts.filters.isActive(column.key),
+        },
       )
-      if (opts.filters.anyActive()) out.push({ name: 'vg:filter-clear-all', label: 'Clear all filters' })
+      if (opts.filters.anyActive())
+        out.push({ name: 'vg:filter-clear-all', label: 'Clear all filters' })
       out.push(SEPARATOR)
     }
     if (opts.grouping?.can(column)) {
       const grouped = opts.grouping.isGrouped(column.key)
-      out.push(grouped ? { name: 'vg:ungroup', label: 'Ungroup' } : { name: 'vg:group', label: `Group by ${column.header ?? column.key}` })
+      out.push(
+        grouped
+          ? { name: 'vg:ungroup', label: 'Ungroup' }
+          : { name: 'vg:group', label: `Group by ${column.header ?? column.key}` },
+      )
       if (opts.grouping.any()) out.push({ name: 'vg:ungroup-all', label: 'Ungroup all' })
       out.push(SEPARATOR)
     }
@@ -203,7 +220,11 @@ export function useGridMenus<T>(opts: GridMenusOptions<T>) {
     if (opts.resize?.can(column)) {
       out.push(
         { name: 'vg:fit-width', label: 'Fit width' },
-        { name: 'vg:reset-width', label: 'Reset width', disabled: !opts.resize.isResized(column.key) },
+        {
+          name: 'vg:reset-width',
+          label: 'Reset width',
+          disabled: !opts.resize.isResized(column.key),
+        },
         SEPARATOR,
       )
     }
@@ -218,7 +239,9 @@ export function useGridMenus<T>(opts: GridMenusOptions<T>) {
     const config = opts.headerMenu()
     if (config === false) return
     const builtin = builtinHeaderItems(column)
-    const next = tidy(typeof config === 'function' ? (config({ column, items: builtin }) ?? []) : builtin)
+    const next = tidy(
+      typeof config === 'function' ? (config({ column, items: builtin }) ?? []) : builtin,
+    )
     if (!next.length) return
     target = { kind: 'header', column }
     void show(event, el, next, `${column.header ?? column.key} column`)
@@ -301,5 +324,14 @@ export function useGridMenus<T>(opts: GridMenusOptions<T>) {
     openHeaderMenu(column, holdEvent(x, y), el)
   }
 
-  return { items, label, openCellMenu, openHeaderMenu, openHeaderMenuAt, holdCell, holdHeader, onSelect }
+  return {
+    items,
+    label,
+    openCellMenu,
+    openHeaderMenu,
+    openHeaderMenuAt,
+    holdCell,
+    holdHeader,
+    onSelect,
+  }
 }

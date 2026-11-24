@@ -9,4 +9,7 @@ import type { KeyboardNavigationFeature } from '../types'
  * Without it the grid is an ARIA `table`: its own controls (sort buttons, expanders, checkboxes,
  * filter buttons) sit in the normal Tab order instead.
  */
-export const keyboardNavigationFeature: KeyboardNavigationFeature = { feature: 'keyboardNavigation', useGridKeyboard }
+export const keyboardNavigationFeature: KeyboardNavigationFeature = {
+  feature: 'keyboardNavigation',
+  useGridKeyboard,
+}

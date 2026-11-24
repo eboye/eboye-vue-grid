@@ -17,7 +17,12 @@ const holdEvents = new WeakSet<Event>()
 export const isHoldEvent = (event: Event) => holdEvents.has(event)
 /** A `contextmenu`-like event at a viewport point, for opening a menu after a touch hold. */
 export function holdEvent(x: number, y: number): MouseEvent {
-  const event = new MouseEvent('contextmenu', { clientX: x, clientY: y, button: 2, cancelable: true })
+  const event = new MouseEvent('contextmenu', {
+    clientX: x,
+    clientY: y,
+    button: 2,
+    cancelable: true,
+  })
   holdEvents.add(event)
   return event
 }
@@ -29,7 +34,10 @@ export function holdEvent(x: number, y: number): MouseEvent {
  * browser's own long-press menu is suppressed, and the click that follows the release is swallowed.
  * Does nothing for mouse and pen.
  */
-export function touchHold(event: PointerEvent, onHold: (x: number, y: number) => HoldHandlers | void): void {
+export function touchHold(
+  event: PointerEvent,
+  onHold: (x: number, y: number) => HoldHandlers | void,
+): void {
   if (event.pointerType !== 'touch') return
   const id = event.pointerId
   const x0 = event.clientX
@@ -96,7 +104,10 @@ export function touchHold(event: PointerEvent, onHold: (x: number, y: number) =>
     window.removeEventListener('pointercancel', onCancel)
     window.removeEventListener('touchmove', blockScroll)
     // A late native `contextmenu` can still arrive right after the release.
-    window.setTimeout(() => window.removeEventListener('contextmenu', blockMenu, { capture: true }), 600)
+    window.setTimeout(
+      () => window.removeEventListener('contextmenu', blockMenu, { capture: true }),
+      600,
+    )
   }
   window.addEventListener('pointermove', onMove)
   window.addEventListener('pointerup', onUp)

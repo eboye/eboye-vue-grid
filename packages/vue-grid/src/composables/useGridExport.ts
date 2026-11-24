@@ -3,7 +3,14 @@ import { guardFormula, plainText, toDelimited } from '../core/csv'
 import { getCellValue } from '../core/value'
 import { copyText } from '../internal/clipboard'
 import type { ResolvedColumn } from '../internal/context'
-import type { CellRendererDefinition, ColumnDef, CopyEvent, ExportOptions, FormatContext, RowKey } from '../types'
+import type {
+  CellRendererDefinition,
+  ColumnDef,
+  CopyEvent,
+  ExportOptions,
+  FormatContext,
+  RowKey,
+} from '../types'
 
 export interface GridExportOptions<T> {
   /** The visible columns, resolved (renderer definition and options). */
@@ -67,7 +74,9 @@ export function useGridExport<T>(opts: GridExportOptions<T>) {
   function columnsFor(o: ExportOptions): ColumnDef<T>[] {
     if (o.columns) {
       const all = opts.allColumns()
-      return o.columns.map((k) => all.find((c) => c.key === k)).filter((c): c is ColumnDef<T> => !!c)
+      return o.columns
+        .map((k) => all.find((c) => c.key === k))
+        .filter((c): c is ColumnDef<T> => !!c)
     }
     return opts
       .columns()
@@ -76,18 +85,33 @@ export function useGridExport<T>(opts: GridExportOptions<T>) {
   }
 
   /** A column's renderer definition and options: from the visible columns, else resolved. */
-  function renderer(col: ColumnDef<T>): { definition?: CellRendererDefinition; options: Record<string, unknown> } {
+  function renderer(col: ColumnDef<T>): {
+    definition?: CellRendererDefinition
+    options: Record<string, unknown>
+  } {
     const shown = opts.columns().find((c) => c.key === col.key)
     if (shown) return { definition: shown.definition, options: shown.options }
     const { definition, fallback } = opts.resolve(col)
-    return { definition, options: fallback ? {} : { ...(definition?.defaults as object), ...(col.rendererOptions as object) } }
+    return {
+      definition,
+      options: fallback
+        ? {}
+        : { ...(definition?.defaults as object), ...(col.rendererOptions as object) },
+    }
   }
 
   /** A cell as text: `exportValue`, else the renderer's text (formatted) or the plain value. */
-  function cellText(row: T, col: ColumnDef<T>, ctx: FormatContext | null, r = ctx && renderer(col)): string {
+  function cellText(
+    row: T,
+    col: ColumnDef<T>,
+    ctx: FormatContext | null,
+    r = ctx && renderer(col),
+  ): string {
     if (col.exportValue) return plainText(col.exportValue(row))
     const value = getCellValue(row, col)
-    return ctx && r?.definition?.format ? r.definition.format(value, r.options, ctx, row) : plainText(value)
+    return ctx && r?.definition?.format
+      ? r.definition.format(value, r.options, ctx, row)
+      : plainText(value)
   }
 
   function table(o: ExportOptions, defaults: { values: 'raw' | 'formatted'; header: boolean }) {
@@ -99,7 +123,8 @@ export function useGridExport<T>(opts: GridExportOptions<T>) {
     const rows = rowsFor(o)
     const lines: string[][] = []
     if (o.header ?? defaults.header) lines.push(cols.map((c) => guard(c.header ?? c.key)))
-    for (const row of rows) lines.push(cols.map((c, i) => guard(cellText(row, c, ctx, renderers[i]))))
+    for (const row of rows)
+      lines.push(cols.map((c, i) => guard(cellText(row, c, ctx, renderers[i]))))
     const total = o.totals ? opts.totals() : undefined
     if (total) {
       lines.push(
@@ -107,7 +132,11 @@ export function useGridExport<T>(opts: GridExportOptions<T>) {
           if (!(c.key in total.values)) return i === 0 ? guard(total.label) : ''
           const value = total.values[c.key]
           const r = renderers[i]
-          return guard(ctx && c.aggregate !== 'count' && r?.definition?.format ? r.definition.format(value, r.options, ctx, total.values) : plainText(value))
+          return guard(
+            ctx && c.aggregate !== 'count' && r?.definition?.format
+              ? r.definition.format(value, r.options, ctx, total.values)
+              : plainText(value),
+          )
         }),
       )
     }
@@ -139,7 +168,10 @@ export function useGridExport<T>(opts: GridExportOptions<T>) {
    * default, as displayed, without a header. Resolves `false` when nothing was copied.
    */
   async function copyRows(o: ExportOptions = {}): Promise<boolean> {
-    const { rows, cols, lines } = table({ rows: 'selected', ...o }, { values: 'formatted', header: false })
+    const { rows, cols, lines } = table(
+      { rows: 'selected', ...o },
+      { values: 'formatted', header: false },
+    )
     if (!lines.length) return false
     const text = toDelimited(lines, o.delimiter ?? '\t', '\n')
     if (!(await copyText(text))) return false
@@ -163,7 +195,13 @@ export function useGridExport<T>(opts: GridExportOptions<T>) {
 
   /** Ctrl/⌘+C in the grid: the selected rows, else the focused cell. A text selection wins. */
   function onKeyDown(event: KeyboardEvent) {
-    if (!(event.ctrlKey || event.metaKey) || event.altKey || event.shiftKey || event.key.toLowerCase() !== 'c') return
+    if (
+      !(event.ctrlKey || event.metaKey) ||
+      event.altKey ||
+      event.shiftKey ||
+      event.key.toLowerCase() !== 'c'
+    )
+      return
     const target = event.target as HTMLElement
     if (target.closest('input, textarea, select, [contenteditable="true"]')) return
     const selection = globalThis.getSelection?.()
@@ -181,7 +219,9 @@ export function useGridExport<T>(opts: GridExportOptions<T>) {
     if (!col || row === undefined) return
     event.preventDefault()
     const text = cellText(row, col, opts.format())
-    void copyText(text).then((ok) => ok && opts.onCopy({ kind: 'cell', text, rows: [row], columns: [col] }))
+    void copyText(text).then(
+      (ok) => ok && opts.onCopy({ kind: 'cell', text, rows: [row], columns: [col] }),
+    )
   }
 
   return { getCsv, exportCsv, copyRows, onKeyDown }

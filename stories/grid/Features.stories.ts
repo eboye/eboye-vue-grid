@@ -57,7 +57,10 @@ const meta = {
   component: VGrid,
   args: {
     rows,
-    columns: betColumns({ sortable: true }).map((c) => ({ ...c, filterable: true })) as GridArgs['columns'],
+    columns: betColumns({ sortable: true }).map((c) => ({
+      ...c,
+      filterable: true,
+    })) as GridArgs['columns'],
     rowKey: 'id',
     ariaLabel: 'Bets',
   },
@@ -73,7 +76,9 @@ export const OptIn: Story = {
     components: { VGrid, BareApp, VGridSearch },
     setup() {
       const on = ref<string[]>([])
-      const features = computed(() => choices.filter((c) => on.value.includes(c.label)).map((c) => c.feature))
+      const features = computed(() =>
+        choices.filter((c) => on.value.includes(c.label)).map((c) => c.feature),
+      )
       return { args, on, choices, features }
     },
     template: `
@@ -117,9 +122,19 @@ export const RowsAndMenus: Story = {
     components: { VGrid, BareApp },
     setup() {
       const on = ref<string[]>([])
-      const features = computed(() => rowChoices.filter((c) => on.value.includes(c.label)).map((c) => c.feature))
+      const features = computed(() =>
+        rowChoices.filter((c) => on.value.includes(c.label)).map((c) => c.feature),
+      )
       const contextMenu = () => [{ name: 'copy', label: 'Copy' }]
-      return { on, rowChoices, features, markets, marketColumns, contextMenu, subRows: (m: Market) => m.children }
+      return {
+        on,
+        rowChoices,
+        features,
+        markets,
+        marketColumns,
+        contextMenu,
+        subRows: (m: Market) => m.children,
+      }
     },
     template: `
       <fieldset class="sb-note" style="display:flex;gap:1rem;border:0;padding:0">
@@ -173,7 +188,9 @@ export const Columns: Story = {
     components: { VGrid, BareApp },
     setup() {
       const on = ref<string[]>([])
-      const features = computed(() => columnChoices.filter((c) => on.value.includes(c.label)).map((c) => c.feature))
+      const features = computed(() =>
+        columnChoices.filter((c) => on.value.includes(c.label)).map((c) => c.feature),
+      )
       return { args, on, columnChoices, features, wideColumns }
     },
     template: `
@@ -204,7 +221,8 @@ export const VirtualScrolling: Story = {
       const on = ref(false)
       const features = computed(() => (on.value ? [virtualScrollingFeature] : []))
       const rendered = ref(0)
-      const count = () => (rendered.value = document.querySelectorAll('#storybook-root .vg-row').length)
+      const count = () =>
+        (rendered.value = document.querySelectorAll('#storybook-root .vg-row').length)
       return { args, on, features, manyRows, rendered, count }
     },
     template: `

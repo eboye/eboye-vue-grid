@@ -6,9 +6,15 @@ import { resolveOption, type ActionButtonOptions } from './options'
 const props = defineProps<CellRendererProps<unknown, unknown, ActionButtonOptions>>()
 const emit = defineEmits<CellRendererEmits>()
 
-const label = computed(() => resolveOption(props.options.label, props.value, props.row) ?? String(props.value ?? ''))
-const disabled = computed(() => (props.options.disabled ? props.options.disabled(props.value, props.row) : false))
-const visible = computed(() => (props.options.visible ? props.options.visible(props.value, props.row) : true))
+const label = computed(
+  () => resolveOption(props.options.label, props.value, props.row) ?? String(props.value ?? ''),
+)
+const disabled = computed(() =>
+  props.options.disabled ? props.options.disabled(props.value, props.row) : false,
+)
+const visible = computed(() =>
+  props.options.visible ? props.options.visible(props.value, props.row) : true,
+)
 // toRaw: options may come from reactive state; render the component itself, not a proxy.
 const icon = computed(() => props.options.icon && toRaw(props.options.icon))
 const iconOnly = computed(() => !!props.options.iconOnly && !!icon.value)

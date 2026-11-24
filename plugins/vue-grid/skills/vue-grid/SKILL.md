@@ -46,9 +46,16 @@ Without MCP: `node_modules/@nocopypaste/vue-grid/agent/api.md` (generated refere
 Call **`vue_grid_validate`** with the grid's config as data:
 
 ```json
-{ "rowKey": "id", "features": ["sortingFeature", "filteringFeature"], "renderers": [],
-  "sortMode": "client", "filterRow": true,
-  "columns": [{ "key": "total", "renderer": "currencyRenderer", "sortable": true, "aggregate": "sum" }] }
+{
+  "rowKey": "id",
+  "features": ["sortingFeature", "filteringFeature"],
+  "renderers": [],
+  "sortMode": "client",
+  "filterRow": true,
+  "columns": [
+    { "key": "total", "renderer": "currencyRenderer", "sortable": true, "aggregate": "sum" }
+  ]
+}
 ```
 
 Renderers / functions may be written as their export names or source strings. Fix every

@@ -3,7 +3,16 @@
  * copying and exports. They mirror the cell components' own formatting.
  */
 import type { FormatContext } from '../types'
-import { DATE_DEFAULT, TIME_DEFAULT, formatCurrency, formatDate, formatNumber, formatSigned, toDate, toNumber } from './format'
+import {
+  DATE_DEFAULT,
+  TIME_DEFAULT,
+  formatCurrency,
+  formatDate,
+  formatNumber,
+  formatSigned,
+  toDate,
+  toNumber,
+} from './format'
 import {
   lookup,
   resolveOption,
@@ -29,7 +38,8 @@ export const currencyText = (v: unknown, o: CurrencyOptions, ctx: FormatContext,
 export function changeText(v: unknown, o: ChangeOptions, ctx: FormatContext): string {
   if (typeof v === 'boolean' || v === 'true' || v === 'false') return ''
   if (toNumber(v) === null) return isEmpty(v) ? '' : String(v)
-  if (o.currency) return formatCurrency(v, ctx, typeof o.currency === 'string' ? o.currency : undefined, o.format)
+  if (o.currency)
+    return formatCurrency(v, ctx, typeof o.currency === 'string' ? o.currency : undefined, o.format)
   return formatNumber(v, ctx, o.format)
 }
 
@@ -46,9 +56,18 @@ export function dateTimeText(v: unknown, o: DateTimeOptions, ctx: FormatContext)
 }
 
 export const booleanText = (v: unknown, o: BooleanOptions) =>
-  v === null || v === undefined ? (o.nullLabel ?? '') : v ? (o.trueLabel ?? 'Yes') : (o.falseLabel ?? 'No')
+  v === null || v === undefined
+    ? (o.nullLabel ?? '')
+    : v
+      ? (o.trueLabel ?? 'Yes')
+      : (o.falseLabel ?? 'No')
 
-export function statusText(v: unknown, o: StatusOptions, _ctx: FormatContext, row?: unknown): string {
+export function statusText(
+  v: unknown,
+  o: StatusOptions,
+  _ctx: FormatContext,
+  row?: unknown,
+): string {
   const l = o.label
   if (typeof l === 'function') return l(v, row)
   const raw = isEmpty(v) ? '' : String(v)
@@ -67,7 +86,11 @@ export function listText(v: unknown, o: ListOptions, _ctx: FormatContext, row?: 
   if (!Array.isArray(raw)) return ''
   return raw
     .map((item) =>
-      o.itemLabel ? o.itemLabel(item, row) : item !== null && typeof item === 'object' ? JSON.stringify(item) : String(item ?? ''),
+      o.itemLabel
+        ? o.itemLabel(item, row)
+        : item !== null && typeof item === 'object'
+          ? JSON.stringify(item)
+          : String(item ?? ''),
     )
     .join(', ')
 }

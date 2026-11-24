@@ -9,8 +9,19 @@
  */
 import apiJson from './api.json'
 
-export { validateGridConfig, type Diagnostic, type GridConfigInput, type ValidationResult } from './validate'
-export { columnFeatures, featureExport, optOuts, propFeatures, type FeatureId } from './requirements'
+export {
+  validateGridConfig,
+  type Diagnostic,
+  type GridConfigInput,
+  type ValidationResult,
+} from './validate'
+export {
+  columnFeatures,
+  featureExport,
+  optOuts,
+  propFeatures,
+  type FeatureId,
+} from './requirements'
 
 /** One prop, model, column option, renderer option or type field. */
 export interface ApiMember {
@@ -32,7 +43,13 @@ export interface ApiReference {
   slots: { name: string; scope: string | null; description: string }[]
   methods: ApiMember[]
   column: ApiMember[]
-  features: { id: string; export: string; description: string; props: string[]; columnOptions: string[] }[]
+  features: {
+    id: string
+    export: string
+    description: string
+    props: string[]
+    columnOptions: string[]
+  }[]
   renderers: {
     name: string
     export: string

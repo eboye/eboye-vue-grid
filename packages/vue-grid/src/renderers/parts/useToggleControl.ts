@@ -11,7 +11,16 @@ export function useToggleControl(props: CellRendererProps<unknown, unknown, Chec
     props.options.checked ? !!props.options.checked(props.value, props.row) : !!props.value,
   )
   const disabled = computed(() => !!resolveOption(props.options.disabled, props.value, props.row))
-  const reason = computed(() => (disabled.value ? props.options.disabledReason?.(props.value, props.row) || undefined : undefined))
-  const label = computed(() => resolveOption(props.options.label, props.value, props.row) ?? props.column.header ?? props.column.key)
+  const reason = computed(() =>
+    disabled.value
+      ? props.options.disabledReason?.(props.value, props.row) || undefined
+      : undefined,
+  )
+  const label = computed(
+    () =>
+      resolveOption(props.options.label, props.value, props.row) ??
+      props.column.header ??
+      props.column.key,
+  )
   return { checked, disabled, reason, label }
 }

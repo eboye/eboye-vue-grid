@@ -23,7 +23,8 @@ interface Part {
   kind: 'select' | 'label' | 'aggregate' | 'empty'
 }
 
-const hasAggregate = (c: ResolvedColumn) => c.kind === 'data' && c.def.aggregate !== undefined && c.key in props.group.aggregates
+const hasAggregate = (c: ResolvedColumn) =>
+  c.kind === 'data' && c.def.aggregate !== undefined && c.key in props.group.aggregates
 
 const parts = computed<Part[]>(() => {
   const cols = grid.columns.value
@@ -37,7 +38,12 @@ const parts = computed<Part[]>(() => {
     if (column.isTree) {
       // The label runs over the empty cells after it, within the same pin side.
       let span = 1
-      while (i + span < cols.length && !hasAggregate(cols[i + span]!) && cols[i + span]!.pinned === column.pinned) span++
+      while (
+        i + span < cols.length &&
+        !hasAggregate(cols[i + span]!) &&
+        cols[i + span]!.pinned === column.pinned
+      )
+        span++
       out.push({ column, span, kind: 'label' })
       i += span - 1
       continue
@@ -47,7 +53,9 @@ const parts = computed<Part[]>(() => {
   return out
 })
 
-const count = computed(() => (format ? formatNumber(props.group.rows.length, format.value) : String(props.group.rows.length)))
+const count = computed(() =>
+  format ? formatNumber(props.group.rows.length, format.value) : String(props.group.rows.length),
+)
 const blank = computed(() => {
   const v = props.group.value
   return v === null || v === undefined || v === '' || (typeof v === 'number' && Number.isNaN(v))
@@ -62,7 +70,9 @@ const cellClass = (column: ResolvedColumn) =>
   typeof column.def.cellClass === 'function' ? undefined : column.def.cellClass
 
 function onLabelClick(event: MouseEvent) {
-  const interactive = (event.target as Element).closest('a, button, input, select, textarea, label, summary')
+  const interactive = (event.target as Element).closest(
+    'a, button, input, select, textarea, label, summary',
+  )
   if (interactive && (event.currentTarget as Element).contains(interactive)) return
   grid.toggleExpanded(props.group)
 }
@@ -90,7 +100,10 @@ function onLabelClick(event: MouseEvent) {
       part.kind === 'aggregate' ? cellClass(part.column) : undefined,
       grid.ui.value.cell,
     ]"
-    :style="[part.span > 1 ? { 'grid-column': `span ${part.span}` } : undefined, grid.pinStyle(part.column.key)]"
+    :style="[
+      part.span > 1 ? { 'grid-column': `span ${part.span}` } : undefined,
+      grid.pinStyle(part.column.key),
+    ]"
     @click="part.kind === 'label' ? onLabelClick($event) : undefined"
   >
     <template v-if="part.kind === 'select'">
@@ -116,7 +129,14 @@ function onLabelClick(event: MouseEvent) {
           @click.stop="grid.toggleExpanded(group)"
         >
           <svg viewBox="0 0 16 16" aria-hidden="true" class="vg-expander-icon">
-            <path d="M6 3.5 10.5 8 6 12.5" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" />
+            <path
+              d="M6 3.5 10.5 8 6 12.5"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.75"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
           </svg>
         </button>
       </span>
@@ -125,10 +145,20 @@ function onLabelClick(event: MouseEvent) {
         <RenderSlot
           v-if="groupSlot"
           :fn="groupSlot"
-          :scope="{ value: group.value, count: group.rows.length, rows: group.rows, column: group.column, group }"
+          :scope="{
+            value: group.value,
+            count: group.rows.length,
+            rows: group.rows,
+            column: group.column,
+            group,
+          }"
         />
         <span v-else-if="blank" class="vg-rowgroup-value vg-rowgroup-blank">(blank)</span>
-        <span v-else-if="group.column.groupValue || !groupColumn?.component" class="vg-rowgroup-value">{{ String(group.value) }}</span>
+        <span
+          v-else-if="group.column.groupValue || !groupColumn?.component"
+          class="vg-rowgroup-value"
+          >{{ String(group.value) }}</span
+        >
         <span v-else class="vg-rowgroup-value">
           <component
             :is="groupColumn.component"
@@ -151,7 +181,9 @@ function onLabelClick(event: MouseEvent) {
         :scope="{ value: group.aggregates[part.column.key], column: part.column.def, group }"
       />
       <template v-else-if="part.column.def.aggregate === 'count'">{{
-        format ? formatNumber(group.aggregates[part.column.key], format) : group.aggregates[part.column.key]
+        format
+          ? formatNumber(group.aggregates[part.column.key], format)
+          : group.aggregates[part.column.key]
       }}</template>
       <component
         :is="part.column.component"

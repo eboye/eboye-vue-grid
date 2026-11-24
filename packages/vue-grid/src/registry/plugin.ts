@@ -2,7 +2,8 @@ import { computed, inject, type ComputedRef, type InjectionKey, type Plugin } fr
 import type { FormatContext, VueGridConfig } from '../types'
 
 export const GRID_CONFIG_KEY: InjectionKey<VueGridConfig> = Symbol('vue-grid:config')
-export const FORMAT_CONTEXT_KEY: InjectionKey<ComputedRef<FormatContext>> = Symbol('vue-grid:format')
+export const FORMAT_CONTEXT_KEY: InjectionKey<ComputedRef<FormatContext>> =
+  Symbol('vue-grid:format')
 
 /**
  * App-wide defaults: extra renderers and formatting context.
@@ -19,8 +20,7 @@ export function createVueGrid(config: VueGridConfig = {}): Plugin {
   }
 }
 
-const browserLocale = () =>
-  (typeof navigator !== 'undefined' && navigator.language) || 'en-US'
+const browserLocale = () => (typeof navigator !== 'undefined' && navigator.language) || 'en-US'
 
 const fallback = computed<FormatContext>(() => ({ locale: browserLocale(), currency: 'USD' }))
 

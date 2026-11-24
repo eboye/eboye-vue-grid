@@ -19,11 +19,20 @@ const direction = computed(() => {
 
 const text = computed(() => {
   const { currency, format, placeholder } = props.options
-  if (typeof props.value === 'boolean' || props.value === 'true' || props.value === 'false') return ''
+  if (typeof props.value === 'boolean' || props.value === 'true' || props.value === 'false')
+    return ''
   if (toNumber(props.value) === null) {
-    return props.value === null || props.value === undefined ? (placeholder ?? '') : String(props.value)
+    return props.value === null || props.value === undefined
+      ? (placeholder ?? '')
+      : String(props.value)
   }
-  if (currency) return formatCurrency(props.value, ctx.value, typeof currency === 'string' ? currency : undefined, format)
+  if (currency)
+    return formatCurrency(
+      props.value,
+      ctx.value,
+      typeof currency === 'string' ? currency : undefined,
+      format,
+    )
   return formatNumber(props.value, ctx.value, format)
 })
 

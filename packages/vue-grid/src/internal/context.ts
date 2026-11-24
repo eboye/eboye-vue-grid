@@ -1,6 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- rows are an opaque, type-erased T inside the grid internals; the public <VGrid generic="T"> API stays fully typed. */
 import { inject, type Component, type ComputedRef, type InjectionKey, type Slots } from 'vue'
-import type { Align, CellRendererDefinition, ClassValue, ColumnDef, FlashMode, GridPart, RowKey } from '../types'
+import type {
+  Align,
+  CellRendererDefinition,
+  ClassValue,
+  ColumnDef,
+  FlashMode,
+  GridPart,
+  RowKey,
+} from '../types'
 import type { ColumnFilter, FilterState, FilterType } from '../core/filter'
 import type { SelectionSummary } from '../core/selection'
 import type { SubRowEntry } from '../composables/useSubRows'
@@ -113,12 +121,29 @@ export interface GridContext {
   virtualRows?: VirtualRowsContext
   pinStyle(key: string): Record<string, string> | undefined
   onRowClick(row: any, key: RowKey, event: MouseEvent | KeyboardEvent): void
-  onCellClick(row: any, key: RowKey, column: ResolvedColumn, event: MouseEvent | KeyboardEvent): void
+  onCellClick(
+    row: any,
+    key: RowKey,
+    column: ResolvedColumn,
+    event: MouseEvent | KeyboardEvent,
+  ): void
   onCellAction(row: any, key: RowKey, column: ResolvedColumn, name: string, payload: unknown): void
-  onCellContextMenu(row: any, key: RowKey, column: ResolvedColumn, event: MouseEvent, el: HTMLElement): void
+  onCellContextMenu(
+    row: any,
+    key: RowKey,
+    column: ResolvedColumn,
+    event: MouseEvent,
+    el: HTMLElement,
+  ): void
   onHeaderContextMenu(column: ResolvedColumn, event: MouseEvent, el: HTMLElement): void
   /** Menus feature: a `pointerdown` on a body cell (touch: hold for its menu). */
-  onCellPointerDown?(row: any, key: RowKey, column: ResolvedColumn, event: PointerEvent, el: HTMLElement): void
+  onCellPointerDown?(
+    row: any,
+    key: RowKey,
+    column: ResolvedColumn,
+    event: PointerEvent,
+    el: HTMLElement,
+  ): void
 }
 
 /** A row in a pinned section: a pinned data row, or the totals row. */

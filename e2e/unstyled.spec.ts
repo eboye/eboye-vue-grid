@@ -1,9 +1,13 @@
 import { expect, test, type Page } from '@playwright/test'
 
 // base.css alone (no theme): the grid must still lay out and behave. playground/unstyled.html.
-const box = async (page: Page, selector: string) => (await page.locator(selector).first().boundingBox())!
+const box = async (page: Page, selector: string) =>
+  (await page.locator(selector).first().boundingBox())!
 const childXs = (page: Page, selector: string) =>
-  page.locator(selector).first().evaluate((el) => [...el.children].map((c) => Math.round(c.getBoundingClientRect().x)))
+  page
+    .locator(selector)
+    .first()
+    .evaluate((el) => [...el.children].map((c) => Math.round(c.getBoundingClientRect().x)))
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/unstyled.html')
@@ -41,7 +45,10 @@ test('sticky header and pinned columns while scrolling (mouse wheel)', async ({ 
   expect((await box(page, '.vg-header > [data-col-key="id"]')).x).toBeCloseTo(pinned0, 0)
   expect((await box(page, '.vg-header > [data-col-key="a"]')).x).toBeLessThan(plain0 - 200)
   // pinned cells are opaque (Canvas fallback), so scrolled content doesn't show through
-  const bg = await page.locator('.vg-row > [data-col-key="id"]').first().evaluate((e) => getComputedStyle(e).backgroundColor)
+  const bg = await page
+    .locator('.vg-row > [data-col-key="id"]')
+    .first()
+    .evaluate((e) => getComputedStyle(e).backgroundColor)
   expect(bg).not.toMatch(/rgba\(0, 0, 0, 0\)|transparent/)
 })
 

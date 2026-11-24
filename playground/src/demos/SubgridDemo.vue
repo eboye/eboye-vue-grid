@@ -13,7 +13,12 @@ const marketColumns = [
   m({ key: 'name', header: 'Market', width: 'minmax(14rem, 2fr)', sortable: true }),
   m({ key: 'selections', header: 'Selections', renderer: 'number', sortable: true }),
   m({ key: 'turnover', header: 'Turnover', renderer: 'currency', sortable: true }),
-  m({ key: 'margin', header: 'Margin %', renderer: 'number', rendererOptions: { format: { minimumFractionDigits: 1 } } }),
+  m({
+    key: 'margin',
+    header: 'Margin %',
+    renderer: 'number',
+    rendererOptions: { format: { minimumFractionDigits: 1 } },
+  }),
   m({
     key: 'status',
     header: 'Status',
@@ -25,7 +30,13 @@ const marketColumns = [
 const f = createColumnHelper<Folder>()
 const folderColumns = [
   f({ key: 'name', header: 'Name', width: 'minmax(16rem, 2fr)' }),
-  f({ key: 'size', header: 'Size', renderer: 'number', value: (row) => (row.size ? row.size / 1024 : null), rendererOptions: { format: { maximumFractionDigits: 0 }, placeholder: '—' } }),
+  f({
+    key: 'size',
+    header: 'Size',
+    renderer: 'number',
+    value: (row) => (row.size ? row.size / 1024 : null),
+    rendererOptions: { format: { maximumFractionDigits: 0 }, placeholder: '—' },
+  }),
   f({ key: 'modified', header: 'Modified', renderer: 'date' }),
 ]
 const errors = ref(0)
@@ -36,9 +47,25 @@ const errors = ref(0)
     <h2>Sub-grid (CSS subgrid), nested, with cascading selection</h2>
     <p>Child rows share the parent's column tracks. Sorting applies within each level.</p>
     <div class="pg-row">
-      <button class="pg-btn" type="button" data-testid="expand-all" @click="marketGrid?.expandAll()">Expand all</button>
-      <button class="pg-btn" type="button" data-testid="collapse-all" @click="marketGrid?.collapseAll()">Collapse all</button>
-      <span data-testid="subgrid-selected">Selected: {{ selected.length ? selected.join(', ') : 'none' }}</span>
+      <button
+        class="pg-btn"
+        type="button"
+        data-testid="expand-all"
+        @click="marketGrid?.expandAll()"
+      >
+        Expand all
+      </button>
+      <button
+        class="pg-btn"
+        type="button"
+        data-testid="collapse-all"
+        @click="marketGrid?.collapseAll()"
+      >
+        Collapse all
+      </button>
+      <span data-testid="subgrid-selected"
+        >Selected: {{ selected.length ? selected.join(', ') : 'none' }}</span
+      >
     </div>
     <VGrid
       ref="marketGrid"

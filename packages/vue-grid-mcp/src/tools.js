@@ -1,11 +1,24 @@
 // The MCP tools: what each does, its input schema, and its handler (docs → text).
 
-const SECTIONS = ['props', 'models', 'events', 'slots', 'methods', 'column', 'features', 'renderers', 'types']
+const SECTIONS = [
+  'props',
+  'models',
+  'events',
+  'slots',
+  'methods',
+  'column',
+  'features',
+  'renderers',
+  'types',
+]
 const json = (value) => JSON.stringify(value, null, 2)
 
 /** Search: score sections by query terms in title (×3) and body. */
 function search(docs, query, limit) {
-  const terms = query.toLowerCase().split(/[^\p{L}\p{N}_-]+/u).filter((t) => t.length > 1)
+  const terms = query
+    .toLowerCase()
+    .split(/[^\p{L}\p{N}_-]+/u)
+    .filter((t) => t.length > 1)
   if (!terms.length) return []
   return docs.sections
     .map((s) => {
@@ -27,11 +40,21 @@ function search(docs, query, limit) {
 }
 
 function findMember(api, section, name) {
-  const list = section === 'types' ? Object.entries(api.types).map(([n, members]) => ({ name: n, members })) : api[section]
-  const lower = name.toLowerCase().replace(/^v-model:/, '').replace(/-(\w)/g, (_, c) => c.toUpperCase())
+  const list =
+    section === 'types'
+      ? Object.entries(api.types).map(([n, members]) => ({ name: n, members }))
+      : api[section]
+  const lower = name
+    .toLowerCase()
+    .replace(/^v-model:/, '')
+    .replace(/-(\w)/g, (_, c) => c.toUpperCase())
   return list.filter((m) => {
     const n = String(m.name ?? m.id).toLowerCase()
-    return n === lower.toLowerCase() || n === name.toLowerCase() || String(m.export ?? '').toLowerCase() === name.toLowerCase()
+    return (
+      n === lower.toLowerCase() ||
+      n === name.toLowerCase() ||
+      String(m.export ?? '').toLowerCase() === name.toLowerCase()
+    )
   })
 }
 
@@ -54,7 +77,11 @@ export const tools = [
       type: 'object',
       properties: {
         section: { type: 'string', enum: SECTIONS, description: 'Which part of the API.' },
-        name: { type: 'string', description: 'One entry: a prop, event, slot, method, column option, feature id / export, renderer name / export or type name.' },
+        name: {
+          type: 'string',
+          description:
+            'One entry: a prop, event, slot, method, column option, feature id / export, renderer name / export or type name.',
+        },
       },
       additionalProperties: false,
     },
@@ -66,19 +93,29 @@ export const tools = [
           package: api.package,
           version: api.version,
           sections: Object.fromEntries(
-            SECTIONS.map((s) => [s, s === 'types' ? Object.keys(api.types) : api[s].map((m) => m.export ?? m.name)]),
+            SECTIONS.map((s) => [
+              s,
+              s === 'types' ? Object.keys(api.types) : api[s].map((m) => m.export ?? m.name),
+            ]),
           ),
           hint: 'Call again with section (and name) for details.',
         })
       }
       if (!section) {
-        const hits = SECTIONS.flatMap((s) => findMember(api, s, name).map((m) => ({ section: s, ...m })))
-        return hits.length ? json(hits) : `Nothing named "${name}". Call without arguments for the index.`
+        const hits = SECTIONS.flatMap((s) =>
+          findMember(api, s, name).map((m) => ({ section: s, ...m })),
+        )
+        return hits.length
+          ? json(hits)
+          : `Nothing named "${name}". Call without arguments for the index.`
       }
-      if (!SECTIONS.includes(section)) throw new Error(`Unknown section "${section}". Use one of: ${SECTIONS.join(', ')}.`)
+      if (!SECTIONS.includes(section))
+        throw new Error(`Unknown section "${section}". Use one of: ${SECTIONS.join(', ')}.`)
       if (!name) return json(section === 'types' ? api.types : api[section])
       const hits = findMember(api, section, name)
-      return hits.length ? json(hits.length === 1 ? hits[0] : hits) : `No ${section} entry named "${name}". Call with section "${section}" alone to list them.`
+      return hits.length
+        ? json(hits.length === 1 ? hits[0] : hits)
+        : `No ${section} entry named "${name}". Call with section "${section}" alone to list them.`
     },
   },
   {
@@ -88,7 +125,9 @@ export const tools = [
       'A cell renderer by name or export (e.g. "currency" or "currencyRenderer"): what it shows, its alignment and filter type, every rendererOption with its type and meaning, and a column example. Without a name, lists all renderers with one-line descriptions so you can pick by data type.',
     inputSchema: {
       type: 'object',
-      properties: { name: { type: 'string', description: 'Renderer name or export name. Omit to list all.' } },
+      properties: {
+        name: { type: 'string', description: 'Renderer name or export name. Omit to list all.' },
+      },
       additionalProperties: false,
     },
     annotations: { readOnlyHint: true },
@@ -98,8 +137,12 @@ export const tools = [
       const key = name.toLowerCase()
       const r = list.find((x) => x.name === key || x.export.toLowerCase() === key)
       if (!r) {
-        const near = list.filter((x) => x.name.includes(key) || key.includes(x.name)).map((x) => x.name)
-        throw new Error(`Unknown renderer "${name}".${near.length ? ` Did you mean ${near.join(', ')}?` : ''} Call without a name to list them.`)
+        const near = list
+          .filter((x) => x.name.includes(key) || key.includes(x.name))
+          .map((x) => x.name)
+        throw new Error(
+          `Unknown renderer "${name}".${near.length ? ` Did you mean ${near.join(', ')}?` : ''} Call without a name to list them.`,
+        )
       }
       const example = `import { ${r.export} } from '@nocopypaste/vue-grid'\n\ncol({ key: '…', renderer: ${r.export}${r.options[0] ? `, rendererOptions: { ${r.options[0].name}: … }` : ''} })`
       return `${json(r)}\n\nExample:\n${example}`
@@ -122,7 +165,8 @@ export const tools = [
     annotations: { readOnlyHint: true },
     run: (docs, { query, limit = 4 }) => {
       const hits = search(docs, String(query), Math.min(Math.max(1, Number(limit) || 4), 10))
-      if (!hits.length) return `No section matches "${query}". Try other words, or vue_grid_api for exact names.`
+      if (!hits.length)
+        return `No section matches "${query}". Try other words, or vue_grid_api for exact names.`
       return hits.map((s) => `<!-- ${s.source} → ${s.title} -->\n${s.text}`).join('\n\n---\n\n')
     },
   },
@@ -136,7 +180,8 @@ export const tools = [
       properties: {
         config: {
           type: 'object',
-          description: 'The grid config: { rowKey, columns: [...], features: [...], renderers?: [...], ...props }.',
+          description:
+            'The grid config: { rowKey, columns: [...], features: [...], renderers?: [...], ...props }.',
         },
       },
       required: ['config'],
@@ -145,16 +190,48 @@ export const tools = [
     annotations: { readOnlyHint: true },
     run: (docs, { config }) => {
       const result = docs.validateGridConfig(config)
-      const counts = ['error', 'warning', 'info'].map((s) => `${result.diagnostics.filter((d) => d.severity === s).length} ${s}(s)`)
+      const counts = ['error', 'warning', 'info'].map(
+        (s) => `${result.diagnostics.filter((d) => d.severity === s).length} ${s}(s)`,
+      )
       return `${result.ok ? 'OK' : 'NOT OK'}: ${counts.join(', ')}\n\n${json(result.diagnostics)}`
     },
   },
 ]
 
 export const resources = (docs) => [
-  { uri: 'vue-grid://AGENTS.md', name: 'AGENTS.md', title: 'vue-grid guide for coding agents', mimeType: 'text/markdown', text: () => docs.files['AGENTS.md'] },
-  { uri: 'vue-grid://api.md', name: 'api.md', title: 'vue-grid API reference', mimeType: 'text/markdown', text: () => docs.files['agent/api.md'] },
-  { uri: 'vue-grid://README.md', name: 'README.md', title: 'vue-grid README', mimeType: 'text/markdown', text: () => docs.files['README.md'] },
-  { uri: 'vue-grid://api.json', name: 'api.json', title: 'vue-grid API reference (JSON)', mimeType: 'application/json', text: () => JSON.stringify(docs.api, null, 2) },
-  { uri: 'vue-grid://grid-config.schema.json', name: 'grid-config.schema.json', title: 'JSON Schema of a grid config', mimeType: 'application/schema+json', text: () => docs.schema },
+  {
+    uri: 'vue-grid://AGENTS.md',
+    name: 'AGENTS.md',
+    title: 'vue-grid guide for coding agents',
+    mimeType: 'text/markdown',
+    text: () => docs.files['AGENTS.md'],
+  },
+  {
+    uri: 'vue-grid://api.md',
+    name: 'api.md',
+    title: 'vue-grid API reference',
+    mimeType: 'text/markdown',
+    text: () => docs.files['agent/api.md'],
+  },
+  {
+    uri: 'vue-grid://README.md',
+    name: 'README.md',
+    title: 'vue-grid README',
+    mimeType: 'text/markdown',
+    text: () => docs.files['README.md'],
+  },
+  {
+    uri: 'vue-grid://api.json',
+    name: 'api.json',
+    title: 'vue-grid API reference (JSON)',
+    mimeType: 'application/json',
+    text: () => JSON.stringify(docs.api, null, 2),
+  },
+  {
+    uri: 'vue-grid://grid-config.schema.json',
+    name: 'grid-config.schema.json',
+    title: 'JSON Schema of a grid config',
+    mimeType: 'application/schema+json',
+    text: () => docs.schema,
+  },
 ]

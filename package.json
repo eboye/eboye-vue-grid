@@ -23,7 +23,8 @@
     "build-storybook": "storybook build -o storybook-static",
     "e2e:storybook": "playwright test -c e2e/storybook.config.ts",
     "showcase": "node scripts/record-showcase.mjs",
-    "screenshots": "node scripts/renderer-screenshots.mjs"
+    "screenshots": "node scripts/renderer-screenshots.mjs",
+    "format:check": "prettier --check ."
   },
   "devDependencies": {
     "@eslint/js": "^10.0.0",

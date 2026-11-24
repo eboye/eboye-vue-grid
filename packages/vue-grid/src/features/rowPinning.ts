@@ -8,4 +8,8 @@ import type { RowPinningFeature } from '../types'
  * stay in view (sticky) under the header or at the bottom while the body scrolls, and aren't
  * filtered, sorted or paged. Without it, those options are ignored.
  */
-export const rowPinningFeature: RowPinningFeature = { feature: 'rowPinning', usePinnedRows, PinnedRows: VGridPinnedRows }
+export const rowPinningFeature: RowPinningFeature = {
+  feature: 'rowPinning',
+  usePinnedRows,
+  PinnedRows: VGridPinnedRows,
+}

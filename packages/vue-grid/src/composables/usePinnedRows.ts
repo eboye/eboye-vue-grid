@@ -58,7 +58,9 @@ export function usePinnedRows<T>(opts: PinnedRowsOptions<T>) {
     const keyed = (list: readonly RowKey[], side: string) =>
       list.flatMap((k): PinnedRowItem[] => {
         const row = byKey.value.get(k)
-        return row === undefined ? [] : [{ id: `${side}:k:${String(k)}`, kind: 'row', row, key: k, selectable: true }]
+        return row === undefined
+          ? []
+          : [{ id: `${side}:k:${String(k)}`, kind: 'row', row, key: k, selectable: true }]
       })
     return {
       top: [...extra(opts.extraTop(), 'top'), ...keyed(topKeys.value, 'top')],

@@ -20,7 +20,10 @@ export interface DataSourceResult<T> {
 }
 
 /** Loads rows for a query. Honour `signal` to cancel superseded requests. */
-export type DataSource<T> = (query: GridQuery, ctx: { signal: AbortSignal }) => Promise<DataSourceResult<T>>
+export type DataSource<T> = (
+  query: GridQuery,
+  ctx: { signal: AbortSignal },
+) => Promise<DataSourceResult<T>>
 
 export interface DataSourceOptions<T> {
   source: () => DataSource<T> | undefined

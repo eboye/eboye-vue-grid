@@ -1,6 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- rows are an opaque, type-erased T inside the grid internals. */
 import { computed, shallowRef, toRaw, watch, type Component, type Ref } from 'vue'
-import { GROUP_KEY_PREFIX, groupKeys, groupRows, groupedLevels, isRowGroup, walkGroups, type RowGroup } from '../core/grouping'
+import {
+  GROUP_KEY_PREFIX,
+  groupKeys,
+  groupRows,
+  groupedLevels,
+  isRowGroup,
+  walkGroups,
+  type RowGroup,
+} from '../core/grouping'
 import type { GridContext } from '../internal/context'
 import type { ColumnDef, RowKey, SortState } from '../types'
 import type { SubRowsSnapshot } from './useVirtualRows'
@@ -36,18 +44,25 @@ export function useRowGrouping<T>(opts: RowGroupingOptions<T>) {
     const raw = opts.groupBy()
     const keys = raw == null ? [] : typeof raw === 'string' ? [raw] : raw
     const columns = opts.columns()
-    const next = [...new Set(keys)].map((k) => columns.find((c) => c.key === k)).filter((c): c is ColumnDef<T> => !!c)
+    const next = [...new Set(keys)]
+      .map((k) => columns.find((c) => c.key === k))
+      .filter((c): c is ColumnDef<T> => !!c)
     return prev && prev.length === next.length && prev.every((c, i) => c === next[i]) ? prev : next
   })
   const active = computed(() => by.value.length > 0)
   const groups = computed<RowGroup<T>[]>(() =>
-    active.value ? groupRows(opts.rows(), { columns: by.value, allColumns: opts.columns(), sort: opts.sort() }) : [],
+    active.value
+      ? groupRows(opts.rows(), { columns: by.value, allColumns: opts.columns(), sort: opts.sort() })
+      : [],
   )
 
   // ── Expansion ───────────────────────────────────────────────────────────────────────────
   /** Groups toggled away from the default. */
   const toggled = shallowRef<ReadonlySet<RowKey>>(new Set())
-  watch([() => by.value.map((c) => c.key).join('\u001e'), opts.expandedByDefault], () => (toggled.value = new Set()))
+  watch(
+    [() => by.value.map((c) => c.key).join('\u001e'), opts.expandedByDefault],
+    () => (toggled.value = new Set()),
+  )
 
   const isExpanded = (key: RowKey) => opts.expandedByDefault() !== toggled.value.has(key)
   function toggle(key: RowKey) {
@@ -58,7 +73,8 @@ export function useRowGrouping<T>(opts: RowGroupingOptions<T>) {
   }
   /** Expands (or collapses) every group. */
   function setAll(expand: boolean) {
-    toggled.value = expand === opts.expandedByDefault() ? new Set() : new Set(groupKeys(groups.value))
+    toggled.value =
+      expand === opts.expandedByDefault() ? new Set() : new Set(groupKeys(groups.value))
   }
   /** Keys of the expanded groups. */
   const expandedKeys = computed<ReadonlySet<RowKey>>(() => {
@@ -73,7 +89,11 @@ export function useRowGrouping<T>(opts: RowGroupingOptions<T>) {
   const keyOf = (base: (row: T) => RowKey) => (row: T) => (isRowGroup(row) ? row.key : base(row))
   /** The expanded rows plus the expanded groups. */
   const expanded = (base: ReadonlySet<RowKey>): ReadonlySet<RowKey> =>
-    !active.value ? base : base.size ? new Set([...base, ...expandedKeys.value]) : expandedKeys.value
+    !active.value
+      ? base
+      : base.size
+        ? new Set([...base, ...expandedKeys.value])
+        : expandedKeys.value
   /** A sub-row snapshot that knows group children (and keeps the sub-grids' own). */
   const tree = (base: ((keyOf: (row: T) => RowKey) => SubRowsSnapshot<T>) | null) =>
     !active.value
@@ -88,7 +108,9 @@ export function useRowGrouping<T>(opts: RowGroupingOptions<T>) {
         }
   /** A group's sub-groups and rows are already filtered and sorted. */
   const preparer = (base: (rows: readonly T[]) => readonly T[]) =>
-    !active.value ? base : (rows: readonly T[]) => (groupedLevels.has(toRaw(rows)) ? rows : base(rows))
+    !active.value
+      ? base
+      : (rows: readonly T[]) => (groupedLevels.has(toRaw(rows)) ? rows : base(rows))
 
   // ── The grid's context: group rows expand, nest, and select their rows ───────────────────────
   function extend(ctx: GridContext, GroupCells: Component) {
@@ -122,7 +144,9 @@ export function useRowGrouping<T>(opts: RowGroupingOptions<T>) {
         if (!isRowGroup(row)) base.ensureSubRows(row)
       },
       isRowSelectable: (row: any) =>
-        isRowGroup(row) ? base.selectMode.value === 'multi' && selectableKeys(row).length > 0 : base.isRowSelectable(row),
+        isRowGroup(row)
+          ? base.selectMode.value === 'multi' && selectableKeys(row).length > 0
+          : base.isRowSelectable(row),
       rowCheckState: (row: any) => (isRowGroup(row) ? checkState(row) : base.rowCheckState(row)),
       toggleRow: (row: any, range?: boolean) => {
         if (!isRowGroup(row)) return base.toggleRow(row, range)
@@ -149,5 +173,21 @@ export function useRowGrouping<T>(opts: RowGroupingOptions<T>) {
     any: () => active.value,
   }
 
-  return { by, active, groups, isGroup: isRowGroup as (row: unknown) => boolean, isExpanded, toggle, setAll, expandedKeys, isGrouped, keyOf, expanded, tree, preparer, extend, menu }
+  return {
+    by,
+    active,
+    groups,
+    isGroup: isRowGroup as (row: unknown) => boolean,
+    isExpanded,
+    toggle,
+    setAll,
+    expandedKeys,
+    isGrouped,
+    keyOf,
+    expanded,
+    tree,
+    preparer,
+    extend,
+    menu,
+  }
 }

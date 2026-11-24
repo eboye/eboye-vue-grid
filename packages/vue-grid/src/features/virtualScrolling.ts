@@ -7,4 +7,7 @@ import type { VirtualScrollingFeature } from '../types'
  * included, inside the same CSS grid / subgrid layout. Without it, `virtual` is ignored and every
  * row renders.
  */
-export const virtualScrollingFeature: VirtualScrollingFeature = { feature: 'virtualScrolling', useVirtualRows }
+export const virtualScrollingFeature: VirtualScrollingFeature = {
+  feature: 'virtualScrolling',
+  useVirtualRows,
+}

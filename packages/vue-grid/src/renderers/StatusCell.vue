@@ -14,12 +14,21 @@ const label = computed(() => {
   return (l && lookup(l, raw)) ?? raw
 })
 const clickable = computed(() => !!resolveOption(props.options.clickable, props.value, props.row))
-const classes = computed(() => ['vg-status-badge', `vg-tone-${tone.value}`, `vg-status-${props.options.variant ?? 'soft'}`])
+const classes = computed(() => [
+  'vg-status-badge',
+  `vg-tone-${tone.value}`,
+  `vg-status-${props.options.variant ?? 'soft'}`,
+])
 </script>
 
 <template>
   <template v-if="label">
-    <button v-if="clickable" type="button" :class="[classes, 'vg-status-button']" @click="emit('action', 'click', value)">
+    <button
+      v-if="clickable"
+      type="button"
+      :class="[classes, 'vg-status-button']"
+      @click="emit('action', 'click', value)"
+    >
       <span v-if="options.dot !== false" class="vg-status-dot" aria-hidden="true" />
       {{ label }}
     </button>
@@ -28,5 +37,7 @@ const classes = computed(() => ['vg-status-badge', `vg-tone-${tone.value}`, `vg-
       {{ label }}
     </span>
   </template>
-  <span v-else-if="options.placeholder" class="vg-text vg-text-muted">{{ options.placeholder }}</span>
+  <span v-else-if="options.placeholder" class="vg-text vg-text-muted">{{
+    options.placeholder
+  }}</span>
 </template>

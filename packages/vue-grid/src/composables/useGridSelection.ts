@@ -191,7 +191,9 @@ export function useGridSelection<T>(opts: GridSelectionOptions<T>) {
   /** The rows matching the query, when more of them exist than are loaded (else null). */
   const moreMatching = computed(() => {
     const total = opts.matchingTotal()
-    return opts.mode() === 'multi' && total !== undefined && total > selectableKeys.value.length ? total : null
+    return opts.mode() === 'multi' && total !== undefined && total > selectableKeys.value.length
+      ? total
+      : null
   })
   /** Offer "select all N" (every loaded row is selected), or show that all N are. */
   const banner = computed<{ total: number; page: number; all: boolean } | null>(() => {
@@ -200,7 +202,11 @@ export function useGridSelection<T>(opts: GridSelectionOptions<T>) {
     return { total, page: selectableKeys.value.length, all: opts.allMatching.value }
   })
   /** Selected rows: every matching row with "all matching", else the selected keys. */
-  const count = computed(() => (opts.allMatching.value ? (opts.matchingTotal() ?? opts.selected.value.length) : opts.selected.value.length))
+  const count = computed(() =>
+    opts.allMatching.value
+      ? (opts.matchingTotal() ?? opts.selected.value.length)
+      : opts.selected.value.length,
+  )
   watch(opts.matchKey, () => (opts.allMatching.value = false))
 
   // ── Pruning ─────────────────────────────────────────────────────────────────────────────
@@ -224,5 +230,15 @@ export function useGridSelection<T>(opts: GridSelectionOptions<T>) {
     if (next.length !== opts.selected.value.length) opts.selected.value = next
   })
 
-  return { isRowSelectable, rowCheckState, toggleRow, selectableKeys, allState, toggleAll, clear, banner, count }
+  return {
+    isRowSelectable,
+    rowCheckState,
+    toggleRow,
+    selectableKeys,
+    allState,
+    toggleAll,
+    clear,
+    banner,
+    count,
+  }
 }

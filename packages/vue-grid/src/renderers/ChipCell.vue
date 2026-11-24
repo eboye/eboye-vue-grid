@@ -9,7 +9,9 @@ const props = defineProps<CellRendererProps<unknown, unknown, ChipOptions>>()
 
 /** Accepts `{ label | name | text, color }` objects (as many APIs send them) or plain values. */
 const record = computed(() =>
-  props.value !== null && typeof props.value === 'object' ? (props.value as Record<string, unknown>) : null,
+  props.value !== null && typeof props.value === 'object'
+    ? (props.value as Record<string, unknown>)
+    : null,
 )
 const label = computed(() => {
   if (props.options.label) return props.options.label(props.value, props.row)
@@ -37,7 +39,10 @@ const style = computed(() => ({
   // The chip CSS paints --vg-chip-bg as background-color (never `background`, so data can't set an
   // image url()) and picks readable text in CSS; JS computes the text colour only as a fallback.
   ...(color.value
-    ? { '--vg-chip-bg': color.value, ...(supportsRelativeColor() ? {} : { color: readableTextColor(color.value) }) }
+    ? {
+        '--vg-chip-bg': color.value,
+        ...(supportsRelativeColor() ? {} : { color: readableTextColor(color.value) }),
+      }
     : {}),
   '--vg-chip-size': props.options.size,
 }))
@@ -52,10 +57,17 @@ const tooltip = computed(() => {
 <template>
   <span
     v-if="label"
-    :class="['vg-chip', `vg-chip-${options.shape ?? 'square'}`, tone && `vg-tone-${tone}`, color ? 'vg-chip-raw' : 'vg-chip-toned']"
+    :class="[
+      'vg-chip',
+      `vg-chip-${options.shape ?? 'square'}`,
+      tone && `vg-tone-${tone}`,
+      color ? 'vg-chip-raw' : 'vg-chip-toned',
+    ]"
     :style="style"
     :title="tooltip"
     >{{ label }}</span
   >
-  <span v-else-if="options.placeholder" class="vg-text vg-text-muted">{{ options.placeholder }}</span>
+  <span v-else-if="options.placeholder" class="vg-text vg-text-muted">{{
+    options.placeholder
+  }}</span>
 </template>

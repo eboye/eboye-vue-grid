@@ -1,15 +1,29 @@
 :root {
   color-scheme: light;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    sans-serif;
   --pg-bg: light-dark(#f1f5f9, #0b1120);
   --pg-card: light-dark(#ffffff, #111827);
   --pg-text: light-dark(#0f172a, #e2e8f0);
   --pg-muted: light-dark(#64748b, #94a3b8);
 }
-:root[data-theme='dark'] { color-scheme: dark; }
+:root[data-theme='dark'] {
+  color-scheme: dark;
+}
 
-* { box-sizing: border-box; }
-body { margin: 0; background: var(--pg-bg); color: var(--pg-text); }
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: var(--pg-bg);
+  color: var(--pg-text);
+}
 
 .pg-header {
   position: sticky;
@@ -23,23 +37,85 @@ body { margin: 0; background: var(--pg-bg); color: var(--pg-text); }
   background: var(--pg-card);
   border-bottom: 1px solid light-dark(#e2e8f0, #1f2937);
 }
-.pg-header h1 { margin: 0; font-size: 1.05rem; }
-.pg-nav { display: flex; flex-wrap: wrap; gap: 0.25rem 0.75rem; font-size: 0.85rem; }
-.pg-nav a { color: var(--pg-muted); text-decoration: none; }
-.pg-nav a:hover { color: var(--pg-text); }
-.pg-header label { font-size: 0.85rem; display: inline-flex; gap: 0.35rem; align-items: center; }
-.pg-spacer { flex: 1; }
+.pg-header h1 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+.pg-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  font-size: 0.85rem;
+}
+.pg-nav a {
+  color: var(--pg-muted);
+  text-decoration: none;
+}
+.pg-nav a:hover {
+  color: var(--pg-text);
+}
+.pg-header label {
+  font-size: 0.85rem;
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: center;
+}
+.pg-spacer {
+  flex: 1;
+}
 
-main { display: grid; gap: 1.5rem; max-width: 1200px; margin: 0 auto; padding: 1.25rem 1rem 4rem; }
-.pg-card { background: var(--pg-card); border-radius: 0.75rem; padding: 1rem; box-shadow: 0 1px 2px rgb(0 0 0 / 6%); min-width: 0; }
-.pg-card h2 { margin: 0 0 0.25rem; font-size: 1rem; }
-.pg-card > p { margin: 0 0 0.75rem; color: var(--pg-muted); font-size: 0.85rem; }
-.pg-row { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: 0.75rem; font-size: 0.85rem; }
-.pg-log { margin-top: 0.5rem; font: 0.8rem ui-monospace, monospace; color: var(--pg-muted); min-height: 1.2em; overflow-wrap: anywhere; }
-.pg-fixed { height: 360px; }
+main {
+  display: grid;
+  gap: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.25rem 1rem 4rem;
+}
+.pg-card {
+  background: var(--pg-card);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 6%);
+  min-width: 0;
+}
+.pg-card h2 {
+  margin: 0 0 0.25rem;
+  font-size: 1rem;
+}
+.pg-card > p {
+  margin: 0 0 0.75rem;
+  color: var(--pg-muted);
+  font-size: 0.85rem;
+}
+.pg-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  font-size: 0.85rem;
+}
+.pg-log {
+  margin-top: 0.5rem;
+  font:
+    0.8rem ui-monospace,
+    monospace;
+  color: var(--pg-muted);
+  min-height: 1.2em;
+  overflow-wrap: anywhere;
+}
+.pg-fixed {
+  height: 360px;
+}
 .pg-btn {
-  font: inherit; font-size: 0.85rem; padding: 0.3rem 0.65rem; border-radius: 0.4rem;
-  border: 1px solid light-dark(#cbd5e1, #334155); background: var(--pg-card); color: var(--pg-text); cursor: pointer;
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 0.4rem;
+  border: 1px solid light-dark(#cbd5e1, #334155);
+  background: var(--pg-card);
+  color: var(--pg-text);
+  cursor: pointer;
 }
 
 /* Theming demo: plain CSS overrides of grid tokens — no !important needed thanks to @layer. */

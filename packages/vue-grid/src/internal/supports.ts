@@ -21,7 +21,6 @@ export const supportsHas = () => check('has', () => CSS.supports('selector(:has(
 export const supportsScrollState = () =>
   check('scroll-state', () => CSS.supports('container-type: scroll-state'))
 
-
 /** Relative colour syntax — picks readable chip text in CSS. */
 export const supportsRelativeColor = () =>
   check('relative-color', () => CSS.supports('color: oklch(from red l c h)'))

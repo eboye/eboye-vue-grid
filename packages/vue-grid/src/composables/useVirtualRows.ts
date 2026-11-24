@@ -221,7 +221,8 @@ export function useVirtualRows<T>(opts: VirtualRowsOptions<T>) {
       prepare: opts.preparer(),
       isExpanded: (row) => expandedKeys.has(rawKey(row)) && expandable(row),
       // group rows (row grouping) have no detail row
-      detailHeight: (row, k) => (detail && !isGroup?.(row) ? (measured.get(`d:${String(k)}`) ?? detailEstimate) : 0),
+      detailHeight: (row, k) =>
+        detail && !isGroup?.(row) ? (measured.get(`d:${String(k)}`) ?? detailEstimate) : 0,
       subRows: (row) => {
         if (!tree) return undefined
         const state = tree.state(row)

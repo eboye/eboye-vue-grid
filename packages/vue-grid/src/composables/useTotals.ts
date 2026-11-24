@@ -26,6 +26,12 @@ export function useTotals<T>(opts: TotalsOptions<T>) {
     const computedValues = aggregateRows(opts.rows(), columns)
     return given ? { ...computedValues, ...given } : computedValues
   })
-  const item = computed<PinnedRowItem>(() => ({ id: 'total', kind: 'total', row: values.value, key: '__vg_total', selectable: false }))
+  const item = computed<PinnedRowItem>(() => ({
+    id: 'total',
+    kind: 'total',
+    row: values.value,
+    key: '__vg_total',
+    selectable: false,
+  }))
   return { at, values, item }
 }

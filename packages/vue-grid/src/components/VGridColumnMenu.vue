@@ -58,7 +58,8 @@ function onToggle(event: Event) {
   stopTracking()
   if ((event as ToggleEvent).newState !== 'open') return
   // Placed, followed and hidden by CSS anchor positioning; JS only where unsupported.
-  if (panel.value && trigger.value) stopTracking = trackAnchor(panel.value, trigger.value, 'bottom-end')
+  if (panel.value && trigger.value)
+    stopTracking = trackAnchor(panel.value, trigger.value, 'bottom-end')
   nextTick(() => filterInput.value?.focus({ preventScroll: true }))
 }
 </script>
@@ -75,12 +76,35 @@ function onToggle(event: Event) {
       :style="{ 'anchor-name': anchor }"
     >
       <svg viewBox="0 0 16 16" aria-hidden="true" class="vg-button-icon">
-        <path d="M2 3h12M2 8h12M2 13h12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+        <path
+          d="M2 3h12M2 8h12M2 13h12"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+        />
       </svg>
       {{ label }}
     </button>
-    <div :id="id" ref="panel" popover="auto" role="dialog" :aria-label="label" class="vg-menu vg-column-panel" data-placement="bottom-end" :style="{ 'position-anchor': anchor }" @toggle="onToggle">
-      <input ref="filterInput" v-model="filter" type="search" class="vg-input" :placeholder="filterPlaceholder" :aria-label="filterPlaceholder" />
+    <div
+      :id="id"
+      ref="panel"
+      popover="auto"
+      role="dialog"
+      :aria-label="label"
+      class="vg-menu vg-column-panel"
+      data-placement="bottom-end"
+      :style="{ 'position-anchor': anchor }"
+      @toggle="onToggle"
+    >
+      <input
+        ref="filterInput"
+        v-model="filter"
+        type="search"
+        class="vg-input"
+        :placeholder="filterPlaceholder"
+        :aria-label="filterPlaceholder"
+      />
       <ul class="vg-column-list">
         <li v-for="col in items" :key="col.key">
           <label class="vg-column-option">
@@ -95,7 +119,9 @@ function onToggle(event: Event) {
         </li>
         <li v-if="!items.length" class="vg-text-muted vg-column-none">No matching columns</li>
       </ul>
-      <button type="button" class="vg-button vg-button-ghost" @click="reset">{{ resetLabel }}</button>
+      <button type="button" class="vg-button vg-button-ghost" @click="reset">
+        {{ resetLabel }}
+      </button>
     </div>
   </span>
 </template>

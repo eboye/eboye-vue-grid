@@ -11,7 +11,11 @@ function emitCss(): Plugin {
     name: 'rating:emit-css',
     apply: 'build',
     generateBundle() {
-      this.emitFile({ type: 'asset', fileName: 'rating.css', source: readFileSync(cssPath, 'utf8') })
+      this.emitFile({
+        type: 'asset',
+        fileName: 'rating.css',
+        source: readFileSync(cssPath, 'utf8'),
+      })
     },
   }
 }

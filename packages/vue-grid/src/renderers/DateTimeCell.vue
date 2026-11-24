@@ -16,11 +16,17 @@ const timePart = computed(() => {
   if (props.options.milliseconds) opts.fractionalSecondDigits = 3
   return formatDate(date.value, ctx.value, opts)
 })
-const custom = computed(() => (date.value && props.options.format ? formatDate(date.value, ctx.value, props.options.format) : ''))
+const custom = computed(() =>
+  date.value && props.options.format ? formatDate(date.value, ctx.value, props.options.format) : '',
+)
 </script>
 
 <template>
-  <time v-if="date" :class="['vg-datetime', { 'vg-datetime-stacked': options.twoLines !== false && !custom }]" :datetime="date.toISOString()">
+  <time
+    v-if="date"
+    :class="['vg-datetime', { 'vg-datetime-stacked': options.twoLines !== false && !custom }]"
+    :datetime="date.toISOString()"
+  >
     <template v-if="custom">{{ custom }}</template>
     <template v-else>
       <span>{{ datePart }}</span>

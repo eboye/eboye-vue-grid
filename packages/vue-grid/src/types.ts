@@ -42,7 +42,10 @@ export interface FilterOption {
   count?: number
 }
 
-export type FilterOptionsLoader = (search: string, ctx: { signal: AbortSignal }) => Promise<readonly FilterOption[]>
+export type FilterOptionsLoader = (
+  search: string,
+  ctx: { signal: AbortSignal },
+) => Promise<readonly FilterOption[]>
 
 export interface ColumnFilterOptions {
   /** `text`, `number`, `date`, `boolean` or `set` (default: from the renderer). */
@@ -283,14 +286,7 @@ export interface CellClickEvent<T = any> {
 }
 
 export type GridPart =
-  | 'root'
-  | 'header'
-  | 'headerCell'
-  | 'row'
-  | 'cell'
-  | 'subgrid'
-  | 'detail'
-  | 'empty'
+  'root' | 'header' | 'headerCell' | 'row' | 'cell' | 'subgrid' | 'detail' | 'empty'
 
 export interface VirtualOptions {
   /** Fixed row height in px. */
@@ -378,7 +374,9 @@ export interface VGridExposed {
    * app can't reach. Top-level and synchronous `subRows` data belong to the app: update them there
    * (assign fields on reactive rows, or use `patchRows`). Returns the number of rows patched.
    */
-  patchLoadedRows(patches: ReadonlyMap<RowKey, Record<string, unknown>> | readonly Record<string, unknown>[]): number
+  patchLoadedRows(
+    patches: ReadonlyMap<RowKey, Record<string, unknown>> | readonly Record<string, unknown>[],
+  ): number
   /** Replaces the filter model (also persisted with `filter-storage`). */
   setFilters(state: FilterState): void
   /** Removes every column filter and the search. */

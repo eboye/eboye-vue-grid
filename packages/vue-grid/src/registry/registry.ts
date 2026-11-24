@@ -32,5 +32,11 @@ export function createRendererRegistry(
 
 /** Tells a renderer definition (`{ name, component, … }`) apart from a plain component. */
 export function isRendererDefinition(value: unknown): value is CellRendererDefinition {
-  return typeof value === 'object' && value !== null && 'component' in value && 'name' in value && typeof (value as { name: unknown }).name === 'string'
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'component' in value &&
+    'name' in value &&
+    typeof (value as { name: unknown }).name === 'string'
+  )
 }

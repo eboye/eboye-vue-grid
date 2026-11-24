@@ -8,7 +8,11 @@
 -->
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useGridContext, type CellRendererEmits, type CellRendererProps } from '@nocopypaste/vue-grid'
+import {
+  useGridContext,
+  type CellRendererEmits,
+  type CellRendererProps,
+} from '@nocopypaste/vue-grid'
 import type { RatingOptions } from './types'
 
 const props = defineProps<CellRendererProps<unknown, number | null | undefined, RatingOptions>>()

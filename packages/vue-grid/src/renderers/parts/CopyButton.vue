@@ -3,7 +3,9 @@ import { onBeforeUnmount, ref } from 'vue'
 import { copyText } from '../../internal/clipboard'
 import { CheckIcon, CopyIcon } from './icons'
 
-const props = withDefaults(defineProps<{ text: string; label?: string; title?: string }>(), { label: 'Copy' })
+const props = withDefaults(defineProps<{ text: string; label?: string; title?: string }>(), {
+  label: 'Copy',
+})
 const emit = defineEmits<{ copied: [text: string]; failed: [text: string] }>()
 
 const done = ref(false)

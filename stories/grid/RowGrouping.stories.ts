@@ -15,7 +15,12 @@ const groupColumns = betColumns({ sortable: true }).map((c) =>
       : c.key === 'change'
         ? { ...c, aggregate: 'avg' as const }
         : c.key === 'placedAt'
-          ? { ...c, aggregate: 'max' as const, groupable: true, groupValue: (b: Bet) => String(b.placedAt).slice(0, 7) }
+          ? {
+              ...c,
+              aggregate: 'max' as const,
+              groupable: true,
+              groupValue: (b: Bet) => String(b.placedAt).slice(0, 7),
+            }
           : c,
 )
 

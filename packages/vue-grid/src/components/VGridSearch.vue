@@ -9,20 +9,33 @@ declare const process: { env: Record<string, string | undefined> } // replaced b
  * Quick search box. Inside a grid's `#toolbar` slot it drives that grid's search automatically;
  * anywhere else, bind it with `v-model` (e.g. to `filters.search`).
  */
-const props = withDefaults(defineProps<{ modelValue?: string; placeholder?: string; label?: string; debounce?: number }>(), {
-  modelValue: undefined,
-  placeholder: 'Search…',
-  label: 'Search rows',
-  debounce: 150,
-})
+const props = withDefaults(
+  defineProps<{ modelValue?: string; placeholder?: string; label?: string; debounce?: number }>(),
+  {
+    modelValue: undefined,
+    placeholder: 'Search…',
+    label: 'Search rows',
+    debounce: 150,
+  },
+)
 const emit = defineEmits<{ 'update:modelValue': [value: string] }>()
 
 const grid = inject(GRID_CONTEXT_KEY, undefined)
 const bound = computed(() => props.modelValue !== undefined || !grid)
-if (process.env.NODE_ENV !== 'production' && grid && !grid.filters && props.modelValue === undefined) {
-  warnOnce('search:no-filtering', '<VGridSearch> in a grid without the filtering feature does nothing. Add filteringFeature to the grid\'s features.')
+if (
+  process.env.NODE_ENV !== 'production' &&
+  grid &&
+  !grid.filters &&
+  props.modelValue === undefined
+) {
+  warnOnce(
+    'search:no-filtering',
+    "<VGridSearch> in a grid without the filtering feature does nothing. Add filteringFeature to the grid's features.",
+  )
 }
-const source = computed(() => (bound.value ? (props.modelValue ?? '') : (grid?.filters?.state.value.search ?? '')))
+const source = computed(() =>
+  bound.value ? (props.modelValue ?? '') : (grid?.filters?.state.value.search ?? ''),
+)
 
 const text = ref(source.value)
 const focused = ref(false)

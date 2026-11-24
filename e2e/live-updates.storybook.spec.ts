@@ -11,7 +11,8 @@ const story = async (page: Page, id: string) => {
 const tagCells = (page: Page) =>
   page.evaluate(() => {
     document.querySelectorAll<HTMLElement>('.vg-row > [data-col-key]').forEach((el) => {
-      ;(el as unknown as { __tag: string }).__tag = `${el.parentElement!.dataset.rowKey}:${el.dataset.colKey}`
+      ;(el as unknown as { __tag: string }).__tag =
+        `${el.parentElement!.dataset.rowKey}:${el.dataset.colKey}`
       ;(el as unknown as { __html: string }).__html = el.innerHTML
     })
   })
@@ -26,7 +27,9 @@ const changedCells = (page: Page) =>
       .map((el) => `${el.parentElement!.dataset.rowKey}:${el.dataset.colKey}`),
   )
 
-test('enrichment via patchRows: only the patched rows change, nodes elsewhere are kept', async ({ page }) => {
+test('enrichment via patchRows: only the patched rows change, nodes elsewhere are kept', async ({
+  page,
+}) => {
   await story(page, 'grid-live-updates--enrichment')
   const city = (row: number) => page.locator(`[data-row-key="${row}"] > [data-col-key="city"]`)
   await expect(city(1)).toHaveText('loading…')
@@ -53,7 +56,9 @@ test('reactive rows: assigning a field changes exactly one cell', async ({ page 
 test('live ticker keeps updating a few cells at a time and can be paused', async ({ page }) => {
   await story(page, 'grid-live-updates--live-ticker')
   await tagCells(page)
-  await expect.poll(async () => (await changedCells(page)).length, { timeout: 5000 }).toBeGreaterThan(0)
+  await expect
+    .poll(async () => (await changedCells(page)).length, { timeout: 5000 })
+    .toBeGreaterThan(0)
   const changed = await changedCells(page)
   expect(changed.every((c) => /:(stake|change)$/.test(c))).toBe(true) // only the fed fields
   await page.getByTestId('toggle').click()
@@ -74,7 +79,10 @@ const flashAt = (page: Page, selector: string, progress = 0) =>
       .find((a) => (a as CSSAnimation).animationName?.startsWith('vg-flash'))
     // Any CSS colour (oklab(), color(srgb …), rgb()) → [r, g, b, a] 0–255 via a canvas pixel.
     const toRgba = (css: string, alpha = 1) => {
-      const ctx = Object.assign(document.createElement('canvas'), { width: 1, height: 1 }).getContext('2d')!
+      const ctx = Object.assign(document.createElement('canvas'), {
+        width: 1,
+        height: 1,
+      }).getContext('2d')!
       ctx.globalAlpha = alpha
       ctx.fillStyle = css
       ctx.fillRect(0, 0, 1, 1)
@@ -84,13 +92,19 @@ const flashAt = (page: Page, selector: string, progress = 0) =>
       const cell = getComputedStyle(el)
       const layer = getComputedStyle(el, '::after')
       const opacity = layer.content === 'none' ? 0 : Number(layer.opacity)
-      const ctx = Object.assign(document.createElement('canvas'), { width: 1, height: 1 }).getContext('2d')!
+      const ctx = Object.assign(document.createElement('canvas'), {
+        width: 1,
+        height: 1,
+      }).getContext('2d')!
       ctx.fillStyle = cell.backgroundColor
       ctx.fillRect(0, 0, 1, 1)
       ctx.globalAlpha = opacity
       ctx.fillStyle = layer.backgroundColor
       ctx.fillRect(0, 0, 1, 1)
-      return { bg: [...ctx.getImageData(0, 0, 1, 1).data], tint: toRgba(layer.backgroundColor, opacity) }
+      return {
+        bg: [...ctx.getImageData(0, 0, 1, 1).data],
+        tint: toRgba(layer.backgroundColor, opacity),
+      }
     }
     if (!anim) return { name: 'none', ...shown() }
     anim.pause()
@@ -99,7 +113,9 @@ const flashAt = (page: Page, selector: string, progress = 0) =>
   }, progress)
 const rgb = (c: number[]) => c
 
-test('flash: changed cells get a tint that fades out; direction colours, restart, unchanged cells untouched', async ({ page }) => {
+test('flash: changed cells get a tint that fades out; direction colours, restart, unchanged cells untouched', async ({
+  page,
+}) => {
   await story(page, 'grid-live-updates--reactive-rows')
   const key = await page.locator('.vg-row').nth(2).getAttribute('data-row-key')
   const stake = `[data-row-key="${key}"] > [data-col-key="stake"]`
@@ -116,7 +132,9 @@ test('flash: changed cells get a tint that fades out; direction colours, restart
   expect(neighbour.name).toBe('none') // unchanged cell: no animation
   // near the end it has faded back to the cell's own background (same as its unchanged neighbour)
   const end = await flashAt(page, stake, 0.999)
-  end.bg.forEach((channel, i) => expect(Math.abs(channel - neighbour.bg[i]!)).toBeLessThanOrEqual(3))
+  end.bg.forEach((channel, i) =>
+    expect(Math.abs(channel - neighbour.bg[i]!)).toBeLessThanOrEqual(3),
+  )
   // a second change restarts it with the other (identical) keyframes
   await page.getByTestId('bump').click()
   expect((await flashAt(page, stake)).name).toBe('vg-flash-2')
@@ -140,7 +158,9 @@ test('flash: neutral tint for non-numeric changes, red for falling numbers', asy
   expect(dr!).toBeGreaterThan(dg!) // falling number → red tint
 })
 
-test('flash with prefers-reduced-motion: the tint holds, then switches off, without fading', async ({ page }) => {
+test('flash with prefers-reduced-motion: the tint holds, then switches off, without fading', async ({
+  page,
+}) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await story(page, 'grid-live-updates--reactive-rows')
   const key = await page.locator('.vg-row').nth(2).getAttribute('data-row-key')

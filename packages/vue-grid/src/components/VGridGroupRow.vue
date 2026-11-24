@@ -43,7 +43,9 @@ watch(
     const first = el?.firstElementChild as HTMLElement | null
     const grid = el?.closest<HTMLElement>('.vg')
     if (!first || !grid || typeof ResizeObserver === 'undefined') return
-    observer = new ResizeObserver(() => grid.style.setProperty('--vg-group-row-height', `${first.offsetHeight}px`))
+    observer = new ResizeObserver(() =>
+      grid.style.setProperty('--vg-group-row-height', `${first.offsetHeight}px`),
+    )
     observer.observe(first)
     grid.style.setProperty('--vg-group-row-height', `${first.offsetHeight}px`)
   },
@@ -62,7 +64,10 @@ onBeforeUnmount(() => {
       :key="`${seg.first}:${seg.label ?? ''}`"
       role="columnheader"
       :aria-colspan="seg.span > 1 ? seg.span : undefined"
-      :class="['vg-group-cell', { 'vg-group-empty': !seg.label, [`vg-pin-${seg.pinned}`]: seg.pinned }]"
+      :class="[
+        'vg-group-cell',
+        { 'vg-group-empty': !seg.label, [`vg-pin-${seg.pinned}`]: seg.pinned },
+      ]"
       :style="[
         { 'grid-column': `${seg.start} / span ${seg.span}` },
         grid.pinStyle(seg.pinned === 'right' ? seg.last : seg.first),

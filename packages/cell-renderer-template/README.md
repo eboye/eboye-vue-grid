@@ -16,23 +16,30 @@ app.use(createVueGrid({ renderers: [ratingRenderer] }))
 
 ```ts
 const col = createColumnHelper<Product>()
-const columns = [col({ key: 'stars', header: 'Rating', renderer: 'rating', rendererOptions: { max: 5 } })]
+const columns = [
+  col({ key: 'stars', header: 'Rating', renderer: 'rating', rendererOptions: { max: 5 } }),
+]
 ```
 
 ```vue
-<VGrid :rows :columns row-key="id" @cell-action="(e) => e.name === 'rate' && save(e.rowKey, e.payload)" />
+<VGrid
+  :rows
+  :columns
+  row-key="id"
+  @cell-action="(e) => e.name === 'rate' && save(e.rowKey, e.payload)"
+/>
 ```
 
 ## Anatomy
 
-| File | What it shows |
-|---|---|
-| `src/RatingCell.vue` | The renderer component: `defineProps<CellRendererProps<Row, Value, Options>>()`, `defineEmits<CellRendererEmits>()`, `useGridContext()` for locale, emitting `action('rate', n)`, accessible markup. |
-| `src/types.ts` | The options interface. |
-| `src/index.ts` | `defineCellRenderer({ name, component, defaults, align, sortValue, format })` and the **module augmentation** that makes `renderer: 'rating'` and its `rendererOptions` type-checked. |
-| `src/rating.css` | Styles in `@layer vue-grid-addons`, built only from grid tokens (`--vg-color-*`, `--vg-radius-sm`, …) plus the addon's own `--vg-rating-*` tokens. |
-| `vite.config.ts` | Library build; `vue` and `@nocopypaste/vue-grid` stay external (peer dependencies). |
-| `test/rating.spec.ts` | Unit test of the component, and an integration test inside `<VGrid>` — including a `@ts-expect-error` proving the options are typed. |
+| File                  | What it shows                                                                                                                                                                                        |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/RatingCell.vue`  | The renderer component: `defineProps<CellRendererProps<Row, Value, Options>>()`, `defineEmits<CellRendererEmits>()`, `useGridContext()` for locale, emitting `action('rate', n)`, accessible markup. |
+| `src/types.ts`        | The options interface.                                                                                                                                                                               |
+| `src/index.ts`        | `defineCellRenderer({ name, component, defaults, align, sortValue, format })` and the **module augmentation** that makes `renderer: 'rating'` and its `rendererOptions` type-checked.                |
+| `src/rating.css`      | Styles in `@layer vue-grid-addons`, built only from grid tokens (`--vg-color-*`, `--vg-radius-sm`, …) plus the addon's own `--vg-rating-*` tokens.                                                   |
+| `vite.config.ts`      | Library build; `vue` and `@nocopypaste/vue-grid` stay external (peer dependencies).                                                                                                                  |
+| `test/rating.spec.ts` | Unit test of the component, and an integration test inside `<VGrid>` — including a `@ts-expect-error` proving the options are typed.                                                                 |
 
 ## Rules of thumb
 

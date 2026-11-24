@@ -59,12 +59,16 @@ const OPS = {
   ],
 } as const
 
-const current = computed(() => (props.modelValue?.type === props.type ? props.modelValue : undefined) as
-  | (ColumnFilter & { op?: string; value?: unknown; to?: unknown })
-  | undefined)
+const current = computed(
+  () =>
+    (props.modelValue?.type === props.type ? props.modelValue : undefined) as
+      (ColumnFilter & { op?: string; value?: unknown; to?: unknown }) | undefined,
+)
 // The chosen condition is a local draft: picking "≥" before typing a value is not yet an active
 // filter (so the model drops it), but the choice must stay.
-const draftOp = ref<string>(current.value?.op ?? (props.type === 'text' ? 'contains' : props.type === 'number' ? 'eq' : 'on'))
+const draftOp = ref<string>(
+  current.value?.op ?? (props.type === 'text' ? 'contains' : props.type === 'number' ? 'eq' : 'on'),
+)
 watch(
   () => current.value?.op,
   (o) => {
@@ -79,7 +83,13 @@ let timer = 0
 onBeforeUnmount(() => window.clearTimeout(timer))
 function update(patch: Record<string, unknown>, debounce = false) {
   if (typeof patch.op === 'string') draftOp.value = patch.op
-  const next = { type: props.type, op: op.value, value: current.value?.value, to: current.value?.to, ...patch } as ColumnFilter
+  const next = {
+    type: props.type,
+    op: op.value,
+    value: current.value?.value,
+    to: current.value?.to,
+    ...patch,
+  } as ColumnFilter
   window.clearTimeout(timer)
   if (debounce) timer = window.setTimeout(() => emit('update:modelValue', next), 150)
   else emit('update:modelValue', next)
@@ -133,13 +143,17 @@ const MAX_RENDERED_VALUES = 300
 const renderedValues = computed(() => shownValues.value.slice(0, MAX_RENDERED_VALUES))
 const hiddenValueCount = computed(() => shownValues.value.length - renderedValues.value.length)
 const selected = computed(() =>
-  props.modelValue?.type === 'set' ? new Set(props.modelValue.values) : new Set(options.value.map((v) => v.key)),
+  props.modelValue?.type === 'set'
+    ? new Set(props.modelValue.values)
+    : new Set(options.value.map((v) => v.key)),
 )
 function emitSelection(keys: Set<string>) {
   // "Everything selected" means no filter — only knowable when the full list is shown.
   const complete = !props.loadValues || !search.value
   const all = complete && options.value.every((v) => keys.has(v.key))
-  const values = props.loadValues ? [...keys] : options.value.map((v) => v.key).filter((k) => keys.has(k))
+  const values = props.loadValues
+    ? [...keys]
+    : options.value.map((v) => v.key).filter((k) => keys.has(k))
   emit('update:modelValue', all ? undefined : { type: 'set', values })
 }
 function toggleValue(key: string) {
@@ -148,7 +162,9 @@ function toggleValue(key: string) {
   else keys.add(key)
   emitSelection(keys)
 }
-const allShownSelected = computed(() => shownValues.value.length > 0 && shownValues.value.every((v) => selected.value.has(v.key)))
+const allShownSelected = computed(
+  () => shownValues.value.length > 0 && shownValues.value.every((v) => selected.value.has(v.key)),
+)
 const someShownSelected = computed(() => shownValues.value.some((v) => selected.value.has(v.key)))
 function toggleAllShown() {
   const keys = new Set(selected.value)
@@ -160,19 +176,31 @@ function toggleAllShown() {
   emitSelection(keys)
 }
 
-const boolValue = computed(() => (props.modelValue?.type === 'boolean' ? String(props.modelValue.value) : 'any'))
+const boolValue = computed(() =>
+  props.modelValue?.type === 'boolean' ? String(props.modelValue.value) : 'any',
+)
 function setBool(v: string) {
-  emit('update:modelValue', v === 'any' ? undefined : { type: 'boolean', value: v === 'null' ? null : v === 'true' })
+  emit(
+    'update:modelValue',
+    v === 'any' ? undefined : { type: 'boolean', value: v === 'null' ? null : v === 'true' },
+  )
 }
 
-const customComponent = computed(() => props.column.filterComponent && toRaw(props.column.filterComponent))
+const customComponent = computed(
+  () => props.column.filterComponent && toRaw(props.column.filterComponent),
+)
 </script>
 
 <template>
   <div ref="root" class="vg-filter-panel">
     <header class="vg-filter-head">
       <strong :id="`${uid}-title`">{{ title }}</strong>
-      <button type="button" class="vg-link-button" :disabled="!modelValue" @click="emit('update:modelValue', undefined)">
+      <button
+        type="button"
+        class="vg-link-button"
+        :disabled="!modelValue"
+        @click="emit('update:modelValue', undefined)"
+      >
         Clear
       </button>
     </header>
@@ -206,7 +234,12 @@ const customComponent = computed(() => props.column.filterComponent && toRaw(pro
             :aria-label="op === 'between' ? `${title}: from` : `${title}: value`"
             :value="current?.value ?? ''"
             @input="
-              update({ value: type === 'number' ? num(($event.target as HTMLInputElement).value) : ($event.target as HTMLInputElement).value })
+              update({
+                value:
+                  type === 'number'
+                    ? num(($event.target as HTMLInputElement).value)
+                    : ($event.target as HTMLInputElement).value,
+              })
             "
           />
           <input
@@ -216,7 +249,12 @@ const customComponent = computed(() => props.column.filterComponent && toRaw(pro
             :aria-label="`${title}: to`"
             :value="current?.to ?? ''"
             @input="
-              update({ to: type === 'number' ? num(($event.target as HTMLInputElement).value) : ($event.target as HTMLInputElement).value })
+              update({
+                to:
+                  type === 'number'
+                    ? num(($event.target as HTMLInputElement).value)
+                    : ($event.target as HTMLInputElement).value,
+              })
             "
           />
         </template>
@@ -224,16 +262,44 @@ const customComponent = computed(() => props.column.filterComponent && toRaw(pro
     </div>
 
     <!-- boolean -->
-    <div v-else-if="type === 'boolean'" class="vg-filter-fields" role="radiogroup" :aria-labelledby="`${uid}-title`">
-      <label v-for="[value, label] in [['any', 'Any'], ['true', 'Yes'], ['false', 'No'], ['null', 'Empty']]" :key="value" class="vg-filter-option">
-        <input type="radio" :name="`${uid}-bool`" :value="value" :checked="boolValue === value" :autofocus="boolValue === value" @change="setBool(value)" />
+    <div
+      v-else-if="type === 'boolean'"
+      class="vg-filter-fields"
+      role="radiogroup"
+      :aria-labelledby="`${uid}-title`"
+    >
+      <label
+        v-for="[value, label] in [
+          ['any', 'Any'],
+          ['true', 'Yes'],
+          ['false', 'No'],
+          ['null', 'Empty'],
+        ]"
+        :key="value"
+        class="vg-filter-option"
+      >
+        <input
+          type="radio"
+          :name="`${uid}-bool`"
+          :value="value"
+          :checked="boolValue === value"
+          :autofocus="boolValue === value"
+          @change="setBool(value)"
+        />
         {{ label }}
       </label>
     </div>
 
     <!-- value list -->
     <div v-else-if="type === 'set'" class="vg-filter-fields">
-      <input v-model="search" class="vg-input" type="search" autofocus placeholder="Search values" :aria-label="`${title}: search values`" />
+      <input
+        v-model="search"
+        class="vg-input"
+        type="search"
+        autofocus
+        placeholder="Search values"
+        :aria-label="`${title}: search values`"
+      />
       <label class="vg-filter-option vg-filter-all">
         <input
           type="checkbox"
@@ -247,15 +313,21 @@ const customComponent = computed(() => props.column.filterComponent && toRaw(pro
         <li v-for="v in renderedValues" :key="v.key">
           <label class="vg-filter-option">
             <input type="checkbox" :checked="selected.has(v.key)" @change="toggleValue(v.key)" />
-            <span class="vg-filter-value-label" :class="{ 'vg-text-muted': !v.key }">{{ v.label }}</span>
+            <span class="vg-filter-value-label" :class="{ 'vg-text-muted': !v.key }">{{
+              v.label
+            }}</span>
             <span v-if="v.count" class="vg-filter-count">{{ v.count }}</span>
           </label>
         </li>
         <li v-if="hiddenValueCount > 0" class="vg-text-muted vg-filter-none">
           {{ hiddenValueCount }} more — search to narrow the list
         </li>
-        <li v-if="loadingValues" class="vg-text-muted vg-filter-none" aria-live="polite">Loading…</li>
-        <li v-else-if="!shownValues.length" class="vg-text-muted vg-filter-none">No matching values</li>
+        <li v-if="loadingValues" class="vg-text-muted vg-filter-none" aria-live="polite">
+          Loading…
+        </li>
+        <li v-else-if="!shownValues.length" class="vg-text-muted vg-filter-none">
+          No matching values
+        </li>
       </ul>
     </div>
 

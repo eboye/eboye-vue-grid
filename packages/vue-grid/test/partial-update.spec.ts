@@ -33,7 +33,12 @@ function counting() {
 }
 
 const makeRows = (): Row[] =>
-  Array.from({ length: 50 }, (_, i) => ({ id: i + 1, name: `Player ${i + 1}`, score: i, city: '—' }))
+  Array.from({ length: 50 }, (_, i) => ({
+    id: i + 1,
+    name: `Player ${i + 1}`,
+    score: i,
+    city: '—',
+  }))
 
 describe('partial updates re-render only what changed', () => {
   it('reactive rows: mutating one field re-renders exactly that cell', async () => {
@@ -59,7 +64,14 @@ describe('partial updates re-render only what changed', () => {
     // Enrich rows 3 and 7 with a new object each; every other row keeps its identity.
     rows.value = rows.value.map((r) => (r.id === 3 || r.id === 7 ? { ...r, city: 'Niš' } : r))
     await w.setProps({ rows: rows.value })
-    expect([...renders.keys()].sort()).toEqual(['3:city', '3:name', '3:score', '7:city', '7:name', '7:score'])
+    expect([...renders.keys()].sort()).toEqual([
+      '3:city',
+      '3:name',
+      '3:score',
+      '7:city',
+      '7:name',
+      '7:score',
+    ])
     reset()
 
     // Mutating in place under a shallowRef is NOT seen until the ref is triggered.
@@ -75,7 +87,14 @@ describe('partial updates re-render only what changed', () => {
     const columns = ['name', 'score', 'city'].map((key) => ({ key, renderer: Counter }))
     const w = mount(VGrid, { props: { rows: rows.value, columns, rowKey: 'id' } })
     reset()
-    rows.value = patchRows(rows.value, [{ id: 2, city: 'Novi Sad' }, { id: 40, city: 'Kragujevac', score: 99 }], 'id')
+    rows.value = patchRows(
+      rows.value,
+      [
+        { id: 2, city: 'Novi Sad' },
+        { id: 40, city: 'Kragujevac', score: 99 },
+      ],
+      'id',
+    )
     await w.setProps({ rows: rows.value })
     expect(new Set([...renders.keys()].map((k) => k.split(':')[0]))).toEqual(new Set(['2', '40']))
     expect(w.find('[data-row-key="40"] > [data-col-key="city"]').text()).toBe('Kragujevac')
@@ -88,13 +107,22 @@ describe('partial updates re-render only what changed', () => {
       { id: 'c2', name: 'Child 2', score: 2, city: '—' },
     ]
     const w = mount(VGrid, {
-      props: { rows: parents, rowKey: 'id', loadSubRows, hasSubRows: () => true, columns: [{ key: 'name' }, { key: 'city' }] },
+      props: {
+        rows: parents,
+        rowKey: 'id',
+        loadSubRows,
+        hasSubRows: () => true,
+        columns: [{ key: 'name' }, { key: 'city' }],
+      },
     })
     await w.find('.vg-expander').trigger('click')
     await flushPromises()
     const city = (key: string) => w.find(`[data-row-key="${key}"] > [data-col-key="city"]`).text()
     expect(city('c2')).toBe('—')
-    const patched = (w.vm as unknown as VGridExposed).patchLoadedRows([{ id: 'c2', city: 'Zrenjanin' }, { id: 'nope', city: 'x' }])
+    const patched = (w.vm as unknown as VGridExposed).patchLoadedRows([
+      { id: 'c2', city: 'Zrenjanin' },
+      { id: 'nope', city: 'x' },
+    ])
     await nextTick()
     expect(patched).toBe(1)
     expect(city('c2')).toBe('Zrenjanin')
@@ -119,14 +147,35 @@ describe('patchRows', () => {
   it('accepts a Map, merges duplicate patches, ignores prototype keys, and recurses into children', () => {
     const viaMap = patchRows(rows, new Map([[3, { score: 7 }]]), 'id')
     expect(viaMap[2]!.score).toBe(7)
-    const merged = patchRows(rows, [{ id: 1, city: 'A' }, { id: 1, score: 5 }], (r) => r.id)
+    const merged = patchRows(
+      rows,
+      [
+        { id: 1, city: 'A' },
+        { id: 1, score: 5 },
+      ],
+      (r) => r.id,
+    )
     expect(merged[0]).toMatchObject({ city: 'A', score: 5 })
     const evil = patchRows(rows, [JSON.parse('{"id":1,"__proto__":{"polluted":true}}')], 'id')
     expect(evil).toBe(rows)
     expect(({} as Record<string, unknown>).polluted).toBeUndefined()
 
-    interface Node { id: string; label: string; children?: Node[] }
-    const tree: Node[] = [{ id: 'a', label: 'A', children: [{ id: 'a1', label: 'A1' }, { id: 'a2', label: 'A2' }] }, { id: 'b', label: 'B' }]
+    interface Node {
+      id: string
+      label: string
+      children?: Node[]
+    }
+    const tree: Node[] = [
+      {
+        id: 'a',
+        label: 'A',
+        children: [
+          { id: 'a1', label: 'A1' },
+          { id: 'a2', label: 'A2' },
+        ],
+      },
+      { id: 'b', label: 'B' },
+    ]
     const t2 = patchRows(tree, [{ id: 'a2', label: 'A2*' }], 'id', { children: 'children' })
     expect(t2[0]).not.toBe(tree[0])
     expect(t2[0]!.children![0]).toBe(tree[0]!.children![0])
@@ -165,7 +214,11 @@ describe('flash (change highlight)', () => {
 
   it("'direction' marks numeric increases and decreases; columns override the grid", async () => {
     const rows = reactive(makeRows().slice(0, 2))
-    const columns = [{ key: 'name', flash: false }, { key: 'score', flash: 'direction' }, { key: 'city' }]
+    const columns = [
+      { key: 'name', flash: false },
+      { key: 'score', flash: 'direction' },
+      { key: 'city' },
+    ]
     const w = mount(VGrid, { props: { rows, columns, rowKey: 'id', flash: true } })
     rows[0]!.score = 10
     rows[1]!.score = -5
@@ -179,7 +232,11 @@ describe('flash (change highlight)', () => {
   })
 
   it('ignores re-fetched rows whose values are equal (new objects, same content)', async () => {
-    const data = shallowRef(makeRows().slice(0, 3).map((r) => ({ ...r, meta: { tags: ['a'] } })))
+    const data = shallowRef(
+      makeRows()
+        .slice(0, 3)
+        .map((r) => ({ ...r, meta: { tags: ['a'] } })),
+    )
     const columns = [{ key: 'score' }, { key: 'meta' }]
     const w = mount(VGrid, { props: { rows: data.value, columns, rowKey: 'id', flash: true } })
     data.value = data.value.map((r) => ({ ...r, meta: { tags: ['a'] } })) // all new objects, same values

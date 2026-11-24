@@ -23,10 +23,19 @@ const leg = createColumnHelper<Leg>()
 const legColumns = [
   leg({ key: 'leg', header: 'Leg', renderer: 'number' }),
   leg({ key: 'event', header: 'Event', width: '1fr' }),
-  leg({ key: 'odds', header: 'Odds', renderer: 'number', rendererOptions: { format: { minimumFractionDigits: 2 } } }),
+  leg({
+    key: 'odds',
+    header: 'Odds',
+    renderer: 'number',
+    rendererOptions: { format: { minimumFractionDigits: 2 } },
+  }),
 ]
 const legsFor = (bet: Bet): Leg[] =>
-  Array.from({ length: (bet.id % 3) + 1 }, (_, i) => ({ leg: i + 1, event: `Event ${bet.id}.${i + 1}`, odds: 1.5 + i * 0.35 }))
+  Array.from({ length: (bet.id % 3) + 1 }, (_, i) => ({
+    leg: i + 1,
+    event: `Event ${bet.id}.${i + 1}`,
+    odds: 1.5 + i * 0.35,
+  }))
 </script>
 
 <template>
@@ -44,7 +53,13 @@ const legsFor = (bet: Bet): Leg[] =>
       aria-label="Bets with details"
     >
       <template #detail="{ row }">
-        <VGrid :rows="legsFor(row)" :columns="legColumns" row-key="leg" density="compact" :aria-label="`Legs of bet ${row.id}`" />
+        <VGrid
+          :rows="legsFor(row)"
+          :columns="legColumns"
+          row-key="leg"
+          density="compact"
+          :aria-label="`Legs of bet ${row.id}`"
+        />
       </template>
     </VGrid>
     <div class="pg-log" data-testid="selected">selected: {{ selected.join(', ') || 'none' }}</div>

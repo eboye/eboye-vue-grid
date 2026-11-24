@@ -15,7 +15,9 @@ function locateGrid(cwd) {
       // not installed there
     }
   }
-  throw new Error('@nocopypaste/vue-grid is not installed (it is a dependency of this server: reinstall it).')
+  throw new Error(
+    '@nocopypaste/vue-grid is not installed (it is a dependency of this server: reinstall it).',
+  )
 }
 
 /** Splits Markdown into `## ` / `### ` sections for search. */

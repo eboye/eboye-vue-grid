@@ -25,7 +25,9 @@ describe('RatingCell', () => {
   })
 
   it('readonly mode renders an image with a label and no buttons', () => {
-    const w = mount(RatingCell, { props: { ...base, value: 2, options: { max: 4, readonly: true } } })
+    const w = mount(RatingCell, {
+      props: { ...base, value: 2, options: { max: 4, readonly: true } },
+    })
     expect(w.find('button').exists()).toBe(false)
     expect(w.find('[role="img"]').attributes('aria-label')).toMatch(/2 of 4/)
   })
@@ -39,11 +41,19 @@ describe('RatingCell', () => {
       col({ key: 'bad', renderer: 'rating', rendererOptions: { max: 'three' } }),
     ]
     const w = mount(VGrid, {
-      props: { rows: [{ id: 1, name: 'Desk', stars: 2 }], columns: columns.slice(0, 2), rowKey: 'id' },
+      props: {
+        rows: [{ id: 1, name: 'Desk', stars: 2 }],
+        columns: columns.slice(0, 2),
+        rowKey: 'id',
+      },
       global: { plugins: [createVueGrid({ renderers: [ratingRenderer] })] },
     })
     expect(w.findAll('[data-col-key="stars"] button.vg-rating-star')).toHaveLength(3)
     await w.findAll('[data-col-key="stars"] button.vg-rating-star')[2]!.trigger('click')
-    expect(w.emitted('cell-action')?.[0]?.[0]).toMatchObject({ name: 'rate', payload: 3, rowKey: 1 })
+    expect(w.emitted('cell-action')?.[0]?.[0]).toMatchObject({
+      name: 'rate',
+      payload: 3,
+      rowKey: 1,
+    })
   })
 })

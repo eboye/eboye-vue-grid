@@ -22,7 +22,10 @@ export function toggleRowSelection(
 
 export type SelectionSummary = 'none' | 'some' | 'all'
 
-export function selectionState(keys: readonly RowKey[], selected: ReadonlySet<RowKey>): SelectionSummary {
+export function selectionState(
+  keys: readonly RowKey[],
+  selected: ReadonlySet<RowKey>,
+): SelectionSummary {
   if (!keys.length) return 'none'
   let count = 0
   for (const k of keys) if (selected.has(k)) count++

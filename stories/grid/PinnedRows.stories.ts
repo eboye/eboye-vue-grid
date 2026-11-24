@@ -1,6 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import { ref } from 'vue'
-import type { CellContext, ContextActionEvent, MenuItem, PinnedRowsState } from '@nocopypaste/vue-grid'
+import type {
+  CellContext,
+  ContextActionEvent,
+  MenuItem,
+  PinnedRowsState,
+} from '@nocopypaste/vue-grid'
 import { betColumns, makeBets, type Bet } from '../data'
 import { Grid as VGrid, type GridArgs } from '../support'
 
@@ -70,7 +75,10 @@ export const PinRows: Story = {
             ]
       const grid = ref<{ pinRow(key: unknown, side: 'top' | 'bottom' | null): void }>()
       const onAction = (event: ContextActionEvent<Bet>) =>
-        grid.value?.pinRow(event.rowKey, event.name === 'unpin' ? null : (event.name as 'top' | 'bottom'))
+        grid.value?.pinRow(
+          event.rowKey,
+          event.name === 'unpin' ? null : (event.name as 'top' | 'bottom'),
+        )
       return { args, pinned, menu, grid, onAction }
     },
     template: `
@@ -86,7 +94,14 @@ export const ExtraRows: Story = {
     totals: 'top',
     totalsLabel: 'All bets',
     pinnedBottomRows: [
-      { id: 'target', player: { name: 'Target', city: '' }, stake: 50000, change: 0, status: 'open', placedAt: '' },
+      {
+        id: 'target',
+        player: { name: 'Target', city: '' },
+        stake: 50000,
+        change: 0,
+        status: 'open',
+        placedAt: '',
+      },
     ] as unknown as Bet[],
   },
   render: (args) => ({

@@ -38,7 +38,11 @@ function choose(item: MenuAction) {
       :style="{ 'anchor-name': anchor }"
       @click.stop
     >
-      <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="3" r="1.5" /><circle cx="8" cy="8" r="1.5" /><circle cx="8" cy="13" r="1.5" /></svg>
+      <svg viewBox="0 0 16 16" aria-hidden="true">
+        <circle cx="8" cy="3" r="1.5" />
+        <circle cx="8" cy="8" r="1.5" />
+        <circle cx="8" cy="13" r="1.5" />
+      </svg>
     </button>
     <VGridMenu
       :id="menuId"

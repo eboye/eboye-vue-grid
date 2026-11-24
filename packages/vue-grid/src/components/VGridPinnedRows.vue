@@ -31,7 +31,10 @@ watch(
     host = el?.closest<HTMLElement>('.vg') ?? null
     if (!el || !host || typeof ResizeObserver === 'undefined') return
     const grid = host
-    const header = props.position === 'top' ? grid.querySelector<HTMLElement>(':scope > .vg-header > .vg-header-cell') : null
+    const header =
+      props.position === 'top'
+        ? grid.querySelector<HTMLElement>(':scope > .vg-header > .vg-header-cell')
+        : null
     const publish = () => {
       grid.style.setProperty(heightVar(), `${el.offsetHeight}px`)
       if (header) grid.style.setProperty('--vg-header-height', `${header.offsetHeight}px`)
@@ -63,7 +66,10 @@ onBeforeUnmount(() => {
           ? 'vg-row-total'
           : [
               {
-                'vg-row-selected': grid.selectMode.value && item.selectable && grid.rowCheckState(item.row) === 'all',
+                'vg-row-selected':
+                  grid.selectMode.value &&
+                  item.selectable &&
+                  grid.rowCheckState(item.row) === 'all',
                 'vg-row-highlighted': grid.isHighlighted(item.key),
                 'vg-row-clickable': grid.rowClickable.value,
               },
@@ -76,7 +82,12 @@ onBeforeUnmount(() => {
       :aria-label="item.kind === 'total' ? grid.totals?.label.value : undefined"
     >
       <template v-if="item.kind === 'total'">
-        <VGridTotalCell v-for="column in grid.columns.value" :key="column.key" :column="column" :row="item.row" />
+        <VGridTotalCell
+          v-for="column in grid.columns.value"
+          :key="column.key"
+          :column="column"
+          :row="item.row"
+        />
       </template>
       <template v-else>
         <VGridCell

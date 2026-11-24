@@ -2,7 +2,8 @@ import type { Ref } from 'vue'
 
 // Group header cells (column groups) aren't interactive: the arrow keys skip them.
 const CELL = '[role="gridcell"], [role="columnheader"]:not(.vg-group-cell)'
-const FOCUSABLE = 'button, a[href], input, select, textarea, summary, [tabindex]:not([tabindex="-1"])'
+const FOCUSABLE =
+  'button, a[href], input, select, textarea, summary, [tabindex]:not([tabindex="-1"])'
 
 export interface GridKeyboardOptions {
   /** Alt+ArrowLeft/Right on a header cell. */
@@ -21,7 +22,10 @@ const RESIZE_STEP = 16
 export function useGridKeyboard(root: Ref<HTMLElement | undefined>, opts: GridKeyboardOptions) {
   let lastCell: HTMLElement | null = null
 
-  const rows = () => Array.from(root.value?.querySelectorAll<HTMLElement>('[role="row"]:not(.vg-header-groups)') ?? [])
+  const rows = () =>
+    Array.from(
+      root.value?.querySelectorAll<HTMLElement>('[role="row"]:not(.vg-header-groups)') ?? [],
+    )
   const cellsOf = (row: Element) =>
     Array.from(row.children).filter((c): c is HTMLElement => c.matches(CELL))
 
@@ -151,7 +155,9 @@ export function useGridKeyboard(root: Ref<HTMLElement | undefined>, opts: GridKe
         const checkbox = cell.parentElement?.querySelector<HTMLInputElement>('.vg-checkbox input')
         if (checkbox && !isHeader) {
           // Shift+Space selects a range, like a shift-click
-          checkbox.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, shiftKey: event.shiftKey }))
+          checkbox.dispatchEvent(
+            new MouseEvent('click', { bubbles: true, cancelable: true, shiftKey: event.shiftKey }),
+          )
           event.preventDefault()
         }
         return

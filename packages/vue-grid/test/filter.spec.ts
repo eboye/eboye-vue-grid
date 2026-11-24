@@ -34,7 +34,8 @@ describe('matchesFilter', () => {
   })
 
   it('number: comparisons, between (inclusive, open-ended), empty; non-numbers fail', () => {
-    const f = (op: string, value?: number | null, to?: number | null) => ({ type: 'number', op, value, to }) as ColumnFilter
+    const f = (op: string, value?: number | null, to?: number | null) =>
+      ({ type: 'number', op, value, to }) as ColumnFilter
     expect(matchesFilter(10, f('gt', 5))).toBe(true)
     expect(matchesFilter('10', f('lte', 10))).toBe(true)
     expect(matchesFilter(3, f('between', 3, 5))).toBe(true)
@@ -45,12 +46,15 @@ describe('matchesFilter', () => {
   })
 
   it('date: by day in the given time zone', () => {
-    const f = (op: string, value?: string, to?: string) => ({ type: 'date', op, value, to }) as ColumnFilter
+    const f = (op: string, value?: string, to?: string) =>
+      ({ type: 'date', op, value, to }) as ColumnFilter
     const late = '2026-03-05T23:30:00Z'
     expect(matchesFilter(late, f('on', '2026-03-05'), { timeZone: 'UTC' })).toBe(true)
     expect(matchesFilter(late, f('on', '2026-03-06'), { timeZone: 'Europe/Belgrade' })).toBe(true) // next day there
     expect(matchesFilter(late, f('before', '2026-03-06'), { timeZone: 'UTC' })).toBe(true)
-    expect(matchesFilter(late, f('between', '2026-03-01', '2026-03-05'), { timeZone: 'UTC' })).toBe(true)
+    expect(matchesFilter(late, f('between', '2026-03-01', '2026-03-05'), { timeZone: 'UTC' })).toBe(
+      true,
+    )
     expect(matchesFilter('nope', f('after', '2020-01-01'))).toBe(false)
   })
 
@@ -67,30 +71,67 @@ describe('matchesFilter', () => {
   it('activity and counts', () => {
     expect(isFilterActive({ type: 'text', op: 'contains', value: '' })).toBe(false)
     expect(isFilterActive({ type: 'number', op: 'empty' })).toBe(true)
-    expect(activeFilterCount({ columns: { a: { type: 'text', op: 'contains', value: 'x' }, b: { type: 'text', op: 'contains' } }, search: ' q ' })).toBe(2)
+    expect(
+      activeFilterCount({
+        columns: {
+          a: { type: 'text', op: 'contains', value: 'x' },
+          b: { type: 'text', op: 'contains' },
+        },
+        search: ' q ',
+      }),
+    ).toBe(2)
   })
 })
 
 describe('quick filter shorthand', () => {
   it('parses and prints number, date and text shorthand', () => {
     expect(parseQuickFilter('number', '>= 10')).toEqual({ type: 'number', op: 'gte', value: 10 })
-    expect(parseQuickFilter('number', '5..20')).toEqual({ type: 'number', op: 'between', value: 5, to: 20 })
-    expect(parseQuickFilter('number', '-5 - -1')).toEqual({ type: 'number', op: 'between', value: -5, to: -1 })
+    expect(parseQuickFilter('number', '5..20')).toEqual({
+      type: 'number',
+      op: 'between',
+      value: 5,
+      to: 20,
+    })
+    expect(parseQuickFilter('number', '-5 - -1')).toEqual({
+      type: 'number',
+      op: 'between',
+      value: -5,
+      to: -1,
+    })
     expect(parseQuickFilter('number', '!=3')).toEqual({ type: 'number', op: 'ne', value: 3 })
     expect(parseQuickFilter('number', 'abc')).toBeUndefined()
-    expect(parseQuickFilter('date', '>2026-01-01')).toEqual({ type: 'date', op: 'after', value: '2026-01-01' })
-    expect(parseQuickFilter('text', ' bel ')).toEqual({ type: 'text', op: 'contains', value: 'bel' })
+    expect(parseQuickFilter('date', '>2026-01-01')).toEqual({
+      type: 'date',
+      op: 'after',
+      value: '2026-01-01',
+    })
+    expect(parseQuickFilter('text', ' bel ')).toEqual({
+      type: 'text',
+      op: 'contains',
+      value: 'bel',
+    })
     expect(parseQuickFilter('text', '   ')).toBeUndefined()
-    for (const s of ['>10', '5..20', '!=3', '7']) expect(quickFilterText(parseQuickFilter('number', s))).toBe(s)
+    for (const s of ['>10', '5..20', '!=3', '7'])
+      expect(quickFilterText(parseQuickFilter('number', s))).toBe(s)
     expect(quickFilterText({ type: 'text', op: 'notContains', value: 'x' })).toBe('') // not expressible
   })
 })
 
 describe('filterTree', () => {
   it('keeps rows that match or have a matching descendant', () => {
-    interface N { id: string; children?: N[] }
-    const tree: N[] = [{ id: 'a', children: [{ id: 'a1' }, { id: 'a2', children: [{ id: 'x' }] }] }, { id: 'b' }]
-    const kept = filterTree(tree, (n) => n.id === 'x', (n) => n.children)
+    interface N {
+      id: string
+      children?: N[]
+    }
+    const tree: N[] = [
+      { id: 'a', children: [{ id: 'a1' }, { id: 'a2', children: [{ id: 'x' }] }] },
+      { id: 'b' },
+    ]
+    const kept = filterTree(
+      tree,
+      (n) => n.id === 'x',
+      (n) => n.children,
+    )
     expect(kept.map((n) => n.id)).toEqual(['a'])
   })
 })
@@ -116,7 +157,10 @@ const columns = [
   { key: 'status', filterable: true, renderer: statusRenderer },
 ]
 const shownIds = (w: ReturnType<typeof mount>) =>
-  w.findAll('.vg-row').map((r) => Number(r.attributes('data-row-key'))).filter((n) => !Number.isNaN(n))
+  w
+    .findAll('.vg-row')
+    .map((r) => Number(r.attributes('data-row-key')))
+    .filter((n) => !Number.isNaN(n))
 
 afterEach(() => localStorage.clear())
 
@@ -124,11 +168,17 @@ describe('grid filtering', () => {
   it('client mode: column filters, search (accent-insensitive) and set filters combine', async () => {
     const w = mount(VGrid, { props: { rows, columns, rowKey: 'id', filters: null } })
     expect(shownIds(w)).toEqual([1, 2, 3, 4])
-    await w.setProps({ filters: { columns: { city: { type: 'text', op: 'equals', value: 'beograd' } }, search: '' } })
+    await w.setProps({
+      filters: { columns: { city: { type: 'text', op: 'equals', value: 'beograd' } }, search: '' },
+    })
     expect(shownIds(w)).toEqual([2, 4])
-    await w.setProps({ filters: { columns: { stake: { type: 'number', op: 'gt', value: 20 } }, search: 'nis' } })
+    await w.setProps({
+      filters: { columns: { stake: { type: 'number', op: 'gt', value: 20 } }, search: 'nis' },
+    })
     expect(shownIds(w)).toEqual([]) // Ana (Niš) has stake 10
-    await w.setProps({ filters: { columns: { status: { type: 'set', values: ['Won'] } }, search: 'nis' } })
+    await w.setProps({
+      filters: { columns: { status: { type: 'set', values: ['Won'] } }, search: 'nis' },
+    })
     expect(shownIds(w)).toEqual([1])
   })
 
@@ -136,7 +186,9 @@ describe('grid filtering', () => {
     const w = mount(VGrid, { props: { rows, columns, rowKey: 'id' }, attachTo: document.body })
     expect(w.findAll('.vg-filter-button')).toHaveLength(4)
     const popover = w.find('[data-col-key="status"] [popover]')
-    expect(w.find('[data-col-key="status"] .vg-filter-button').attributes('popovertarget')).toBe(popover.attributes('id'))
+    expect(w.find('[data-col-key="status"] .vg-filter-button').attributes('popovertarget')).toBe(
+      popover.attributes('id'),
+    )
     w.unmount()
   })
 
@@ -155,20 +207,36 @@ describe('grid filtering', () => {
 
   it('controlled mode only emits; rows stay as given', async () => {
     const w = mount(VGrid, { props: { rows, columns, rowKey: 'id', filterMode: 'controlled' } })
-    ;(w.vm as unknown as VGridExposed).setFilters({ columns: { city: { type: 'text', op: 'contains', value: 'beo' } } })
+    ;(w.vm as unknown as VGridExposed).setFilters({
+      columns: { city: { type: 'text', op: 'contains', value: 'beo' } },
+    })
     await nextTick()
     expect(shownIds(w)).toEqual([1, 2, 3, 4])
     expect((w.emitted('update:filters') as FilterState[][])[0]![0]!.columns.city).toBeTruthy()
   })
 
   it('custom filterFn, no-match message with Clear filters, persistence', async () => {
-    const cols = [...columns, { key: 'even', filterable: true, value: (r: Bet) => r.id % 2 === 0, filterFn: (row: Bet, f: ColumnFilter) => (f as { value: unknown }).value === 'even' ? row.id % 2 === 0 : true }]
-    const w = mount(VGrid, { props: { rows, columns: cols, rowKey: 'id', filterStorage: 'test-filters' } })
+    const cols = [
+      ...columns,
+      {
+        key: 'even',
+        filterable: true,
+        value: (r: Bet) => r.id % 2 === 0,
+        filterFn: (row: Bet, f: ColumnFilter) =>
+          (f as { value: unknown }).value === 'even' ? row.id % 2 === 0 : true,
+      },
+    ]
+    const w = mount(VGrid, {
+      props: { rows, columns: cols, rowKey: 'id', filterStorage: 'test-filters' },
+    })
     const api = w.vm as unknown as VGridExposed
     api.setFilters({ columns: { even: { type: 'custom', value: 'even' } } })
     await nextTick()
     expect(shownIds(w)).toEqual([2, 4])
-    expect(localFilterStorage('test-filters').load()?.columns.even).toEqual({ type: 'custom', value: 'even' })
+    expect(localFilterStorage('test-filters').load()?.columns.even).toEqual({
+      type: 'custom',
+      value: 'even',
+    })
 
     api.setFilters({ columns: { city: { type: 'text', op: 'equals', value: 'zzz' } } })
     await nextTick()
@@ -178,7 +246,9 @@ describe('grid filtering', () => {
 
     // a fresh grid restores the persisted filters
     api.setFilters({ columns: { status: { type: 'set', values: ['Open'] } } })
-    const again = mount(VGrid, { props: { rows, columns: cols, rowKey: 'id', filterStorage: 'test-filters' } })
+    const again = mount(VGrid, {
+      props: { rows, columns: cols, rowKey: 'id', filterStorage: 'test-filters' },
+    })
     expect(shownIds(again)).toEqual([3])
   })
 
@@ -188,7 +258,14 @@ describe('grid filtering', () => {
       { id: 20, player: 'Group B', city: '', stake: 0, status: '', children: [rows[2]!, rows[3]!] },
     ]
     const w = mount(VGrid, {
-      props: { rows: tree, columns, rowKey: 'id', subRows: (r: Bet) => r.children, expanded: [10, 20], selectable: true },
+      props: {
+        rows: tree,
+        columns,
+        rowKey: 'id',
+        subRows: (r: Bet) => r.children,
+        expanded: [10, 20],
+        selectable: true,
+      },
     })
     const api = w.vm as unknown as VGridExposed
     api.setFilters({ columns: { player: { type: 'text', op: 'contains', value: 'marko' } } })
@@ -198,6 +275,8 @@ describe('grid filtering', () => {
     await nextTick()
     expect(shownIds(w)).toEqual([20, 3, 4])
     await w.find('.vg-header [type="checkbox"]').setValue(true)
-    expect(((w.emitted('update:selected') as number[][][]).at(-1)![0]! as number[]).sort()).toEqual([20, 3, 4].sort())
+    expect(((w.emitted('update:selected') as number[][][]).at(-1)![0]! as number[]).sort()).toEqual(
+      [20, 3, 4].sort(),
+    )
   })
 })

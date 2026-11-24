@@ -58,7 +58,8 @@ function patchWith<T>(
     const patch = map.get(resolveRowKey(row, rowKey))
     if (patch) {
       for (const [field, value] of Object.entries(patch)) {
-        if (SKIP_PROTO_KEYS.has(field) || Object.is((row as Record<string, unknown>)[field], value)) continue
+        if (SKIP_PROTO_KEYS.has(field) || Object.is((row as Record<string, unknown>)[field], value))
+          continue
         if (next === row) next = { ...(row as object) } as T
         ;(next as Record<string, unknown>)[field] = value
       }

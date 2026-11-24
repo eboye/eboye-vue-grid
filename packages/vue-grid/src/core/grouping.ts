@@ -116,7 +116,10 @@ export function groupRows<T>(rows: readonly T[], opts: GroupRowsOptions<T>): Row
 }
 
 /** Pre-order walk over groups and their sub-groups (not their rows). */
-export function walkGroups<T>(groups: readonly (RowGroup<T> | T)[], visit: (group: RowGroup<T>) => void) {
+export function walkGroups<T>(
+  groups: readonly (RowGroup<T> | T)[],
+  visit: (group: RowGroup<T>) => void,
+) {
   for (const g of groups) {
     if (!isRowGroup(g)) return // a level holds either groups or rows
     visit(g)

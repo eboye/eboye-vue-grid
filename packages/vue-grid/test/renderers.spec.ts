@@ -7,7 +7,13 @@ import VGridComponent from '../src/components/VGrid.vue'
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const VGrid = VGridComponent as any
 import TextCell from '../src/renderers/TextCell.vue'
-import { formatCurrency, formatDate, formatSigned, safeHref, stringifyJson } from '../src/renderers/format'
+import {
+  formatCurrency,
+  formatDate,
+  formatSigned,
+  safeHref,
+  stringifyJson,
+} from '../src/renderers/format'
 import type { ColumnDef } from '../src/types'
 
 const base = { row: {}, rowKey: 1, rowIndex: 0, depth: 0, column: { key: 'x' } }
@@ -18,7 +24,9 @@ describe('TextCell', () => {
     const w = mount(TextCell, { props: { ...base, value: 'hello', options: {} } })
     expect(w.text()).toBe('hello')
     expect(w.attributes('row')).toBeUndefined()
-    const empty = mount(TextCell, { props: { ...base, value: null, options: { placeholder: '—' } } })
+    const empty = mount(TextCell, {
+      props: { ...base, value: null, options: { placeholder: '—' } },
+    })
     expect(empty.text()).toBe('—')
   })
 })
@@ -31,9 +39,13 @@ describe('formatters', () => {
     expect(formatSigned(5, ctx)).toBe('+5')
     expect(formatSigned(-5, ctx)).toBe('-5')
     expect(formatSigned(0, ctx)).toBe('0')
-    expect(formatDate('2024-03-05T10:00:00Z', ctx, { year: 'numeric', month: '2-digit', day: '2-digit' })).toBe(
-      '03/05/2024',
-    )
+    expect(
+      formatDate('2024-03-05T10:00:00Z', ctx, {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      }),
+    ).toBe('03/05/2024')
     expect(formatDate('not a date', ctx)).toBe('')
   })
 
@@ -81,7 +93,11 @@ describe('built-in renderers inside the grid', () => {
     { key: 'json', field: 'payload', renderer: 'json' },
     { key: 'text' },
     { key: 'icon', renderer: 'icon', rendererOptions: { icon: Star, label: 'Starred' } },
-    { key: 'menu', renderer: 'actions-menu', rendererOptions: { actions: [{ name: 'del', label: 'Delete' }] } },
+    {
+      key: 'menu',
+      renderer: 'actions-menu',
+      rendererOptions: { actions: [{ name: 'del', label: 'Delete' }] },
+    },
     { key: 'btn', renderer: 'action-button', rendererOptions: { label: 'Open', action: 'open' } },
   ]
   const w = mount(VGrid, {

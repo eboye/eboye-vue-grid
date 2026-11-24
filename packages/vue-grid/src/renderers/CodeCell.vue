@@ -11,10 +11,14 @@ const source = computed(() => {
   if (v === null || v === undefined || v === '') return null
   const lang = props.options.language ?? 'auto'
   const parsed = lang === 'text' ? v : parseJsonish(v)
-  const isJson = lang === 'json' || (lang === 'auto' && parsed !== null && typeof parsed === 'object')
+  const isJson =
+    lang === 'json' || (lang === 'auto' && parsed !== null && typeof parsed === 'object')
   if (!isJson) return { json: false, text: typeof v === 'string' ? v : JSON.stringify(v) }
   try {
-    return { json: true, text: JSON.stringify(parsed, null, props.options.indent ?? 2) ?? String(v) }
+    return {
+      json: true,
+      text: JSON.stringify(parsed, null, props.options.indent ?? 2) ?? String(v),
+    }
   } catch {
     return { json: false, text: String(v) }
   }

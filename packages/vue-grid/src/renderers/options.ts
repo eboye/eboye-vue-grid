@@ -408,12 +408,20 @@ export interface ListOptions {
 }
 
 /** Resolves an option that may be a constant or a `(value, row) => …` function. */
-export function resolveOption<R>(opt: R | RowFn<R> | undefined, value: unknown, row: unknown): R | undefined {
+export function resolveOption<R>(
+  opt: R | RowFn<R> | undefined,
+  value: unknown,
+  row: unknown,
+): R | undefined {
   return typeof opt === 'function' ? (opt as RowFn<R>)(value, row) : opt
 }
 
 /** Resolves a {@link ToneOption}. */
-export function resolveTone(opt: ToneOption | undefined, value: unknown, row: unknown): Tone | undefined {
+export function resolveTone(
+  opt: ToneOption | undefined,
+  value: unknown,
+  row: unknown,
+): Tone | undefined {
   if (typeof opt === 'function') return opt(value, row)
   if (opt && typeof opt === 'object') return lookup(opt, value)
   return opt

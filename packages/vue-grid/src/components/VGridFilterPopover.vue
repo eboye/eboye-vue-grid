@@ -26,7 +26,8 @@ const active = computed(() => filters.isActive(props.column.key))
 const type = computed(() => filters.typeOf(props.column.def))
 /** A value-list loader from the column (`filter: { options: (search, { signal }) => … }`). */
 const loader = computed(() => {
-  const options = typeof props.column.def.filter === 'object' ? props.column.def.filter.options : undefined
+  const options =
+    typeof props.column.def.filter === 'object' ? props.column.def.filter.options : undefined
   return typeof options === 'function' ? options : undefined
 })
 
@@ -35,7 +36,8 @@ onBeforeUnmount(() => stopTracking())
 function onToggle(event: Event) {
   open.value = (event as ToggleEvent).newState === 'open'
   stopTracking()
-  if (open.value && panel.value && button.value) stopTracking = trackAnchor(panel.value, button.value, 'bottom-end')
+  if (open.value && panel.value && button.value)
+    stopTracking = trackAnchor(panel.value, button.value, 'bottom-end')
   // The panel renders only while open (and loads lazily), so it focuses its own first field on mount.
 }
 // Events inside the popover must not reach the header cell (drag, sort, header menu).

@@ -19,11 +19,36 @@ import { Grid as VGrid, type GridArgs } from '../support'
 const bet = createColumnHelper<Bet>()
 const columns = [
   bet({ key: 'id', header: '#', width: 'min-content' }),
-  bet({ key: 'player', header: 'Player', field: 'player.name', width: 'minmax(10rem, 1fr)', filterable: true, sortable: true }),
+  bet({
+    key: 'player',
+    header: 'Player',
+    field: 'player.name',
+    width: 'minmax(10rem, 1fr)',
+    filterable: true,
+    sortable: true,
+  }),
   bet({ key: 'city', header: 'City', field: 'player.city', filterable: true, filter: 'set' }),
-  bet({ key: 'status', header: 'Status', renderer: statusRenderer, rendererOptions: { tone: statusTones }, filterable: true }),
-  bet({ key: 'stake', header: 'Stake', renderer: currencyRenderer, filterable: true, sortable: true }),
-  bet({ key: 'placedAt', header: 'Placed', renderer: dateRenderer, filterable: true, sortable: true }),
+  bet({
+    key: 'status',
+    header: 'Status',
+    renderer: statusRenderer,
+    rendererOptions: { tone: statusTones },
+    filterable: true,
+  }),
+  bet({
+    key: 'stake',
+    header: 'Stake',
+    renderer: currencyRenderer,
+    filterable: true,
+    sortable: true,
+  }),
+  bet({
+    key: 'placedAt',
+    header: 'Placed',
+    renderer: dateRenderer,
+    filterable: true,
+    sortable: true,
+  }),
   bet({ key: 'verified', header: 'KYC', renderer: booleanRenderer, filterable: true }),
 ]
 
@@ -100,7 +125,10 @@ export const Persisted: Story = {
 // A custom filter: a "high rollers" toggle as the column's own filter UI + predicate.
 const HighRollerFilter = defineComponent({
   props: {
-    modelValue: { type: Object as () => FilterComponentProps<Bet>['modelValue'], default: undefined },
+    modelValue: {
+      type: Object as () => FilterComponentProps<Bet>['modelValue'],
+      default: undefined,
+    },
     column: { type: Object as () => FilterComponentProps<Bet>['column'], required: true },
   },
   emits: ['update:modelValue'],
@@ -111,7 +139,10 @@ const HighRollerFilter = defineComponent({
           type: 'checkbox',
           checked: props.modelValue?.type === 'custom' && props.modelValue.value === true,
           onChange: (e: Event) =>
-            emit('update:modelValue', (e.target as HTMLInputElement).checked ? { type: 'custom', value: true } : undefined),
+            emit(
+              'update:modelValue',
+              (e.target as HTMLInputElement).checked ? { type: 'custom', value: true } : undefined,
+            ),
         }),
         ' Only stakes ≥ €300',
       ])
@@ -129,7 +160,8 @@ export const CustomFilter: Story = {
         renderer: currencyRenderer,
         filterable: true,
         filterComponent: HighRollerFilter,
-        filterFn: (row, filter: ColumnFilter) => !(filter.type === 'custom' && filter.value === true) || row.stake >= 300,
+        filterFn: (row, filter: ColumnFilter) =>
+          !(filter.type === 'custom' && filter.value === true) || row.stake >= 300,
       }),
     ],
   },

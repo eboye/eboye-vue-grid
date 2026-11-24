@@ -25,11 +25,20 @@ const settle = async () => {
 const box = (w: W, key: number) => w.find(`[data-row-key="${key}"] .vg-cell-select input`)
 /** Clicks a row's checkbox, as a mouse click (optionally with Shift). */
 const click = (w: W, key: number, shiftKey = false) => box(w, key).trigger('click', { shiftKey })
-const lastSelected = (w: W) => [...((w.emitted('update:selected')?.at(-1)?.[0] as number[]) ?? [])].sort((a, b) => a - b)
+const lastSelected = (w: W) =>
+  [...((w.emitted('update:selected')?.at(-1)?.[0] as number[]) ?? [])].sort((a, b) => a - b)
 /** Mounts with `v-model:selected` wired back, like an app. */
 function mountGrid(props: Record<string, unknown> = {}) {
   const w: W = mount(VGrid, {
-    props: { rows, columns, rowKey: 'id', selectable: true, selected: [], 'onUpdate:selected': (v: unknown) => w.setProps({ selected: v }), ...props },
+    props: {
+      rows,
+      columns,
+      rowKey: 'id',
+      selectable: true,
+      selected: [],
+      'onUpdate:selected': (v: unknown) => w.setProps({ selected: v }),
+      ...props,
+    },
     attachTo: document.body,
   })
   return w
@@ -48,7 +57,9 @@ describe('shift ranges', () => {
 
   it('skips rows that cannot be selected, and rows hidden by filters', async () => {
     const w = mountGrid({ isRowSelectable: (r: Row) => r.id !== 3 })
-    await w.setProps({ filters: { columns: { name: { type: 'text', op: 'notContains', value: '5' } }, search: '' } })
+    await w.setProps({
+      filters: { columns: { name: { type: 'text', op: 'notContains', value: '5' } }, search: '' },
+    })
     await click(w, 2)
     await click(w, 7, true)
     expect(lastSelected(w)).toEqual([2, 4, 6, 7])
@@ -56,7 +67,14 @@ describe('shift ranges', () => {
 
   it('covers expanded children (cascading) and works with Shift+Space', async () => {
     const tree: Row[] = [
-      { id: 1, name: 'A', kids: [{ id: 11, name: 'A1' }, { id: 12, name: 'A2' }] },
+      {
+        id: 1,
+        name: 'A',
+        kids: [
+          { id: 11, name: 'A1' },
+          { id: 12, name: 'A2' },
+        ],
+      },
       { id: 2, name: 'B', kids: [{ id: 21, name: 'B1' }] },
       { id: 3, name: 'C' },
     ]
@@ -68,7 +86,9 @@ describe('shift ranges', () => {
     const k = mountGrid({ features: undefined })
     await click(k, 1)
     const cell = k.find('[data-row-key="4"] .vg-cell-select').element as HTMLElement
-    cell.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', shiftKey: true, bubbles: true, cancelable: true }))
+    cell.dispatchEvent(
+      new KeyboardEvent('keydown', { key: ' ', shiftKey: true, bubbles: true, cancelable: true }),
+    )
     await flushPromises()
     expect(lastSelected(k)).toEqual([1, 2, 3, 4])
   })
@@ -80,7 +100,10 @@ describe('batch actions', () => {
       props: { rows, columns, rowKey: 'id', selectable: true, selected: [2, 5] },
       slots: {
         toolbar: (s: { selected: number[]; selectedCount: number; clearSelection: () => void }) =>
-          h('div', { class: 'bar' }, [`${s.selectedCount}: ${s.selected.join(',')}`, h('button', { onClick: s.clearSelection }, 'clear')]),
+          h('div', { class: 'bar' }, [
+            `${s.selectedCount}: ${s.selected.join(',')}`,
+            h('button', { onClick: s.clearSelection }, 'clear'),
+          ]),
       },
     })
     expect(w.find('.bar').text()).toContain('2: 2,5')
@@ -114,7 +137,10 @@ describe('select all matching (server data)', () => {
         'onUpdate:selectAllMatching': (v: unknown) => w.setProps({ selectAllMatching: v }),
         ...props,
       },
-      slots: { toolbar: (s: { selectedCount: number }) => h('span', { class: 'count' }, String(s.selectedCount)) },
+      slots: {
+        toolbar: (s: { selectedCount: number }) =>
+          h('span', { class: 'count' }, String(s.selectedCount)),
+      },
       attachTo: document.body, // jsdom only toggles checkboxes in the document
     })
     await settle()

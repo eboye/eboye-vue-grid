@@ -15,7 +15,9 @@ const props = defineProps<{ column: ResolvedColumn; row: Record<string, unknown>
 const grid = useInternalGrid()
 const format = inject(FORMAT_CONTEXT_KEY, undefined)
 
-const value = computed(() => (props.column.kind === 'data' ? grid.totals?.values.value[props.column.key] : undefined))
+const value = computed(() =>
+  props.column.kind === 'data' ? grid.totals?.values.value[props.column.key] : undefined,
+)
 const show = computed<'slot' | 'count' | 'renderer' | 'label' | null>(() => {
   if (props.column.kind !== 'data') return null
   if (grid.slots[`total-${props.column.key}`]) return 'slot'
@@ -24,7 +26,9 @@ const show = computed<'slot' | 'count' | 'renderer' | 'label' | null>(() => {
   return props.column.isTree ? 'label' : null
 })
 // A class function of the row doesn't apply: the totals aren't a row of the data.
-const cellClass = computed(() => (typeof props.column.def.cellClass === 'function' ? undefined : props.column.def.cellClass))
+const cellClass = computed(() =>
+  typeof props.column.def.cellClass === 'function' ? undefined : props.column.def.cellClass,
+)
 </script>
 
 <template>
@@ -48,10 +52,19 @@ const cellClass = computed(() => (typeof props.column.def.cellClass === 'functio
     :style="grid.pinStyle(column.key)"
   >
     <template v-if="column.kind === 'data'">
-      <span v-if="column.isTree && (grid.treeMode.value || grid.hasDetail.value)" class="vg-tree-gutter" />
+      <span
+        v-if="column.isTree && (grid.treeMode.value || grid.hasDetail.value)"
+        class="vg-tree-gutter"
+      />
       <div class="vg-cell-content">
-        <RenderSlot v-if="show === 'slot'" :fn="grid.slots[`total-${column.key}`]" :scope="{ value, column: column.def }" />
-        <template v-else-if="show === 'count'">{{ format ? formatNumber(value, format) : value }}</template>
+        <RenderSlot
+          v-if="show === 'slot'"
+          :fn="grid.slots[`total-${column.key}`]"
+          :scope="{ value, column: column.def }"
+        />
+        <template v-else-if="show === 'count'">{{
+          format ? formatNumber(value, format) : value
+        }}</template>
         <component
           :is="column.component"
           v-else-if="show === 'renderer' && column.component"
@@ -64,7 +77,9 @@ const cellClass = computed(() => (typeof props.column.def.cellClass === 'functio
           :options="column.options"
         />
         <template v-else-if="show === 'renderer'">{{ value ?? '' }}</template>
-        <span v-else-if="show === 'label'" class="vg-total-label">{{ grid.totals?.label.value }}</span>
+        <span v-else-if="show === 'label'" class="vg-total-label">{{
+          grid.totals?.label.value
+        }}</span>
       </div>
     </template>
   </div>

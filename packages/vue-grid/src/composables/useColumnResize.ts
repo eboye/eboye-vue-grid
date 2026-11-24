@@ -31,10 +31,13 @@ export function useColumnResize(opts: ColumnResizeOptions) {
     cancelAnimationFrame(frame)
   })
   /** Stores a width (`null` = back to the column's own `width`). */
-  const commit = (key: string, width: string | null) => opts.setState(setColumnWidth(opts.state(), key, width))
+  const commit = (key: string, width: string | null) =>
+    opts.setState(setColumnWidth(opts.state(), key, width))
 
   const headerCell = (key: string) =>
-    opts.root.value?.querySelector<HTMLElement>(`:scope > .vg-header > [data-col-key="${CSS.escape(key)}"]`)
+    opts.root.value?.querySelector<HTMLElement>(
+      `:scope > .vg-header > [data-col-key="${CSS.escape(key)}"]`,
+    )
 
   /** A CSS length in px, measured in the grid (so `rem`, `ch`, `%`… resolve like the cells do). */
   function toPx(length: string | undefined): number | undefined {
@@ -117,5 +120,12 @@ export function useColumnResize(opts: ColumnResizeOptions) {
     commit(key, `${width}px`)
   }
 
-  return { live, resizing, onPointerDown, step, autosize, reset: (key: string) => commit(key, null) }
+  return {
+    live,
+    resizing,
+    onPointerDown,
+    step,
+    autosize,
+    reset: (key: string) => commit(key, null),
+  }
 }

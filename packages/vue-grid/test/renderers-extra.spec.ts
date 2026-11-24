@@ -32,8 +32,12 @@ const VGrid = VGridComponent as any
 
 const row = { id: 7, name: 'Ana', currency: 'EUR' }
 const base = { row, rowKey: 7, rowIndex: 0, depth: 0, column: { key: 'x', header: 'Col' } }
-const cell = (component: Component, value: unknown, options: Record<string, unknown> = {}, extra = {}) =>
-  mount(component, { props: { ...base, value, options }, ...extra })
+const cell = (
+  component: Component,
+  value: unknown,
+  options: Record<string, unknown> = {},
+  extra = {},
+) => mount(component, { props: { ...base, value, options }, ...extra })
 const actions = (w: ReturnType<typeof mount>) => (w.emitted('action') ?? []) as unknown[][]
 
 const Icon = defineComponent({ setup: () => () => h('svg', { class: 'test-icon' }) })
@@ -70,8 +74,19 @@ describe('helpers', () => {
   it('tokenizes pretty JSON', () => {
     const tokens = tokenizeJson('{\n  "a": "x:1",\n  "b": -2.5,\n  "c": true,\n  "d": null\n}')
     const typed = tokens.filter((t) => t.type !== 'punct').map((t) => `${t.type}:${t.text}`)
-    expect(typed).toEqual(['key:"a"', 'string:"x:1"', 'key:"b"', 'number:-2.5', 'key:"c"', 'boolean:true', 'key:"d"', 'null:null'])
-    expect(tokens.map((t) => t.text).join('')).toBe('{\n  "a": "x:1",\n  "b": -2.5,\n  "c": true,\n  "d": null\n}')
+    expect(typed).toEqual([
+      'key:"a"',
+      'string:"x:1"',
+      'key:"b"',
+      'number:-2.5',
+      'key:"c"',
+      'boolean:true',
+      'key:"d"',
+      'null:null',
+    ])
+    expect(tokens.map((t) => t.text).join('')).toBe(
+      '{\n  "a": "x:1",\n  "b": -2.5,\n  "c": true,\n  "d": null\n}',
+    )
   })
 })
 
@@ -89,11 +104,17 @@ describe('text options', () => {
     expect(w.find('.vg-badge').classes()).toContain('vg-tone-success')
     expect(w.find('.vg-text-icon').attributes('aria-label')).toBe('Alert')
     expect(w.find('.test-icon').exists()).toBe(true)
-    expect(w.find('.vg-text').classes()).toEqual(expect.arrayContaining(['vg-text-bold', 'vg-text-fill', 'vg-tone-danger']))
+    expect(w.find('.vg-text').classes()).toEqual(
+      expect.arrayContaining(['vg-text-bold', 'vg-text-fill', 'vg-tone-danger']),
+    )
   })
 
   it('keeps newlines on request and puts the badge at the end', () => {
-    const w = cell(TextCell, 'a\nb', { preserveNewlines: true, badge: () => 'X', badgePosition: 'end' })
+    const w = cell(TextCell, 'a\nb', {
+      preserveNewlines: true,
+      badge: () => 'X',
+      badgePosition: 'end',
+    })
     expect(w.find('.vg-text').classes()).toContain('vg-text-pre')
     expect(w.find('.vg-text-adorned').element.lastElementChild!.textContent).toBe('X')
   })
@@ -111,20 +132,31 @@ describe('text options', () => {
 
 describe('status, boolean, number, change, link options', () => {
   it('status: label map, variants, placeholder and click', async () => {
-    const w = cell(StatusCell, 'CANCELLED', { label: { CANCELLED: 'Canceled' }, tone: { CANCELLED: 'danger' }, variant: 'outline', clickable: true })
+    const w = cell(StatusCell, 'CANCELLED', {
+      label: { CANCELLED: 'Canceled' },
+      tone: { CANCELLED: 'danger' },
+      variant: 'outline',
+      clickable: true,
+    })
     expect(w.text()).toBe('Canceled')
-    expect(w.find('button').classes()).toEqual(expect.arrayContaining(['vg-status-outline', 'vg-tone-danger']))
+    expect(w.find('button').classes()).toEqual(
+      expect.arrayContaining(['vg-status-outline', 'vg-tone-danger']),
+    )
     await w.find('button').trigger('click')
     expect(actions(w)).toEqual([['click', 'CANCELLED']])
     expect(cell(StatusCell, '', { placeholder: 'N/A' }).text()).toBe('N/A')
   })
 
   it('boolean icon mode: check, nothing or cross, and the null label', () => {
-    expect(cell(BooleanCell, true, { display: 'icon' }).find('[role="img"]').attributes('aria-label')).toBe('Yes')
+    expect(
+      cell(BooleanCell, true, { display: 'icon' }).find('[role="img"]').attributes('aria-label'),
+    ).toBe('Yes')
     const no = cell(BooleanCell, false, { display: 'icon' })
     expect(no.find('[role="img"]').exists()).toBe(false)
     expect(no.find('.vg-sr-only').text()).toBe('No')
-    expect(cell(BooleanCell, false, { display: 'icon', falseIcon: true }).find('[role="img"]').exists()).toBe(true)
+    expect(
+      cell(BooleanCell, false, { display: 'icon', falseIcon: true }).find('[role="img"]').exists(),
+    ).toBe(true)
     expect(cell(BooleanCell, null, { display: 'icon', nullLabel: 'N/A' }).text()).toBe('N/A')
   })
 
@@ -132,8 +164,13 @@ describe('status, boolean, number, change, link options', () => {
     const n = cell(NumberCell, 42, { clickable: true })
     await n.find('button').trigger('click')
     expect(actions(n)).toEqual([['click', 42]])
-    expect(cell(NumberCell, null, { clickable: true, placeholder: 'N/A' }).find('button').exists()).toBe(false)
-    const c = cell(CurrencyCell, 10, { clickable: (_v: unknown, r: typeof row) => r.id === 7, currency: 'EUR' })
+    expect(
+      cell(NumberCell, null, { clickable: true, placeholder: 'N/A' }).find('button').exists(),
+    ).toBe(false)
+    const c = cell(CurrencyCell, 10, {
+      clickable: (_v: unknown, r: typeof row) => r.id === 7,
+      currency: 'EUR',
+    })
     expect(c.find('button').text()).toContain('10')
   })
 
@@ -150,15 +187,29 @@ describe('status, boolean, number, change, link options', () => {
   it('link `to`: href fallback without a router, RouterLink with one, plain text for null', () => {
     const plain = cell(LinkCell, 5, { to: (v: number) => `/orders/${v}` })
     expect(plain.find('a').attributes('href')).toBe('/orders/5')
-    expect(cell(LinkCell, 5, { to: () => null }).find('a').exists()).toBe(false)
+    expect(
+      cell(LinkCell, 5, { to: () => null })
+        .find('a')
+        .exists(),
+    ).toBe(false)
     expect(cell(LinkCell, 5, { to: () => null }).text()).toBe('5')
 
     const RouterLink = defineComponent({
       props: { to: { type: [String, Object], required: true } },
-      setup: (p, { slots }) => () => h('a', { class: 'router-link', 'data-to': JSON.stringify(p.to) }, slots.default?.()),
+      setup:
+        (p, { slots }) =>
+        () =>
+          h('a', { class: 'router-link', 'data-to': JSON.stringify(p.to) }, slots.default?.()),
     })
-    const routed = cell(LinkCell, 5, { to: (v: number) => ({ name: 'order', params: { id: v } }) }, { global: { components: { RouterLink } } })
-    expect(routed.find('.router-link').attributes('data-to')).toBe('{"name":"order","params":{"id":5}}')
+    const routed = cell(
+      LinkCell,
+      5,
+      { to: (v: number) => ({ name: 'order', params: { id: v } }) },
+      { global: { components: { RouterLink } } },
+    )
+    expect(routed.find('.router-link').attributes('data-to')).toBe(
+      '{"name":"order","params":{"id":5}}',
+    )
   })
 })
 
@@ -199,7 +250,11 @@ describe('new renderers', () => {
     expect(actions(w)).toEqual([['copy', 'SN-42']])
 
     mockClipboard(false)
-    const fail = cell(CopyCell, { a: 1 }, { iconOnly: true, copyValue: (v: object) => JSON.stringify(v, null, 2) })
+    const fail = cell(
+      CopyCell,
+      { a: 1 },
+      { iconOnly: true, copyValue: (v: object) => JSON.stringify(v, null, 2) },
+    )
     expect(fail.find('.vg-text').exists()).toBe(false)
     await fail.find('button').trigger('click')
     await flushPromises()
@@ -214,7 +269,9 @@ describe('new renderers', () => {
     expect((raw.element as HTMLElement).style.getPropertyValue('--vg-chip-bg')).toBe('#facc15')
     expect(raw.attributes('title')).toBe('Low risk')
     const toned = cell(ChipCell, 'C', { tone: { A: 'success', C: 'danger' }, shape: 'circle' })
-    expect(toned.classes()).toEqual(expect.arrayContaining(['vg-chip-circle', 'vg-tone-danger', 'vg-chip-toned']))
+    expect(toned.classes()).toEqual(
+      expect.arrayContaining(['vg-chip-circle', 'vg-tone-danger', 'vg-chip-toned']),
+    )
     // only a colour can be set from data, never a background image
     const evil = cell(ChipCell, { label: 'X', color: 'url(https://evil.example/x.png)' })
     expect(evil.attributes('style') ?? '').not.toContain('url(')
@@ -234,7 +291,10 @@ describe('new renderers', () => {
   })
 
   it('switch: aria-checked and change', async () => {
-    const w = cell(SwitchCell, 0, { checked: (_v: unknown, r: typeof row) => r.id === 7, label: 'Web channel' })
+    const w = cell(SwitchCell, 0, {
+      checked: (_v: unknown, r: typeof row) => r.id === 7,
+      label: 'Web channel',
+    })
     const btn = w.find('[role="switch"]')
     expect(btn.attributes('aria-checked')).toBe('true')
     expect(btn.attributes('aria-label')).toBe('Web channel')
@@ -318,9 +378,16 @@ describe('new renderers', () => {
   })
 
   it('list: first item(s) and a +N more toggle', async () => {
-    const w = cell(ListCell, [{ p: 'a' }, { p: 'b' }, { p: 'c' }], { itemLabel: (i: { p: string }) => i.p })
+    const w = cell(ListCell, [{ p: 'a' }, { p: 'b' }, { p: 'c' }], {
+      itemLabel: (i: { p: string }) => i.p,
+    })
     // first item visible, the rest inside a native <details> (open state is the browser's)
-    expect(w.find('.vg-list > .vg-list-items').findAll('li').map((l) => l.text())).toEqual(['a'])
+    expect(
+      w
+        .find('.vg-list > .vg-list-items')
+        .findAll('li')
+        .map((l) => l.text()),
+    ).toEqual(['a'])
     const details = w.find('details')
     expect(details.find('summary').text()).toContain('+2 more')
     expect(details.findAll('li').map((l) => l.text())).toEqual(['b', 'c'])
@@ -333,7 +400,11 @@ describe('new renderers', () => {
 
 describe('json-tree and action-button options', () => {
   it('json-tree: nested JSON strings, max depth, collapsed start, empty text', async () => {
-    const w = cell(JsonTreeCell, { payload: '{"inner":{"deep":1}}' }, { parseNested: true, collapseAt: 9, collapsed: true })
+    const w = cell(
+      JsonTreeCell,
+      { payload: '{"inner":{"deep":1}}' },
+      { parseNested: true, collapseAt: 9, collapsed: true },
+    )
     // collapsed → a native <details> that starts closed
     const reveal = w.find('details.vg-json-reveal')
     expect((reveal.element as HTMLDetailsElement).open).toBe(false)
@@ -342,15 +413,29 @@ describe('json-tree and action-button options', () => {
     const shallow = cell(JsonTreeCell, { a: { b: { c: 1 } } }, { collapseAt: 9, maxDepth: 1 })
     expect(shallow.text()).toContain('{1 key}')
     expect(shallow.text()).not.toContain('c:')
-    expect(cell(JsonTreeCell, null, { emptyText: 'No data to show' }).text()).toBe('No data to show')
+    expect(cell(JsonTreeCell, null, { emptyText: 'No data to show' }).text()).toBe(
+      'No data to show',
+    )
   })
 
   it('action-button: visible predicate, icon only, variants', () => {
-    expect(cell(ActionButtonCell, 'x', { label: 'Resolve', visible: () => false }).find('button').exists()).toBe(false)
-    const w = cell(ActionButtonCell, 'x', { label: 'Delete', icon: Icon, iconOnly: true, variant: 'ghost', tone: 'danger' })
+    expect(
+      cell(ActionButtonCell, 'x', { label: 'Resolve', visible: () => false })
+        .find('button')
+        .exists(),
+    ).toBe(false)
+    const w = cell(ActionButtonCell, 'x', {
+      label: 'Delete',
+      icon: Icon,
+      iconOnly: true,
+      variant: 'ghost',
+      tone: 'danger',
+    })
     expect(w.attributes('aria-label')).toBe('Delete')
     expect(w.text()).toBe('')
-    expect(w.classes()).toEqual(expect.arrayContaining(['vg-variant-ghost', 'vg-tone-danger', 'vg-action-icon-only']))
+    expect(w.classes()).toEqual(
+      expect.arrayContaining(['vg-variant-ghost', 'vg-tone-danger', 'vg-action-icon-only']),
+    )
   })
 })
 
@@ -374,11 +459,9 @@ describe('new renderers inside the grid', () => {
     await w.find('[data-row-key="2"] input[type="checkbox"]').setValue(true)
     await w.find('[data-row-key="1"] [role="switch"]').trigger('click')
     await w.find('[data-row-key="2"] .vg-icon-toggle').trigger('click')
-    const events = (w.emitted('cell-action') as { name: string; payload: unknown; rowKey: number }[][]).map(([e]) => [
-      e!.name,
-      e!.payload,
-      e!.rowKey,
-    ])
+    const events = (
+      w.emitted('cell-action') as { name: string; payload: unknown; rowKey: number }[][]
+    ).map(([e]) => [e!.name, e!.payload, e!.rowKey])
     expect(events).toEqual([
       ['change', true, 2],
       ['change', false, 1],

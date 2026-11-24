@@ -80,10 +80,10 @@ body {
   display: grid;
   gap: 0.125rem;
 }
-.sb-log [data-status="aborted"] {
+.sb-log [data-status='aborted'] {
   opacity: 0.55;
   text-decoration: line-through;
 }
-.sb-log [data-status="error"] {
+.sb-log [data-status='error'] {
   color: #dc2626;
 }

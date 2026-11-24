@@ -7,12 +7,5 @@
   },
   "repository": "https://github.com/eboye/eboye-vue-grid",
   "license": "MIT",
-  "keywords": [
-    "vue",
-    "vue3",
-    "data-grid",
-    "table",
-    "vue-grid",
-    "mcp"
-  ]
+  "keywords": ["vue", "vue3", "data-grid", "table", "vue-grid", "mcp"]
 }

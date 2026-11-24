@@ -21,7 +21,8 @@ const INSTRUCTIONS =
 export async function handle(message, docs, version) {
   const { id, method, params = {} } = message
   const reply = (result) => (id === undefined ? undefined : { jsonrpc: '2.0', id, result })
-  const fail = (code, msg) => (id === undefined ? undefined : { jsonrpc: '2.0', id, error: { code, message: msg } })
+  const fail = (code, msg) =>
+    id === undefined ? undefined : { jsonrpc: '2.0', id, error: { code, message: msg } }
   try {
     switch (method) {
       case 'initialize': {
@@ -37,7 +38,13 @@ export async function handle(message, docs, version) {
         return reply({})
       case 'tools/list':
         return reply({
-          tools: tools.map(({ name, title, description, inputSchema, annotations }) => ({ name, title, description, inputSchema, annotations })),
+          tools: tools.map(({ name, title, description, inputSchema, annotations }) => ({
+            name,
+            title,
+            description,
+            inputSchema,
+            annotations,
+          })),
         })
       case 'tools/call': {
         const tool = tools.find((t) => t.name === params.name)
@@ -47,12 +54,20 @@ export async function handle(message, docs, version) {
           return reply({ content: [{ type: 'text', text }] })
         } catch (error) {
           // tool errors are results the model can read and act on, not protocol errors
-          return reply({ content: [{ type: 'text', text: String(error?.message ?? error) }], isError: true })
+          return reply({
+            content: [{ type: 'text', text: String(error?.message ?? error) }],
+            isError: true,
+          })
         }
       }
       case 'resources/list':
         return reply({
-          resources: resources(docs).map(({ uri, name, title, mimeType }) => ({ uri, name, title, mimeType })),
+          resources: resources(docs).map(({ uri, name, title, mimeType }) => ({
+            uri,
+            name,
+            title,
+            mimeType,
+          })),
         })
       case 'resources/read': {
         const r = resources(docs).find((x) => x.uri === params.uri)
@@ -73,7 +88,11 @@ export async function handle(message, docs, version) {
 }
 
 /** Runs the server on stdin / stdout. Logs go to stderr (stdout is the protocol). */
-export async function serve({ input = process.stdin, output = process.stdout, cwd = process.cwd() } = {}) {
+export async function serve({
+  input = process.stdin,
+  output = process.stdout,
+  cwd = process.cwd(),
+} = {}) {
   const docs = await loadDocs(cwd)
   const version = docs.version
   process.stderr.write(`[vue-grid-mcp] @nocopypaste/vue-grid ${version} from ${docs.dir}\n`)
@@ -84,7 +103,13 @@ export async function serve({ input = process.stdin, output = process.stdout, cw
     try {
       message = JSON.parse(line)
     } catch {
-      output.write(JSON.stringify({ jsonrpc: '2.0', id: null, error: { code: -32700, message: 'Parse error' } }) + '\n')
+      output.write(
+        JSON.stringify({
+          jsonrpc: '2.0',
+          id: null,
+          error: { code: -32700, message: 'Parse error' },
+        }) + '\n',
+      )
       continue
     }
     const batch = Array.isArray(message) ? message : [message]

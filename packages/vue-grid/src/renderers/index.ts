@@ -15,7 +15,17 @@ import NumberCell from './NumberCell.vue'
 import StatusCell from './StatusCell.vue'
 import TextCell from './TextCell.vue'
 import { textRenderer } from './text'
-import { booleanText, changeText, chipText, currencyText, dateText, dateTimeText, listText, numberText, statusText } from './plainText'
+import {
+  booleanText,
+  changeText,
+  chipText,
+  currencyText,
+  dateText,
+  dateTimeText,
+  listText,
+  numberText,
+  statusText,
+} from './plainText'
 import ToggleTextCell from './ToggleTextCell.vue'
 import ButtonGroupCell from './ButtonGroupCell.vue'
 import CheckboxCell from './CheckboxCell.vue'
@@ -102,7 +112,10 @@ const dateSort = (value: unknown) => toDate(value)?.getTime() ?? null
 
 export { textRenderer }
 /** Text that toggles a highlight when clicked. Emits `toggle` (with `clickable`). */
-export const toggleTextRenderer = /*#__PURE__*/ defineCellRenderer<ToggleTextOptions>({ name: 'toggle-text', component: ToggleTextCell })
+export const toggleTextRenderer = /*#__PURE__*/ defineCellRenderer<ToggleTextOptions>({
+  name: 'toggle-text',
+  component: ToggleTextCell,
+})
 /** Locale-formatted numbers. With `clickable`, a link-style button that emits `click`. */
 export const numberRenderer = /*#__PURE__*/ defineCellRenderer<NumberOptions>({
   name: 'number',
@@ -141,7 +154,13 @@ export const changeRenderer = /*#__PURE__*/ defineCellRenderer<ChangeOptions>({
   format: changeText,
 })
 /** A calendar day, in the grid's locale and time zone (date-only strings never shift a day). */
-export const dateRenderer = /*#__PURE__*/ defineCellRenderer<DateOptions>({ name: 'date', component: DateCell, sortValue: dateSort, filterType: 'date', format: dateText })
+export const dateRenderer = /*#__PURE__*/ defineCellRenderer<DateOptions>({
+  name: 'date',
+  component: DateCell,
+  sortValue: dateSort,
+  filterType: 'date',
+  format: dateText,
+})
 /** Date and time, on two lines by default. */
 export const dateTimeRenderer = /*#__PURE__*/ defineCellRenderer<DateTimeOptions>({
   name: 'datetime',
@@ -151,17 +170,40 @@ export const dateTimeRenderer = /*#__PURE__*/ defineCellRenderer<DateTimeOptions
   format: dateTimeText,
 })
 /** Yes / no as text labels or icons. */
-export const booleanRenderer = /*#__PURE__*/ defineCellRenderer<BooleanOptions>({ name: 'boolean', component: BooleanCell, filterType: 'boolean', format: booleanText })
+export const booleanRenderer = /*#__PURE__*/ defineCellRenderer<BooleanOptions>({
+  name: 'boolean',
+  component: BooleanCell,
+  filterType: 'boolean',
+  format: booleanText,
+})
 /** A coloured status badge (tone from a map, a function or a constant). With `clickable`, emits `click`. */
-export const statusRenderer = /*#__PURE__*/ defineCellRenderer<StatusOptions>({ name: 'status', component: StatusCell, filterType: 'set', format: statusText })
+export const statusRenderer = /*#__PURE__*/ defineCellRenderer<StatusOptions>({
+  name: 'status',
+  component: StatusCell,
+  filterType: 'set',
+  format: statusText,
+})
 /** A safe link (http(s), mailto, tel only), or a `<RouterLink>` with `to` when vue-router is installed. */
-export const linkRenderer = /*#__PURE__*/ defineCellRenderer<LinkOptions>({ name: 'link', component: LinkCell })
+export const linkRenderer = /*#__PURE__*/ defineCellRenderer<LinkOptions>({
+  name: 'link',
+  component: LinkCell,
+})
 /** An icon component, fixed or picked per row. */
-export const iconRenderer = /*#__PURE__*/ defineCellRenderer<IconOptions>({ name: 'icon', component: IconCell, align: 'center' })
+export const iconRenderer = /*#__PURE__*/ defineCellRenderer<IconOptions>({
+  name: 'icon',
+  component: IconCell,
+  align: 'center',
+})
 /** A button that opens the value as escaped JSON in a dialog. */
-export const jsonRenderer = /*#__PURE__*/ defineCellRenderer<JsonOptions>({ name: 'json', component: JsonCell })
+export const jsonRenderer = /*#__PURE__*/ defineCellRenderer<JsonOptions>({
+  name: 'json',
+  component: JsonCell,
+})
 /** A collapsible tree of nested data. */
-export const jsonTreeRenderer = /*#__PURE__*/ defineCellRenderer<JsonTreeOptions>({ name: 'json-tree', component: JsonTreeCell })
+export const jsonTreeRenderer = /*#__PURE__*/ defineCellRenderer<JsonTreeOptions>({
+  name: 'json-tree',
+  component: JsonTreeCell,
+})
 /** A `⋯` button with a keyboard-friendly menu. Emits the chosen item's `name`. */
 export const actionsMenuRenderer = /*#__PURE__*/ defineCellRenderer<ActionsMenuOptions>({
   name: 'actions-menu',
@@ -174,9 +216,15 @@ export const actionButtonRenderer = /*#__PURE__*/ defineCellRenderer<ActionButto
   component: ActionButtonCell,
 })
 /** Stacked lines, each with its own style, link, badge, trend or action. */
-export const multiLineRenderer = /*#__PURE__*/ defineCellRenderer<MultiLineOptions>({ name: 'multi-line', component: MultiLineCell })
+export const multiLineRenderer = /*#__PURE__*/ defineCellRenderer<MultiLineOptions>({
+  name: 'multi-line',
+  component: MultiLineCell,
+})
 /** A value with a copy-to-clipboard button. Emits `copy` / `copy-error`. */
-export const copyRenderer = /*#__PURE__*/ defineCellRenderer<CopyOptions>({ name: 'copy', component: CopyCell })
+export const copyRenderer = /*#__PURE__*/ defineCellRenderer<CopyOptions>({
+  name: 'copy',
+  component: CopyCell,
+})
 /** A chip in any colour (readable text picked by contrast), square, circle or pill. */
 export const chipRenderer = /*#__PURE__*/ defineCellRenderer<ChipOptions>({
   name: 'chip',
@@ -184,11 +232,14 @@ export const chipRenderer = /*#__PURE__*/ defineCellRenderer<ChipOptions>({
   component: ChipCell,
   sortValue: (value) =>
     value !== null && typeof value === 'object'
-      ? ((value as Record<string, unknown>).label ?? (value as Record<string, unknown>).name ?? null)
+      ? ((value as Record<string, unknown>).label ??
+        (value as Record<string, unknown>).name ??
+        null)
       : value,
   format: chipText,
 })
-const booleanSort = (value: unknown) => (value === null || value === undefined ? null : value ? 1 : 0)
+const booleanSort = (value: unknown) =>
+  value === null || value === undefined ? null : value ? 1 : 0
 /** A controlled checkbox, with a tooltip when disabled. Emits `change` with the requested state. */
 export const checkboxRenderer = /*#__PURE__*/ defineCellRenderer<CheckboxOptions>({
   name: 'checkbox',
@@ -214,13 +265,26 @@ export const radioRenderer = /*#__PURE__*/ defineCellRenderer<RadioOptions>({
   sortValue: booleanSort,
 })
 /** A value with an edit button, for opening your own editor. Emits `edit`. */
-export const editRenderer = /*#__PURE__*/ defineCellRenderer<EditOptions>({ name: 'edit', component: EditCell })
+export const editRenderer = /*#__PURE__*/ defineCellRenderer<EditOptions>({
+  name: 'edit',
+  component: EditCell,
+})
 /** A thumbnail, with a placeholder when empty or broken. */
-export const imageRenderer = /*#__PURE__*/ defineCellRenderer<ImageOptions>({ name: 'image', component: ImageCell, align: 'center' })
+export const imageRenderer = /*#__PURE__*/ defineCellRenderer<ImageOptions>({
+  name: 'image',
+  component: ImageCell,
+  align: 'center',
+})
 /** Monospaced code, with JSON pretty-printing and highlighting. */
-export const codeRenderer = /*#__PURE__*/ defineCellRenderer<CodeOptions>({ name: 'code', component: CodeCell })
+export const codeRenderer = /*#__PURE__*/ defineCellRenderer<CodeOptions>({
+  name: 'code',
+  component: CodeCell,
+})
 /** Several buttons, fixed or per row. Emits the clicked button's `name`. */
-export const buttonGroupRenderer = /*#__PURE__*/ defineCellRenderer<ButtonGroupOptions>({ name: 'button-group', component: ButtonGroupCell })
+export const buttonGroupRenderer = /*#__PURE__*/ defineCellRenderer<ButtonGroupOptions>({
+  name: 'button-group',
+  component: ButtonGroupCell,
+})
 /** A star / flag style on-off button (controlled). Emits `toggle`. */
 export const iconToggleRenderer = /*#__PURE__*/ defineCellRenderer<IconToggleOptions>({
   name: 'icon-toggle',
@@ -230,7 +294,10 @@ export const iconToggleRenderer = /*#__PURE__*/ defineCellRenderer<IconToggleOpt
   sortValue: booleanSort,
 })
 /** A status badge plus an info button with an anchored popover of label / value rows. */
-export const detailsRenderer = /*#__PURE__*/ defineCellRenderer<DetailsOptions>({ name: 'details', component: DetailsCell })
+export const detailsRenderer = /*#__PURE__*/ defineCellRenderer<DetailsOptions>({
+  name: 'details',
+  component: DetailsCell,
+})
 /** The first items of a list, with a “+N more” toggle. Emits `expand`. */
 export const listRenderer = /*#__PURE__*/ defineCellRenderer<ListOptions>({
   name: 'list',

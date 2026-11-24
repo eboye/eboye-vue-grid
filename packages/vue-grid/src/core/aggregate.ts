@@ -58,7 +58,10 @@ export function aggregateValues<T>(
 }
 
 /** The aggregates of every column that has one (`column.aggregate`), by column key. */
-export function aggregateRows<T>(rows: readonly T[], columns: readonly ColumnDef<T>[]): Record<string, unknown> {
+export function aggregateRows<T>(
+  rows: readonly T[],
+  columns: readonly ColumnDef<T>[],
+): Record<string, unknown> {
   const out: Record<string, unknown> = {}
   for (const col of columns) {
     if (!col.aggregate) continue

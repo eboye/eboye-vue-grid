@@ -44,51 +44,51 @@ JSON Schema. The `@nocopypaste/vue-grid-mcp` MCP server serves all of this as to
 
 ## Which feature for what
 
-| The user wants… | Feature(s) | Props / column options |
-|---|---|---|
-| Click a header to sort | `sortingFeature` | column `sortable: true`; `sort-mode="client"` (or handle `v-model:sort`) |
-| Filters per column, a filter row, quick search | `filteringFeature` | column `filterable: true` (`filter: 'text' \| 'number' \| 'date' \| 'boolean' \| 'set'`); `filter-row`; `<VGridSearch />` in `#toolbar` |
-| Pages | `paginationFeature` | `pagination` (or `{ pageSizes: [10, 25, 50] }`), `v-model:page`, `v-model:page-size` |
-| Backend sorting / filtering / paging | `serverDataFeature` (+ the above) | `:data-source="(query, { signal }) => Promise<{ rows, total }>"` |
-| Checkboxes / row selection, batch actions | `selectionFeature` | `selectable` (or `'single'`), `v-model:selected`, `is-row-selectable`, `prune-selection`; `#toolbar="{ selected, selectedCount, clearSelection }"`; server data: `v-model:select-all-matching` |
-| Nested child rows aligned to the parent's columns | `subGridsFeature` | `:sub-rows="(row) => row.children"` or `:load-sub-rows` + `:has-sub-rows` |
-| An expandable panel under a row | — | `#detail="{ row }"` slot (`row-expandable` to limit it) |
-| 10,000+ rows | `virtualScrollingFeature` | `:virtual="{ rowHeight: 40 }"` + bounded height |
-| Right-click menus (cells, headers) | `menusFeature` | `:context-menu="(ctx) => MenuItem[]"` + `@context-action`; header menu is on by default |
-| Freeze columns left / right | `columnPinningFeature` | column `pinned: 'left' \| 'right'` |
-| Show / hide columns | `columnVisibilityFeature` | column `hidden: true`; `<VGridColumnMenu>` in `#toolbar` |
-| Drag columns to reorder | `columnReorderFeature` | column `reorderable: false` to lock one |
-| Drag column edges to resize | `columnResizingFeature` | `minWidth` / `maxWidth`, `resizable: false` |
-| Grouped headers ("Q1" over three columns) | `columnGroupsFeature` | column `group: 'Q1'` |
-| Rows that stay on top / bottom | `rowPinningFeature` | `v-model:pinned-rows="{ top: [id], bottom: [] }"`, `pinRow()`, `pinned-top-rows` |
-| A totals row (sum, avg, …) | `aggregationFeature` | column `aggregate: 'sum' \| 'avg' \| 'min' \| 'max' \| 'count' \| fn`; `totals` (or `'top'`) |
-| Group rows by a column ("by status, then city") | `rowGroupingFeature` | `v-model:group-by="['status', 'city']"`, `groups-expanded`; column `groupable: true` (header menu), `groupValue: (row) => …` (e.g. month); `aggregate` shows per group |
-| Download CSV, copy rows / cells (Ctrl+C) | `exportFeature` | `grid.exportCsv()`, `getCsv()`, `copyRows()`, `@copy`; column `exportValue`, `exportable: false` |
-| Arrow-key navigation (ARIA grid) | `keyboardNavigationFeature` | — |
-| Remember column layout | — | `storage="orders-grid"` (localStorage key) |
-| Cell type (money, date, badge, link, …) | — | `renderer: currencyRenderer` etc. (list below) |
+| The user wants…                                   | Feature(s)                        | Props / column options                                                                                                                                                                         |
+| ------------------------------------------------- | --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Click a header to sort                            | `sortingFeature`                  | column `sortable: true`; `sort-mode="client"` (or handle `v-model:sort`)                                                                                                                       |
+| Filters per column, a filter row, quick search    | `filteringFeature`                | column `filterable: true` (`filter: 'text' \| 'number' \| 'date' \| 'boolean' \| 'set'`); `filter-row`; `<VGridSearch />` in `#toolbar`                                                        |
+| Pages                                             | `paginationFeature`               | `pagination` (or `{ pageSizes: [10, 25, 50] }`), `v-model:page`, `v-model:page-size`                                                                                                           |
+| Backend sorting / filtering / paging              | `serverDataFeature` (+ the above) | `:data-source="(query, { signal }) => Promise<{ rows, total }>"`                                                                                                                               |
+| Checkboxes / row selection, batch actions         | `selectionFeature`                | `selectable` (or `'single'`), `v-model:selected`, `is-row-selectable`, `prune-selection`; `#toolbar="{ selected, selectedCount, clearSelection }"`; server data: `v-model:select-all-matching` |
+| Nested child rows aligned to the parent's columns | `subGridsFeature`                 | `:sub-rows="(row) => row.children"` or `:load-sub-rows` + `:has-sub-rows`                                                                                                                      |
+| An expandable panel under a row                   | —                                 | `#detail="{ row }"` slot (`row-expandable` to limit it)                                                                                                                                        |
+| 10,000+ rows                                      | `virtualScrollingFeature`         | `:virtual="{ rowHeight: 40 }"` + bounded height                                                                                                                                                |
+| Right-click menus (cells, headers)                | `menusFeature`                    | `:context-menu="(ctx) => MenuItem[]"` + `@context-action`; header menu is on by default                                                                                                        |
+| Freeze columns left / right                       | `columnPinningFeature`            | column `pinned: 'left' \| 'right'`                                                                                                                                                             |
+| Show / hide columns                               | `columnVisibilityFeature`         | column `hidden: true`; `<VGridColumnMenu>` in `#toolbar`                                                                                                                                       |
+| Drag columns to reorder                           | `columnReorderFeature`            | column `reorderable: false` to lock one                                                                                                                                                        |
+| Drag column edges to resize                       | `columnResizingFeature`           | `minWidth` / `maxWidth`, `resizable: false`                                                                                                                                                    |
+| Grouped headers ("Q1" over three columns)         | `columnGroupsFeature`             | column `group: 'Q1'`                                                                                                                                                                           |
+| Rows that stay on top / bottom                    | `rowPinningFeature`               | `v-model:pinned-rows="{ top: [id], bottom: [] }"`, `pinRow()`, `pinned-top-rows`                                                                                                               |
+| A totals row (sum, avg, …)                        | `aggregationFeature`              | column `aggregate: 'sum' \| 'avg' \| 'min' \| 'max' \| 'count' \| fn`; `totals` (or `'top'`)                                                                                                   |
+| Group rows by a column ("by status, then city")   | `rowGroupingFeature`              | `v-model:group-by="['status', 'city']"`, `groups-expanded`; column `groupable: true` (header menu), `groupValue: (row) => …` (e.g. month); `aggregate` shows per group                         |
+| Download CSV, copy rows / cells (Ctrl+C)          | `exportFeature`                   | `grid.exportCsv()`, `getCsv()`, `copyRows()`, `@copy`; column `exportValue`, `exportable: false`                                                                                               |
+| Arrow-key navigation (ARIA grid)                  | `keyboardNavigationFeature`       | —                                                                                                                                                                                              |
+| Remember column layout                            | —                                 | `storage="orders-grid"` (localStorage key)                                                                                                                                                     |
+| Cell type (money, date, badge, link, …)           | —                                 | `renderer: currencyRenderer` etc. (list below)                                                                                                                                                 |
 
 ## Renderers (pick by data)
 
-| Data | Renderer export | Useful options |
-|---|---|---|
-| Plain / long text | default (`text`) | `ellipsis`, `lines`, `tone`, `badge`, `copyable`, `tooltip` |
-| Numbers | `numberRenderer` | `format` (Intl), `clickable` |
-| Money | `currencyRenderer` | `currency` (code or `(v, row) => code`) |
-| Up / down change | `changeRenderer` | `direction`, `currency`, `iconOnly` |
-| Dates / date-times | `dateRenderer` / `dateTimeRenderer` | `format`, `twoLines` |
-| Yes / no | `booleanRenderer` | `display: 'icon'`, labels |
-| Status badge | `statusRenderer` | `tone: { Paid: 'success', Open: 'info' }`, `label`, `variant` |
-| Colour chip / tag | `chipRenderer` | `color`, `tone`, `shape` |
-| Links | `linkRenderer` | `href` / `to` (vue-router), `label`, `target` |
-| Several lines in one cell | `multiLineRenderer` | `lines: (v, row) => [...]` |
-| Arrays | `listRenderer` | `max`, `itemLabel` |
-| Images | `imageRenderer` | `src`, `size`, `shape` |
-| JSON / code | `jsonTreeRenderer`, `jsonRenderer`, `codeRenderer` | `collapseAt`, `language` |
-| Badge + info popover | `detailsRenderer` | `items: (v, row) => [{ label, value }]` |
-| Buttons / menus | `actionButtonRenderer`, `buttonGroupRenderer`, `actionsMenuRenderer` | `action`, `buttons`, `actions` |
-| Toggles / inputs (controlled) | `checkboxRenderer`, `switchRenderer`, `radioRenderer`, `iconToggleRenderer`, `editRenderer` | handle `@cell-action` |
-| Copy to clipboard | `copyRenderer` | `copyValue`, `iconOnly` |
+| Data                          | Renderer export                                                                             | Useful options                                                |
+| ----------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| Plain / long text             | default (`text`)                                                                            | `ellipsis`, `lines`, `tone`, `badge`, `copyable`, `tooltip`   |
+| Numbers                       | `numberRenderer`                                                                            | `format` (Intl), `clickable`                                  |
+| Money                         | `currencyRenderer`                                                                          | `currency` (code or `(v, row) => code`)                       |
+| Up / down change              | `changeRenderer`                                                                            | `direction`, `currency`, `iconOnly`                           |
+| Dates / date-times            | `dateRenderer` / `dateTimeRenderer`                                                         | `format`, `twoLines`                                          |
+| Yes / no                      | `booleanRenderer`                                                                           | `display: 'icon'`, labels                                     |
+| Status badge                  | `statusRenderer`                                                                            | `tone: { Paid: 'success', Open: 'info' }`, `label`, `variant` |
+| Colour chip / tag             | `chipRenderer`                                                                              | `color`, `tone`, `shape`                                      |
+| Links                         | `linkRenderer`                                                                              | `href` / `to` (vue-router), `label`, `target`                 |
+| Several lines in one cell     | `multiLineRenderer`                                                                         | `lines: (v, row) => [...]`                                    |
+| Arrays                        | `listRenderer`                                                                              | `max`, `itemLabel`                                            |
+| Images                        | `imageRenderer`                                                                             | `src`, `size`, `shape`                                        |
+| JSON / code                   | `jsonTreeRenderer`, `jsonRenderer`, `codeRenderer`                                          | `collapseAt`, `language`                                      |
+| Badge + info popover          | `detailsRenderer`                                                                           | `items: (v, row) => [{ label, value }]`                       |
+| Buttons / menus               | `actionButtonRenderer`, `buttonGroupRenderer`, `actionsMenuRenderer`                        | `action`, `buttons`, `actions`                                |
+| Toggles / inputs (controlled) | `checkboxRenderer`, `switchRenderer`, `radioRenderer`, `iconToggleRenderer`, `editRenderer` | handle `@cell-action`                                         |
+| Copy to clipboard             | `copyRenderer`                                                                              | `copyValue`, `iconOnly`                                       |
 
 Every option is in `agent/api.md` → Renderers. Options typed `RowFn` / `RowOption` also take
 `(value, row) => …`. Status / chip / details `tone`s: `success`, `danger`, `warning`, `info`,
@@ -100,23 +100,54 @@ Every option is in `agent/api.md` → Renderers. Options typed `RowFn` / `RowOpt
 
 ```vue
 <script setup lang="ts">
-import { VGrid, createColumnHelper, currencyRenderer, dateRenderer, sortingFeature, statusRenderer } from '@nocopypaste/vue-grid'
+import {
+  VGrid,
+  createColumnHelper,
+  currencyRenderer,
+  dateRenderer,
+  sortingFeature,
+  statusRenderer,
+} from '@nocopypaste/vue-grid'
 
-interface Order { id: number; customer: { name: string }; total: number; status: 'Paid' | 'Open'; placedAt: string }
+interface Order {
+  id: number
+  customer: { name: string }
+  total: number
+  status: 'Paid' | 'Open'
+  placedAt: string
+}
 defineProps<{ orders: Order[] }>()
 
 const col = createColumnHelper<Order>()
 const columns = [
   col({ key: 'id', header: '#', width: 'min-content' }),
-  col({ key: 'customer', header: 'Customer', field: 'customer.name', sortable: true, width: 'minmax(10rem, 1fr)' }),
+  col({
+    key: 'customer',
+    header: 'Customer',
+    field: 'customer.name',
+    sortable: true,
+    width: 'minmax(10rem, 1fr)',
+  }),
   col({ key: 'total', header: 'Total', renderer: currencyRenderer, sortable: true }),
-  col({ key: 'status', header: 'Status', renderer: statusRenderer, rendererOptions: { tone: { Paid: 'success', Open: 'info' } } }),
+  col({
+    key: 'status',
+    header: 'Status',
+    renderer: statusRenderer,
+    rendererOptions: { tone: { Paid: 'success', Open: 'info' } },
+  }),
   col({ key: 'placedAt', header: 'Placed', renderer: dateRenderer, sortable: true }),
 ]
 </script>
 
 <template>
-  <VGrid :rows="orders" :columns="columns" row-key="id" :features="[sortingFeature]" sort-mode="client" style="height: 480px" />
+  <VGrid
+    :rows="orders"
+    :columns="columns"
+    row-key="id"
+    :features="[sortingFeature]"
+    sort-mode="client"
+    style="height: 480px"
+  />
 </template>
 ```
 
@@ -125,21 +156,41 @@ const columns = [
 ```vue
 <script setup lang="ts">
 import {
-  VGrid, VGridColumnMenu, VGridSearch,
-  columnVisibilityFeature, filteringFeature, sortingFeature, type FilterState,
+  VGrid,
+  VGridColumnMenu,
+  VGridSearch,
+  columnVisibilityFeature,
+  filteringFeature,
+  sortingFeature,
+  type FilterState,
 } from '@nocopypaste/vue-grid'
 const filters = ref<FilterState | null>(null)
 // columns: add `filterable: true` (type from the renderer, or `filter: 'date'` etc.)
 </script>
 
 <template>
-  <VGrid v-model:filters="filters" :rows="rows" :columns="columns" row-key="id" filter-row sort-mode="client"
-         storage="orders-grid" filter-storage="orders-filters"
-         :features="[sortingFeature, filteringFeature, columnVisibilityFeature]" style="height: 480px">
+  <VGrid
+    v-model:filters="filters"
+    :rows="rows"
+    :columns="columns"
+    row-key="id"
+    filter-row
+    sort-mode="client"
+    storage="orders-grid"
+    filter-storage="orders-filters"
+    :features="[sortingFeature, filteringFeature, columnVisibilityFeature]"
+    style="height: 480px"
+  >
     <template #toolbar="{ columnState, setColumnState, activeFilterCount, clearFilters }">
       <VGridSearch />
-      <button v-if="activeFilterCount" @click="clearFilters()">Clear {{ activeFilterCount }}</button>
-      <VGridColumnMenu :columns="columns" :column-state="columnState" @update:column-state="setColumnState($event!)" />
+      <button v-if="activeFilterCount" @click="clearFilters()">
+        Clear {{ activeFilterCount }}
+      </button>
+      <VGridColumnMenu
+        :columns="columns"
+        :column-state="columnState"
+        @update:column-state="setColumnState($event!)"
+      />
     </template>
   </VGrid>
 </template>
@@ -148,19 +199,36 @@ const filters = ref<FilterState | null>(null)
 ### Server data with paging
 
 ```ts
-import { filteringFeature, paginationFeature, serverDataFeature, sortingFeature, type DataSource } from '@nocopypaste/vue-grid'
+import {
+  filteringFeature,
+  paginationFeature,
+  serverDataFeature,
+  sortingFeature,
+  type DataSource,
+} from '@nocopypaste/vue-grid'
 
 const fetchOrders: DataSource<Order> = async (query, { signal }) => {
   // query: { sort: { key, dir } | null, filters: { columns, search }, page, pageSize }
-  const res = await fetch('/api/orders/search', { method: 'POST', body: JSON.stringify(query), signal })
+  const res = await fetch('/api/orders/search', {
+    method: 'POST',
+    body: JSON.stringify(query),
+    signal,
+  })
   if (!res.ok) throw new Error(res.statusText) // the grid shows an error with Retry, emits load-error
   return res.json() as Promise<{ rows: Order[]; total: number }>
 }
 ```
 
 ```vue
-<VGrid :data-source="fetchOrders" :columns="columns" row-key="id" pagination filter-row
-       :features="[serverDataFeature, sortingFeature, filteringFeature, paginationFeature]" style="height: 520px" />
+<VGrid
+  :data-source="fetchOrders"
+  :columns="columns"
+  row-key="id"
+  pagination
+  filter-row
+  :features="[serverDataFeature, sortingFeature, filteringFeature, paginationFeature]"
+  style="height: 520px"
+/>
 ```
 
 Server totals: pass them as `:aggregates="{ total: 125000 }"` with `totals` and `aggregationFeature`.
@@ -169,10 +237,23 @@ Server totals: pass them as `:aggregates="{ total: 125000 }"` with `totals` and 
 
 ```vue
 <!-- synchronous children -->
-<VGrid :rows="markets" :columns="columns" row-key="id" :sub-rows="(m) => m.children" :features="[subGridsFeature]" />
+<VGrid
+  :rows="markets"
+  :columns="columns"
+  row-key="id"
+  :sub-rows="(m) => m.children"
+  :features="[subGridsFeature]"
+/>
 <!-- lazy children, fetched on first expand -->
-<VGrid :rows="folders" :columns="columns" row-key="id" :load-sub-rows="loadChildren" :has-sub-rows="(f) => f.hasChildren"
-       v-model:expanded="expanded" :features="[subGridsFeature]" />
+<VGrid
+  :rows="folders"
+  :columns="columns"
+  row-key="id"
+  :load-sub-rows="loadChildren"
+  :has-sub-rows="(f) => f.hasChildren"
+  v-model:expanded="expanded"
+  :features="[subGridsFeature]"
+/>
 ```
 
 Children share the parent's columns. For a different set of columns, use the `#detail` slot with
@@ -189,8 +270,16 @@ another `<VGrid>` inside.
 ### Selection and batch actions
 
 ```vue
-<VGrid v-model:selected="selected" :rows="rows" :columns="columns" row-key="id" selectable prune-selection
-       :is-row-selectable="(r) => r.status !== 'locked'" :features="[selectionFeature]">
+<VGrid
+  v-model:selected="selected"
+  :rows="rows"
+  :columns="columns"
+  row-key="id"
+  selectable
+  prune-selection
+  :is-row-selectable="(r) => r.status !== 'locked'"
+  :features="[selectionFeature]"
+>
   <template #toolbar="{ selected, selectedCount, clearSelection }">
     <span v-if="selectedCount">{{ selectedCount }} selected
       <button @click="approve(selected).then(clearSelection)">Approve</button></span>
@@ -205,8 +294,15 @@ the banner's "Select all N rows" sets `v-model:select-all-matching`; act on the 
 ### 10,000+ rows
 
 ```vue
-<VGrid :rows="bigList" :columns="columns" row-key="id" :virtual="{ rowHeight: 40 }" sort-mode="client"
-       :features="[virtualScrollingFeature, sortingFeature]" style="height: 600px" />
+<VGrid
+  :rows="bigList"
+  :columns="columns"
+  row-key="id"
+  :virtual="{ rowHeight: 40 }"
+  sort-mode="client"
+  :features="[virtualScrollingFeature, sortingFeature]"
+  style="height: 600px"
+/>
 ```
 
 ### Totals and pinned rows
@@ -220,8 +316,16 @@ const pinned = ref<PinnedRowsState>({ top: [42] })
 ```
 
 ```vue
-<VGrid ref="grid" v-model:pinned-rows="pinned" :rows="rows" :columns="columns" row-key="id" totals
-       :features="[aggregationFeature, rowPinningFeature]" style="height: 480px" />
+<VGrid
+  ref="grid"
+  v-model:pinned-rows="pinned"
+  :rows="rows"
+  :columns="columns"
+  row-key="id"
+  totals
+  :features="[aggregationFeature, rowPinningFeature]"
+  style="height: 480px"
+/>
 <!-- grid.value.pinRow(key, 'top' | 'bottom' | null) from your own button or context menu -->
 ```
 
@@ -231,15 +335,27 @@ const pinned = ref<PinnedRowsState>({ top: [42] })
 const columns = [
   col({ key: 'customer', field: 'customer.name' }),
   col({ key: 'status', renderer: statusRenderer, groupable: true }),
-  col({ key: 'placedAt', renderer: dateRenderer, groupable: true, groupValue: (o) => o.placedAt.slice(0, 7) }),
+  col({
+    key: 'placedAt',
+    renderer: dateRenderer,
+    groupable: true,
+    groupValue: (o) => o.placedAt.slice(0, 7),
+  }),
   col({ key: 'total', renderer: currencyRenderer, aggregate: 'sum' }), // shown in every group row
 ]
 const groupBy = ref(['status'])
 ```
 
 ```vue
-<VGrid v-model:group-by="groupBy" :rows="orders" :columns="columns" row-key="id" sort-mode="client"
-       :features="[rowGroupingFeature, sortingFeature, menusFeature]" style="height: 480px" />
+<VGrid
+  v-model:group-by="groupBy"
+  :rows="orders"
+  :columns="columns"
+  row-key="id"
+  sort-mode="client"
+  :features="[rowGroupingFeature, sortingFeature, menusFeature]"
+  style="height: 480px"
+/>
 ```
 
 Groups start collapsed (`groups-expanded` to open them); the group label sits in the first
@@ -250,7 +366,12 @@ label runs across them). `#group-<key>="{ value, count }"` renders a group's val
 
 ```vue
 <script setup lang="ts">
-import { exportFeature, keyboardNavigationFeature, selectionFeature, type VGridExposed } from '@nocopypaste/vue-grid'
+import {
+  exportFeature,
+  keyboardNavigationFeature,
+  selectionFeature,
+  type VGridExposed,
+} from '@nocopypaste/vue-grid'
 const grid = ref<VGridExposed>()
 // columns: `exportable: false` on action columns; `exportValue: (row) => row.id` where the cell isn't the data
 </script>
@@ -258,8 +379,15 @@ const grid = ref<VGridExposed>()
 <template>
   <button @click="grid?.exportCsv({ filename: 'orders.csv' })">Download CSV</button>
   <button @click="grid?.copyRows()">Copy selected</button>
-  <VGrid ref="grid" :rows="orders" :columns="columns" row-key="id" selectable
-         :features="[exportFeature, selectionFeature, keyboardNavigationFeature]" @copy="(e) => notify(e.text)" />
+  <VGrid
+    ref="grid"
+    :rows="orders"
+    :columns="columns"
+    row-key="id"
+    selectable
+    :features="[exportFeature, selectionFeature, keyboardNavigationFeature]"
+    @copy="(e) => notify(e.text)"
+  />
 </template>
 ```
 
@@ -272,19 +400,47 @@ raw values; `copyRows` and Ctrl/⌘+C to the selected rows as displayed, tab-sep
 
 ```vue
 <script setup lang="ts">
-import { actionsMenuRenderer, menusFeature, type CellActionEvent, type CellContext, type MenuItem } from '@nocopypaste/vue-grid'
+import {
+  actionsMenuRenderer,
+  menusFeature,
+  type CellActionEvent,
+  type CellContext,
+  type MenuItem,
+} from '@nocopypaste/vue-grid'
 const columns = [
   /* … */
-  col({ key: 'actions', header: '', width: 'min-content', renderer: actionsMenuRenderer,
-        rendererOptions: { actions: [{ name: 'edit', label: 'Edit' }, { separator: true }, { name: 'delete', label: 'Delete', tone: 'danger' }] } }),
+  col({
+    key: 'actions',
+    header: '',
+    width: 'min-content',
+    renderer: actionsMenuRenderer,
+    rendererOptions: {
+      actions: [
+        { name: 'edit', label: 'Edit' },
+        { separator: true },
+        { name: 'delete', label: 'Delete', tone: 'danger' },
+      ],
+    },
+  }),
 ]
-const cellMenu = (ctx: CellContext<Order>): MenuItem[] => [{ name: 'copy', label: `Copy ${ctx.column.header}` }]
-function onAction(e: CellActionEvent<Order>) { if (e.name === 'delete') remove(e.rowKey) }
+const cellMenu = (ctx: CellContext<Order>): MenuItem[] => [
+  { name: 'copy', label: `Copy ${ctx.column.header}` },
+]
+function onAction(e: CellActionEvent<Order>) {
+  if (e.name === 'delete') remove(e.rowKey)
+}
 </script>
 
 <template>
-  <VGrid :rows :columns row-key="id" :context-menu="cellMenu" :features="[menusFeature]"
-         @cell-action="onAction" @context-action="(e) => copy(String(e.value))" />
+  <VGrid
+    :rows
+    :columns
+    row-key="id"
+    :context-menu="cellMenu"
+    :features="[menusFeature]"
+    @cell-action="onAction"
+    @context-action="(e) => copy(String(e.value))"
+  />
 </template>
 ```
 
@@ -300,14 +456,22 @@ col({ key: 'active', renderer: switchRenderer })
 ```ts
 import { defineCellRenderer } from '@nocopypaste/vue-grid'
 import RatingCell from './RatingCell.vue' // props: CellRendererProps<Row, number, { max?: number }>; emit('action', 'rate', n)
-export const ratingRenderer = defineCellRenderer<{ max?: number }>({ name: 'rating', component: RatingCell, defaults: { max: 5 } })
+export const ratingRenderer = defineCellRenderer<{ max?: number }>({
+  name: 'rating',
+  component: RatingCell,
+  defaults: { max: 5 },
+})
 // column: { key: 'rating', renderer: ratingRenderer, rendererOptions: { max: 10 } }
 ```
 
 ### Theming
 
 ```css
-.my-grid { --vg-color-accent: #db2777; --vg-radius: 1rem; --vg-font-size: 0.8125rem; }
+.my-grid {
+  --vg-color-accent: #db2777;
+  --vg-radius: 1rem;
+  --vg-font-size: 0.8125rem;
+}
 ```
 
 Tokens: `--vg-*` (see README → Theming). Dark mode follows `color-scheme`. Density:

@@ -7,8 +7,28 @@ export function rng(seed: number) {
   }
 }
 
-const firstNames = ['Ana', 'Marko', 'Jelena', 'Nikola', 'Milica', 'Stefan', 'Ivana', 'Luka', 'Sara', 'Petar']
-const lastNames = ['Jovanović', 'Petrović', 'Nikolić', 'Marković', 'Đorđević', 'Stojanović', 'Ilić', 'Pavlović']
+const firstNames = [
+  'Ana',
+  'Marko',
+  'Jelena',
+  'Nikola',
+  'Milica',
+  'Stefan',
+  'Ivana',
+  'Luka',
+  'Sara',
+  'Petar',
+]
+const lastNames = [
+  'Jovanović',
+  'Petrović',
+  'Nikolić',
+  'Marković',
+  'Đorđević',
+  'Stojanović',
+  'Ilić',
+  'Pavlović',
+]
 const cities = ['Beograd', 'Novi Sad', 'Niš', 'Kragujevac', 'Subotica', 'Zrenjanin']
 const statuses = ['Won', 'Lost', 'Open', 'Void'] as const
 
@@ -43,7 +63,11 @@ export function makeBets(count: number, seed = 7): Bet[] {
       verified: r() > 0.3,
       rating: Math.floor(r() * 6),
       site: `https://example.com/bets/${i + 1}`,
-      meta: { channel: pick(['web', 'retail', 'mobile']), odds: [Math.round(r() * 300) / 100], tags: { vip: r() > 0.8 } },
+      meta: {
+        channel: pick(['web', 'retail', 'mobile']),
+        odds: [Math.round(r() * 300) / 100],
+        tags: { vip: r() > 0.8 },
+      },
     }
   })
 }
@@ -60,7 +84,8 @@ export interface Market {
 
 export function makeMarkets(): Market[] {
   const r = rng(42)
-  const status = (): Market['status'] => (['Active', 'Suspended', 'Closed'] as const)[Math.floor(r() * 3)]!
+  const status = (): Market['status'] =>
+    (['Active', 'Suspended', 'Closed'] as const)[Math.floor(r() * 3)]!
   const market = (id: string, name: string, children?: Market[]): Market => ({
     id,
     name,
@@ -72,7 +97,11 @@ export function makeMarkets(): Market[] {
   })
   return [
     market('fb', 'Football', [
-      market('fb-1x2', 'Match result', [market('fb-1x2-h', 'Home'), market('fb-1x2-d', 'Draw'), market('fb-1x2-a', 'Away')]),
+      market('fb-1x2', 'Match result', [
+        market('fb-1x2-h', 'Home'),
+        market('fb-1x2-d', 'Draw'),
+        market('fb-1x2-a', 'Away'),
+      ]),
       market('fb-ou', 'Over / under 2.5'),
       market('fb-btts', 'Both teams to score'),
     ]),
@@ -108,5 +137,11 @@ export const rootFolders: Folder[] = [
   { id: 'docs', name: 'Documents', size: 0, modified: '2026-10-01T09:00:00Z', hasChildren: true },
   { id: 'pics', name: 'Pictures', size: 0, modified: '2026-09-12T09:00:00Z', hasChildren: true },
   { id: 'broken', name: 'Broken', size: 0, modified: '2026-08-02T09:00:00Z', hasChildren: true },
-  { id: 'readme', name: 'README.md', size: 2048, modified: '2026-07-20T09:00:00Z', hasChildren: false },
+  {
+    id: 'readme',
+    name: 'README.md',
+    size: 2048,
+    modified: '2026-07-20T09:00:00Z',
+    hasChildren: false,
+  },
 ]

@@ -6,7 +6,9 @@ import { CheckIcon, CrossIcon } from './parts/icons'
 
 const props = defineProps<CellRendererProps<unknown, unknown, BooleanOptions>>()
 
-const state = computed(() => (props.value === null || props.value === undefined ? 'null' : props.value ? 'true' : 'false'))
+const state = computed(() =>
+  props.value === null || props.value === undefined ? 'null' : props.value ? 'true' : 'false',
+)
 const text = computed(
   () =>
     ({
@@ -16,13 +18,22 @@ const text = computed(
     })[state.value],
 )
 const icon = computed(() =>
-  state.value === 'true' ? CheckIcon : state.value === 'false' && props.options.falseIcon ? CrossIcon : null,
+  state.value === 'true'
+    ? CheckIcon
+    : state.value === 'false' && props.options.falseIcon
+      ? CrossIcon
+      : null,
 )
 </script>
 
 <template>
-  <span v-if="options.display === 'icon'" :class="['vg-boolean', 'vg-boolean-icon', `vg-boolean-${state}`]">
-    <span v-if="icon" class="vg-boolean-glyph" role="img" :aria-label="text" :title="text"><component :is="icon" /></span>
+  <span
+    v-if="options.display === 'icon'"
+    :class="['vg-boolean', 'vg-boolean-icon', `vg-boolean-${state}`]"
+  >
+    <span v-if="icon" class="vg-boolean-glyph" role="img" :aria-label="text" :title="text"
+      ><component :is="icon"
+    /></span>
     <span v-else-if="state === 'null'">{{ text }}</span>
     <span v-else class="vg-sr-only">{{ text }}</span>
   </span>

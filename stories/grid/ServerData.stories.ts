@@ -18,11 +18,17 @@ import { Grid as VGrid, type GridArgs } from '../support'
 /** A fake REST backend: filters, searches, sorts and pages 500 bets with ~400 ms latency. */
 function createFakeApi() {
   const db = makeBets(500, 21)
-  const log = ref<{ id: number; query: string; status: 'pending' | 'ok' | 'aborted' | 'error'; rows?: number }[]>([])
+  const log = ref<
+    { id: number; query: string; status: 'pending' | 'ok' | 'aborted' | 'error'; rows?: number }[]
+  >([])
   let failNext = false
   let seq = 0
   const get = (row: Bet, key: string) =>
-    key === 'player' ? row.player.name : key === 'city' ? row.player.city : (row as unknown as Record<string, unknown>)[key]
+    key === 'player'
+      ? row.player.name
+      : key === 'city'
+        ? row.player.city
+        : (row as unknown as Record<string, unknown>)[key]
 
   const source: GridDataSource<Bet> = (query, { signal }) => {
     const entry = { id: ++seq, query: describe(query), status: 'pending' as const }
@@ -37,10 +43,13 @@ function createFakeApi() {
           return reject(new Error('500 Internal Server Error'))
         }
         let rows = db.filter((row) =>
-          Object.entries(query.filters.columns).every(([key, filter]) => matchesFilter(get(row, key), filter)),
+          Object.entries(query.filters.columns).every(([key, filter]) =>
+            matchesFilter(get(row, key), filter),
+          ),
         )
         const q = query.filters.search?.trim().toLowerCase()
-        if (q) rows = rows.filter((r) => `${r.player.name} ${r.player.city}`.toLowerCase().includes(q))
+        if (q)
+          rows = rows.filter((r) => `${r.player.name} ${r.player.city}`.toLowerCase().includes(q))
         if (query.sort) {
           const { key, dir } = query.sort
           rows = [...rows].sort((a, b) => {
@@ -50,7 +59,8 @@ function createFakeApi() {
           })
         }
         const total = rows.length
-        if (query.pageSize) rows = rows.slice((query.page - 1) * query.pageSize, query.page * query.pageSize)
+        if (query.pageSize)
+          rows = rows.slice((query.page - 1) * query.pageSize, query.page * query.pageSize)
         set('ok', rows.length)
         resolve({ rows, total })
       }, 400)
@@ -62,7 +72,10 @@ function createFakeApi() {
   }
 
   /** Distinct cities from the "server", searched server-side. */
-  const cityOptions = async (search: string, { signal }: { signal: AbortSignal }): Promise<FilterOption[]> => {
+  const cityOptions = async (
+    search: string,
+    { signal }: { signal: AbortSignal },
+  ): Promise<FilterOption[]> => {
     await new Promise((r, reject) => {
       const t = setTimeout(r, 300)
       signal.addEventListener('abort', () => {
@@ -83,7 +96,8 @@ function createFakeApi() {
 function describe(q: GridQuery) {
   const parts = [`page ${q.page}${q.pageSize ? `/${q.pageSize}` : ''}`]
   if (q.sort) parts.push(`sort ${q.sort.key} ${q.sort.dir}`)
-  for (const [key, f] of Object.entries(q.filters.columns)) parts.push(`${key}: ${JSON.stringify(f).replace(/"/g, '')}`)
+  for (const [key, f] of Object.entries(q.filters.columns))
+    parts.push(`${key}: ${JSON.stringify(f).replace(/"/g, '')}`)
   if (q.filters.search) parts.push(`search "${q.filters.search}"`)
   return parts.join(' · ')
 }
@@ -99,7 +113,13 @@ function describe(q: GridQuery) {
 const meta = {
   title: 'Grid/Server data',
   component: VGrid,
-  args: { columns: [], rowKey: 'id', ariaLabel: 'Bets from the server', onQueryChange: fn(), onLoadError: fn() },
+  args: {
+    columns: [],
+    rowKey: 'id',
+    ariaLabel: 'Bets from the server',
+    onQueryChange: fn(),
+    onLoadError: fn(),
+  },
   argTypes: { rows: { control: false }, columns: { control: false } },
 } satisfies Meta<GridArgs>
 
@@ -114,10 +134,39 @@ export const DataSource: Story = {
       const bet = createColumnHelper<Bet>()
       const columns = [
         bet({ key: 'id', header: '#', width: 'min-content', sortable: true }),
-        bet({ key: 'player', header: 'Player', field: 'player.name', width: 'minmax(10rem, 1fr)', sortable: true, filterable: true }),
-        bet({ key: 'city', header: 'City', field: 'player.city', filterable: true, filter: { type: 'set', options: api.cityOptions } }),
-        bet({ key: 'status', header: 'Status', renderer: statusRenderer, rendererOptions: { tone: statusTones }, filterable: true, filter: { type: 'set', options: ['Won', 'Lost', 'Open', 'Void'].map((value) => ({ value })) } }),
-        bet({ key: 'stake', header: 'Stake', renderer: currencyRenderer, sortable: true, filterable: true }),
+        bet({
+          key: 'player',
+          header: 'Player',
+          field: 'player.name',
+          width: 'minmax(10rem, 1fr)',
+          sortable: true,
+          filterable: true,
+        }),
+        bet({
+          key: 'city',
+          header: 'City',
+          field: 'player.city',
+          filterable: true,
+          filter: { type: 'set', options: api.cityOptions },
+        }),
+        bet({
+          key: 'status',
+          header: 'Status',
+          renderer: statusRenderer,
+          rendererOptions: { tone: statusTones },
+          filterable: true,
+          filter: {
+            type: 'set',
+            options: ['Won', 'Lost', 'Open', 'Void'].map((value) => ({ value })),
+          },
+        }),
+        bet({
+          key: 'stake',
+          header: 'Stake',
+          renderer: currencyRenderer,
+          sortable: true,
+          filterable: true,
+        }),
         bet({ key: 'placedAt', header: 'Placed', renderer: dateRenderer, sortable: true }),
       ]
       return { args, api, columns }
@@ -155,15 +204,33 @@ export const QueryChangeEvent: Story = {
       const bet = createColumnHelper<Bet>()
       const columns = [
         bet({ key: 'id', header: '#', width: 'min-content', sortable: true }),
-        bet({ key: 'player', header: 'Player', field: 'player.name', width: '1fr', sortable: true, filterable: true }),
-        bet({ key: 'stake', header: 'Stake', renderer: currencyRenderer, sortable: true, filterable: true }),
+        bet({
+          key: 'player',
+          header: 'Player',
+          field: 'player.name',
+          width: '1fr',
+          sortable: true,
+          filterable: true,
+        }),
+        bet({
+          key: 'stake',
+          header: 'Stake',
+          renderer: currencyRenderer,
+          sortable: true,
+          filterable: true,
+        }),
       ]
       function onQuery(q: GridQuery) {
         last.value = describe(q)
-        let r = db.filter((row) => Object.entries(q.filters.columns).every(([k, f]) => matchesFilter(k === 'player' ? row.player.name : row.stake, f)))
+        let r = db.filter((row) =>
+          Object.entries(q.filters.columns).every(([k, f]) =>
+            matchesFilter(k === 'player' ? row.player.name : row.stake, f),
+          ),
+        )
         if (q.sort) {
           const { key, dir } = q.sort
-          const val = (b: Bet) => (key === 'player' ? b.player.name : key === 'stake' ? b.stake : b.id)
+          const val = (b: Bet) =>
+            key === 'player' ? b.player.name : key === 'stake' ? b.stake : b.id
           r = [...r].sort((a, b) => (val(a) < val(b) ? -1 : 1) * (dir === 'asc' ? 1 : -1))
         }
         rows.value = r

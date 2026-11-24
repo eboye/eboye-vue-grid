@@ -14,7 +14,10 @@ export function getByPath(source: unknown, path: string): unknown {
   return current
 }
 
-export function getCellValue<T>(row: T, column: Pick<ColumnDef<T>, 'key' | 'field' | 'value'>): unknown {
+export function getCellValue<T>(
+  row: T,
+  column: Pick<ColumnDef<T>, 'key' | 'field' | 'value'>,
+): unknown {
   if (column.value) return column.value(row)
   return getByPath(row, column.field ?? column.key)
 }

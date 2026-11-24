@@ -13,7 +13,11 @@ interface Row {
   name: string
   score: number
 }
-const all: Row[] = Array.from({ length: 23 }, (_, i) => ({ id: i + 1, name: `Row ${i + 1}`, score: (i * 7) % 10 }))
+const all: Row[] = Array.from({ length: 23 }, (_, i) => ({
+  id: i + 1,
+  name: `Row ${i + 1}`,
+  score: (i * 7) % 10,
+}))
 const columns = [
   { key: 'name', sortable: true, filterable: true },
   { key: 'score', sortable: true, filterable: true },
@@ -32,9 +36,15 @@ function backend(delay = 0) {
     let rows = all
     const name = query.filters.columns.name
     if (name?.type === 'text' && name.value) rows = rows.filter((r) => r.name.includes(name.value!))
-    if (query.sort) rows = [...rows].sort((a, b) => (a[query.sort!.key as 'score'] - b[query.sort!.key as 'score']) * (query.sort!.dir === 'asc' ? 1 : -1))
+    if (query.sort)
+      rows = [...rows].sort(
+        (a, b) =>
+          (a[query.sort!.key as 'score'] - b[query.sort!.key as 'score']) *
+          (query.sort!.dir === 'asc' ? 1 : -1),
+      )
     const total = rows.length
-    if (query.pageSize) rows = rows.slice((query.page - 1) * query.pageSize, query.page * query.pageSize)
+    if (query.pageSize)
+      rows = rows.slice((query.page - 1) * query.pageSize, query.page * query.pageSize)
     return { rows, total }
   }
   return { source, queries, signals }
@@ -45,13 +55,17 @@ describe('dataSource (server rows)', () => {
     const api = backend()
     const w = mount(VGrid, { props: { dataSource: api.source, columns, rowKey: 'id' } })
     await flushPromises()
-    expect(api.queries).toEqual([{ sort: null, filters: { columns: {}, search: '' }, page: 1, pageSize: null }])
+    expect(api.queries).toEqual([
+      { sort: null, filters: { columns: {}, search: '' }, page: 1, pageSize: null },
+    ])
     expect(shownIds(w)).toHaveLength(23)
   })
 
   it('sort and filter changes go to the backend; the grid does not sort or filter itself; page resets', async () => {
     const api = backend()
-    const w = mount(VGrid, { props: { dataSource: api.source, columns, rowKey: 'id', pagination: true, pageSize: 5 } })
+    const w = mount(VGrid, {
+      props: { dataSource: api.source, columns, rowKey: 'id', pagination: true, pageSize: 5 },
+    })
     await flushPromises()
     expect(api.queries.at(-1)).toMatchObject({ page: 1, pageSize: 5 })
     await vi.dynamicImportSettled() // the pagination bar is loaded on demand
@@ -70,9 +84,15 @@ describe('dataSource (server rows)', () => {
     expect(last.page).toBe(1) // new sort → first page
     expect(w.emitted('update:page')!.at(-1)).toEqual([1])
 
-    ;(w.vm as unknown as VGridExposed).setFilters({ columns: { name: { type: 'text', op: 'contains', value: 'Row 2' } } })
+    ;(w.vm as unknown as VGridExposed).setFilters({
+      columns: { name: { type: 'text', op: 'contains', value: 'Row 2' } },
+    })
     await flushPromises()
-    expect(api.queries.at(-1)!.filters.columns.name).toEqual({ type: 'text', op: 'contains', value: 'Row 2' })
+    expect(api.queries.at(-1)!.filters.columns.name).toEqual({
+      type: 'text',
+      op: 'contains',
+      value: 'Row 2',
+    })
   })
 
   it('cancels superseded requests and ignores late responses', async () => {
@@ -85,7 +105,14 @@ describe('dataSource (server rows)', () => {
       const rows = query.filters.search === 'slow' ? [all[0]!] : [all[1]!]
       return new Promise((resolve) => resolvers.push(() => resolve({ rows })))
     }
-    const w = mount(VGrid, { props: { dataSource: source, columns, rowKey: 'id', filters: { columns: {}, search: 'slow' } } })
+    const w = mount(VGrid, {
+      props: {
+        dataSource: source,
+        columns,
+        rowKey: 'id',
+        filters: { columns: {}, search: 'slow' },
+      },
+    })
     await nextTick()
     await w.setProps({ filters: { columns: {}, search: 'fast' } })
     await nextTick()
@@ -130,7 +157,10 @@ describe('query-change and client pagination', () => {
     expect(w.emitted('query-change')).toHaveLength(1)
     await w.find('[data-col-key="name"] .vg-sort').trigger('click')
     await nextTick()
-    expect((w.emitted('query-change') as GridQuery[][]).at(-1)![0]!.sort).toEqual({ key: 'name', dir: 'asc' })
+    expect((w.emitted('query-change') as GridQuery[][]).at(-1)![0]!.sort).toEqual({
+      key: 'name',
+      dir: 'asc',
+    })
     const count = w.emitted('query-change')!.length
     ;(w.vm as unknown as VGridExposed).setFilters({ columns: {}, search: '' }) // same as before
     await nextTick()
@@ -138,9 +168,20 @@ describe('query-change and client pagination', () => {
   })
 
   it('client pagination slices the filtered rows and keeps the page in range', async () => {
-    const w = mount(VGrid, { props: { rows: all, columns, rowKey: 'id', pagination: { pageSizes: [5, 10] }, pageSize: 10, page: 3 } })
+    const w = mount(VGrid, {
+      props: {
+        rows: all,
+        columns,
+        rowKey: 'id',
+        pagination: { pageSizes: [5, 10] },
+        pageSize: 10,
+        page: 3,
+      },
+    })
     expect(shownIds(w)).toEqual([21, 22, 23])
-    ;(w.vm as unknown as VGridExposed).setFilters({ columns: { name: { type: 'text', op: 'contains', value: 'Row 1' } } })
+    ;(w.vm as unknown as VGridExposed).setFilters({
+      columns: { name: { type: 'text', op: 'contains', value: 'Row 1' } },
+    })
     await nextTick()
     await nextTick()
     // "Row 1", "Row 10".."Row 19" → 11 rows → page 1 (the filter reset the page)

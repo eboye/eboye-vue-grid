@@ -13,14 +13,20 @@ const emit = defineEmits<{ selectAll: []; clear: [] }>()
 const format = inject(FORMAT_CONTEXT_KEY, undefined)
 const n = (v: number) => (format ? formatNumber(v, format.value) : String(v))
 const text = computed(() =>
-  props.all ? `All ${n(props.total)} rows are selected.` : `All ${n(props.page)} rows on this page are selected.`,
+  props.all
+    ? `All ${n(props.total)} rows are selected.`
+    : `All ${n(props.page)} rows on this page are selected.`,
 )
 </script>
 
 <template>
   <div class="vg-selection-banner" role="status">
     <span>{{ text }}</span>
-    <button v-if="!all" type="button" class="vg-link-button" @click="emit('selectAll')">Select all {{ n(total) }} rows</button>
-    <button v-else type="button" class="vg-link-button" @click="emit('clear')">Clear selection</button>
+    <button v-if="!all" type="button" class="vg-link-button" @click="emit('selectAll')">
+      Select all {{ n(total) }} rows
+    </button>
+    <button v-else type="button" class="vg-link-button" @click="emit('clear')">
+      Clear selection
+    </button>
   </div>
 </template>

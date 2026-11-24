@@ -6,7 +6,12 @@ export function plainText(value: unknown): string {
   if (value === null || value === undefined) return ''
   if (typeof value === 'number') return Number.isNaN(value) ? '' : String(value)
   if (value instanceof Date) return Number.isNaN(value.getTime()) ? '' : value.toISOString()
-  if (Array.isArray(value)) return value.map((v) => (v !== null && typeof v === 'object' && !(v instanceof Date) ? safeJson(v) : plainText(v))).join(', ')
+  if (Array.isArray(value))
+    return value
+      .map((v) =>
+        v !== null && typeof v === 'object' && !(v instanceof Date) ? safeJson(v) : plainText(v),
+      )
+      .join(', ')
   if (typeof value === 'object') return safeJson(value)
   return String(value)
 }
@@ -31,10 +36,19 @@ export function guardFormula(text: string): string {
 }
 
 /** Joins a table of text into delimited lines, quoting fields that need it (RFC 4180). */
-export function toDelimited(table: readonly (readonly string[])[], delimiter = ',', newline = '\r\n'): string {
-  const needsQuotes = (s: string) => s.includes(delimiter) || s.includes('"') || s.includes('\n') || s.includes('\r')
+export function toDelimited(
+  table: readonly (readonly string[])[],
+  delimiter = ',',
+  newline = '\r\n',
+): string {
+  const needsQuotes = (s: string) =>
+    s.includes(delimiter) || s.includes('"') || s.includes('\n') || s.includes('\r')
   return table
-    .map((line) => line.map((field) => (needsQuotes(field) ? `"${field.replace(/"/g, '""')}"` : field)).join(delimiter))
+    .map((line) =>
+      line
+        .map((field) => (needsQuotes(field) ? `"${field.replace(/"/g, '""')}"` : field))
+        .join(delimiter),
+    )
     .join(newline)
 }
 
@@ -52,11 +66,18 @@ export interface ToCsvOptions {
  * as plain text). Columns with `exportable: false` are left out. For the grid's own rows, filters,
  * sort and formatting, use the export feature (`grid.getCsv()`).
  */
-export function toCsv<T>(rows: readonly T[], columns: readonly ColumnDef<T>[], options: ToCsvOptions = {}): string {
+export function toCsv<T>(
+  rows: readonly T[],
+  columns: readonly ColumnDef<T>[],
+  options: ToCsvOptions = {},
+): string {
   const cols = columns.filter((c) => c.exportable !== false)
   const guard = options.guard !== false ? guardFormula : (s: string) => s
   const table: string[][] = []
   if (options.header !== false) table.push(cols.map((c) => guard(c.header ?? c.key)))
-  for (const row of rows) table.push(cols.map((c) => guard(plainText(c.exportValue ? c.exportValue(row) : getCellValue(row, c)))))
+  for (const row of rows)
+    table.push(
+      cols.map((c) => guard(plainText(c.exportValue ? c.exportValue(row) : getCellValue(row, c)))),
+    )
   return toDelimited(table, options.delimiter ?? ',')
 }

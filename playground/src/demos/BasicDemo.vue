@@ -19,7 +19,14 @@ const log = ref('')
 const col = createColumnHelper<Bet>()
 const columns = [
   col({ key: 'id', header: '#', renderer: 'number', sortable: true, width: 'min-content' }),
-  col({ key: 'player', header: 'Player', field: 'player.name', sortable: true, minWidth: '9rem', width: '1.2fr' }),
+  col({
+    key: 'player',
+    header: 'Player',
+    field: 'player.name',
+    sortable: true,
+    minWidth: '9rem',
+    width: '1.2fr',
+  }),
   col({ key: 'city', header: 'City', field: 'player.city', sortable: true }),
   col({
     key: 'status',
@@ -32,8 +39,19 @@ const columns = [
   col({ key: 'change', header: 'Δ odds', renderer: 'change', sortable: true }),
   col({ key: 'placedAt', header: 'Placed', renderer: 'datetime', sortable: true }),
   col({ key: 'verified', header: 'KYC', renderer: 'boolean', align: 'center' }),
-  col({ key: 'rating', header: 'Rating', renderer: 'rating', rendererOptions: { max: 5 }, sortable: true }),
-  col({ key: 'site', header: 'Link', renderer: 'link', rendererOptions: { label: () => 'Open', target: '_blank' } }),
+  col({
+    key: 'rating',
+    header: 'Rating',
+    renderer: 'rating',
+    rendererOptions: { max: 5 },
+    sortable: true,
+  }),
+  col({
+    key: 'site',
+    header: 'Link',
+    renderer: 'link',
+    rendererOptions: { label: () => 'Open', target: '_blank' },
+  }),
   col({ key: 'meta', header: 'Meta', renderer: 'json' }),
   col({
     key: 'actions',
@@ -81,7 +99,10 @@ function onAction(e: CellActionEvent<Bet>) {
 <template>
   <section id="basic" class="pg-card" data-demo="basic">
     <h2>Renderers & client-side sorting</h2>
-    <p>Click headers to sort (asc → desc → none). Right-click a cell or a header for menus. Rating is the boilerplate addon renderer.</p>
+    <p>
+      Click headers to sort (asc → desc → none). Right-click a cell or a header for menus. Rating is
+      the boilerplate addon renderer.
+    </p>
     <VGrid
       v-model:sort="sort"
       class="pg-fixed"
@@ -92,7 +113,13 @@ function onAction(e: CellActionEvent<Bet>) {
       row-clickable
       aria-label="Bets"
       :context-menu="contextMenu"
-      :header-menu="({ items }) => [{ name: 'copy-column', label: 'Copy column values' }, { separator: true }, ...items]"
+      :header-menu="
+        ({ items }) => [
+          { name: 'copy-column', label: 'Copy column values' },
+          { separator: true },
+          ...items,
+        ]
+      "
       @row-click="onRowClick"
       @cell-action="onAction"
       @context-action="onContextAction"

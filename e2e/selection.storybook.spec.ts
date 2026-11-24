@@ -7,10 +7,14 @@ const open = async (page: Page, id: string) => {
   await page.locator('#storybook-root .vg .vg-row').first().waitFor()
 }
 const grid = (page: Page) => page.locator('#storybook-root .vg')
-const rowBox = (page: Page, i: number) => grid(page).locator(':scope > .vg-row').nth(i).locator('.vg-cell-select input')
-const checkedCount = (page: Page) => grid(page).locator(':scope > .vg-row .vg-cell-select input:checked').count()
+const rowBox = (page: Page, i: number) =>
+  grid(page).locator(':scope > .vg-row').nth(i).locator('.vg-cell-select input')
+const checkedCount = (page: Page) =>
+  grid(page).locator(':scope > .vg-row .vg-cell-select input:checked').count()
 
-test('shift-click selects a range; the toolbar bar counts it, deletes it and clears it', async ({ page }) => {
+test('shift-click selects a range; the toolbar bar counts it, deletes it and clears it', async ({
+  page,
+}) => {
   await open(page, 'batch-actions')
   await rowBox(page, 2).click()
   await rowBox(page, 7).click({ modifiers: ['Shift'] })
@@ -42,7 +46,9 @@ test('keyboard: Space toggles, Shift+Space selects the range', async ({ page }) 
   await expect.poll(() => checkedCount(page)).toBe(4)
 })
 
-test('server data: select the page, then every matching row; unticking one goes back', async ({ page }) => {
+test('server data: select the page, then every matching row; unticking one goes back', async ({
+  page,
+}) => {
   await open(page, 'select-all-matching')
   await expect(page.locator('.vg-selection-banner')).toHaveCount(0)
   await grid(page).locator('.vg-header input[type="checkbox"]').click()
@@ -57,7 +63,9 @@ test('server data: select the page, then every matching row; unticking one goes 
   await page.getByRole('button', { name: 'Next page' }).click()
   // the next page has loaded (the source answers after a delay), every row ticked
   await expect(page.locator('.vg-pagination-summary')).toHaveText('11–20 of 240')
-  await expect(grid(page).locator(':scope > .vg-row').first().locator('[data-col-key="id"]')).toHaveText('11')
+  await expect(
+    grid(page).locator(':scope > .vg-row').first().locator('[data-col-key="id"]'),
+  ).toHaveText('11')
   await expect.poll(() => checkedCount(page)).toBe(10)
 
   await rowBox(page, 0).click()

@@ -12,5 +12,7 @@ export const filteringFeature: FilteringFeature = {
   feature: 'filtering',
   useFilters: useGridFilters,
   FilterButton: VGridFilterPopover,
-  FilterInput: /*#__PURE__*/ defineAsyncComponent(() => import('../components/VGridFilterInput.vue')),
+  FilterInput: /*#__PURE__*/ defineAsyncComponent(
+    () => import('../components/VGridFilterInput.vue'),
+  ),
 }

@@ -8,7 +8,9 @@ const box = async (l: Locator) => {
   return b
 }
 const headerKeys = (grid: Locator) =>
-  grid.locator('.vg-header > [role="columnheader"]').evaluateAll((els) => els.map((e) => (e as HTMLElement).dataset.colKey))
+  grid
+    .locator('.vg-header > [role="columnheader"]')
+    .evaluateAll((els) => els.map((e) => (e as HTMLElement).dataset.colKey))
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/')
@@ -53,9 +55,14 @@ test.describe('menu visibility', () => {
       if (/deprecated/i.test(m.text())) warnings.push(m.text())
     })
     await page.reload()
-    await demo(page, 'basic').locator('[data-row-key="2"]').getByRole('button', { name: 'Actions' }).click()
+    await demo(page, 'basic')
+      .locator('[data-row-key="2"]')
+      .getByRole('button', { name: 'Actions' })
+      .click()
     await expect(openMenu(page)).toBeVisible()
-    await demo(page, 'basic').locator('[role="columnheader"][data-col-key="stake"]').click({ button: 'right' })
+    await demo(page, 'basic')
+      .locator('[role="columnheader"][data-col-key="stake"]')
+      .click({ button: 'right' })
     await expect(openMenu(page)).toBeVisible()
     expect(warnings).toEqual([])
   })
@@ -76,7 +83,9 @@ test.describe('menu visibility', () => {
     const s = await box(scroller)
     const t = await box(trigger)
     await scroller.evaluate((el, by) => (el.scrollTop += by), t.y + t.height - s.y + 4)
-    await expect.poll(async () => (await box(trigger)).y + (await box(trigger)).height).toBeLessThan(s.y)
+    await expect
+      .poll(async () => (await box(trigger)).y + (await box(trigger)).height)
+      .toBeLessThan(s.y)
     expect((await box(trigger)).y).toBeGreaterThan(0) // still on the page
     // Hidden boxes keep their computed style but are no longer painted or hit-testable.
     const hitsMenu = () =>
@@ -135,11 +144,19 @@ test.describe('cell context menu', () => {
 
   test('returns [] → no custom menu (the Link column keeps the native one)', async ({ page }) => {
     const grid = demo(page, 'basic')
-    const prevented = await grid.locator('[data-row-key="1"] > [data-col-key="site"]').evaluate((el) => {
-      const e = new MouseEvent('contextmenu', { bubbles: true, cancelable: true, button: 2, clientX: 5, clientY: 5 })
-      el.dispatchEvent(e)
-      return e.defaultPrevented
-    })
+    const prevented = await grid
+      .locator('[data-row-key="1"] > [data-col-key="site"]')
+      .evaluate((el) => {
+        const e = new MouseEvent('contextmenu', {
+          bubbles: true,
+          cancelable: true,
+          button: 2,
+          clientX: 5,
+          clientY: 5,
+        })
+        el.dispatchEvent(e)
+        return e.defaultPrevented
+      })
     expect(prevented).toBe(false)
     await expect(openMenu(page)).toHaveCount(0)
   })
@@ -154,11 +171,15 @@ test.describe('cell context menu', () => {
     await expect(openMenu(page)).toBeVisible()
     const m = await box(openMenu(page))
     expect(Math.abs(m.x - (b.x + 10))).toBeLessThan(6)
-    await openMenu(page).getByRole('menuitem', { name: /Open bet/ }).click()
+    await openMenu(page)
+      .getByRole('menuitem', { name: /Open bet/ })
+      .click()
     await expect(page.getByTestId('log')).toHaveText('context-action open #3 player')
   })
 
-  test('keyboard: Shift+F10 opens it at the focused cell; typeahead, Enter, Esc restores focus', async ({ page }) => {
+  test('keyboard: Shift+F10 opens it at the focused cell; typeahead, Enter, Esc restores focus', async ({
+    page,
+  }) => {
     const grid = demo(page, 'basic')
     const cell = grid.locator('[data-row-key="2"] > [data-col-key="city"]')
     await cell.click()
@@ -198,25 +219,31 @@ test.describe('header context menu', () => {
     await expect(page.getByTestId('log')).toHaveText('header-action copy-column stake')
   })
 
-  test('pins a column at runtime (sticky while scrolling), persists, and unpins', async ({ page }) => {
+  test('pins a column at runtime (sticky while scrolling), persists, and unpins', async ({
+    page,
+  }) => {
     const grid = demo(page, 'pinned')
     const stake = grid.locator('[role="columnheader"][data-col-key="stake"]')
     await stake.click({ button: 'right' })
     await expect(openMenu(page)).toHaveAttribute('aria-label', 'Stake column')
     await openMenu(page).getByRole('menuitem', { name: 'Pin left' }).click()
-    await expect.poll(() => headerKeys(grid)).toEqual(
-      expect.arrayContaining(['id', 'player', 'stake']),
-    )
+    await expect
+      .poll(() => headerKeys(grid))
+      .toEqual(expect.arrayContaining(['id', 'player', 'stake']))
     expect((await headerKeys(grid)).slice(0, 3)).toEqual(['id', 'player', 'stake'])
     await expect(stake).toHaveClass(/vg-pin-left/)
     const shadow = (key: string) =>
-      grid.locator(`[role="columnheader"][data-col-key="${key}"]`).evaluate((el) => getComputedStyle(el).boxShadow)
+      grid
+        .locator(`[role="columnheader"][data-col-key="${key}"]`)
+        .evaluate((el) => getComputedStyle(el).boxShadow)
     // No edge shadow until content scrolls under the pinned columns.
     expect(await shadow('stake')).toBe('none')
 
     const x0 = (await box(stake)).x
     await grid.locator('.vg').evaluate((el) => (el.scrollLeft = 400))
-    await expect.poll(async () => (await box(grid.locator('[role="columnheader"][data-col-key="city"]'))).x).toBeLessThan(x0)
+    await expect
+      .poll(async () => (await box(grid.locator('[role="columnheader"][data-col-key="city"]'))).x)
+      .toBeLessThan(x0)
     expect((await box(stake)).x).toBeCloseTo(x0, 0)
     // Now the new innermost pinned column (Stake) carries the edge shadow, Player no longer does.
     await expect.poll(() => shadow('stake')).not.toBe('none')
@@ -231,7 +258,9 @@ test.describe('header context menu', () => {
     await after.locator('[role="columnheader"][data-col-key="stake"]').click({ button: 'right' })
     await expect(openMenu(page).getByRole('menuitem', { name: 'Pin left' })).toBeDisabled()
     await openMenu(page).getByRole('menuitem', { name: 'Unpin' }).click()
-    await expect(after.locator('[role="columnheader"][data-col-key="stake"]')).not.toHaveClass(/vg-pin-left/)
+    await expect(after.locator('[role="columnheader"][data-col-key="stake"]')).not.toHaveClass(
+      /vg-pin-left/,
+    )
   })
 
   test('pin right, move and hide from the header menu', async ({ page }) => {

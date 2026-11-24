@@ -12,7 +12,9 @@ const text = computed(() =>
     : String(props.value),
 )
 const clickable = computed(() => !!resolveOption(props.options.clickable, props.value, props.row))
-const highlighted = computed(() => !!resolveOption(props.options.highlighted, props.value, props.row))
+const highlighted = computed(
+  () => !!resolveOption(props.options.highlighted, props.value, props.row),
+)
 </script>
 
 <template>

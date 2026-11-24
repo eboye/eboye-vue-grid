@@ -13,13 +13,7 @@
       "description": "Build and fix <VGrid> data grids with @nocopypaste/vue-grid: a skill with the grid's rules and workflow, plus an MCP server for exact API lookup, renderer details, doc search and config validation.",
       "version": "0.3.1",
       "category": "development",
-      "keywords": [
-        "vue",
-        "vue3",
-        "data-grid",
-        "table",
-        "vue-grid"
-      ]
+      "keywords": ["vue", "vue3", "data-grid", "table", "vue-grid"]
     }
   ]
 }

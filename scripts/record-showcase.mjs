@@ -148,7 +148,11 @@ function titleCard({ tagline, fadeIn }) {
   const card = el('div')
   card.id = 'sc-title'
   const inner = el('div')
-  inner.append(el('h1', '@nocopypaste/vue-grid'), el('p', tagline), el('code', 'npm i @nocopypaste/vue-grid'))
+  inner.append(
+    el('h1', '@nocopypaste/vue-grid'),
+    el('p', tagline),
+    el('code', 'npm i @nocopypaste/vue-grid'),
+  )
   card.append(inner)
   if (fadeIn) card.style.opacity = '0'
   document.documentElement.append(card)

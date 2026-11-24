@@ -41,7 +41,11 @@ const pads = level?.pads
 
 const items = computed(() => {
   const span = props.layout && level?.span.value
-  const rows = span ? props.layout!.rows.slice(span.start, span.end) : props.presorted ? props.rows : grid.sortRows(props.rows)
+  const rows = span
+    ? props.layout!.rows.slice(span.start, span.end)
+    : props.presorted
+      ? props.rows
+      : grid.sortRows(props.rows)
   const first = span ? span.start : 0
   return rows.map((row, i) => {
     const key = grid.getKey(row)
@@ -69,11 +73,15 @@ watchEffect(() => {
     if (item.expanded) grid.ensureSubRows(item.row)
   }
 })
-
 </script>
 
 <template>
-  <div v-if="pads && pads.top > 0" class="vg-spacer" aria-hidden="true" :style="{ height: `${pads.top}px` }" />
+  <div
+    v-if="pads && pads.top > 0"
+    class="vg-spacer"
+    aria-hidden="true"
+    :style="{ height: `${pads.top}px` }"
+  />
   <template v-for="item in items" :key="item.key">
     <div
       role="row"
@@ -96,9 +104,18 @@ watchEffect(() => {
       :aria-level="grid.keyboardNav && grid.treeMode.value ? depth + 1 : undefined"
       :aria-expanded="item.expandable ? item.expanded : undefined"
       :aria-selected="grid.keyboardNav ? item.selected : undefined"
-      :aria-rowindex="item.virtual ? item.virtual.ariaIndex + 1 + grid.headerRows.value + grid.pinnedTopCount.value : undefined"
+      :aria-rowindex="
+        item.virtual
+          ? item.virtual.ariaIndex + 1 + grid.headerRows.value + grid.pinnedTopCount.value
+          : undefined
+      "
     >
-      <component :is="grid.grouping?.GroupCells" v-if="item.group" :group="item.group" :depth="depth" />
+      <component
+        :is="grid.grouping?.GroupCells"
+        v-if="item.group"
+        :group="item.group"
+        :depth="depth"
+      />
       <template v-else>
         <VGridCell
           v-for="column in grid.columns.value"
@@ -113,7 +130,12 @@ watchEffect(() => {
     </div>
 
     <template v-if="item.expanded">
-      <div v-if="grid.hasDetail.value && !item.group" role="row" class="vg-detail-row" :data-detail-for="String(item.key)">
+      <div
+        v-if="grid.hasDetail.value && !item.group"
+        role="row"
+        class="vg-detail-row"
+        :data-detail-for="String(item.key)"
+      >
         <div
           :ref="layout ? virtual?.measureDetail(item.key) : undefined"
           :role="grid.cellRole"
@@ -125,7 +147,9 @@ watchEffect(() => {
       </div>
 
       <div
-        v-if="grid.treeMode.value && (grid.subRowState(item.row) || grid.children(item.row)?.length)"
+        v-if="
+          grid.treeMode.value && (grid.subRowState(item.row) || grid.children(item.row)?.length)
+        "
         :ref="layout ? virtual?.measureSubgrid : undefined"
         role="rowgroup"
         :class="['vg-subgrid', grid.ui.value.subgrid]"
@@ -133,7 +157,11 @@ watchEffect(() => {
         :data-subgrid-for="String(item.key)"
         :style="{ '--vg-depth': depth + 1 }"
       >
-        <div v-if="grid.subRowState(item.row)?.status === 'loading'" role="row" class="vg-status-row">
+        <div
+          v-if="grid.subRowState(item.row)?.status === 'loading'"
+          role="row"
+          class="vg-status-row"
+        >
           <div
             :ref="layout ? virtual?.measureStatus(item.key) : undefined"
             :role="grid.cellRole"
@@ -142,11 +170,19 @@ watchEffect(() => {
             aria-live="polite"
           >
             <span class="vg-spinner" aria-hidden="true" />
-            <RenderSlot v-if="grid.slots['sub-rows-loading']" :fn="grid.slots['sub-rows-loading']" :scope="{ row: item.row }" />
+            <RenderSlot
+              v-if="grid.slots['sub-rows-loading']"
+              :fn="grid.slots['sub-rows-loading']"
+              :scope="{ row: item.row }"
+            />
             <template v-else>Loading…</template>
           </div>
         </div>
-        <div v-else-if="grid.subRowState(item.row)?.status === 'error'" role="row" class="vg-status-row">
+        <div
+          v-else-if="grid.subRowState(item.row)?.status === 'error'"
+          role="row"
+          class="vg-status-row"
+        >
           <div
             :ref="layout ? virtual?.measureStatus(item.key) : undefined"
             :role="grid.cellRole"
@@ -154,7 +190,9 @@ watchEffect(() => {
             class="vg-status vg-status-error"
           >
             <span>Could not load rows.</span>
-            <button type="button" class="vg-button" @click="grid.retrySubRows(item.row)">Retry</button>
+            <button type="button" class="vg-button" @click="grid.retrySubRows(item.row)">
+              Retry
+            </button>
           </div>
         </div>
         <VGridRows
@@ -175,5 +213,10 @@ watchEffect(() => {
       </div>
     </template>
   </template>
-  <div v-if="pads && pads.bottom > 0" class="vg-spacer" aria-hidden="true" :style="{ height: `${pads.bottom}px` }" />
+  <div
+    v-if="pads && pads.bottom > 0"
+    class="vg-spacer"
+    aria-hidden="true"
+    :style="{ height: `${pads.bottom}px` }"
+  />
 </template>
