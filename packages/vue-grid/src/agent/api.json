@@ -1,6 +1,6 @@
 {
   "package": "@nocopypaste/vue-grid",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "component": "VGrid",
   "props": [
     {
