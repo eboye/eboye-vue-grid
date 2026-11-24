@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import { ref } from 'vue'
+import type { DataSource, GroupPath, RowKey } from '@nocopypaste/vue-grid'
 import { betColumns, makeBets, type Bet } from '../data'
 import { Grid as VGrid, type GridArgs } from '../support'
 
@@ -109,5 +110,79 @@ export const Virtual: Story = {
     components: { VGrid },
     setup: () => ({ args, groupBy: ref<string[]>(['city']) }),
     template,
+  }),
+}
+
+/** A fake backend that groups on the server: 2,000 bets, ~300 ms per request, with a request log. */
+function groupingServer() {
+  const db = makeBets(2000, 12)
+  const log = ref<string[]>([])
+  const valueOf = (b: Bet, key: string): unknown =>
+    key === 'city' ? b.player.city : (b as unknown as Record<string, unknown>)[key]
+  const source: DataSource<Bet> = async (query) => {
+    await new Promise((r) => setTimeout(r, 300))
+    let rows = db
+    for (const p of query.groupPath ?? []) rows = rows.filter((b) => valueOf(b, p.key) === p.value)
+    const level = (query.groupPath ?? []).length
+    const path = (query.groupPath ?? []).map((p) => String(p.value)).join(' › ') || 'top'
+    if (!query.groupBy || level === query.groupBy.length) {
+      log.value = [`rows of ${path}: ${rows.length}`, ...log.value].slice(0, 6)
+      return { rows, total: rows.length }
+    }
+    const key = query.groupBy[level]!
+    const values = [...new Set(rows.map((b) => String(valueOf(b, key))))].sort()
+    const groups = values.map((value) => {
+      const inGroup = rows.filter((b) => String(valueOf(b, key)) === value)
+      return {
+        value,
+        count: inGroup.length,
+        aggregates: { stake: Math.round(inGroup.reduce((n, b) => n + b.stake, 0) * 100) / 100 },
+      }
+    })
+    log.value = [`groups in ${path}: ${groups.length}`, ...log.value].slice(0, 6)
+    return { groups, total: groups.length, rowTotal: rows.length }
+  }
+  return { source, log }
+}
+
+/**
+ * **Server-side grouping**: with a `data-source`, the query carries `groupBy` and `groupPath`, and the
+ * server answers with groups (value, count, aggregates) instead of rows. Each group's contents load
+ * when it expands: its sub-groups, or its rows at the last level. A group's checkbox selects it by
+ * query (`v-model:selected-groups`), without loading its rows.
+ */
+export const ServerSide: Story = {
+  args: { rows: undefined, selectable: true, statusBar: true },
+  render: (args) => ({
+    components: { VGrid },
+    setup() {
+      const api = groupingServer()
+      return {
+        args,
+        api,
+        groupBy: ref<string[]>(['status', 'city']),
+        selected: ref<RowKey[]>([]),
+        selectedGroups: ref<GroupPath[]>([]),
+      }
+    },
+    template: `
+      <div class="sb-frame">
+        <p class="sb-note" data-testid="selection">selected = [{{ selected.join(', ') }}] · selected-groups = {{ JSON.stringify(selectedGroups) }}</p>
+        <VGrid v-bind="args" :data-source="api.source" v-model:group-by="groupBy" v-model:selected="selected" v-model:selected-groups="selectedGroups" />
+        <ol class="sb-log" data-testid="requests"><li v-for="(line, i) in api.log.value" :key="i">{{ line }}</li></ol>
+      </div>`,
+  }),
+}
+
+/** Server-side groups in a virtual window: a big group's rows render only where you look. */
+export const ServerSideVirtual: Story = {
+  args: { rows: undefined, virtual: { rowHeight: 40 }, statusBar: true },
+  render: (args) => ({
+    components: { VGrid },
+    setup: () => ({ args, api: groupingServer(), groupBy: ref<string[]>(['city']) }),
+    template: `
+      <div class="sb-frame" style="height: 480px">
+        <VGrid v-bind="args" :data-source="api.source" v-model:group-by="groupBy" style="height: 100%" />
+      </div>`,
   }),
 }

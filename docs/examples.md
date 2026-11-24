@@ -2127,6 +2127,62 @@ const groupBy = ref(['status', 'city'])
 - ↑ / ↓ keep their column across group rows: from Stake up onto a group row lands on its Stake
   aggregate.
 
+### Groups from the server
+
+With a `data-source`, `serverGroupingFeature` groups across all the data on the server instead of
+only the rows the grid has loaded. The query then carries `groupBy` and `groupPath`, and your source
+answers with **groups** instead of rows:
+
+```ts
+const source: DataSource<Bet> = async (query, { signal }) => {
+  const res = await fetch('/api/bets/search', {
+    method: 'POST',
+    body: JSON.stringify(query),
+    signal,
+  })
+  return res.json()
+}
+// query.groupBy = ['status', 'city'], query.groupPath = []           → the top-level groups
+//   { groups: [{ value: 'Won', count: 1204, aggregates: { stake: 98211.5 } }, …], total: 4 }
+// query.groupPath = [{ key: 'status', value: 'Won' }]                  → the groups inside "Won"
+//   { groups: [{ value: 'Niš', count: 310, aggregates: { … } }, …] }
+// query.groupPath = [{ key: 'status', value: 'Won' }, { key: 'city', value: 'Niš' }]
+//   → the last level: { rows: [ …310 rows… ] }
+```
+
+```vue
+<VGrid
+  v-model:group-by="groupBy"
+  v-model:selected="selected"
+  v-model:selected-groups="selectedGroups"
+  :data-source="source"
+  :columns="columns"
+  row-key="id"
+  selectable
+  :features="[serverDataFeature, rowGroupingFeature, serverGroupingFeature, selectionFeature]"
+/>
+```
+
+- **Lazy.** The first request returns only the top-level groups (`value`, `count`, `aggregates`).
+  Expanding a group asks for its sub-groups, or at the last level all its rows; a level loads
+  once, with a loading row meanwhile and the error and Retry of lazy sub-grids when it fails
+  (`load-error` fires). Requests for a group carry the current sort and filters, `page: 1`,
+  `pageSize: null`.
+- **Paging.** `pagination` pages the top-level groups: return their number as `total`. Return
+  `rowTotal` (every matching row) for the status bar; without it the groups' counts are added up.
+- **Sort, filters, page.** A new query asks for the top-level groups again; open groups load their
+  contents again.
+- **Selection by query.** A group's checkbox selects it by its path in `v-model:selected-groups`
+  (`[[{ key: 'status', value: 'Won' }]]`), without loading its rows; rows and sub-groups inside a
+  selected group show ticked and locked. The header checkbox selects every top-level group. Act on
+  `selectedGroups` + `selected` + the filters on the server. The selected groups end when the
+  filters or the grouping change, or with `clearSelection()`; the status bar and the toolbar's
+  `selectedCount` add their counts.
+- **Export, print, totals.** `exportCsv()`, `print()` and the others cover the rows that are loaded.
+  For the totals row pass `aggregates` (the server's totals).
+- Without the feature, a grouped grid with a data source groups only the rows it has loaded (with
+  a dev warning). A source that returns `rows` to a grouped query gets the same.
+
 ---
 
 ## 25. Export and copy

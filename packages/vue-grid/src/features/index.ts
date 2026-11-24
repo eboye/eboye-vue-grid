@@ -14,6 +14,7 @@ import { rowGroupingFeature } from './rowGrouping'
 import { rowPinningFeature } from './rowPinning'
 import { selectionFeature } from './selection'
 import { serverDataFeature } from './serverData'
+import { serverGroupingFeature } from './serverGrouping'
 import { sortingFeature } from './sorting'
 import { statusBarFeature } from './statusBar'
 import { subGridsFeature } from './subGrids'
@@ -35,6 +36,7 @@ export {
   rowPinningFeature,
   selectionFeature,
   serverDataFeature,
+  serverGroupingFeature,
   sortingFeature,
   statusBarFeature,
   subGridsFeature,
@@ -62,4 +64,5 @@ export const allFeatures: readonly GridFeature[] = [
   rowGroupingFeature,
   exportFeature,
   statusBarFeature,
+  serverGroupingFeature,
 ]

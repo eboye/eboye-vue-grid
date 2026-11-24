@@ -1,4 +1,4 @@
-# @nocopypaste/vue-grid 0.7.0 — API reference
+# @nocopypaste/vue-grid 0.8.0 — API reference
 
 > Generated from the TypeScript sources (`scripts/gen-agent.mjs`). Machine-readable: `agent/api.json`, `agent/grid-config.schema.json`.
 
@@ -23,6 +23,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `rowPinningFeature` | Pinned rows: `v-model:pinned-rows` (`{ top, bottom }` row keys), `pinned-top-rows` / `pinned-bottom-rows` (extra rows that aren't in the data) and the `pinRow()` method. Pinned rows stay in view (sticky) under the header or at the bottom while the body scrolls, and aren't filtered, sorted or paged. Without it, those options are ignored. | `pinnedTopRows` `pinnedBottomRows` `pinnedRows` |  |
 | `selectionFeature` | Row selection: the `selectable` prop (multi or single), `v-model:selected`, `selection-mode` (cascade through sub-grids), `is-row-selectable`, Space on a row, shift-click (or Shift+Space) for a range, the select-all checkbox, `prune-selection`, and with server data a "select all N matching rows" banner (`v-model:select-all-matching`; it loads on demand, its own chunk). | `selectable` `selectionMode` `isRowSelectable` `pruneSelection` `selected` `selectAllMatching` |  |
 | `serverDataFeature` | Server data: the `dataSource` prop. The grid sends sort, filters and page to your function, cancels superseded requests, and shows loading, error and retry states. | `dataSource` |  |
+| `serverGroupingFeature` | Row grouping with server data: with `group-by` and a `data-source`, the query carries `groupBy` and `groupPath`, the server answers with groups (value, count, aggregates), and each group's contents load when it expands. A group's checkbox selects it by query (`v-model:selected-groups`), without loading its rows. Needs the row grouping and server data features too. Without it, a grouped server grid groups only the rows it has loaded. | `selectedGroups` |  |
 | `sortingFeature` | Sorting: the sort button on `sortable` column headers, the sort items of the header menu and, with `sort-mode="client"`, sorting the rows in the browser. |  | `sortable` `sortValue` `sortFn` |
 | `statusBarFeature` | A status bar under the grid (`status-bar`): how many rows pass the filters ("84 of 200 rows"), how many are selected, how many filters are on (with Clear), and with `{ summary: ['total'] }` the sum and average of those columns over the selected rows, as the cells show them. The `#status-bar` slot replaces its content. Its component loads on demand (own chunk). | `statusBar` |  |
 | `subGridsFeature` | Sub-grids: nested child rows in a CSS `subgrid`, from `sub-rows` (synchronous) or `load-sub-rows` (lazy, cached, with loading / error / retry). Detail rows (`#detail` slot) don't need it. | `subRows` `loadSubRows` `hasSubRows` |  |
@@ -93,6 +94,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `v-model:pinnedRows` | `PinnedRowsState \| null` | `null` | `rowPinningFeature` | Top-level rows pinned above / below the body, by key: `{ top, bottom }`. Needs the row pinning feature. |
 | `v-model:groupBy` | `readonly string[] \| string \| null` | `null` | `rowGroupingFeature` | Column keys to group the rows by, outermost first (`['region', 'status']`, or one key). Group rows show the value, the row count and the columns' aggregates. Needs the row grouping feature. |
 | `v-model:selectAllMatching` | `boolean` | `false` | `selectionFeature` | Server data: every row matching the query is selected, not just the loaded ones (set from the "Select all N rows" banner; ends when filters change or a row is unticked). Act on the query then, not on `selected`. Needs the selection feature. |
+| `v-model:selectedGroups` | `GroupPath[]` | `[]` | `serverGroupingFeature` | Server data with row grouping: groups selected by query, by their paths, without loading their rows (a group's checkbox). Act on these with `selected` and the filters. Ends when the filters or the grouping change. Needs the selection and row grouping features. |
 
 ## Events
 
@@ -124,7 +126,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `status-bar` | `StatusBarScope` | The status bar's content (status bar feature): replaces the counts and the summary. |
 | `loading` |  | Shown while loading with no rows yet. |
 | `sub-rows-loading` | `{ row: T }` | Shown while a row's lazy children load. |
-| `toolbar` | `{ columns: readonly ColumnDef<T>[]; columnState: ColumnState; setColumnState: (state: ColumnState) => void; filters: FilterState; setFilters: (state: FilterState) => void; clearFilters: () => void; activeFilterCount: number; selected: readonly RowKey[]; selectedCount: number; selectAllMatching: boolean; clearSelection: () => void }` | Above the grid: put a search box, column menu, filter summary or batch actions here. |
+| `toolbar` | `{ columns: readonly ColumnDef<T>[]; columnState: ColumnState; setColumnState: (state: ColumnState) => void; filters: FilterState; setFilters: (state: FilterState) => void; clearFilters: () => void; activeFilterCount: number; selected: readonly RowKey[]; selectedCount: number; selectedGroups: GroupPath[]; selectAllMatching: boolean; clearSelection: () => void }` | Above the grid: put a search box, column menu, filter summary or batch actions here. |
 
 ## Exposed methods (`ref<VGridExposed>()`)
 

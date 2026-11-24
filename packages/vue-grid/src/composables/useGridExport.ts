@@ -25,6 +25,8 @@ export interface GridExportOptions<T> {
   getKey: (row: T) => RowKey
   /** A group row (row grouping feature): its rows are exported instead. */
   isGroup: (row: T) => boolean
+  /** A group row's rows (server groups: the loaded ones). */
+  groupRows?: (group: T) => readonly T[]
   /**
    * Top-level rows, sorted: `filtered` (every page, pinned rows included), `all` (filters
    * ignored), or `page` (the rows in the body, groups included).
@@ -51,7 +53,12 @@ export function useGridExport<T>(opts: GridExportOptions<T>) {
   function flatten(rows: readonly T[], children: boolean, filtered: boolean, out: T[] = []): T[] {
     for (const row of rows) {
       if (opts.isGroup(row)) {
-        flatten((row as unknown as { rows: T[] }).rows, children, filtered, out)
+        flatten(
+          opts.groupRows?.(row) ?? (row as unknown as { rows: T[] }).rows,
+          children,
+          filtered,
+          out,
+        )
         continue
       }
       out.push(row)

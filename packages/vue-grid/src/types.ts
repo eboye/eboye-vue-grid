@@ -627,7 +627,12 @@ export interface StatusBarFeature {
   /** The status bar's default content. */
   StatusBar: Component
 }
+export interface ServerGroupingFeature {
+  readonly feature: 'serverGrouping'
+  useServerGroups: typeof import('./composables/useServerGroups').useServerGroups
+}
 export type GridFeature =
+  | ServerGroupingFeature
   | StatusBarFeature
   | ExportFeature
   | RowGroupingFeature

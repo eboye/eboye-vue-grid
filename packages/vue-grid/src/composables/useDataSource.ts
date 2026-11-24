@@ -11,12 +11,40 @@ export interface GridQuery {
   /** 1-based; with `pageSize: null` (no pagination) always 1. */
   page: number
   pageSize: number | null
+  /**
+   * Row grouping with server data: the grouped column keys, outermost first (absent when the grid
+   * isn't grouped). Return `groups` for the level `groupPath` asks for, or `rows` at the last level.
+   */
+  groupBy?: string[]
+  /**
+   * Which group's contents: `[]` for the top-level groups, `[{ key: 'status', value: 'Won' }]` for
+   * the groups (or, at the last level, the rows) inside the "Won" group, and so on.
+   */
+  groupPath?: GroupPath
+}
+
+/** A group, by the values of its grouped columns from the top: `[{ key: 'status', value: 'Won' }]`. */
+export type GroupPath = { key: string; value: unknown }[]
+
+/** A group the server returns (row grouping with server data). */
+export interface ServerGroup {
+  /** The value its rows share in the grouped column. */
+  value: unknown
+  /** How many rows it holds (sub-groups included). */
+  count: number
+  /** Its columns' aggregates, by column key, shown in the group row. */
+  aggregates?: Record<string, unknown>
 }
 
 export interface DataSourceResult<T> {
-  rows: T[]
-  /** Total matching rows (for pagination); default `rows.length`. */
+  /** The rows; with `groupBy`, the rows of a last-level group (`groups` at the levels above). */
+  rows?: T[]
+  /** With `groupBy`: the groups at `groupPath`'s level, in display order. */
+  groups?: ServerGroup[]
+  /** Total matching rows (for pagination), or top-level groups when grouped; default the length. */
   total?: number
+  /** When grouped: all matching rows, for the status bar (default: the groups' counts added up). */
+  rowTotal?: number
 }
 
 /** Loads rows for a query. Honour `signal` to cancel superseded requests. */
@@ -39,6 +67,9 @@ export interface DataSourceOptions<T> {
 export function useDataSource<T>(opts: DataSourceOptions<T>) {
   const rows = shallowRef<T[]>([])
   const total = ref<number | undefined>(undefined)
+  /** Grouped server data: the top-level groups of the last response (undefined: it sent rows). */
+  const groups = shallowRef<ServerGroup[] | undefined>(undefined)
+  const rowTotal = ref<number | undefined>(undefined)
   const loading = ref(false)
   const error = shallowRef<unknown>(null)
   let controller: AbortController | undefined
@@ -60,7 +91,9 @@ export function useDataSource<T>(opts: DataSourceOptions<T>) {
       const result = await source(opts.query(), { signal })
       if (id !== seq) return // superseded
       rows.value = result?.rows ?? []
-      total.value = result?.total ?? rows.value.length
+      groups.value = result?.groups
+      total.value = result?.total ?? (result?.groups ?? rows.value).length
+      rowTotal.value = result?.rowTotal
     } catch (e) {
       if (id !== seq || signal.aborted) return
       error.value = e
@@ -87,5 +120,5 @@ export function useDataSource<T>(opts: DataSourceOptions<T>) {
     return count
   }
 
-  return { rows, total, loading, error, reload: load, patch }
+  return { rows, groups, total, rowTotal, loading, error, reload: load, patch }
 }

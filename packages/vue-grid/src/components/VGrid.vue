@@ -23,7 +23,7 @@ import { localStorageAdapter } from '../core/storage'
 import { getCellValue, resolveRowKey, type RowKeyGetter } from '../core/value'
 import type { RowPatches } from '../core/patch'
 import type { MenuHandle } from '../composables/useGridMenus'
-import type { DataSource, GridQuery } from '../composables/useDataSource'
+import type { DataSource, GridQuery, GroupPath } from '../composables/useDataSource'
 import { resolveFeatures } from '../internal/features'
 import { MESSAGES_KEY, PARTS_KEY, partOn } from '../internal/messages'
 import { warnOnce } from '../internal/dev'
@@ -252,6 +252,12 @@ const groupBy = defineModel<readonly string[] | string | null>('groupBy', { defa
  * then, not on `selected`. Needs the selection feature.
  */
 const selectAllMatching = defineModel<boolean>('selectAllMatching', { default: false })
+/**
+ * Server data with row grouping: groups selected by query, by their paths, without loading their
+ * rows (a group's checkbox). Act on these with `selected` and the filters. Ends when the filters or
+ * the grouping change. Needs the selection and row grouping features.
+ */
+const selectedGroups = defineModel<GroupPath[]>('selectedGroups', { default: () => [] })
 
 const emit = defineEmits<{
   /** The combined query (sort, filters, search, page) — on mount and whenever it changes. */
@@ -339,6 +345,8 @@ defineSlots<{
     selected: readonly RowKey[]
     /** How many rows are selected: every matching row with `selectAllMatching`. */
     selectedCount: number
+    /** Server data with row grouping: groups selected by query (`v-model:selected-groups`). */
+    selectedGroups: GroupPath[]
     /** Every row matching the query is selected (server data, "Select all N rows"). */
     selectAllMatching: boolean
     /** Clears the selection (and "all matching"). */
@@ -668,11 +676,25 @@ const currentPage = computed(() => {
   return Number.isFinite(n) && n >= 1 ? n : 1
 })
 
+/** Server data, grouped: the grouped column keys the query carries (row grouping feature). */
+const serverGroupBy = computed<string[] | undefined>(() => {
+  if (
+    !features.serverGrouping ||
+    !features.rowGrouping ||
+    !serverMode.value ||
+    groupBy.value == null
+  )
+    return undefined
+  const keys = typeof groupBy.value === 'string' ? [groupBy.value] : groupBy.value
+  const known = [...new Set(keys)].filter((k) => props.columns.some((c) => c.key === k))
+  return known.length ? known : undefined
+})
 const query = computed<GridQuery>(() => ({
   sort: sort.value,
   filters: filterState.value,
   page: paginated.value ? currentPage.value : 1,
   pageSize: paginated.value ? currentPageSize.value : null,
+  ...(serverGroupBy.value ? { groupBy: serverGroupBy.value, groupPath: [] } : {}),
 }))
 
 const ds = features.serverData?.useDataSource<T>({
@@ -737,8 +759,14 @@ const sel = features.selection?.useSelection<T>({
   matchingTotal: () => (serverMode.value ? ds?.total.value : undefined),
   matchKey: () => JSON.stringify(filterState.value),
 })
-const allState = computed(() => sel?.allState.value ?? 'none')
-const hasSelectableRows = computed(() => !!sel?.selectableKeys.value.length)
+// With server groups, the header checkbox selects every top-level group (by query).
+const allState = computed(() =>
+  grouping?.server.value ? grouping.allServerState.value : (sel?.allState.value ?? 'none'),
+)
+const hasSelectableRows = computed(() =>
+  grouping?.server.value ? grouping.groups.value.length > 0 : !!sel?.selectableKeys.value.length,
+)
+const toggleAll = () => (grouping?.server.value ? grouping.toggleAllServer() : sel?.toggleAll())
 
 // ── Row grouping ────────────────────────────────────────────────────────────────────────────
 // It groups the body's rows (`topRows`, below); the context, virtual layout and menu learn about
@@ -753,7 +781,49 @@ const grouping = features.rowGrouping?.useRowGrouping<T>({
   selected,
   cascade: () => cascadeSelection.value,
   walk,
+  server: features.serverGrouping?.useServerGroups<T>({
+    top: () => (serverGroupBy.value ? ds?.groups.value : undefined),
+    load: (path, signal) =>
+      props.dataSource!({ ...query.value, groupPath: path, page: 1, pageSize: null }, { signal }),
+    selectedGroups,
+    selected,
+    getKey,
+    onError: (error) => emit('load-error', error),
+  }),
 })
+/** Selected rows, plus (server groups) the rows of the selected groups. */
+const selectedTotal = computed(
+  () => (sel?.count.value ?? 0) + (grouping?.server.value ? grouping.selectedGroupCount.value : 0),
+)
+// Groups are selected by query: a new filter or grouping makes them mean something else.
+watch(
+  () => JSON.stringify([filterState.value, serverGroupBy.value]),
+  () => {
+    if (selectedGroups.value.length) selectedGroups.value = []
+  },
+)
+if (process.env.NODE_ENV !== 'production' && features.rowGrouping && !features.serverGrouping)
+  watchEffect(() => {
+    if (props.dataSource && groupBy.value?.length)
+      warnOnce(
+        'feature:serverGrouping',
+        'A grid with a data source is grouped, but only the rows it has loaded are grouped. For ' +
+          'groups across all the data from the server, add serverGroupingFeature.',
+      )
+  })
+if (process.env.NODE_ENV !== 'production')
+  watch(
+    () => serverGroupBy.value && ds && !ds.loading.value && !ds.error.value && !ds.groups.value,
+    (ignored) => {
+      if (ignored)
+        warnOnce(
+          'server-groups',
+          'The data source got a grouped query (query.groupBy) but returned rows, not groups: only ' +
+            'the loaded rows are grouped. Return { groups: [{ value, count, aggregates? }] } for ' +
+            'groups across all the data.',
+        )
+    },
+  )
 
 // ── Pinned columns, drag & keyboard ─────────────────────────────────────────────────────────
 const pinning = features.columnPinning
@@ -1007,10 +1077,13 @@ const exporter = features.export?.useExport<T>({
   format: () => formatContext.value,
   getKey,
   isGroup: (row) => !!grouping?.isGroup(row),
+  groupRows: (group) => grouping?.rowsIn(group as never) ?? [],
   rows: (which) =>
     which === 'page'
       ? windowRows.value
-      : sortRowsFn(which === 'all' ? sourceRows.value : filteredTopRows.value),
+      : grouping?.server.value
+        ? (grouping.groups.value as unknown as T[]) // their loaded rows (groupRows)
+        : sortRowsFn(which === 'all' ? sourceRows.value : filteredTopRows.value),
   children: childrenOf,
   prepare: (rows, filtered) => (filtered ? prepareRows : sortRowsFn)(rows),
   selected,
@@ -1023,10 +1096,14 @@ const exporter = features.export?.useExport<T>({
 const statusBar = features.statusBar?.useStatusBar<T>({
   options: () => props.statusBar,
   rowCount: () =>
-    serverMode.value ? (ds?.total.value ?? sourceRows.value.length) : filteredTopRows.value.length,
+    grouping?.server.value
+      ? (ds?.rowTotal.value ?? grouping.groups.value.reduce((n, g) => n + g.count, 0))
+      : serverMode.value
+        ? (ds?.total.value ?? sourceRows.value.length)
+        : filteredTopRows.value.length,
   totalRowCount: () => (serverMode.value ? undefined : sourceRows.value.length),
   rows: () => sourceRows.value,
-  selection: sel,
+  selection: sel && { count: selectedTotal },
   selected,
   allMatching: selectAllMatching,
   filterCount: activeFilterCount,
@@ -1250,7 +1327,10 @@ function setFilters(state: FilterState) {
 }
 const clearFilters = () => filt?.clearAll()
 /** Clears the selection, "all matching" included. */
-const clearSelection = () => sel?.clear()
+const clearSelection = () => {
+  sel?.clear()
+  if (selectedGroups.value.length) selectedGroups.value = []
+}
 
 /** The export feature's methods; without it they warn (dev) and do nothing. */
 function viaExport<
@@ -1313,7 +1393,8 @@ defineExpose<VGridExposed>({
         :clear-filters="clearFilters"
         :active-filter-count="activeFilterCount"
         :selected="selected"
-        :selected-count="sel?.count.value ?? 0"
+        :selected-count="selectedTotal"
+        :selected-groups="selectedGroups"
         :select-all-matching="selectAllMatching"
         :clear-selection="clearSelection"
       />
@@ -1396,7 +1477,7 @@ defineExpose<VGridExposed>({
           :drop-target="drag?.target.value ?? null"
           :can-reorder="canReorder"
           @sort="onSort"
-          @toggle-all="sel?.toggleAll()"
+          @toggle-all="toggleAll"
           @drag-start="onHeaderPointerDown"
           @header-click="(event: MouseEvent) => drag?.consumeClick(event)"
         />

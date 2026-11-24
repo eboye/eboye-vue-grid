@@ -1,6 +1,6 @@
 {
   "package": "@nocopypaste/vue-grid",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "component": "VGrid",
   "props": [
     {
@@ -386,6 +386,13 @@
       "default": "false",
       "description": "Server data: every row matching the query is selected, not just the loaded ones (set from the \"Select all N rows\" banner; ends when filters change or a row is unticked). Act on the query then, not on `selected`. Needs the selection feature.",
       "feature": "selection"
+    },
+    {
+      "name": "selectedGroups",
+      "type": "GroupPath[]",
+      "default": "[]",
+      "description": "Server data with row grouping: groups selected by query, by their paths, without loading their rows (a group's checkbox). Act on these with `selected` and the filters. Ends when the filters or the grouping change. Needs the selection and row grouping features.",
+      "feature": "serverGrouping"
     }
   ],
   "events": [
@@ -498,7 +505,7 @@
     },
     {
       "name": "toolbar",
-      "scope": "{ columns: readonly ColumnDef<T>[]; columnState: ColumnState; setColumnState: (state: ColumnState) => void; filters: FilterState; setFilters: (state: FilterState) => void; clearFilters: () => void; activeFilterCount: number; selected: readonly RowKey[]; selectedCount: number; selectAllMatching: boolean; clearSelection: () => void }",
+      "scope": "{ columns: readonly ColumnDef<T>[]; columnState: ColumnState; setColumnState: (state: ColumnState) => void; filters: FilterState; setFilters: (state: FilterState) => void; clearFilters: () => void; activeFilterCount: number; selected: readonly RowKey[]; selectedCount: number; selectedGroups: GroupPath[]; selectAllMatching: boolean; clearSelection: () => void }",
       "description": "Above the grid: put a search box, column menu, filter summary or batch actions here."
     }
   ],
@@ -1029,6 +1036,15 @@
       "description": "Server data: the `dataSource` prop. The grid sends sort, filters and page to your function, cancels superseded requests, and shows loading, error and retry states.",
       "props": [
         "dataSource"
+      ],
+      "columnOptions": []
+    },
+    {
+      "id": "serverGrouping",
+      "export": "serverGroupingFeature",
+      "description": "Row grouping with server data: with `group-by` and a `data-source`, the query carries `groupBy` and `groupPath`, the server answers with groups (value, count, aggregates), and each group's contents load when it expands. A group's checkbox selects it by query (`v-model:selected-groups`), without loading its rows. Needs the row grouping and server data features too. Without it, a grouped server grid groups only the rows it has loaded.",
+      "props": [
+        "selectedGroups"
       ],
       "columnOptions": []
     },

@@ -15,6 +15,7 @@ import type {
   PaginationFeature,
   SelectionFeature,
   ServerDataFeature,
+  ServerGroupingFeature,
   SortingFeature,
   StatusBarFeature,
   SubGridsFeature,
@@ -42,6 +43,7 @@ export interface FeatureSet {
   rowGrouping?: RowGroupingFeature
   export?: ExportFeature
   statusBar?: StatusBarFeature
+  serverGrouping?: ServerGroupingFeature
 }
 
 /** Merges feature lists (app-wide, then per grid); a later entry with the same name wins. */

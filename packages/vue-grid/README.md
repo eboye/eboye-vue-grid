@@ -132,6 +132,7 @@ an opt-in feature:
 | `rowPinningFeature`         | `v-model:pinned-rows` / `pinRow()`: rows that stay in view above or below the body, plus `pinned-top-rows` / `pinned-bottom-rows` for rows that aren't in the data                                                                                                                                                                      |
 | `aggregationFeature`        | Column `aggregate` (`sum`, `avg`, `min`, `max`, `count`, a function) and `totals`: a sticky totals row over the filtered rows                                                                                                                                                                                                           |
 | `rowGroupingFeature`        | `v-model:group-by`: rows grouped by one or more columns into collapsible group rows with the value, row count and aggregates; Group by / Ungroup in the header menu for `groupable` columns                                                                                                                                             |
+| `serverGroupingFeature`     | With a `data-source`: groups from the server (`query.groupBy` / `groupPath`), each one's contents loaded on expand, groups selected by query (`v-model:selected-groups`). See [Server-side grouping](#server-side-grouping)                                                                                                             |
 | `exportFeature`             | `exportCsv()` / `getCsv()`, `exportXlsx()` / `getXlsx()` (Excel, typed cells), `print()` (every row, header on each page), `copyRows()`, Ctrl/⌘+C for the selected rows or the focused cell, the `copy` event; column `exportValue` / `exportable`                                                                                      |
 | `statusBarFeature`          | `status-bar`: a bar under the grid with the rows that pass the filters, the selected rows, the active filters (with Clear), and `{ summary: [keys] }` columns' sum and average over the selected rows; the `#status-bar` slot                                                                                                           |
 
@@ -177,33 +178,34 @@ what you import.
 
 | Import (minified / gzip, Vue excluded)                                       | Initial chunk      |
 | ---------------------------------------------------------------------------- | ------------------ |
-| `VGrid` (no features)                                                        | 40.5 kB / 14.1 kB  |
-| `VGrid` + `sortingFeature`                                                   | 41.2 kB / 14.4 kB  |
-| `VGrid` + `filteringFeature`                                                 | 51.1 kB / 17.8 kB  |
-| `VGrid` + `serverDataFeature`                                                | 41.8 kB / 14.7 kB  |
-| `VGrid` + `paginationFeature`                                                | 40.6 kB / 14.1 kB  |
-| `VGrid` + `selectionFeature`                                                 | 44.6 kB / 15.5 kB  |
-| `VGrid` + `subGridsFeature`                                                  | 42.8 kB / 14.9 kB  |
-| `VGrid` + `menusFeature`                                                     | 50.9 kB / 17.6 kB  |
-| `VGrid` + `columnReorderFeature`                                             | 44.2 kB / 15.3 kB  |
-| `VGrid` + `columnPinningFeature`                                             | 43.4 kB / 15.1 kB  |
-| `VGrid` + `virtualScrollingFeature`                                          | 46.2 kB / 16.3 kB  |
-| `VGrid` + `columnVisibilityFeature`                                          | 40.6 kB / 14.1 kB  |
-| `VGrid` + `keyboardNavigationFeature`                                        | 43.2 kB / 15.1 kB  |
-| `VGrid` + `columnResizingFeature`                                            | 43.7 kB / 15.3 kB  |
-| `VGrid` + `columnGroupsFeature`                                              | 41.8 kB / 14.5 kB  |
-| `VGrid` + `rowPinningFeature`                                                | 45.4 kB / 15.4 kB  |
-| `VGrid` + `aggregationFeature`                                               | 45.6 kB / 15.5 kB  |
-| `VGrid` + `rowGroupingFeature`                                               | 50.2 kB / 16.9 kB  |
-| `VGrid` + `exportFeature`                                                    | 45.4 kB / 16.0 kB  |
-| `VGrid` + `statusBarFeature`                                                 | 42.8 kB / 15.0 kB  |
-| `VGrid` + `allFeatures` + `VGridSearch`                                      | 108.1 kB / 36.5 kB |
-| `VGrid` + `currencyRenderer`                                                 | 41.9 kB / 14.5 kB  |
-| `VGrid` + `VGridPagination` + `VGridColumnMenu`                              | 47.2 kB / 16.3 kB  |
+| `VGrid` (no features)                                                        | 43.1 kB / 14.8 kB  |
+| `VGrid` + `sortingFeature`                                                   | 43.8 kB / 15.1 kB  |
+| `VGrid` + `filteringFeature`                                                 | 53.8 kB / 18.6 kB  |
+| `VGrid` + `serverDataFeature`                                                | 44.5 kB / 15.4 kB  |
+| `VGrid` + `paginationFeature`                                                | 43.2 kB / 14.8 kB  |
+| `VGrid` + `selectionFeature`                                                 | 47.2 kB / 16.2 kB  |
+| `VGrid` + `subGridsFeature`                                                  | 45.4 kB / 15.6 kB  |
+| `VGrid` + `menusFeature`                                                     | 53.9 kB / 18.4 kB  |
+| `VGrid` + `columnReorderFeature`                                             | 46.7 kB / 16.0 kB  |
+| `VGrid` + `columnPinningFeature`                                             | 46.0 kB / 15.8 kB  |
+| `VGrid` + `virtualScrollingFeature`                                          | 48.8 kB / 17.0 kB  |
+| `VGrid` + `columnVisibilityFeature`                                          | 43.2 kB / 14.8 kB  |
+| `VGrid` + `keyboardNavigationFeature`                                        | 45.8 kB / 15.8 kB  |
+| `VGrid` + `columnResizingFeature`                                            | 46.3 kB / 16.0 kB  |
+| `VGrid` + `columnGroupsFeature`                                              | 44.4 kB / 15.2 kB  |
+| `VGrid` + `rowPinningFeature`                                                | 48.0 kB / 16.1 kB  |
+| `VGrid` + `aggregationFeature`                                               | 48.2 kB / 16.2 kB  |
+| `VGrid` + `rowGroupingFeature`                                               | 53.8 kB / 18.3 kB  |
+| `VGrid` + `exportFeature`                                                    | 48.0 kB / 16.7 kB  |
+| `VGrid` + `statusBarFeature`                                                 | 45.5 kB / 15.7 kB  |
+| `VGrid` + `serverGroupingFeature`                                            | 46.2 kB / 15.9 kB  |
+| `VGrid` + `allFeatures` + `VGridSearch`                                      | 115.0 kB / 38.6 kB |
+| `VGrid` + `currencyRenderer`                                                 | 44.4 kB / 15.2 kB  |
+| `VGrid` + `VGridPagination` + `VGridColumnMenu`                              | 50.3 kB / 17.2 kB  |
 | `sortRows` only                                                              | 0.7 kB / 0.4 kB    |
 | `toCsv` only                                                                 | 1.1 kB / 0.6 kB    |
-| everything                                                                   | 160.7 kB / 51.5 kB |
-| `validateGridConfig` (`@nocopypaste/vue-grid/agent`, never in an app bundle) | 70.5 kB / 19.2 kB  |
+| everything                                                                   | 168.7 kB / 54.0 kB |
+| `validateGridConfig` (`@nocopypaste/vue-grid/agent`, never in an app bundle) | 72.9 kB / 19.8 kB  |
 
 With `filteringFeature`, the filter popover body and the filter-row editors are **on-demand
 chunks**: they load the first time a popover opens or `filter-row` is on. With
@@ -258,6 +260,7 @@ chunks that on-demand imports share with the entry, even when nothing uses them.
 | `aggregates`                         | `Record<string, unknown>`                                                                                                    | —                  | Totals by column key, used instead of computing them (e.g. from a server).                                                                                                                                                  |
 | `v-model:groupBy`                    | `string[] \| string \| null`                                                                                                 | `null`             | Column keys to group the rows by, outermost first. Needs `rowGroupingFeature` (as does the next one). See [Row grouping](#row-grouping).                                                                                    |
 | `groupsExpanded`                     | `boolean`                                                                                                                    | `false`            | Groups start expanded.                                                                                                                                                                                                      |
+| `v-model:selectedGroups`             | `GroupPath[]`                                                                                                                | `[]`               | Server-side grouping: groups selected by query, by path (`[[{ key, value }]]`), without their rows.                                                                                                                         |
 | `rowClickable`                       | `boolean`                                                                                                                    | `false`            | Pointer cursor; `row-click` is always emitted.                                                                                                                                                                              |
 | `rowClass`                           | `(row, index) => ClassValue`                                                                                                 | —                  |                                                                                                                                                                                                                             |
 | `highlightedRows`                    | `RowKey[]`                                                                                                                   | —                  |                                                                                                                                                                                                                             |
@@ -867,6 +870,62 @@ Style group rows with `.vg-rowgroup` (and `[data-group-level]`), `.vg-rowgroup-n
 `.vg-rowgroup-value`, `.vg-rowgroup-count` and the `--vg-rowgroup-bg` /
 `--vg-rowgroup-font-weight` tokens. `groupRows()` and `isRowGroup()` are exported for using the
 same grouping elsewhere.
+
+### Server-side grouping
+
+With a `data-source`, `serverGroupingFeature` groups across all the data on the server instead of
+only the rows the grid has loaded. The query then carries `groupBy` and `groupPath`, and your source
+answers with **groups** instead of rows:
+
+```ts
+const source: DataSource<Bet> = async (query, { signal }) => {
+  const res = await fetch('/api/bets/search', {
+    method: 'POST',
+    body: JSON.stringify(query),
+    signal,
+  })
+  return res.json()
+}
+// query.groupBy = ['status', 'city'], query.groupPath = []           → the top-level groups
+//   { groups: [{ value: 'Won', count: 1204, aggregates: { stake: 98211.5 } }, …], total: 4 }
+// query.groupPath = [{ key: 'status', value: 'Won' }]                  → the groups inside "Won"
+//   { groups: [{ value: 'Niš', count: 310, aggregates: { … } }, …] }
+// query.groupPath = [{ key: 'status', value: 'Won' }, { key: 'city', value: 'Niš' }]
+//   → the last level: { rows: [ …310 rows… ] }
+```
+
+```vue
+<VGrid
+  v-model:group-by="groupBy"
+  v-model:selected="selected"
+  v-model:selected-groups="selectedGroups"
+  :data-source="source"
+  :columns="columns"
+  row-key="id"
+  selectable
+  :features="[serverDataFeature, rowGroupingFeature, serverGroupingFeature, selectionFeature]"
+/>
+```
+
+- **Lazy.** The first request returns only the top-level groups (`value`, `count`, `aggregates`).
+  Expanding a group asks for its sub-groups, or at the last level all its rows; a level loads
+  once, with a loading row meanwhile and the error and Retry of lazy sub-grids when it fails
+  (`load-error` fires). Requests for a group carry the current sort and filters, `page: 1`,
+  `pageSize: null`.
+- **Paging.** `pagination` pages the top-level groups: return their number as `total`. Return
+  `rowTotal` (every matching row) for the status bar; without it the groups' counts are added up.
+- **Sort, filters, page.** A new query asks for the top-level groups again; open groups load their
+  contents again.
+- **Selection by query.** A group's checkbox selects it by its path in `v-model:selected-groups`
+  (`[[{ key: 'status', value: 'Won' }]]`), without loading its rows; rows and sub-groups inside a
+  selected group show ticked and locked. The header checkbox selects every top-level group. Act on
+  `selectedGroups` + `selected` + the filters on the server. The selected groups end when the
+  filters or the grouping change, or with `clearSelection()`; the status bar and the toolbar's
+  `selectedCount` add their counts.
+- **Export, print, totals.** `exportCsv()`, `print()` and the others cover the rows that are loaded.
+  For the totals row pass `aggregates` (the server's totals).
+- Without the feature, a grouped grid with a data source groups only the rows it has loaded (with
+  a dev warning). A source that returns `rows` to a grouped query gets the same.
 
 ## Export and copy
 

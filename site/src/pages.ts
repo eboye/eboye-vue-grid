@@ -108,6 +108,20 @@ export const pages: Page[] = [
     files: ['GroupingDemo'],
   },
   {
+    id: 'server-grouping',
+    title: 'Grouping on the server',
+    section: 'Rows',
+    summary:
+      'With server data, the groups come from the server, with their counts and sums across all the data. Each group loads its contents when it opens, and a group can be selected without loading its rows.',
+    try: [
+      'Open a status, then a city: watch the requests below.',
+      'Tick a group: it is selected by query; the rows inside show ticked and locked.',
+      'Right-click a header to group by another column.',
+    ],
+    docs: 'Groups from the server',
+    files: ['ServerGroupingDemo'],
+  },
+  {
     id: 'totals',
     title: 'Totals and pinned rows',
     section: 'Rows',

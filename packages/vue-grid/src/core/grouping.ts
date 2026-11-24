@@ -27,6 +27,15 @@ export interface RowGroup<T = any> {
   readonly children: readonly (RowGroup<T> | T)[]
   /** Aggregates of the group's rows, by column key (columns with an `aggregate`). */
   readonly aggregates: Readonly<Record<string, unknown>>
+  /** How many rows it holds: `rows.length`, or the server's count (server data). */
+  readonly count: number
+  /** The grouped columns' values from the top: `[{ key: 'status', value: 'Won' }, …]`. */
+  readonly path: readonly { key: string; value: unknown }[]
+  /**
+   * A group from the server (row grouping with server data): `rows` and `children` are empty and
+   * its contents load when it expands.
+   */
+  readonly server?: boolean
 }
 
 /** A row of the grid is a group row, not a row of the data. */
@@ -78,7 +87,12 @@ export interface GroupRowsOptions<T> {
  */
 export function groupRows<T>(rows: readonly T[], opts: GroupRowsOptions<T>): RowGroup<T>[] {
   const aggregated = opts.allColumns.filter((c) => c.aggregate)
-  const build = (items: readonly T[], level: number, parentKey: string): RowGroup<T>[] => {
+  const build = (
+    items: readonly T[],
+    level: number,
+    parentKey: string,
+    parentPath: RowGroup['path'],
+  ): RowGroup<T>[] => {
     const column = opts.columns[level]!
     const buckets = new Map<string, { value: unknown; rows: T[] }>()
     for (const row of items) {
@@ -97,8 +111,9 @@ export function groupRows<T>(rows: readonly T[], opts: GroupRowsOptions<T>): Row
     })
     const last = level === opts.columns.length - 1
     return ordered.map(([id, bucket]) => {
-      const key = `${parentKey}${parentKey ? '\u001e' : GROUP_KEY_PREFIX}${column.key}=${id}`
-      const children = last ? bucket.rows : build(bucket.rows, level + 1, key)
+      const key = groupKey(parentKey, column.key, id)
+      const path = [...parentPath, { key: column.key, value: bucket.value }]
+      const children = last ? bucket.rows : build(bucket.rows, level + 1, key, path)
       groupedLevels.add(children)
       return {
         [GROUP]: true,
@@ -109,10 +124,45 @@ export function groupRows<T>(rows: readonly T[], opts: GroupRowsOptions<T>): Row
         rows: bucket.rows,
         children,
         aggregates: aggregated.length ? aggregateRows(bucket.rows, aggregated) : {},
+        count: bucket.rows.length,
+        path,
       } as RowGroup<T>
     })
   }
-  return opts.columns.length ? build(rows, 0, '') : []
+  return opts.columns.length ? build(rows, 0, '', []) : []
+}
+
+/** The key of the group at a path (`[{ key: 'status', value: 'Won' }, …]`), as its group row has it. */
+export function pathKey(path: readonly { key: string; value: unknown }[]): string {
+  return path.reduce((key, p) => groupKey(key, p.key, groupId(p.value)), '')
+}
+
+/** A group's key: its parent's, then the column and the value's id. */
+const groupKey = (parentKey: string, columnKey: string, id: string) =>
+  `${parentKey}${parentKey ? '\u001e' : GROUP_KEY_PREFIX}${columnKey}=${id}`
+
+/**
+ * Group rows for groups the server sent (row grouping with server data), at one level: their
+ * contents load when they expand. `parent` is the group they are inside (none at the top).
+ */
+export function serverGroups<T>(
+  groups: readonly { value: unknown; count: number; aggregates?: Record<string, unknown> }[],
+  column: ColumnDef<T>,
+  parent?: RowGroup<T>,
+): RowGroup<T>[] {
+  return groups.map((g) => ({
+    [GROUP]: true,
+    key: groupKey(parent?.key ?? '', column.key, groupId(g.value)),
+    column,
+    value: g.value,
+    level: parent ? parent.level + 1 : 0,
+    rows: [],
+    children: [],
+    aggregates: g.aggregates ?? {},
+    count: Number(g.count) || 0,
+    path: [...(parent?.path ?? []), { key: column.key, value: g.value }],
+    server: true,
+  })) as RowGroup<T>[]
 }
 
 /** Pre-order walk over groups and their sub-groups (not their rows). */

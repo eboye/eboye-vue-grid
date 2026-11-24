@@ -40,6 +40,7 @@
           "rowPinningFeature",
           "selectionFeature",
           "serverDataFeature",
+          "serverGroupingFeature",
           "sortingFeature",
           "statusBarFeature",
           "subGridsFeature",
@@ -432,6 +433,11 @@
     "selectAllMatching": {
       "type": "boolean",
       "description": "Server data: every row matching the query is selected, not just the loaded ones (set from the \"Select all N rows\" banner; ends when filters change or a row is unticked). Act on the query then, not on `selected`. Needs the selection feature."
+    },
+    "selectedGroups": {
+      "type": "array",
+      "items": {},
+      "description": "Server data with row grouping: groups selected by query, by their paths, without loading their rows (a group's checkbox). Act on these with `selected` and the filters. Ends when the filters or the grouping change. Needs the selection and row grouping features."
     }
   },
   "required": [

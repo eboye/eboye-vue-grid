@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.8.0 — 2026-11-24
+
+**Server-side row grouping** (`serverGroupingFeature`, with `rowGroupingFeature` and
+`serverDataFeature`): a grouped grid with a `data-source` asks the server for groups instead of
+grouping only the rows it has loaded. The query gains `groupBy` and `groupPath`; the source
+answers with `groups: [{ value, count, aggregates }]` (or `rows` at the last level). Only the
+top-level groups load first; expanding a group loads its sub-groups or rows, once, with the
+loading row and error / Retry of lazy sub-grids. `pagination` pages the top-level groups;
+`rowTotal` feeds the status bar. A group's checkbox selects it by query, without loading its
+rows (`v-model:selected-groups`, paths like `[[{ key: 'status', value: 'Won' }]]`); rows inside
+show ticked and locked, the header checkbox selects every top-level group, and the selected groups
+end with a new filter or grouping. Exports cover the loaded rows. Works with virtual scrolling and
+keyboard navigation. New exported types `GroupPath`, `ServerGroup`; group rows gain `count` and
+`path`; `DataSourceResult` gains `groups` and `rowTotal` (`rows` is optional). Without the
+feature, grouped server grids work as before, with a dev hint. Grids without it grow by 0.3 kB
+gzip (the `selected-groups` model and the grouped query), grids with row grouping by 0.6 kB more.
+
+Docs: the bundle sizes are measured again. 0.7.0's table was not updated for its own changes:
+a plain grid was 14.5 kB gzip there, not 14.1 (now 14.8).
+
 ## 0.7.0 — 2026-11-24
 
 **Text and parts are configurable.** `messages` (`GridMessages`) replaces any built-in text: menus,

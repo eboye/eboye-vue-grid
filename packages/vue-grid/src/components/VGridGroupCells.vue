@@ -54,7 +54,7 @@ const parts = computed<Part[]>(() => {
 })
 
 const count = computed(() =>
-  format ? formatNumber(props.group.rows.length, format.value) : String(props.group.rows.length),
+  format ? formatNumber(props.group.count, format.value) : String(props.group.count),
 )
 const blank = computed(() => {
   const v = props.group.value
@@ -164,7 +164,7 @@ function onLabelClick(event: MouseEvent) {
           :fn="groupSlot"
           :scope="{
             value: group.value,
-            count: group.rows.length,
+            count: group.count,
             rows: group.rows,
             column: group.column,
             group,
@@ -193,7 +193,7 @@ function onLabelClick(event: MouseEvent) {
         <span
           v-if="grid.parts.value.groupCounts !== false"
           class="vg-rowgroup-count"
-          :aria-label="grid.messages.value.groupRowCount?.(group.rows.length) ?? `${count} rows`"
+          :aria-label="grid.messages.value.groupRowCount?.(group.count) ?? `${count} rows`"
           >{{ count }}</span
         >
       </div>

@@ -29,7 +29,13 @@ export { groupRows, isRowGroup, type RowGroup, type GroupRowsOptions } from './c
 export { toCsv, toDelimited, plainText, guardFormula, type ToCsvOptions } from './core/csv'
 export { toXlsx, type ToXlsxOptions, type XlsxFormat } from './core/xlsx'
 export { patchRows, type RowPatches, type PatchRowsOptions } from './core/patch'
-export type { DataSource, DataSourceResult, GridQuery } from './composables/useDataSource'
+export type {
+  DataSource,
+  DataSourceResult,
+  GridQuery,
+  GroupPath,
+  ServerGroup,
+} from './composables/useDataSource'
 export {
   activeFilterCount,
   emptyFilters,
