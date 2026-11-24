@@ -55,15 +55,31 @@ jobs:
       # npm are skipped, so a failed run can simply be re-run. Pre-releases (0.4.0-beta.1) go to `next`.
       - name: Publish to npm
         run: |
+          set -o pipefail # npm's exit code survives the filter below
+          if [ -z "$ACTIONS_ID_TOKEN_REQUEST_URL" ]; then
+            echo "::error::No GitHub OIDC token available: the job needs 'id-token: write'"
+            exit 1
+          fi
           tag=latest
           case "$VERSION" in *-*) tag=next ;; esac
           for name in @nocopypaste/vue-grid @nocopypaste/vue-grid-mcp @nocopypaste/vue-grid-renderer-template; do
             if npm view "$name@$VERSION" version >/dev/null 2>&1; then
               echo "$name@$VERSION is already published"
             else
-              npm publish -w "$name" --access public --tag "$tag"
+              # verbose: npm says why a trusted-publishing (OIDC) login was refused only at this level
+              npm publish -w "$name" --access public --tag "$tag" --loglevel verbose 2>&1 \
+                | grep -v '^npm verbose \(cli\|title\|argv\|logfile\|cwd\|os\|node\|npm\)\b' \
+                || { echo "::error::npm publish failed for $name (look for 'oidc' above)"; exit 1; }
             fi
           done
+
+      - name: npm logs of a failed publish
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-logs
+          path: ~/.npm/_logs/
+          retention-days: 7
 
       - name: GitHub release
         env:
