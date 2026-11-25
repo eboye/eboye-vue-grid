@@ -1,5 +1,6 @@
 import type { GridFeature } from '../types'
 import { aggregationFeature } from './aggregation'
+import { attributesFeature } from './attributes'
 import { columnGroupsFeature } from './columnGroups'
 import { columnPinningFeature } from './columnPinning'
 import { columnResizingFeature } from './columnResizing'
@@ -24,6 +25,7 @@ import { virtualScrollingFeature } from './virtualScrolling'
 
 export {
   aggregationFeature,
+  attributesFeature,
   columnGroupsFeature,
   columnPinningFeature,
   columnReorderFeature,
@@ -71,4 +73,5 @@ export const allFeatures: readonly GridFeature[] = [
   serverGroupingFeature,
   editingFeature,
   rangeSelectionFeature,
+  attributesFeature,
 ]

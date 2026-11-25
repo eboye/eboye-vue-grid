@@ -44,9 +44,12 @@ import type {
   CellEditEvent,
   CellsPasteEvent,
   CellRange,
+  CellAttrsContext,
   CellContext,
   CellRendererDefinition,
   ClassValue,
+  ExtraAttrs,
+  RowAttrsContext,
   ColumnDef,
   ColumnState,
   FlashMode,
@@ -165,6 +168,10 @@ const props = withDefaults(
     rowClickable?: boolean
     /** Extra classes for a row. */
     rowClass?: (row: T, index: number) => ClassValue
+    /** Extra attributes for each data row, such as test hooks (`{ 'data-test': ... }`). */
+    rowAttrs?: (ctx: RowAttrsContext<T>) => ExtraAttrs | null | undefined
+    /** Extra attributes for each cell of a data row, such as test hooks. */
+    cellAttrs?: (ctx: CellAttrsContext<T>) => ExtraAttrs | null | undefined
     /** Keys of rows to highlight (e.g. the row being edited). */
     highlightedRows?: readonly RowKey[]
     /** Briefly highlight cells whose value changes (live data, enrichment). Columns can override. */
@@ -1316,6 +1323,8 @@ if (process.env.NODE_ENV !== 'production') {
       missing('editing', `Column "${editCol}" is \`editable\`; that`)
     if (!features.rangeSelection && props.rangeSelection)
       missing('rangeSelection', '`range-selection`')
+    if (!features.attributes && (props.rowAttrs || props.cellAttrs))
+      missing('attributes', '`row-attrs` / `cell-attrs`')
     const exportCol = props.columns.find((c) => c.exportValue)?.key
     if (!features.export && exportCol)
       missing('export', `Column "${exportCol}" has an \`exportValue\`; that`)
@@ -1391,6 +1400,7 @@ const context: GridContext = {
   toggleRow: (row, range) => sel?.toggleRow(row, range),
   isHighlighted: (key) => highlighted.value.has(key),
   rowClass: (row, index) => props.rowClass?.(row, index),
+  attrs: features.attributes?.useExtraAttrs(props, resolvedColumns),
   rowClickable: computed(() => props.rowClickable),
   flash: computed(() => props.flash ?? false),
   filters: filt && {

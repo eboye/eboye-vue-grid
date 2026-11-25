@@ -1,4 +1,4 @@
-# @nocopypaste/vue-grid 0.17.1 — API reference
+# @nocopypaste/vue-grid 0.18.0 — API reference
 
 > Generated from the TypeScript sources (`scripts/gen-agent.mjs`). Machine-readable: `agent/api.json`, `agent/grid-config.schema.json`.
 
@@ -9,6 +9,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | Export | What it enables | Props | Column options |
 |---|---|---|---|
 | `aggregationFeature` | Aggregates and the totals row: columns with an `aggregate` (`sum`, `avg`, `min`, `max`, `count` or a function) and `totals` (`true` / `'bottom'` or `'top'`) show a sticky totals row over the rows that pass the filters, on every page. `aggregates` supplies the values instead (e.g. from a server). Without it, `aggregate` and `totals` are ignored. | `totals` `totalsLabel` `aggregates` | `aggregate` |
+| `attributesFeature` | Your own attributes on rows and cells (`row-attrs`, `cell-attrs`), such as test hooks: `:row-attrs="({ rowIndex }) => ({ 'data-test': `row-${rowIndex}` })"`. Each gets the row, its key and its position as shown (cells also the column and its position). The grid's own attributes (role, ARIA, `tabindex`, classes, styles, its `data-*` hooks) and `on…` handlers are left alone. | `rowAttrs` `cellAttrs` |  |
 | `columnGroupsFeature` | Grouped column headers: give columns a `group` and adjacent visible columns of the same group get one header cell spanning them, in a sticky row above the column headers. Groups follow reordering, hiding and pinning (a pin boundary splits a group). Without it, `group` is ignored. |  | `group` |
 | `columnPinningFeature` | Pinned columns: `pinned: 'left' \| 'right'` columns stay put (sticky) while the grid scrolls sideways, with edge shadows; runtime pins from the header menu (Pin left / Pin right / Unpin) are kept in `v-model:column-state` and persisted with `storage`. While the pinned columns would take more than `pinned-max-share` of the grid's width (half, by default), they scroll like the others. Without it, pins are ignored. | `pinnedMaxShare` | `pinned` `pinnable` |
 | `columnReorderFeature` | Column reordering: drag a header (mouse, pen, touch), Alt+←/→ on a focused header, and the header menu's Move left / Move right. Columns opt out with `reorderable: false`. The order is part of `v-model:column-state` and persisted with `storage`; `<VGridColumnMenu>` works without it. |  | `reorderable` |
@@ -62,6 +63,8 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `rowExpandable` | `(row: T) => boolean` |  |  | With a `#detail` slot: which rows can expand to show it (default: every row). |
 | `rowClickable` | `boolean` | `false` |  | Pointer cursor on rows (`row-click` is emitted either way). |
 | `rowClass` | `(row: T, index: number) => ClassValue` |  |  | Extra classes for a row. |
+| `rowAttrs` | `(ctx: RowAttrsContext<T>) => ExtraAttrs \| null \| undefined` |  | `attributesFeature` | Extra attributes for each data row, such as test hooks (`{ 'data-test': ... }`). |
+| `cellAttrs` | `(ctx: CellAttrsContext<T>) => ExtraAttrs \| null \| undefined` |  | `attributesFeature` | Extra attributes for each cell of a data row, such as test hooks. |
 | `highlightedRows` | `readonly RowKey[]` |  |  | Keys of rows to highlight (e.g. the row being edited). |
 | `flash` | `FlashMode` |  |  | Briefly highlight cells whose value changes (live data, enrichment). Columns can override. |
 | `virtual` | `VirtualOptions \| false` | `false` | `virtualScrollingFeature` | Virtual scrolling: only the rows in view render. Rows share one height (`rowHeight`, px) and the grid needs a bounded height. Needs the virtual scrolling feature. |

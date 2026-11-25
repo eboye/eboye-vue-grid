@@ -26,6 +26,7 @@ export type FeatureId =
   | 'serverGrouping'
   | 'editing'
   | 'rangeSelection'
+  | 'attributes'
 
 /** Grid props (and `v-model`s) that need a feature. */
 export const propFeatures: Readonly<Record<string, FeatureId>> = {
@@ -67,6 +68,8 @@ export const propFeatures: Readonly<Record<string, FeatureId>> = {
   undoLimit: 'editing',
   rangeSelection: 'rangeSelection',
   range: 'rangeSelection',
+  rowAttrs: 'attributes',
+  cellAttrs: 'attributes',
 }
 
 /** Column options that need a feature. */

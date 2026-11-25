@@ -11,6 +11,7 @@ import type {
   GridParts,
   RowKey,
 } from '../types'
+import type { ExtraAttrsState } from '../composables/useExtraAttrs'
 import type { ColumnFilter, FilterState, FilterType } from '../core/filter'
 import type { SelectionSummary } from '../core/selection'
 import type { SubRowEntry } from '../composables/useSubRows'
@@ -107,6 +108,8 @@ export interface GridContext {
   // presentation & events
   isHighlighted(key: RowKey): boolean
   rowClass(row: any, index: number): ClassValue
+  /** `row-attrs` / `cell-attrs` (only with the attributes feature). */
+  attrs?: ExtraAttrsState
   rowClickable: ComputedRef<boolean>
   /** Grid-wide change highlight (columns may override with `flash`). */
   flash: ComputedRef<FlashMode>

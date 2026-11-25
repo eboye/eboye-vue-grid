@@ -1,6 +1,6 @@
 {
   "package": "@nocopypaste/vue-grid",
-  "version": "0.17.1",
+  "version": "0.18.0",
   "component": "VGrid",
   "props": [
     {
@@ -190,6 +190,20 @@
       "type": "(row: T, index: number) => ClassValue",
       "required": false,
       "description": "Extra classes for a row."
+    },
+    {
+      "name": "rowAttrs",
+      "type": "(ctx: RowAttrsContext<T>) => ExtraAttrs | null | undefined",
+      "required": false,
+      "description": "Extra attributes for each data row, such as test hooks (`{ 'data-test': ... }`).",
+      "feature": "attributes"
+    },
+    {
+      "name": "cellAttrs",
+      "type": "(ctx: CellAttrsContext<T>) => ExtraAttrs | null | undefined",
+      "required": false,
+      "description": "Extra attributes for each cell of a data row, such as test hooks.",
+      "feature": "attributes"
     },
     {
       "name": "highlightedRows",
@@ -1074,6 +1088,16 @@
       "columnOptions": [
         "aggregate"
       ]
+    },
+    {
+      "id": "attributes",
+      "export": "attributesFeature",
+      "description": "Your own attributes on rows and cells (`row-attrs`, `cell-attrs`), such as test hooks: `:row-attrs=\"({ rowIndex }) => ({ 'data-test': `row-${rowIndex}` })\"`. Each gets the row, its key and its position as shown (cells also the column and its position). The grid's own attributes (role, ARIA, `tabindex`, classes, styles, its `data-*` hooks) and `on…` handlers are left alone.",
+      "props": [
+        "rowAttrs",
+        "cellAttrs"
+      ],
+      "columnOptions": []
     },
     {
       "id": "columnGroups",

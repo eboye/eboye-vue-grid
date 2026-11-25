@@ -30,6 +30,8 @@ const props = withDefaults(
 )
 
 const grid = useInternalGrid()
+/** `row-attrs` (attributes feature; nothing without it). */
+const vExtraAttrs = grid.attrs?.directive
 const virtual = grid.virtualRows
 /** Virtual mode: which blocks of this level are in view, and the spacers around them. */
 const level = virtual?.level(
@@ -84,6 +86,7 @@ watchEffect(() => {
   />
   <template v-for="item in items" :key="item.key">
     <div
+      v-extra-attrs="grid.attrs?.row(item, depth)"
       role="row"
       :class="[
         'vg-row',

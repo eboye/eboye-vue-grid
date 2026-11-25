@@ -17,6 +17,8 @@ const props = defineProps<{
 }>()
 
 const grid = useInternalGrid()
+/** `row-attrs` (attributes feature; nothing without it). */
+const vExtraAttrs = grid.attrs?.directive
 
 // The top section sticks right under the header, and both keep focused rows clear of themselves
 // (`scroll-padding`): publish the header's and the section's heights on the scroll container.
@@ -58,6 +60,7 @@ onBeforeUnmount(() => {
     <div
       v-for="(item, i) in items"
       :key="item.id"
+      v-extra-attrs="grid.attrs?.pinnedRow(item, i, position)"
       role="row"
       :class="[
         'vg-row',
@@ -99,6 +102,7 @@ onBeforeUnmount(() => {
           :depth="0"
           :column="column"
           pinned
+          :pinned-side="position"
           :selectable="item.selectable"
         />
       </template>

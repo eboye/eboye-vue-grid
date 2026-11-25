@@ -160,6 +160,7 @@ app.use(createVueGrid({ features: allFeatures })) // all of them
 | `exportFeature`             | `exportCsv()` / `getCsv()` / `copyRows()`, Ctrl/⌘+C, `@copy`, column `exportValue` / `exportable`                     |
 | `editingFeature`            | column `editable` / `editor` / `editorOptions` / `validate`, `@cell-edit`, `save-cell`, `startEdit()` / `stopEdit()`  |
 | `rangeSelectionFeature`     | `range-selection`, `v-model:range`, `selectRange()` / `getRangeValues()` / `copyRange()`, `copy` with `kind: 'range'` |
+| `attributesFeature`         | `row-attrs`, `cell-attrs` (test hooks and other attributes on rows and cells)                                         |
 
 Without its feature, an option does nothing and a dev warning names the feature to add. A grid
 reads `features` once when it is created.
@@ -2613,3 +2614,52 @@ Delete or Backspace clear the selected cells (each column's empty value); Ctrl/�
 first, so cutting and pasting moves them. Read-only cells and a `validate` that wants a value keep
 a cell as it is. Each change is a `cell-edit` (`source: 'clear'` / `'cut'`), `cells-clear` reports
 the lot, and one Ctrl/⌘+Z undoes it. `parts: { clearShortcut: false }` turns the keys off.
+
+---
+
+## 30. Test hooks on rows and cells
+
+`row-attrs` and `cell-attrs` (needs `attributesFeature`) add your own attributes to each data row
+and cell, such as `data-test` hooks for end-to-end tests:
+
+```vue
+<script setup lang="ts">
+import {
+  attributesFeature,
+  sortingFeature,
+  VGrid,
+  type CellAttrsContext,
+  type RowAttrsContext,
+} from '@nocopypaste/vue-grid'
+
+const rowAttrs = ({ rowIndex }: RowAttrsContext<Bet>) => ({ 'data-test': `row-${rowIndex}` })
+const cellAttrs = ({ columnKey, rowIndex }: CellAttrsContext<Bet>) => ({
+  'data-test': `${columnKey}-${rowIndex}`,
+})
+</script>
+
+<template>
+  <VGrid
+    :rows="bets"
+    :columns="columns"
+    row-key="id"
+    sort-mode="client"
+    :features="[attributesFeature, sortingFeature]"
+    :row-attrs="rowAttrs"
+    :cell-attrs="cellAttrs"
+  />
+</template>
+```
+
+```ts
+// Playwright: the first row as shown, whatever the sort
+await expect(page.locator('[data-test="row-0"] [data-test="player-0"]')).toHaveText('Ana')
+```
+
+- `rowIndex` is the position as shown (sorted, filtered, on its page), from 0; with virtual
+  scrolling it counts every row, drawn or not. Tree children count from 0 under their parent;
+  pinned rows from 0 in their section (`pinned`).
+- `cell-attrs` also gets `column`, `columnKey`, `columnIndex` (from 0, the selection checkbox
+  included), `kind` (`'data'` / `'select'`) and `columnPinned`.
+- The grid's own attributes stay: `role`, `aria-*`, `tabindex`, `id`, `class`, `style`, its `data-*`
+  hooks and `on…` handlers are ignored here. Group and totals rows get none.

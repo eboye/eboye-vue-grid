@@ -17,11 +17,16 @@ const props = withDefaults(
     pinned?: boolean
     /** Pinned rows: show the selection checkbox. */
     selectable?: boolean
+    /** A cell of a pinned row: its section, for `cellAttrs`. */
+    pinnedSide?: 'top' | 'bottom'
   }>(),
-  { pinned: false, selectable: true },
+  { pinned: false, selectable: true, pinnedSide: undefined },
 )
 
 const grid = useInternalGrid()
+
+/** `cell-attrs` (attributes feature; nothing without it). */
+const vExtraAttrs = grid.attrs?.directive
 
 const value = computed(() =>
   props.column.kind === 'data' ? getCellValue(props.row, props.column.def) : undefined,
@@ -112,6 +117,7 @@ function onClick(event: MouseEvent) {
 
 <template>
   <div
+    v-extra-attrs="grid.attrs?.cell(props)"
     :role="grid.cellRole"
     :tabindex="grid.rovingTabindex"
     :data-col-key="column.key"

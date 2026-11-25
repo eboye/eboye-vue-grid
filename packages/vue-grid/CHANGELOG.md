@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.18.0 — 2026-11-25
+
+**Test hooks on rows and cells** (`attributesFeature`): `row-attrs` and `cell-attrs` add your own
+attributes to each data row and cell, such as `data-test` hooks for end-to-end tests. Each gets the
+row, its key and its position as shown (0-based, sorted and filtered; with virtual scrolling
+counted over every row), its tree depth and pinned section; cells also the column, its key and
+position, its kind and pinned side. The grid's own attributes (`role`, `aria-*`, `tabindex`, `id`,
+`class`, `style`, its `data-*` hooks) and `on…` handlers can't be overridden. New types
+`RowAttrsContext`, `CellAttrsContext`, `ExtraAttrs`. The feature is 0.5 kB gzipped; a plain grid
+grows by 0.1 kB, to 16.1 kB.
+
 ## 0.17.1 — 2026-11-25
 
 Fix: the find bar no longer loses keyboard focus after **Replace** or **Replace all**. The buttons

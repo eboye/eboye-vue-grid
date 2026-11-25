@@ -137,6 +137,7 @@ an opt-in feature:
 | `statusBarFeature`          | `status-bar`: a bar under the grid with the rows that pass the filters, the selected rows, the active filters (with Clear), and `{ summary: [keys] }` columns' sum and average over the selected rows; the `#status-bar` slot                                                                                                           |
 | `editingFeature`            | `editable` columns: an editor in the cell (text, number, date, select, checkbox, or your own) on double-click, Enter / F2 or typing; `cell-edit`, and `save-cell` for async saves. See [Inline editing](#inline-editing)                                                                                                                |
 | `rangeSelectionFeature`     | `range-selection`: drag, Shift+click or Shift+arrows select a block of cells, Ctrl/⌘+C copies it (tab-separated, pastes into spreadsheets), the status bar adds it up; `v-model:range`. See [Cell-range selection](#cell-range-selection)                                                                                               |
+| `attributesFeature`         | `row-attrs` / `cell-attrs`: your own attributes on each row and cell, such as test hooks (`data-test`), from the row, its position and the column. See [Test hooks](#test-hooks-row-and-cell-attributes)                                                                                                                                |
 
 ```ts
 // per grid
@@ -180,36 +181,37 @@ what you import.
 
 | Import (minified / gzip, Vue excluded)                                       | Initial chunk      |
 | ---------------------------------------------------------------------------- | ------------------ |
-| `VGrid` (no features)                                                        | 46.8 kB / 16.0 kB  |
-| `VGrid` + `sortingFeature`                                                   | 49.5 kB / 17.0 kB  |
-| `VGrid` + `filteringFeature`                                                 | 57.5 kB / 19.9 kB  |
-| `VGrid` + `serverDataFeature`                                                | 48.2 kB / 16.6 kB  |
-| `VGrid` + `paginationFeature`                                                | 46.9 kB / 16.1 kB  |
-| `VGrid` + `selectionFeature`                                                 | 50.9 kB / 17.5 kB  |
-| `VGrid` + `subGridsFeature`                                                  | 49.1 kB / 16.8 kB  |
-| `VGrid` + `menusFeature`                                                     | 58.1 kB / 19.8 kB  |
-| `VGrid` + `columnReorderFeature`                                             | 50.5 kB / 17.3 kB  |
-| `VGrid` + `columnPinningFeature`                                             | 49.7 kB / 17.1 kB  |
-| `VGrid` + `virtualScrollingFeature`                                          | 52.6 kB / 18.2 kB  |
-| `VGrid` + `columnVisibilityFeature`                                          | 46.9 kB / 16.1 kB  |
-| `VGrid` + `keyboardNavigationFeature`                                        | 49.6 kB / 17.0 kB  |
-| `VGrid` + `columnResizingFeature`                                            | 50.1 kB / 17.2 kB  |
-| `VGrid` + `columnGroupsFeature`                                              | 48.1 kB / 16.5 kB  |
-| `VGrid` + `rowPinningFeature`                                                | 51.7 kB / 17.5 kB  |
-| `VGrid` + `aggregationFeature`                                               | 51.9 kB / 17.7 kB  |
-| `VGrid` + `rowGroupingFeature`                                               | 57.6 kB / 19.6 kB  |
-| `VGrid` + `exportFeature`                                                    | 51.7 kB / 18.0 kB  |
-| `VGrid` + `statusBarFeature`                                                 | 49.7 kB / 17.1 kB  |
-| `VGrid` + `serverGroupingFeature`                                            | 49.9 kB / 17.2 kB  |
-| `VGrid` + `editingFeature`                                                   | 54.3 kB / 18.9 kB  |
-| `VGrid` + `rangeSelectionFeature`                                            | 60.9 kB / 21.0 kB  |
-| `VGrid` + `allFeatures` + `VGridSearch`                                      | 142.5 kB / 47.9 kB |
-| `VGrid` + `currencyRenderer`                                                 | 48.2 kB / 16.5 kB  |
-| `VGrid` + `VGridPagination` + `VGridColumnMenu`                              | 54.1 kB / 18.5 kB  |
+| `VGrid` (no features)                                                        | 47.0 kB / 16.1 kB  |
+| `VGrid` + `sortingFeature`                                                   | 49.7 kB / 17.2 kB  |
+| `VGrid` + `filteringFeature`                                                 | 57.7 kB / 20.0 kB  |
+| `VGrid` + `serverDataFeature`                                                | 48.5 kB / 16.8 kB  |
+| `VGrid` + `paginationFeature`                                                | 47.2 kB / 16.2 kB  |
+| `VGrid` + `selectionFeature`                                                 | 51.2 kB / 17.6 kB  |
+| `VGrid` + `subGridsFeature`                                                  | 49.4 kB / 16.9 kB  |
+| `VGrid` + `menusFeature`                                                     | 58.3 kB / 19.9 kB  |
+| `VGrid` + `columnReorderFeature`                                             | 50.7 kB / 17.4 kB  |
+| `VGrid` + `columnPinningFeature`                                             | 50.0 kB / 17.2 kB  |
+| `VGrid` + `virtualScrollingFeature`                                          | 52.8 kB / 18.4 kB  |
+| `VGrid` + `columnVisibilityFeature`                                          | 47.2 kB / 16.2 kB  |
+| `VGrid` + `keyboardNavigationFeature`                                        | 49.8 kB / 17.2 kB  |
+| `VGrid` + `columnResizingFeature`                                            | 50.3 kB / 17.4 kB  |
+| `VGrid` + `columnGroupsFeature`                                              | 48.3 kB / 16.6 kB  |
+| `VGrid` + `rowPinningFeature`                                                | 52.0 kB / 17.7 kB  |
+| `VGrid` + `aggregationFeature`                                               | 52.3 kB / 17.8 kB  |
+| `VGrid` + `rowGroupingFeature`                                               | 57.8 kB / 19.8 kB  |
+| `VGrid` + `exportFeature`                                                    | 52.0 kB / 18.1 kB  |
+| `VGrid` + `statusBarFeature`                                                 | 49.9 kB / 17.2 kB  |
+| `VGrid` + `serverGroupingFeature`                                            | 50.1 kB / 17.3 kB  |
+| `VGrid` + `editingFeature`                                                   | 54.6 kB / 19.0 kB  |
+| `VGrid` + `rangeSelectionFeature`                                            | 61.1 kB / 21.1 kB  |
+| `VGrid` + `attributesFeature`                                                | 48.1 kB / 16.6 kB  |
+| `VGrid` + `allFeatures` + `VGridSearch`                                      | 143.9 kB / 48.4 kB |
+| `VGrid` + `currencyRenderer`                                                 | 48.4 kB / 16.6 kB  |
+| `VGrid` + `VGridPagination` + `VGridColumnMenu`                              | 54.3 kB / 18.6 kB  |
 | `sortRows` only                                                              | 0.7 kB / 0.4 kB    |
 | `toCsv` only                                                                 | 1.1 kB / 0.6 kB    |
-| everything                                                                   | 196.5 kB / 63.5 kB |
-| `validateGridConfig` (`@nocopypaste/vue-grid/agent`, never in an app bundle) | 80.9 kB / 22.1 kB  |
+| everything                                                                   | 197.9 kB / 64.0 kB |
+| `validateGridConfig` (`@nocopypaste/vue-grid/agent`, never in an app bundle) | 81.9 kB / 22.4 kB  |
 
 With `filteringFeature`, the filter popover body and the filter-row editors are **on-demand
 chunks**: they load the first time a popover opens or `filter-row` is on. With
@@ -270,6 +272,8 @@ chunks that on-demand imports share with the entry, even when nothing uses them.
 | `v-model:range`                      | `CellRange \| null`                                                                                                          | `null`             | Cell-range selection: the selected block, `{ start, end }` corner cells (`{ rowKey, columnKey }`). One cell alone is no range.                                                                                              |
 | `rowClickable`                       | `boolean`                                                                                                                    | `false`            | Pointer cursor; `row-click` is always emitted.                                                                                                                                                                              |
 | `rowClass`                           | `(row, index) => ClassValue`                                                                                                 | —                  |                                                                                                                                                                                                                             |
+| `rowAttrs`                           | `(ctx: RowAttrsContext) => ExtraAttrs`                                                                                       | —                  | Extra attributes per data row (`attributesFeature`): `{ row, rowKey, rowIndex, depth, pinned }`                                                                                                                             |
+| `cellAttrs`                          | `(ctx: CellAttrsContext) => ExtraAttrs`                                                                                      | —                  | Extra attributes per cell (`attributesFeature`): the row’s fields plus `column`, `columnKey`, `columnIndex`, `kind`, `columnPinned`                                                                                         |
 | `highlightedRows`                    | `RowKey[]`                                                                                                                   | —                  |                                                                                                                                                                                                                             |
 | `flash`                              | `boolean \| 'direction'`                                                                                                     | `false`            | Briefly highlight cells whose value changes; `'direction'` = green up / red down. Columns override with `flash`.                                                                                                            |
 | `renderers`                          | `CellRendererDefinition[]`                                                                                                   | —                  | Renderers usable by name in this grid (override plugin ones).                                                                                                                                                               |
@@ -1272,6 +1276,44 @@ const range = ref<CellRange | null>(null) // { start: { rowKey, columnKey }, end
   ahead, while the browser is idle); its colours are `--vg-color-find`, `--vg-color-find-current`
   and `--vg-color-find-border`, its text in `messages` (`find`, `replaceWith`, `findCount`…).
 - Style it with `--vg-color-range` (the cells' tint) and `--vg-color-range-border` (the outline).
+
+## Test hooks (row and cell attributes)
+
+`attributesFeature` puts your own attributes on rows and cells, for end-to-end tests or anything
+else that needs a hook. Each function gets the row, its key and its position as shown (sorted,
+filtered, on its page; 0-based); cells also get their column and its position:
+
+```vue
+<script setup lang="ts">
+import { attributesFeature, VGrid } from '@nocopypaste/vue-grid'
+</script>
+
+<template>
+  <VGrid
+    :rows="orders"
+    :columns="columns"
+    row-key="id"
+    :features="[attributesFeature]"
+    :row-attrs="({ rowIndex }) => ({ 'data-test': `row-${rowIndex}` })"
+    :cell-attrs="({ columnKey, rowIndex }) => ({ 'data-test': `${columnKey}-${rowIndex}` })"
+  />
+</template>
+```
+
+A test then finds `[data-test="row-0"] [data-test="total-0"]`. With virtual scrolling, positions
+count every row, not just the drawn ones, so `row-1999` is the last of 2,000 rows once it is
+scrolled into view. Tree children count from 0 under their parent (`depth` says how deep), a
+pinned row from 0 in its section (`pinned: 'top' | 'bottom'`); group and totals rows get none.
+
+- Values are written as text; `null` or `undefined` leaves an attribute out.
+- The grid keeps its own attributes: `role`, `aria-*`, `tabindex`, `id`, `class`, `style` and its
+  `data-*` hooks (`data-row-key`, `data-col-key`, …) are ignored, and so are `on…` handlers. For
+  classes, use `row-class` and the column's `cellClass`.
+- Without `row-attrs` and `cell-attrs` nothing is added. The feature costs about 0.5 kB gzipped.
+
+Moving from another grid whose tests use its own hooks? Give those names back from here, for
+example a 0-based row position (`'data-row': rowIndex`) and a column position counted per pinned
+section, worked out from your column list.
 
 ## Status bar
 

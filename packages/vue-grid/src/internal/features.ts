@@ -1,5 +1,6 @@
 import type {
   AggregationFeature,
+  AttributesFeature,
   ExportFeature,
   RowGroupingFeature,
   RowPinningFeature,
@@ -48,6 +49,7 @@ export interface FeatureSet {
   editing?: EditingFeature
   serverGrouping?: ServerGroupingFeature
   rangeSelection?: RangeSelectionFeature
+  attributes?: AttributesFeature
 }
 
 /** Merges feature lists (app-wide, then per grid); a later entry with the same name wins. */

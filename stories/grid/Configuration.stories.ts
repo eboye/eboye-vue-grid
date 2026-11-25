@@ -134,6 +134,27 @@ export const LanguagePacks: Story = {
 }
 
 /**
+ * `row-attrs` and `cell-attrs` add your own attributes to each data row and cell, such as test
+ * hooks: here `data-test="row-<position>"` on rows and `data-test="<column>-<position>"` on cells,
+ * with positions as shown (sorted, 0-based) and counted over all 2,000 virtual rows, not just the
+ * drawn ones. Inspect a cell to see them.
+ */
+export const TestHooks: Story = {
+  args: {
+    rows: makeBets(2000, 14),
+    virtual: { rowHeight: 41 },
+    pagination: undefined,
+    pageSize: undefined,
+    filterRow: false,
+    totals: false,
+    rowAttrs: ({ rowIndex }: { rowIndex: number }) => ({ 'data-test': `row-${rowIndex}` }),
+    cellAttrs: ({ columnKey, rowIndex }: { columnKey: string; rowIndex: number }) => ({
+      'data-test': `${columnKey}-${rowIndex}`,
+    }),
+  },
+}
+
+/**
  * `:parts` turns pieces off: no filter funnels (the filter row still filters), no resize grips,
  * no dragging headers, no select-all checkbox, no first / last page buttons, and a status bar
  * without the Clear button.

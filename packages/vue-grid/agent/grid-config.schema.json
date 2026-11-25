@@ -26,6 +26,7 @@
         "enum": [
           "allFeatures",
           "aggregationFeature",
+          "attributesFeature",
           "columnGroupsFeature",
           "columnPinningFeature",
           "columnReorderFeature",
@@ -147,6 +148,12 @@
     },
     "rowClass": {
       "description": "Extra classes for a row."
+    },
+    "rowAttrs": {
+      "description": "Extra attributes for each data row, such as test hooks (`{ 'data-test': ... }`)."
+    },
+    "cellAttrs": {
+      "description": "Extra attributes for each cell of a data row, such as test hooks."
     },
     "highlightedRows": {
       "type": "array",

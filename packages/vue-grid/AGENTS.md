@@ -74,6 +74,7 @@ runs in the [live examples](https://eboye.github.io/eboye-vue-grid/), each with 
 | Row / selection counts, sum of the selected rows  | `statusBarFeature`                                                          | `status-bar` (or `{ summary: ['total'], aggregates?: ['sum', 'avg'] }`); `#status-bar="{ rowCount, selectedCount, summary, … }"`                                                                                                                                                                                                                                                                                                                                  |
 | Edit cells in place (spreadsheet-like)            | `editingFeature` (+ `keyboardNavigationFeature` for typing / Enter)         | column `editable: true \| (row) => boolean`, `editor`, `editorOptions`, `validate`; `@cell-edit` (store `value`: `setCellValue(e.row, e.column, e.value)`), `:save-cell` (async, rejection = error)                                                                                                                                                                                                                                                               |
 | Select cells, copy / paste / fill / find, sum     | `rangeSelectionFeature` (+ `keyboardNavigationFeature`, `statusBarFeature`) | `range-selection`, `v-model:range="{ start: { rowKey, columnKey }, end }"`; `@copy` (`kind: 'range'`), `copyRange()`, `getRangeValues()`, `selectRange()`; + `editingFeature`: Ctrl/⌘+V pastes into `editable` cells (`@cell-edit` each, `@cells-paste`, `pasteText()`), the fill handle / Ctrl/⌘+D fill them (`@cells-fill`, `fillDown()`); Ctrl/⌘+F / Ctrl/⌘+H find and replace (`openFind()`, `@cells-replace`); Delete clears, Ctrl/⌘+X cuts (`@cells-clear`) |
+| Test hooks (`data-test`) on rows and cells        | `attributesFeature`                                                         | `:row-attrs="({ row, rowKey, rowIndex }) => ({ 'data-test': `row-${rowIndex}` })"`, `:cell-attrs="({ columnKey, rowIndex }) => …"`                                                                                                                                                                                                                                                                                                                                |
 | Translate / reword the grid, drop built-in pieces | —                                                                           | a language pack (`import { de } from '@nocopypaste/vue-grid/locales/de'`; also `fr`, `es`, `sr`, `sr-Latn`) or your own `messages` (`GridMessages`), `parts` (`GridParts`): app-wide in `createVueGrid` or per grid; slots `#load-error`, `#no-match`, `#select-all-banner`                                                                                                                                                                                       |
 | Arrow-key navigation (ARIA grid)                  | `keyboardNavigationFeature`                                                 | —                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | Remember column layout                            | —                                                                           | `storage="orders-grid"` (localStorage key)                                                                                                                                                                                                                                                                                                                                                                                                                        |
@@ -505,6 +506,24 @@ buttons, `undo-limit` (default 100, `0` off), `grid.clearHistory()` after reload
 
 `range` is `{ start, end }` (each `{ rowKey, columnKey }`) or null; it is not row selection
 (`selected`), and both can be on.
+
+### Test hooks on rows and cells
+
+```vue
+<VGrid
+  :rows
+  :columns
+  row-key="id"
+  :features="[attributesFeature]"
+  :row-attrs="({ rowIndex }) => ({ 'data-test': `row-${rowIndex}` })"
+  :cell-attrs="({ columnKey, rowIndex }) => ({ 'data-test': `${columnKey}-${rowIndex}` })"
+/>
+<!-- a test: page.locator('[data-test="row-0"] [data-test="total-0"]') -->
+```
+
+`rowIndex` is the position as shown (0-based; every row with virtual scrolling). The grid's own
+`role`, `aria-*`, `tabindex`, `class`, `style` and `data-*` hooks can't be overridden here; style
+with `row-class` / `cellClass`. Don't wrap cells in your own elements just to add a hook.
 
 ### Editable checkbox (controlled)
 

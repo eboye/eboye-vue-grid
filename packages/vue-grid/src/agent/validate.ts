@@ -298,6 +298,8 @@ export function validateGridConfig(config: GridConfigInput): ValidationResult {
     'rowExpandable',
     'isRowSelectable',
     'rowClass',
+    'rowAttrs',
+    'cellAttrs',
     'contextMenu',
   ]) {
     const v = props[fnProp]

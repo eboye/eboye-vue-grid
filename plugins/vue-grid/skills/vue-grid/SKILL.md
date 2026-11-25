@@ -46,6 +46,8 @@ A working example of each feature, complete component source included:
   (`setCellValue`), or use `:save-cell` for async saves; the grid never writes the value itself.
   Undo / redo (Ctrl/⌘+Z, Ctrl+Y) come through the same `@cell-edit` (`e.source`): store them too.
 - Editable renderers are controlled: handle `@cell-action` and update the data.
+- Test hooks (`data-test`) on rows and cells: `attributesFeature` with `:row-attrs` /
+  `:cell-attrs` (`({ rowIndex, columnKey }) => ({ 'data-test': … })`), not wrapper elements.
 - Selecting / copying a block of cells: `range-selection` + `rangeSelectionFeature` (`v-model:range`),
   not row selection; Ctrl/⌘+C copies it, the status bar adds it up. With `editingFeature`,
   Ctrl/⌘+V pastes into `editable` cells, and the fill handle / Ctrl/⌘+D fill them: each change is

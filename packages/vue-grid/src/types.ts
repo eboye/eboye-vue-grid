@@ -447,6 +447,46 @@ export interface CellContext<T = any> {
   value: unknown
 }
 
+/**
+ * Extra attributes for a row or a cell (`rowAttrs` / `cellAttrs`, attributes feature), such as
+ * test hooks: `{ 'data-test': 'row-0' }`. Values are written as text; `null` and `undefined`
+ * leave an attribute out. The grid keeps its own: `role`, `aria-*`, `tabindex`, `id`, `class`,
+ * `style` and its `data-*` hooks (`data-row-key`, `data-col-key`, `data-vg-*`, …) are ignored
+ * here, and so are `on…` handlers. For classes, use `rowClass` and `cellClass`.
+ */
+export type ExtraAttrs = Record<string, string | number | boolean | null | undefined>
+
+/** What `rowAttrs` gets for a data row (group, detail and totals rows get none). */
+export interface RowAttrsContext<T = any> {
+  row: T
+  /** The row’s key (`row-key`). */
+  rowKey: RowKey
+  /**
+   * The row’s position, from 0, among the rows shown at its level, as sorted and filtered (on
+   * its page with pagination; in a pinned section, its position there). Tree children count
+   * from 0 under their parent.
+   */
+  rowIndex: number
+  /** Tree depth: 0 for top-level rows. */
+  depth: number
+  /** Set for a pinned row: the section it's in. */
+  pinned?: 'top' | 'bottom'
+}
+
+/** What `cellAttrs` gets for a cell of a data row. */
+export interface CellAttrsContext<T = any> extends RowAttrsContext<T> {
+  /** The cell’s column definition. */
+  column: ColumnDef<T>
+  /** The column key (`data-col-key`). */
+  columnKey: string
+  /** The column’s position, from 0, among the shown columns, the selection checkbox included. */
+  columnIndex: number
+  /** `select`: the selection checkbox column; `data`: one of yours. */
+  kind: 'data' | 'select'
+  /** Set for a pinned column: its side. */
+  columnPinned?: PinSide
+}
+
 export interface ContextActionEvent<T = any> extends CellContext<T> {
   /** The chosen item’s `name`. */
   name: string
@@ -831,6 +871,10 @@ export interface ExportFeature {
   readonly feature: 'export'
   useExport: typeof import('./composables/useGridExport').useGridExport
 }
+export interface AttributesFeature {
+  readonly feature: 'attributes'
+  useExtraAttrs: typeof import('./composables/useExtraAttrs').useExtraAttrs
+}
 export interface StatusBarFeature {
   readonly feature: 'statusBar'
   useStatusBar: typeof import('./composables/useStatusBar').useStatusBar
@@ -858,6 +902,7 @@ export interface RangeSelectionFeature {
   preloadFind: () => Promise<unknown>
 }
 export type GridFeature =
+  | AttributesFeature
   | RangeSelectionFeature
   | EditingFeature
   | ServerGroupingFeature
