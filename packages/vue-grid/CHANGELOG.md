@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.13.1 — 2026-11-25
+
+**Fix:** an open cell editor showed two outlines in apps with a global `:focus-visible` style: the
+cell's accent outline and the app's focus ring on the input inside it (unlayered app CSS beats the
+grid's `@layer`). The editor's input and select now draw no ring of their own; the cell's outline
+marks the edit.
+
 ## 0.13.0 — 2026-11-25
 
 **Paste into a range** (`rangeSelectionFeature` with `editingFeature`): Ctrl/⌘+V pastes

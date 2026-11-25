@@ -1,4 +1,4 @@
-# @nocopypaste/vue-grid 0.13.0 — API reference
+# @nocopypaste/vue-grid 0.13.1 — API reference
 
 > Generated from the TypeScript sources (`scripts/gen-agent.mjs`). Machine-readable: `agent/api.json`, `agent/grid-config.schema.json`.
 

@@ -139,3 +139,23 @@ test('typing straight after a double-click replaces the value, however fast', as
   await expect(editor(page)).toHaveCount(0)
   await expect(cell(page, 6, 'stake')).toHaveText(/^€42\.00$/)
 })
+
+test('one outline while editing, even with the app’s own :focus-visible style', async ({
+  page,
+}) => {
+  await open(page)
+  // a global focus ring, as many apps have (unlayered, so it beats the grid's @layer)
+  await page.addStyleTag({
+    content: ':focus-visible { outline: 2px solid red; outline-offset: 2px }',
+  })
+  for (const key of ['player', 'status']) {
+    await cell(page, 2, key).dblclick()
+    await expect(editor(page)).toBeFocused()
+    // the cell's accent outline marks the edit; the input / select adds no ring of its own
+    expect(await editor(page).evaluate((el) => getComputedStyle(el).outlineStyle)).toBe('none')
+    expect(await cell(page, 2, key).evaluate((el) => getComputedStyle(el).boxShadow)).toMatch(
+      /inset/,
+    )
+    await page.keyboard.press('Escape')
+  }
+})

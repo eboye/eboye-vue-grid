@@ -696,9 +696,6 @@
     font: inherit;
     text-align: inherit;
   }
-  .vg-editor-control:focus {
-    outline: none;
-  }
   .vg-edit-error[popover] {
     position: fixed;
     inset: auto;

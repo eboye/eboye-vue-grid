@@ -239,10 +239,16 @@ const customEditor = kind === 'custom' ? (def.editor as Component) : undefined
       @commit="(v?: unknown) => commit(0, v === undefined ? custom : v)"
       @cancel="mine() && editing.cancel()"
     />
+    <!--
+      No focus ring of its own: the cell's editing outline shows where focus is. Inline, so an
+      app's global :focus-visible style (unlayered, it beats the grid's layer) doesn't add a
+      second outline inside the cell.
+    -->
     <select
       v-else-if="kind === 'select'"
       v-model="text"
       class="vg-editor-control"
+      style="outline: none"
       :aria-label="label"
       :aria-invalid="!!error || undefined"
       :aria-describedby="error ? errorId : undefined"
@@ -257,6 +263,7 @@ const customEditor = kind === 'custom' ? (def.editor as Component) : undefined
       v-else
       v-model="text"
       class="vg-editor-control"
+      style="outline: none"
       :type="
         kind === 'number'
           ? 'text'
