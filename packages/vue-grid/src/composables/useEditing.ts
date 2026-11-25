@@ -67,7 +67,10 @@ export interface PasteCell<T> {
   rowKey: RowKey
   column: ColumnDef<T>
   definition: CellRendererDefinition | undefined
-  text: string
+  /** Pasted text, read as the column's kind of value. */
+  text?: string
+  /** A filled value (fill handle), kept when it fits the column. */
+  value?: unknown
 }
 
 /** What a cell tells the editing feature about itself. */
@@ -319,12 +322,18 @@ export function useEditing<T>(opts: EditingOptions<T>) {
    * then all of them are saved with `save-cell` together. No editor opens; what didn't fit is
    * reported in `skipped`, the saves that failed in `failed`.
    */
-  async function pasteCells(cells: readonly PasteCell<T>[]): Promise<CellsPasteEvent<T>> {
+  async function writeCells(
+    cells: readonly PasteCell<T>[],
+    source: 'paste' | 'fill',
+  ): Promise<CellsPasteEvent<T>> {
     if (state.value && !state.value.saving) state.value = null
-    const { pasteValue } = await import('../core/paste') // loads on the first paste
+    // loads on the first paste or fill (own chunk)
+    const { fillValue, pasteValue } = await import('../core/paste')
     const m = opts.messages()
     const result: CellsPasteEvent<T> = { edits: [], skipped: [], failed: [] }
-    for (const { row, rowKey, column, definition, text } of cells) {
+    for (const cell of cells) {
+      const { row, rowKey, column, definition } = cell
+      const text = cell.text ?? (cell.value == null ? '' : String(cell.value))
       const skip = (reason: PasteSkip['reason'], message?: string) =>
         result.skipped.push({ rowKey, columnKey: column.key, text, reason, message })
       if (!canEdit(row, column)) {
@@ -337,13 +346,17 @@ export function useEditing<T>(opts: EditingOptions<T>) {
         continue
       }
       const oldValue = getCellValue(row, column)
-      const value = pasteValue(text, kind, {
+      const ctx = {
         locale: opts.locale(),
         oldValue,
         options: kind === 'select' ? choices(column) : undefined,
         yes: m.yes,
         no: m.no,
-      })
+      }
+      const value =
+        cell.text !== undefined
+          ? pasteValue(cell.text, kind, ctx)
+          : fillValue(cell.value, kind, ctx)
       if (value instanceof Error) {
         skip('invalid', value.message)
         continue
@@ -365,7 +378,7 @@ export function useEditing<T>(opts: EditingOptions<T>) {
         continue
       }
       if (Object.is(value, oldValue) || sameDate(value, oldValue)) continue
-      const event: CellEditEvent<T> = { row, rowKey, column, value, oldValue, source: 'paste' }
+      const event: CellEditEvent<T> = { row, rowKey, column, value, oldValue, source }
       result.edits.push(event)
       opts.emit(event)
     }
@@ -377,9 +390,12 @@ export function useEditing<T>(opts: EditingOptions<T>) {
       })
     }
     const failed = new Set(result.failed.map((f) => f.edit))
-    record(result.edits.filter((e) => !failed.has(e))) // the whole paste is one undo step
+    record(result.edits.filter((e) => !failed.has(e))) // the whole paste / fill is one undo step
     return result
   }
+  const pasteCells = (cells: readonly PasteCell<T>[]) => writeCells(cells, 'paste')
+  /** Fills cells with values (the fill handle, Ctrl/⌘+D): like pasting, without reading text. */
+  const fillCells = (cells: readonly PasteCell<T>[]) => writeCells(cells, 'fill')
 
   // ── Undo / redo ─────────────────────────────────────────────────────────────────────────
   /** Changes to undo (oldest first) and undone changes to redo; each step is one edit or paste. */
@@ -532,6 +548,7 @@ export function useEditing<T>(opts: EditingOptions<T>) {
   return {
     forCell,
     pasteCells,
+    fillCells,
     undo: () => travel('undo'),
     redo: () => travel('redo'),
     canUndo: () => past.value.length > 0,

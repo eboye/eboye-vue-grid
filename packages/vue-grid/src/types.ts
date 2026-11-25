@@ -350,10 +350,11 @@ export interface CellEditEvent<T = any> {
   /** The value before the edit. */
   oldValue: unknown
   /**
-   * What made the change: `edit` (an editor, a checkbox), `paste` (Ctrl/⌘+V into a range), or
+   * What made the change: `edit` (an editor, a checkbox), `paste` (Ctrl/⌘+V into a range), `fill`
+   * (the fill handle, Ctrl/⌘+D), or
    * `undo` / `redo` (Ctrl/⌘+Z, Ctrl+Y, or the methods). Store it the same way in every case.
    */
-  source?: 'edit' | 'paste' | 'undo' | 'redo'
+  source?: 'edit' | 'paste' | 'fill' | 'undo' | 'redo'
 }
 
 /** A pasted cell that wasn't changed (range selection + editing). */
@@ -550,6 +551,12 @@ export interface VGridExposed {
    * features.
    */
   pasteText(text: string): Promise<CellsPasteEvent | null>
+  /**
+   * Fills the selected range down from its top row, as Ctrl/⌘+D does (the fill handle's rules:
+   * one value repeats). Resolves the `cells-fill` event, or `null` without a range of two or
+   * more rows. Range selection and editing features.
+   */
+  fillDown(): Promise<CellsPasteEvent | null>
   /**
    * Undoes the last change made in the grid (an edit, a checkbox, a whole paste): each cell gets
    * its value back through `cell-edit` (`source: 'undo'`) and `save-cell`, as Ctrl/⌘+Z does.
@@ -1179,6 +1186,11 @@ export interface GridParts {
   headerDrag?: boolean
   /** Export: Ctrl/⌘+C copying in the grid. */
   copyShortcut?: boolean
+  /**
+   * Range selection with editing: the fill handle on the selection's corner, and Ctrl/⌘+D
+   * (`fillDown()` still works).
+   */
+  fillHandle?: boolean
   /** Editing: Ctrl/⌘+Z and Ctrl+Y / Ctrl/⌘+Shift+Z (`undo()` / `redo()` still work). */
   undoShortcut?: boolean
   /** Range selection with editing: Ctrl/⌘+V pasting into editable cells (`pasteText()` still works). */

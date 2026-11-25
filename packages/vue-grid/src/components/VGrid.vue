@@ -310,6 +310,11 @@ const emit = defineEmits<{
    * cells left alone and why, and the `save-cell` calls that failed.
    */
   'cells-paste': [event: CellsPasteEvent<T>]
+  /**
+   * A fill finished (the fill handle, Ctrl/⌘+D): every changed cell (each also a `cell-edit`,
+   * `source: 'fill'`), the cells left alone and why, and the saves that failed.
+   */
+  'cells-fill': [event: CellsPasteEvent<T>]
   /** `loadSubRows` rejected for a row. */
   'sub-rows-error': [event: { row: T; error: unknown }]
   /** An item of the body-cell context menu was chosen. */
@@ -1191,6 +1196,14 @@ const cellRange = features.rangeSelection?.useCellRange<T>({
       return result
     }),
   pasteKeys: () => part('pasteShortcut'),
+  fill:
+    editing &&
+    (async (cells) => {
+      const result = await editing.fillCells(cells)
+      emit('cells-fill', result)
+      return result
+    }),
+  fillOn: () => part('fillHandle'),
 })
 
 // ── Status bar ──────────────────────────────────────────────────────────────────────────────
@@ -1479,6 +1492,7 @@ const selectRange = (next: CellRange | null) =>
   cellRange ? cellRange.select(next) : noRange('selectRange')
 const getRangeValues = () => cellRange?.values() ?? (noRange('getRangeValues'), [])
 const copyRange = () => cellRange?.copyRange() ?? (noRange('copyRange'), Promise.resolve(false))
+const fillDown = () => cellRange?.fillDown() ?? (noRange('fillDown'), Promise.resolve(null))
 const pasteText = (text: string) =>
   cellRange?.pasteText(text) ?? (noRange('pasteText'), Promise.resolve(null))
 
@@ -1523,6 +1537,7 @@ defineExpose<VGridExposed>({
   getRangeValues,
   copyRange,
   pasteText,
+  fillDown,
   undo,
   redo,
   canUndo,

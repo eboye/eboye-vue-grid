@@ -50,6 +50,18 @@ export interface CellRangeOptions<T> {
   paste?: (cells: PasteCell<T>[]) => Promise<CellsPasteEvent<T>>
   /** Ctrl/⌘+V pastes (`parts.pasteShortcut`). */
   pasteKeys: () => boolean
+  /** Editing feature: writes filled values into cells. Without it there's no fill handle. */
+  fill?: (cells: PasteCell<T>[]) => Promise<CellsPasteEvent<T>>
+  /** The fill handle and Ctrl/⌘+D are on (`parts.fillHandle`). */
+  fillOn: () => boolean
+}
+
+/** A block of cells by position: first and last row, first and last column. */
+interface Box {
+  top: number
+  bottom: number
+  left: number
+  right: number
 }
 
 const ROW = '[role="row"][data-row-key]'
@@ -69,6 +81,8 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
   let dragging = false
   /** Focus is going back to a cell after a paste: not a new range. */
   let refocusing = false
+  /** A fill-handle drag: the cells it fills from, and the area it covers so far. */
+  const filling = shallowRef<{ source: Box; area: Box } | null>(null)
 
   /** The body's data rows as laid out, top to bottom: expanded children in, group rows out. */
   const ordered = computed<T[]>(() => {
@@ -119,6 +133,16 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
     }
   })
 
+  /** What's selected: the range, else the anchor cell alone. */
+  const selection = computed<Box | null>(() => {
+    if (bounds.value) return bounds.value
+    const a = opts.enabled() ? anchor.value : null
+    const r = a && rowIndex.value.get(String(a.rowKey))
+    const c = a && colIndex.value.get(a.columnKey)
+    return r == null || c == null ? null : { top: r, bottom: r, left: c, right: c }
+  })
+  const canFill = () => !!opts.fill && opts.fillOn()
+
   const same = (a: CellRef, b: CellRef) =>
     String(a.rowKey) === String(b.rowKey) && a.columnKey === b.columnKey
 
@@ -159,21 +183,64 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
   /** How close to an edge (px) the grid starts scrolling, and its fastest step per frame. */
   const EDGE = 28
   const MAX_STEP = 36
+  /** The fill handle's grab area (px) in the corner cell's corner. */
+  const HANDLE = 10
 
+  /** Ends a drag; a fill drag ends without filling (`pointerup` fills: `onPointerUp`). */
   function stopDrag() {
     dragging = false
     cancelAnimationFrame(frame)
     frame = 0
-    opts.root.value?.classList.remove('vg-range-dragging')
+    opts.root.value?.classList.remove('vg-range-dragging', 'vg-range-filling')
     window.removeEventListener('pointermove', onPointerMove)
-    window.removeEventListener('pointerup', stopDrag)
+    window.removeEventListener('pointerup', onPointerUp)
     window.removeEventListener('pointercancel', stopDrag)
+    const f = filling.value
+    filling.value = null
+    return f
+  }
+
+  function onPointerUp() {
+    const f = stopDrag()
+    if (f) void fillArea(f.source, f.area)
+  }
+
+  function listen() {
+    dragging = true
+    // on the window: the drag goes on when the pointer leaves the grid (it then scrolls)
+    window.addEventListener('pointermove', onPointerMove)
+    window.addEventListener('pointerup', onPointerUp)
+    window.addEventListener('pointercancel', stopDrag)
+  }
+
+  /** The press is on the fill handle: the bottom-right corner (bottom-left, right to left) of the corner cell. */
+  function onHandle(event: PointerEvent): boolean {
+    if (!canFill() || filling.value) return false
+    const cell = (event.target as Element).closest<HTMLElement>('.vg-range-corner')
+    if (!cell) return false
+    const box = cell.getBoundingClientRect()
+    const rtl = getComputedStyle(cell).direction === 'rtl'
+    const x = rtl ? event.clientX - box.left : box.right - event.clientX
+    return (
+      x >= 0 &&
+      x <= HANDLE &&
+      box.bottom - event.clientY >= 0 &&
+      box.bottom - event.clientY <= HANDLE
+    )
   }
 
   function onPointerDown(event: PointerEvent) {
     // Touch drags scroll; a press on a control belongs to it.
     if (!opts.enabled() || event.button !== 0 || event.pointerType === 'touch') return
     if ((event.target as Element).closest(INTERACTIVE)) return
+    if (onHandle(event) && selection.value) {
+      // the fill handle: no focus move, no text selection; the drag shows what it will fill
+      event.preventDefault()
+      filling.value = { source: selection.value, area: selection.value }
+      opts.root.value?.classList.add('vg-range-filling')
+      listen()
+      return
+    }
     const ref = refOf(event.target as Element)
     if (!ref) return
     if (event.shiftKey && anchor.value) {
@@ -184,14 +251,11 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
       return
     }
     set(ref, ref)
-    dragging = true
-    // on the window: the drag goes on when the pointer leaves the grid (it then scrolls)
-    window.addEventListener('pointermove', onPointerMove)
-    window.addEventListener('pointerup', stopDrag)
-    window.addEventListener('pointercancel', stopDrag)
+    listen()
   }
 
   function extendTo(ref: CellRef | null) {
+    if (filling.value) return fillTo(ref)
     if (!ref || !anchor.value) return
     if (!same(ref, anchor.value)) {
       // Past the first cell it's a range, not a text selection.
@@ -201,8 +265,36 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
     set(anchor.value, ref)
   }
 
+  /**
+   * A fill drag reaching a cell: the fill area runs from the source to its row (up or down) or
+   * its column (left or right), whichever it went further past.
+   */
+  function fillTo(ref: CellRef | null) {
+    const f = filling.value
+    const r = ref && rowIndex.value.get(String(ref.rowKey))
+    const c = ref && colIndex.value.get(ref.columnKey)
+    if (!f || r == null || c == null) return
+    const s = f.source
+    const dr = r > s.bottom ? r - s.bottom : r < s.top ? s.top - r : 0
+    const dc = c > s.right ? c - s.right : c < s.left ? s.left - c : 0
+    const area =
+      dr && dr >= dc
+        ? { ...s, top: Math.min(s.top, r), bottom: Math.max(s.bottom, r) }
+        : dc
+          ? { ...s, left: Math.min(s.left, c), right: Math.max(s.right, c) }
+          : s
+    const a = f.area
+    if (
+      a.top !== area.top ||
+      a.bottom !== area.bottom ||
+      a.left !== area.left ||
+      a.right !== area.right
+    )
+      filling.value = { source: s, area }
+  }
+
   function onPointerMove(event: PointerEvent) {
-    if (!dragging || !anchor.value) return
+    if (!dragging || (!anchor.value && !filling.value)) return
     if (!(event.buttons & 1)) return stopDrag()
     pointer.x = event.clientX
     pointer.y = event.clientY
@@ -295,6 +387,14 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
     if (ctrl && !event.altKey && !event.shiftKey && key.toLowerCase() === 'v') {
       if (!opts.paste || !opts.pasteKeys() || !start()) return false
       catchPaste() // the browser's own paste lands in a hidden text area, which reads it
+      return true
+    }
+    if (ctrl && !event.altKey && !event.shiftKey && key.toLowerCase() === 'd') {
+      // fill down: the range's top row into the rows below it
+      const b = bounds.value
+      if (!canFill() || !b || b.bottom === b.top) return false
+      event.preventDefault()
+      void fillArea({ ...b, bottom: b.top }, b)
       return true
     }
     if (ctrl && !event.altKey && !event.shiftKey && key.toLowerCase() === 'a') {
@@ -465,6 +565,56 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
     area.focus({ preventScroll: true })
   }
 
+  // ── Filling ──────────────────────────────────────────────────────────────────────────────
+  /**
+   * Fills `area` from `source` (inside it, at one end): each column (filling up or down) or row
+   * (left or right) goes on from its source cells, a series where they make one, else repeating
+   * them. The whole area becomes the range. Null when there's nothing to fill.
+   */
+  async function fillArea(source: Box, area: Box): Promise<CellsPasteEvent<T> | null> {
+    const vertical = area.top !== source.top || area.bottom !== source.bottom
+    const horizontal = area.left !== source.left || area.right !== source.right
+    if (!opts.fill || (!vertical && !horizontal)) return null
+    const rows = ordered.value
+    const cols = opts.columns()
+    const { fillSeries } = await import('../core/paste') // with the paste code (own chunk)
+    const cells: PasteCell<T>[] = []
+    const add = (r: number, c: number, value: unknown) => {
+      const row = rows[r]!
+      const col = cols[c]!
+      cells.push({
+        row,
+        rowKey: opts.getKey(row),
+        column: col.def,
+        definition: col.definition as CellRendererDefinition | undefined,
+        value,
+      })
+    }
+    const at = (r: number, c: number) => getCellValue(rows[r]!, cols[c]!.def)
+    const span = (from: number, to: number) =>
+      Array.from({ length: to - from + 1 }, (_, i) => from + i)
+    // each line (a column when filling up / down, a row when filling sideways) on its own
+    const lines = vertical ? span(source.left, source.right) : span(source.top, source.bottom)
+    for (const line of lines) {
+      const cell = (i: number) => (vertical ? at(i, line) : at(line, i))
+      const put = (i: number, v: unknown) => (vertical ? add(i, line, v) : add(line, i, v))
+      const [lo, hi, aLo, aHi] = vertical
+        ? [source.top, source.bottom, area.top, area.bottom]
+        : [source.left, source.right, area.left, area.right]
+      const src = span(lo, hi).map(cell)
+      if (aHi > hi) fillSeries(src, aHi - hi).forEach((v, i) => put(hi + 1 + i, v))
+      if (aLo < lo)
+        // upwards / leftwards: the series runs backwards from the source's first cell
+        fillSeries([...src].reverse(), lo - aLo).forEach((v, i) => put(lo - 1 - i, v))
+    }
+    const corner = (r: number, c: number) => ({
+      rowKey: opts.getKey(rows[r]!),
+      columnKey: cols[c]!.key,
+    })
+    set(corner(area.top, area.left), corner(area.bottom, area.right))
+    return opts.fill(cells)
+  }
+
   /** Every cell in the body. False when there are none. */
   function selectAll(): boolean {
     const rows = ordered.value
@@ -483,20 +633,30 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
   /** A cell's classes while it is in the range: in it, and on which of its edges (null outside). */
   function forCell(cell: () => { rowKey: RowKey; columnKey: string; data: boolean }) {
     return computed<string[] | null>(() => {
-      const b = bounds.value
-      if (!b) return null
+      const sel = selection.value
+      const f = filling.value
+      if (!sel && !f) return null
       const c = cell()
       if (!c.data) return null
       const r = rowIndex.value.get(String(c.rowKey))
       const col = colIndex.value.get(c.columnKey)
       if (r === undefined || col === undefined) return null
-      if (r < b.top || r > b.bottom || col < b.left || col > b.right) return null
-      const classes = ['vg-in-range']
-      if (r === b.top) classes.push('vg-range-top')
-      if (r === b.bottom) classes.push('vg-range-bottom')
-      if (col === b.left) classes.push('vg-range-left')
-      if (col === b.right) classes.push('vg-range-right')
-      return classes
+      const inside = (x: Box) => r >= x.top && r <= x.bottom && col >= x.left && col <= x.right
+      const classes: string[] = []
+      const b = bounds.value
+      if (b && inside(b)) {
+        classes.push('vg-in-range')
+        if (r === b.top) classes.push('vg-range-top')
+        if (r === b.bottom) classes.push('vg-range-bottom')
+        if (col === b.left) classes.push('vg-range-left')
+        if (col === b.right) classes.push('vg-range-right')
+      }
+      // while dragging the handle: the cells it will fill
+      if (f && inside(f.area) && !inside(f.source)) classes.push('vg-fill-preview')
+      // the handle sits on the selection's last cell
+      else if (!f && sel && canFill() && r === sel.bottom && col === sel.right)
+        classes.push('vg-range-corner')
+      return classes.length ? classes : null
     })
   }
 
@@ -511,6 +671,11 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
     text,
     copyRange,
     pasteText,
+    /** Fills the range down from its top row (Ctrl/⌘+D). Null without a range of 2+ rows. */
+    fillDown() {
+      const b = bounds.value
+      return b && b.bottom > b.top ? fillArea({ ...b, bottom: b.top }, b) : Promise.resolve(null)
+    },
     selectAll,
     clear,
     /** Selects the block around these cells (after an undo: the cells it changed). */

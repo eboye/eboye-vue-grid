@@ -227,3 +227,107 @@ export function pasteArea(
   if (range && range.rows % block.rows === 0 && range.cols % block.cols === 0) return range
   return block
 }
+
+// ── Filling (the fill handle, Ctrl/⌘+D) ─────────────────────────────────────────────────────
+
+/** A value read as a calendar day, if it is one: a Date, or ISO text (`2026-05-23`, with a time or not). */
+function asDay(value: unknown): Date | null {
+  if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value
+  if (typeof value !== 'string') return null
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
+  if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]))
+  if (!/^\d{4}-\d{2}-\d{2}T\d/.test(value)) return null
+  const d = new Date(value)
+  return Number.isNaN(d.getTime()) ? null : d
+}
+
+/** Whole days from `a` to `b`, by the calendar (a daylight-saving change doesn't count). */
+const dayGap = (a: Date, b: Date) =>
+  Math.round(
+    (Date.UTC(b.getFullYear(), b.getMonth(), b.getDate()) -
+      Date.UTC(a.getFullYear(), a.getMonth(), a.getDate())) /
+      86_400_000,
+  )
+
+/** `d` moved by `days`, in the type `like` had (Date, ISO date, ISO date-time). */
+function shiftDay(d: Date, days: number, like: unknown): unknown {
+  const next = new Date(d)
+  next.setDate(next.getDate() + days)
+  if (like instanceof Date) return next
+  if (typeof like === 'string' && like.length === 10) {
+    const pad = (n: number) => String(n).padStart(2, '0')
+    return `${next.getFullYear()}-${pad(next.getMonth() + 1)}-${pad(next.getDate())}`
+  }
+  return next.toISOString()
+}
+
+/**
+ * The next `count` values after `source` (the cells a fill starts from, in the fill's direction),
+ * as a spreadsheet's fill handle makes them: numbers a steady step apart go on (`1, 2` → `3, 4`;
+ * `10, 20` → `30`), dates go on by their step in days (one date alone: day by day), and
+ * anything else repeats (`a, b` → `a, b, a`).
+ */
+export function fillSeries(source: readonly unknown[], count: number): unknown[] {
+  const n = source.length
+  const out: unknown[] = []
+  if (!n || count <= 0) return out
+  const last = source[n - 1]
+  if (n >= 2 && source.every((v) => typeof v === 'number' && Number.isFinite(v))) {
+    const nums = source as number[]
+    const step = nums[1]! - nums[0]!
+    const steady = nums.every(
+      (v, i) => i === 0 || Math.abs(v - nums[i - 1]! - step) <= 1e-9 * Math.max(1, Math.abs(step)),
+    )
+    if (steady) {
+      // rounded: 0.1 + 0.2 shows as 0.3, not 0.30000000000000004
+      for (let i = 1; i <= count; i++)
+        out.push(Number(((last as number) + step * i).toPrecision(12)))
+      return out
+    }
+  }
+  const days = source.map(asDay)
+  if (days.every((d): d is Date => d !== null)) {
+    const step = n === 1 ? 1 : dayGap(days[0]!, days[1]!)
+    const steady = days.every((d, i) => i === 0 || dayGap(days[i - 1]!, d) === step)
+    if (steady && step !== 0) {
+      for (let i = 1; i <= count; i++) out.push(shiftDay(days[n - 1]!, step * i, last))
+      return out
+    }
+  }
+  for (let i = 0; i < count; i++) out.push(source[i % n])
+  return out
+}
+
+/**
+ * A filled value as the target column holds it: kept when it already fits (a number into a
+ * number column, a choice into a select…), else read like pasted text; an Error when it can't be.
+ */
+export function fillValue(value: unknown, kind: PasteKind, ctx: PasteContext): unknown {
+  if (value === null || value === undefined || value === '')
+    return kind === 'checkbox' ? false : kind === 'text' ? (value ?? null) : null
+  switch (kind) {
+    case 'number':
+      if (typeof value === 'number')
+        return Number.isFinite(value) ? value : new Error('Not a number.')
+      return pasteValue(String(value), kind, ctx)
+    case 'checkbox':
+      return typeof value === 'boolean' ? value : pasteValue(String(value), kind, ctx)
+    case 'date':
+    case 'datetime': {
+      const d =
+        value instanceof Date
+          ? value
+          : typeof value === 'number'
+            ? new Date(value)
+            : parseDate(String(value), ctx.locale)
+      if (!d || Number.isNaN(d.getTime())) return new Error(`"${String(value)}" is not a date.`)
+      return asOld(d, ctx.oldValue, kind)
+    }
+    case 'select':
+      return ctx.options?.some((o) => Object.is(o.value, value))
+        ? value
+        : pasteValue(String(value), kind, ctx)
+    default:
+      return typeof value === 'string' ? value : String(value)
+  }
+}

@@ -669,6 +669,24 @@
     user-select: none;
     cursor: cell;
   }
+  .vg-range-filling {
+    user-select: none;
+    cursor: crosshair;
+  }
+  /* The fill handle: a square in the selection's last cell's corner (drawn by the theme). */
+  .vg-range-corner:not(.vg-pin-left, .vg-pin-right) {
+    position: relative; /* pinned cells are sticky, which positions the handle already */
+  }
+  .vg-range-corner::after {
+    content: '';
+    position: absolute;
+    inset-inline-end: 0;
+    bottom: 0;
+    z-index: 1;
+    width: 8px;
+    height: 8px;
+    cursor: crosshair;
+  }
   .vg-cell-editing:not(.vg-pin-left, .vg-pin-right) {
     position: relative; /* pinned cells are sticky, which positions the editor already */
   }

@@ -44,7 +44,9 @@ body {
 a {
   color: var(--site-accent);
 }
-:focus-visible {
+/* The site's own focus ring; inside a grid, the grid draws its own (an extra, offset ring around
+   a cell or header would double it, and spill over the neighbours). */
+:focus-visible:not(.vg *, .vg) {
   outline: 2px solid var(--site-accent);
   outline-offset: 2px;
 }

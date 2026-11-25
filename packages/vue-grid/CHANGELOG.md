@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.15.0 — 2026-11-25
+
+**Fill handle** (`rangeSelectionFeature` with `editingFeature`): the selection's last cell
+has a small square; drag it down, up or sideways and the cells it passes over are filled, as in a
+spreadsheet. One value repeats, two or more numbers a steady step apart go on (`1, 2` → `3, 4`,
+without float noise), dates go on by their step in days (one date alone: day by day, in the type
+the cell had), anything else repeats as a pattern. A dashed preview shows the cells it will fill,
+and the grid scrolls at its edges. Ctrl/⌘+D fills the selected range down from its top row.
+Values go through the same checks as a paste (read-only and invalid cells are skipped); each
+change is a `cell-edit` with `source: 'fill'` and a `save-cell`, the new `cells-fill` event
+reports the lot, and one Ctrl/⌘+Z undoes the whole fill. New: `grid.fillDown()`, part
+`fillHandle`. The handle is drawn with CSS (no extra elements in the cells). The range selection feature grows by 0.9 kB gzipped; a plain grid stays at 15.8 kB.
+
 ## 0.14.0 — 2026-11-25
 
 **Undo and redo** (`editingFeature`): Ctrl/⌘+Z undoes the last change made in the grid, an edit,

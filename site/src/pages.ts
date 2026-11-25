@@ -122,6 +122,7 @@ export const pages: Page[] = [
       'Click a cell and use Shift+arrow keys; Ctrl+A (⌘A) takes every cell, Esc clears.',
       'Copy cells from Excel or Sheets (or from the grid), click a Player cell and press Ctrl+V (⌘V): numbers, dates and statuses are read as such, and the # and Δ odds columns are left alone.',
       'Select ten Stake cells and paste a single number: it fills all of them. Ctrl+Z (⌘Z) undoes the whole paste.',
+      'Drag the small square on a selection’s corner down a few rows: values repeat, two numbers go on in their step, dates day by day. Ctrl+D (⌘D) fills a selection down from its top row.',
       'Turn on 2,000 rows and drag past the bottom edge, or Shift+click far below: rows that aren’t drawn still count.',
     ],
     docs: '29. Cell-range selection',

@@ -285,6 +285,19 @@
   .vg-cell.vg-range-right {
     --_vg-range-r: 2px;
   }
+  /* The fill handle (a square on the corner), and the cells a fill drag will change. */
+  .vg-range-corner::after {
+    box-sizing: border-box;
+    border: 1.5px solid var(--vg-color-surface);
+    background: var(--vg-color-range-border);
+  }
+  .vg-row > .vg-cell.vg-fill-preview,
+  .vg-row:hover > .vg-cell.vg-fill-preview {
+    background: color-mix(in srgb, var(--vg-color-range) 60%, transparent);
+    outline: 1px dashed var(--vg-color-range-border);
+    outline-offset: -1px;
+    transition-duration: 0s;
+  }
   .vg-cell[data-vg-flash] {
     --_vg-flash: var(--vg-flash-color);
   }

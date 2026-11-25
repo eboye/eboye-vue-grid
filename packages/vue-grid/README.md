@@ -180,36 +180,36 @@ what you import.
 
 | Import (minified / gzip, Vue excluded)                                       | Initial chunk      |
 | ---------------------------------------------------------------------------- | ------------------ |
-| `VGrid` (no features)                                                        | 45.9 kB / 15.8 kB  |
-| `VGrid` + `sortingFeature`                                                   | 48.7 kB / 16.8 kB  |
-| `VGrid` + `filteringFeature`                                                 | 56.7 kB / 19.7 kB  |
-| `VGrid` + `serverDataFeature`                                                | 47.4 kB / 16.4 kB  |
-| `VGrid` + `paginationFeature`                                                | 46.1 kB / 15.9 kB  |
-| `VGrid` + `selectionFeature`                                                 | 50.1 kB / 17.2 kB  |
-| `VGrid` + `subGridsFeature`                                                  | 48.3 kB / 16.6 kB  |
-| `VGrid` + `menusFeature`                                                     | 57.2 kB / 19.6 kB  |
-| `VGrid` + `columnReorderFeature`                                             | 49.6 kB / 17.0 kB  |
-| `VGrid` + `columnPinningFeature`                                             | 48.9 kB / 16.8 kB  |
-| `VGrid` + `virtualScrollingFeature`                                          | 51.7 kB / 18.0 kB  |
-| `VGrid` + `columnVisibilityFeature`                                          | 46.1 kB / 15.8 kB  |
-| `VGrid` + `keyboardNavigationFeature`                                        | 48.7 kB / 16.8 kB  |
-| `VGrid` + `columnResizingFeature`                                            | 49.2 kB / 17.0 kB  |
-| `VGrid` + `columnGroupsFeature`                                              | 47.2 kB / 16.3 kB  |
-| `VGrid` + `rowPinningFeature`                                                | 50.9 kB / 17.2 kB  |
-| `VGrid` + `aggregationFeature`                                               | 51.1 kB / 17.4 kB  |
-| `VGrid` + `rowGroupingFeature`                                               | 56.8 kB / 19.4 kB  |
-| `VGrid` + `exportFeature`                                                    | 50.9 kB / 17.7 kB  |
-| `VGrid` + `statusBarFeature`                                                 | 48.9 kB / 16.9 kB  |
-| `VGrid` + `serverGroupingFeature`                                            | 49.1 kB / 16.9 kB  |
-| `VGrid` + `editingFeature`                                                   | 53.3 kB / 18.6 kB  |
-| `VGrid` + `rangeSelectionFeature`                                            | 54.2 kB / 18.8 kB  |
-| `VGrid` + `allFeatures` + `VGridSearch`                                      | 135.9 kB / 45.7 kB |
-| `VGrid` + `currencyRenderer`                                                 | 47.3 kB / 16.3 kB  |
-| `VGrid` + `VGridPagination` + `VGridColumnMenu`                              | 53.2 kB / 18.3 kB  |
+| `VGrid` (no features)                                                        | 46.1 kB / 15.8 kB  |
+| `VGrid` + `sortingFeature`                                                   | 48.8 kB / 16.8 kB  |
+| `VGrid` + `filteringFeature`                                                 | 56.8 kB / 19.7 kB  |
+| `VGrid` + `serverDataFeature`                                                | 47.5 kB / 16.4 kB  |
+| `VGrid` + `paginationFeature`                                                | 46.3 kB / 15.9 kB  |
+| `VGrid` + `selectionFeature`                                                 | 50.3 kB / 17.3 kB  |
+| `VGrid` + `subGridsFeature`                                                  | 48.5 kB / 16.7 kB  |
+| `VGrid` + `menusFeature`                                                     | 57.4 kB / 19.6 kB  |
+| `VGrid` + `columnReorderFeature`                                             | 49.8 kB / 17.1 kB  |
+| `VGrid` + `columnPinningFeature`                                             | 49.1 kB / 16.9 kB  |
+| `VGrid` + `virtualScrollingFeature`                                          | 51.9 kB / 18.0 kB  |
+| `VGrid` + `columnVisibilityFeature`                                          | 46.3 kB / 15.9 kB  |
+| `VGrid` + `keyboardNavigationFeature`                                        | 48.9 kB / 16.9 kB  |
+| `VGrid` + `columnResizingFeature`                                            | 49.4 kB / 17.0 kB  |
+| `VGrid` + `columnGroupsFeature`                                              | 47.4 kB / 16.3 kB  |
+| `VGrid` + `rowPinningFeature`                                                | 51.0 kB / 17.2 kB  |
+| `VGrid` + `aggregationFeature`                                               | 51.3 kB / 17.5 kB  |
+| `VGrid` + `rowGroupingFeature`                                               | 56.9 kB / 19.4 kB  |
+| `VGrid` + `exportFeature`                                                    | 51.0 kB / 17.8 kB  |
+| `VGrid` + `statusBarFeature`                                                 | 49.0 kB / 16.9 kB  |
+| `VGrid` + `serverGroupingFeature`                                            | 49.2 kB / 17.0 kB  |
+| `VGrid` + `editingFeature`                                                   | 53.6 kB / 18.7 kB  |
+| `VGrid` + `rangeSelectionFeature`                                            | 56.9 kB / 19.7 kB  |
+| `VGrid` + `allFeatures` + `VGridSearch`                                      | 138.7 kB / 46.7 kB |
+| `VGrid` + `currencyRenderer`                                                 | 47.5 kB / 16.3 kB  |
+| `VGrid` + `VGridPagination` + `VGridColumnMenu`                              | 53.4 kB / 18.3 kB  |
 | `sortRows` only                                                              | 0.7 kB / 0.4 kB    |
 | `toCsv` only                                                                 | 1.1 kB / 0.6 kB    |
-| everything                                                                   | 189.9 kB / 61.3 kB |
-| `validateGridConfig` (`@nocopypaste/vue-grid/agent`, never in an app bundle) | 79.2 kB / 21.8 kB  |
+| everything                                                                   | 192.7 kB / 62.3 kB |
+| `validateGridConfig` (`@nocopypaste/vue-grid/agent`, never in an app bundle) | 79.8 kB / 21.9 kB  |
 
 With `filteringFeature`, the filter popover body and the filter-row editors are **on-demand
 chunks**: they load the first time a popover opens or `filter-row` is on. With
@@ -297,6 +297,7 @@ chunks that on-demand imports share with the entry, even when nothing uses them.
 `load-error(error)` (a `dataSource` call failed) ·
 `cell-edit({ row, rowKey, column, value, oldValue })` (an edited cell: `editingFeature`; update your data) ·
 `cells-paste({ edits, skipped, failed })` (a paste into a range finished: `rangeSelectionFeature` + `editingFeature`) ·
+`cells-fill({ edits, skipped, failed })` (a fill-handle drag or Ctrl/⌘+D finished; same features) ·
 plus the `update:*` events of every `v-model`.
 
 Clicks on links, buttons and inputs inside a cell never trigger `row-click`.
@@ -331,6 +332,7 @@ grid.value?.selectRange({
 }) // rangeSelectionFeature (null clears)
 grid.value?.getRangeValues() / copyRange() // the selected block's raw values, row by row / copy it as tab-separated text
 grid.value?.pasteText('7\t8\n9\t10') // + editingFeature: paste into the editable cells from the range (like Ctrl/⌘+V)
+grid.value?.fillDown() // + editingFeature: fill the range down from its top row (like Ctrl/⌘+D)
 ```
 
 `reload()` also forgets lazily loaded children, as does passing a different `load-sub-rows`
@@ -1234,6 +1236,15 @@ const range = ref<CellRange | null>(null) // { start: { rowKey, columnKey }, end
   components) and the saves that failed. `grid.pasteText(text)` pastes from code;
   `parts: { pasteShortcut: false }` leaves Ctrl/⌘+V to the browser. While an editor is open,
   Ctrl/⌘+V pastes into it as usual.
+- **Fill handle** (with `editingFeature`): a small square on the selection's last cell. Drag it
+  down, up or sideways (the grid scrolls at its edges) and the cells it passes over are filled,
+  as in a spreadsheet: a value repeats, two or more numbers a steady step apart go on (`1, 2` →
+  `3, 4`), dates go on by their step in days (one date alone: day by day), anything else repeats
+  as a pattern. A dashed preview shows what it will fill. **Ctrl/⌘+D** fills the range down from
+  its top row. Values go through the column's checks like a paste (read-only and invalid cells
+  are skipped), each change is a `cell-edit` (`source: 'fill'`) and a `save-cell`, then
+  `cells-fill({ edits, skipped, failed })` reports it, and one Ctrl/⌘+Z undoes the whole fill.
+  `grid.fillDown()` does Ctrl/⌘+D from code; `parts: { fillHandle: false }` turns both off.
 - Style it with `--vg-color-range` (the cells' tint) and `--vg-color-range-border` (the outline).
 
 ## Status bar
@@ -1546,6 +1557,7 @@ Text that takes a count gets the number too (`rowCount(shown, total, count, tota
 | `headerDrag`         | Dragging headers to reorder (Alt+←/→ and the header menu still move columns)    |
 | `copyShortcut`       | Ctrl/⌘+C copying in the grid (`copyRows()` still works)                         |
 | `pasteShortcut`      | Ctrl/⌘+V pasting into a range (`pasteText()` still works)                       |
+| `fillHandle`         | The fill handle on a range's corner, and Ctrl/⌘+D (`fillDown()` still works)    |
 | `undoShortcut`       | Ctrl/⌘+Z undo and Ctrl+Y / Ctrl/⌘+Shift+Z redo (`undo()` / `redo()` still work) |
 | `groupCounts`        | The row count on group rows                                                     |
 

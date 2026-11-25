@@ -1,4 +1,4 @@
-# @nocopypaste/vue-grid 0.14.0 — API reference
+# @nocopypaste/vue-grid 0.15.0 — API reference
 
 > Generated from the TypeScript sources (`scripts/gen-agent.mjs`). Machine-readable: `agent/api.json`, `agent/grid-config.schema.json`.
 
@@ -115,6 +115,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `cell-action` | `[event: CellActionEvent<T>]` | A renderer emitted an action (buttons, toggles, menus, edit, copy). |
 | `cell-edit` | `[event: CellEditEvent<T>]` | A cell was edited (editing feature): update your data with `value`. The grid doesn't. |
 | `cells-paste` | `[event: CellsPasteEvent<T>]` | A paste finished (range selection + editing): every changed cell (each also a `cell-edit`), the cells left alone and why, and the `save-cell` calls that failed. |
+| `cells-fill` | `[event: CellsPasteEvent<T>]` | A fill finished (the fill handle, Ctrl/⌘+D): every changed cell (each also a `cell-edit`, `source: 'fill'`), the cells left alone and why, and the saves that failed. |
 | `sub-rows-error` | `[event: { row: T; error: unknown }]` | `loadSubRows` rejected for a row. |
 | `context-action` | `[event: ContextActionEvent<T>]` | An item of the body-cell context menu was chosen. |
 | `header-action` | `[event: HeaderActionEvent<T>]` | A custom item of the header menu was chosen (built-in items act by themselves). |
@@ -167,6 +168,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `getRangeValues` | `unknown[][]` |  | The selected range's raw values, row by row (`[]` without a range). Range selection feature. |
 | `copyRange` | `Promise<boolean>` |  | Copies the selected range as tab-separated text, as the cells show it (Ctrl/⌘+C does the same). Resolves `false` without a range. Range selection feature. |
 | `pasteText` | `Promise<CellsPasteEvent \| null>` |  | Pastes tab-separated text (what spreadsheets copy) into the editable cells from the selected range's top-left cell, as Ctrl/⌘+V does; a range a whole number of blocks in size is filled. Resolves the `cells-paste` event, or `null` with nowhere to paste. Range selection and editing features. |
+| `fillDown` | `Promise<CellsPasteEvent \| null>` |  | Fills the selected range down from its top row, as Ctrl/⌘+D does (the fill handle's rules: one value repeats). Resolves the `cells-fill` event, or `null` without a range of two or more rows. Range selection and editing features. |
 | `undo` | `Promise<boolean>` |  | Undoes the last change made in the grid (an edit, a checkbox, a whole paste): each cell gets its value back through `cell-edit` (`source: 'undo'`) and `save-cell`, as Ctrl/⌘+Z does. Cells changed since by something else are left alone. Resolves whether anything changed. Editing feature. |
 | `redo` | `Promise<boolean>` |  | Redoes the last undone change (Ctrl+Y, Ctrl/⌘+Shift+Z). Editing feature. |
 | `canUndo` | `boolean` |  | Whether there's a change to undo (for your own buttons; reactive). |

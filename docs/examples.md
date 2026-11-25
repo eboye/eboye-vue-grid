@@ -2566,3 +2566,21 @@ With `editingFeature` and `editable` columns, Ctrl/⌘+V pastes what Excel, Shee
 - Every changed cell is a `cell-edit` (and `save-cell`, if set), like typing; `cells-paste` lists
   `edits`, `skipped` (with the reason) and `failed` saves, e.g. to save the lot in one request.
 - `grid.pasteText(text)` pastes from code; `parts: { pasteShortcut: false }` turns Ctrl/⌘+V off.
+
+### Fill handle
+
+The same setup gives the selection a fill handle, the square on its last cell. Drag it down
+(or up, or sideways) to fill: one value repeats, `1, 2` goes on `3, 4, 5`, a date goes on day by
+day, anything else repeats as a pattern. Ctrl/⌘+D fills the range down from its top row.
+
+```vue
+<VGrid
+  …
+  range-selection
+  @cell-edit="(e) => setCellValue(e.row, e.column, e.value)"
+  @cells-fill="(e) => e.skipped.length && toast(`${e.skipped.length} cells left as they were`)"
+/>
+```
+
+Each filled cell is a `cell-edit` with `source: 'fill'` (and a `save-cell`); one Ctrl/⌘+Z undoes the
+whole fill. `parts: { fillHandle: false }` removes the handle and Ctrl/⌘+D.

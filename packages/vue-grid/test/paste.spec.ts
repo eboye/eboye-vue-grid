@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { parseClipboard, parseDate, parseNumber, pasteArea, pasteValue } from '../src/core/paste'
+import {
+  fillSeries,
+  fillValue,
+  parseClipboard,
+  parseDate,
+  parseNumber,
+  pasteArea,
+  pasteValue,
+} from '../src/core/paste'
 
 describe('parseClipboard', () => {
   it('tabs and line breaks, the trailing break dropped, CRLF too', () => {
@@ -91,5 +99,44 @@ describe('pasteArea', () => {
     expect(pasteArea({ rows: 2, cols: 1 }, { rows: 4, cols: 3 })).toEqual({ rows: 4, cols: 3 })
     expect(pasteArea({ rows: 2, cols: 2 }, { rows: 3, cols: 2 })).toEqual({ rows: 2, cols: 2 })
     expect(pasteArea({ rows: 2, cols: 2 }, null)).toEqual({ rows: 2, cols: 2 })
+  })
+})
+
+describe('fillSeries', () => {
+  it('numbers a steady step apart go on; anything else repeats', () => {
+    expect(fillSeries([1, 2], 3)).toEqual([3, 4, 5])
+    expect(fillSeries([10, 20, 30], 2)).toEqual([40, 50])
+    expect(fillSeries([0.1, 0.2], 2)).toEqual([0.3, 0.4]) // no float noise
+    expect(fillSeries([5, 3], 2)).toEqual([1, -1])
+    expect(fillSeries([7], 3)).toEqual([7, 7, 7]) // one number: copied
+    expect(fillSeries([1, 2, 4], 4)).toEqual([1, 2, 4, 1]) // no steady step: repeated
+    expect(fillSeries(['a', 'b'], 3)).toEqual(['a', 'b', 'a'])
+    expect(fillSeries([true], 2)).toEqual([true, true])
+  })
+  it('dates go on by their step in days, in the type they had', () => {
+    expect(fillSeries(['2026-05-30'], 3)).toEqual(['2026-05-31', '2026-06-01', '2026-06-02'])
+    expect(fillSeries(['2026-01-01', '2026-01-08'], 2)).toEqual(['2026-01-15', '2026-01-22'])
+    const [d] = fillSeries([new Date(2026, 2, 28)], 1) as Date[]
+    expect([d!.getMonth(), d!.getDate()]).toEqual([2, 29])
+    // across the spring DST change (Europe, 29 March) the calendar step holds
+    const dt = fillSeries(['2026-03-28T10:00:00.000Z', '2026-03-29T10:00:00.000Z'], 1)[0]
+    expect(typeof dt).toBe('string')
+    expect(dt).toMatch(/^2026-03-30T/)
+  })
+})
+
+describe('fillValue', () => {
+  const ctx = { locale: 'en-US', oldValue: null }
+  it('a value that fits the column is kept; else read like pasted text', () => {
+    expect(fillValue(12.5, 'number', ctx)).toBe(12.5)
+    expect(fillValue('1,234.5', 'number', ctx)).toBe(1234.5)
+    expect(fillValue('n/a', 'number', ctx)).toBeInstanceOf(Error)
+    expect(fillValue(false, 'checkbox', ctx)).toBe(false)
+    expect(fillValue('yes', 'checkbox', ctx)).toBe(true)
+    expect(fillValue('won', 'select', { ...ctx, options: [{ value: 'won' }] })).toBe('won')
+    expect(fillValue(5, 'text', ctx)).toBe('5')
+    expect(fillValue(new Date(2026, 4, 23), 'date', { ...ctx, oldValue: '2026-01-01' })).toBe(
+      '2026-05-23',
+    )
   })
 })

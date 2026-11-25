@@ -1,6 +1,6 @@
 {
   "package": "@nocopypaste/vue-grid",
-  "version": "0.14.0",
+  "version": "0.15.0",
   "component": "VGrid",
   "props": [
     {
@@ -474,6 +474,11 @@
       "description": "A paste finished (range selection + editing): every changed cell (each also a `cell-edit`), the cells left alone and why, and the `save-cell` calls that failed."
     },
     {
+      "name": "cells-fill",
+      "payload": "[event: CellsPasteEvent<T>]",
+      "description": "A fill finished (the fill handle, Ctrl/⌘+D): every changed cell (each also a `cell-edit`, `source: 'fill'`), the cells left alone and why, and the saves that failed."
+    },
+    {
       "name": "sub-rows-error",
       "payload": "[event: { row: T; error: unknown }]",
       "description": "`loadSubRows` rejected for a row."
@@ -716,6 +721,12 @@
       "type": "Promise<CellsPasteEvent | null>",
       "required": true,
       "description": "Pastes tab-separated text (what spreadsheets copy) into the editable cells from the selected range's top-left cell, as Ctrl/⌘+V does; a range a whole number of blocks in size is filled. Resolves the `cells-paste` event, or `null` with nowhere to paste. Range selection and editing features."
+    },
+    {
+      "name": "fillDown",
+      "type": "Promise<CellsPasteEvent | null>",
+      "required": true,
+      "description": "Fills the selected range down from its top row, as Ctrl/⌘+D does (the fill handle's rules: one value repeats). Resolves the `cells-fill` event, or `null` without a range of two or more rows. Range selection and editing features."
     },
     {
       "name": "undo",
