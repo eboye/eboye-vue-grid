@@ -2,6 +2,8 @@ import { computed, nextTick, shallowRef, watch, type Ref } from 'vue'
 import { getCellValue } from '../core/value'
 import type {
   CellEditEvent,
+  CellsPasteEvent,
+  PasteSkip,
   CellRendererDefinition,
   ColumnDef,
   EditorName,
@@ -37,6 +39,17 @@ export interface EditingOptions<T> {
   columns: () => readonly ColumnDef<T>[]
   /** Loads the editor's chunk. */
   preload: () => Promise<unknown>
+  /** The format locale: how pasted numbers and dates are read. */
+  locale: () => string
+}
+
+/** A cell to paste into: its row and column, and the pasted text for it. */
+export interface PasteCell<T> {
+  row: T
+  rowKey: RowKey
+  column: ColumnDef<T>
+  definition: CellRendererDefinition | undefined
+  text: string
 }
 
 /** What a cell tells the editing feature about itself. */
@@ -281,6 +294,72 @@ export function useEditing<T>(opts: EditingOptions<T>) {
     return [...seen].sort((a, b) => String(a).localeCompare(String(b))).map((value) => ({ value }))
   }
 
+  /**
+   * Pastes text into many cells at once (range selection): each editable cell's text becomes its
+   * column's kind of value, `validate` checks it, and a changed cell is emitted as `cell-edit`,
+   * then all of them are saved with `save-cell` together. No editor opens; what didn't fit is
+   * reported in `skipped`, the saves that failed in `failed`.
+   */
+  async function pasteCells(cells: readonly PasteCell<T>[]): Promise<CellsPasteEvent<T>> {
+    if (state.value && !state.value.saving) state.value = null
+    const { pasteValue } = await import('../core/paste') // loads on the first paste
+    const m = opts.messages()
+    const result: CellsPasteEvent<T> = { edits: [], skipped: [], failed: [] }
+    for (const { row, rowKey, column, definition, text } of cells) {
+      const skip = (reason: PasteSkip['reason'], message?: string) =>
+        result.skipped.push({ rowKey, columnKey: column.key, text, reason, message })
+      if (!canEdit(row, column)) {
+        skip('read-only')
+        continue
+      }
+      const kind = editorOf(column, definition)
+      if (kind === 'custom') {
+        skip('unsupported')
+        continue
+      }
+      const oldValue = getCellValue(row, column)
+      const value = pasteValue(text, kind, {
+        locale: opts.locale(),
+        oldValue,
+        options: kind === 'select' ? choices(column) : undefined,
+        yes: m.yes,
+        no: m.no,
+      })
+      if (value instanceof Error) {
+        skip('invalid', value.message)
+        continue
+      }
+      const { min, max } = column.editorOptions ?? {}
+      if (
+        typeof value === 'number' &&
+        ((min !== undefined && value < min) || (max !== undefined && value > max))
+      ) {
+        skip(
+          'invalid',
+          m.editOutOfRange?.(min, max) ?? `Out of range (${min ?? '…'}–${max ?? '…'}).`,
+        )
+        continue
+      }
+      const invalid = column.validate?.(value, row)
+      if (invalid) {
+        skip('invalid', invalid)
+        continue
+      }
+      if (Object.is(value, oldValue) || sameDate(value, oldValue)) continue
+      const event: CellEditEvent<T> = { row, rowKey, column, value, oldValue }
+      result.edits.push(event)
+      opts.emit(event)
+    }
+    const saver = opts.save()
+    if (saver && result.edits.length) {
+      const settled = await Promise.allSettled(result.edits.map((e) => saver(e)))
+      settled.forEach((s, i) => {
+        if (s.status === 'rejected') result.failed.push({ edit: result.edits[i]!, error: s.reason })
+      })
+    }
+    return result
+  }
+
   /** A body cell's editing state and handlers. */
   function forCell(cell: () => EditCell<T>) {
     const editable = computed(() => {
@@ -323,6 +402,7 @@ export function useEditing<T>(opts: EditingOptions<T>) {
 
   return {
     forCell,
+    pasteCells,
     state,
     canEdit,
     isEditing,

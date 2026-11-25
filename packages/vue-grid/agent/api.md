@@ -1,4 +1,4 @@
-# @nocopypaste/vue-grid 0.12.0 — API reference
+# @nocopypaste/vue-grid 0.13.0 — API reference
 
 > Generated from the TypeScript sources (`scripts/gen-agent.mjs`). Machine-readable: `agent/api.json`, `agent/grid-config.schema.json`.
 
@@ -113,6 +113,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `cell-click` | `[event: CellClickEvent<T>]` | A cell of a `clickable: true` column was clicked. |
 | `cell-action` | `[event: CellActionEvent<T>]` | A renderer emitted an action (buttons, toggles, menus, edit, copy). |
 | `cell-edit` | `[event: CellEditEvent<T>]` | A cell was edited (editing feature): update your data with `value`. The grid doesn't. |
+| `cells-paste` | `[event: CellsPasteEvent<T>]` | A paste finished (range selection + editing): every changed cell (each also a `cell-edit`), the cells left alone and why, and the `save-cell` calls that failed. |
 | `sub-rows-error` | `[event: { row: T; error: unknown }]` | `loadSubRows` rejected for a row. |
 | `context-action` | `[event: ContextActionEvent<T>]` | An item of the body-cell context menu was chosen. |
 | `header-action` | `[event: HeaderActionEvent<T>]` | A custom item of the header menu was chosen (built-in items act by themselves). |
@@ -164,6 +165,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `selectRange` | `void` |  | Selects a block of cells (`null` clears it), as `v-model:range` does. Range selection feature, with `range-selection`. |
 | `getRangeValues` | `unknown[][]` |  | The selected range's raw values, row by row (`[]` without a range). Range selection feature. |
 | `copyRange` | `Promise<boolean>` |  | Copies the selected range as tab-separated text, as the cells show it (Ctrl/⌘+C does the same). Resolves `false` without a range. Range selection feature. |
+| `pasteText` | `Promise<CellsPasteEvent \| null>` |  | Pastes tab-separated text (what spreadsheets copy) into the editable cells from the selected range's top-left cell, as Ctrl/⌘+V does; a range a whole number of blocks in size is filled. Resolves the `cells-paste` event, or `null` with nowhere to paste. Range selection and editing features. |
 
 ## `ColumnDef<T>`
 

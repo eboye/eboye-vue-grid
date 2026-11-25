@@ -42,7 +42,7 @@ CSV / Excel export, printing and copying · status bar · text and parts · them
 - **Small by default, everything optional.** ESM, one file per module, zero runtime dependencies.
   Sorting, filtering, server data, pagination, selection, sub-grids, menus, column reordering,
   resizing, pinning, visibility and grouping, pinned rows, totals, row grouping, inline editing, CSV and Excel export, printing, copying, a status bar, virtual scrolling and keyboard navigation are opt-in **features**, and
-  renderers are opt-in too. A plain grid with text cells is **15.5 kB gzipped**, and each feature or renderer you add costs
+  renderers are opt-in too. A plain grid with text cells is **15.6 kB gzipped**, and each feature or renderer you add costs
   only itself.
 - **Fast where it counts.** Virtual scrolling renders a screenful out of tens of thousands of rows,
   expanded sub-grids and detail rows included. Data changes re-render only the cells that changed,
@@ -81,7 +81,7 @@ CSV / Excel export, printing and copying · status bar · text and parts · them
 | **Rows**         | Nested sub-grids (sync or lazy-loaded, with retry; `reloadSubRows()`) · detail rows with any content, including another grid · cascading selection that follows lazily loaded children · pinned rows that stay above or below the body · a sticky totals row (sum, avg, min, max, count or your own aggregate) · row grouping by one or more columns, with counts and per-group aggregates, from `v-model:group-by` or the header menu · row highlighting and classes |
 | **Export**       | CSV or Excel (.xlsx, typed cells with number formats, no dependency) download, CSV text, or printing (every row, header on each page) of the filtered, sorted rows (or all, the page, the selection), raw or as displayed, with totals · Ctrl/⌘+C copies the selected rows (pastes as cells into spreadsheets) or the focused cell · formula-injection guard · works over plain http                                                                                  |
 | **Editing**      | Inline cell editing (opt-in): double-click, Enter / F2 or just type; text, number, date, select and checkbox editors picked from the renderer, or your own · Enter saves, Tab moves on, Esc cancels · validation and async saves with the error in place · the grid emits, your data stays yours                                                                                                                                                                      |
-| **Ranges**       | Spreadsheet-like cell-range selection (opt-in): drag (the grid scrolls at its edges), Shift+click, Shift+arrows, Ctrl/⌘+A · Ctrl/⌘+C copies the block as cells for Excel or Sheets · the status bar shows its count, sum and average · works next to row selection, across sorting, groups and virtual scrolling                                                                                                                                                      |
+| **Ranges**       | Spreadsheet-like cell-range selection (opt-in): drag (the grid scrolls at its edges), Shift+click, Shift+arrows, Ctrl/⌘+A · Ctrl/⌘+C copies the block as cells for Excel or Sheets, Ctrl/⌘+V pastes a block from them into the editable cells (typed, validated, one value fills a range) · the status bar shows its count, sum and average · works next to row selection, across sorting, groups and virtual scrolling                                               |
 | **Status bar**   | Rows that pass the filters (`84 of 200 rows`), selected rows, active filters with Clear · the sum and average of chosen columns over the selected rows, formatted like the cells · your own content in a slot                                                                                                                                                                                                                                                         |
 | **Menus**        | Right-click menus for cells and headers (sort, then sort by, pin, move, hide, reset, your own items) · `⋯` actions menu · keyboard: ContextMenu / Shift+F10, arrows, typeahead                                                                                                                                                                                                                                                                                        |
 | **Cells**        | 29 renderers (below) · slots for any cell or header · your own renderers as typed add-ons                                                                                                                                                                                                                                                                                                                                                                             |
@@ -466,31 +466,31 @@ bundler in Vite (minified / gzip, Vue excluded; the entry plus every chunk it lo
 
 | You import                                                                   | Initial chunk      |
 | ---------------------------------------------------------------------------- | ------------------ |
-| `VGrid` (no features)                                                        | 45.3 kB / 15.5 kB  |
-| `VGrid` + `sortingFeature`                                                   | 48.0 kB / 16.5 kB  |
-| `VGrid` + `filteringFeature`                                                 | 56.0 kB / 19.4 kB  |
-| `VGrid` + `selectionFeature`                                                 | 49.4 kB / 17.0 kB  |
-| `VGrid` + `subGridsFeature`                                                  | 47.6 kB / 16.3 kB  |
-| `VGrid` + `menusFeature`                                                     | 56.6 kB / 19.3 kB  |
-| `VGrid` + `columnReorderFeature`                                             | 49.0 kB / 16.8 kB  |
-| `VGrid` + `columnPinningFeature`                                             | 48.2 kB / 16.5 kB  |
-| `VGrid` + `virtualScrollingFeature`                                          | 51.0 kB / 17.7 kB  |
-| `VGrid` + `columnVisibilityFeature`                                          | 45.5 kB / 15.6 kB  |
-| `VGrid` + `keyboardNavigationFeature`                                        | 48.1 kB / 16.5 kB  |
-| `VGrid` + `columnResizingFeature`                                            | 48.6 kB / 16.7 kB  |
-| `VGrid` + `columnGroupsFeature`                                              | 46.6 kB / 16.0 kB  |
-| `VGrid` + `rowPinningFeature`                                                | 50.2 kB / 16.9 kB  |
-| `VGrid` + `aggregationFeature`                                               | 50.4 kB / 17.0 kB  |
-| `VGrid` + `rowGroupingFeature`                                               | 56.1 kB / 19.1 kB  |
-| `VGrid` + `exportFeature`                                                    | 50.2 kB / 17.4 kB  |
-| `VGrid` + `statusBarFeature`                                                 | 48.2 kB / 16.6 kB  |
-| `VGrid` + `serverGroupingFeature`                                            | 48.4 kB / 16.7 kB  |
-| `VGrid` + `editingFeature`                                                   | 49.7 kB / 17.2 kB  |
-| `VGrid` + `rangeSelectionFeature`                                            | 51.7 kB / 17.8 kB  |
-| `VGrid` + `allFeatures` + `VGridSearch`                                      | 130.4 kB / 43.8 kB |
-| `VGrid` + `currencyRenderer`                                                 | 46.7 kB / 16.0 kB  |
-| everything                                                                   | 184.4 kB / 59.3 kB |
-| `validateGridConfig` (`@nocopypaste/vue-grid/agent`, never in an app bundle) | 77.4 kB / 21.1 kB  |
+| `VGrid` (no features)                                                        | 45.5 kB / 15.6 kB  |
+| `VGrid` + `sortingFeature`                                                   | 48.2 kB / 16.6 kB  |
+| `VGrid` + `filteringFeature`                                                 | 56.2 kB / 19.5 kB  |
+| `VGrid` + `selectionFeature`                                                 | 49.6 kB / 17.0 kB  |
+| `VGrid` + `subGridsFeature`                                                  | 47.8 kB / 16.4 kB  |
+| `VGrid` + `menusFeature`                                                     | 56.8 kB / 19.4 kB  |
+| `VGrid` + `columnReorderFeature`                                             | 49.2 kB / 16.8 kB  |
+| `VGrid` + `columnPinningFeature`                                             | 48.4 kB / 16.6 kB  |
+| `VGrid` + `virtualScrollingFeature`                                          | 51.2 kB / 17.8 kB  |
+| `VGrid` + `columnVisibilityFeature`                                          | 45.7 kB / 15.7 kB  |
+| `VGrid` + `keyboardNavigationFeature`                                        | 48.3 kB / 16.6 kB  |
+| `VGrid` + `columnResizingFeature`                                            | 48.8 kB / 16.8 kB  |
+| `VGrid` + `columnGroupsFeature`                                              | 46.8 kB / 16.1 kB  |
+| `VGrid` + `rowPinningFeature`                                                | 50.4 kB / 16.9 kB  |
+| `VGrid` + `aggregationFeature`                                               | 50.6 kB / 17.1 kB  |
+| `VGrid` + `rowGroupingFeature`                                               | 56.3 kB / 19.2 kB  |
+| `VGrid` + `exportFeature`                                                    | 50.4 kB / 17.5 kB  |
+| `VGrid` + `statusBarFeature`                                                 | 48.4 kB / 16.7 kB  |
+| `VGrid` + `serverGroupingFeature`                                            | 48.6 kB / 16.8 kB  |
+| `VGrid` + `editingFeature`                                                   | 51.0 kB / 17.7 kB  |
+| `VGrid` + `rangeSelectionFeature`                                            | 53.4 kB / 18.5 kB  |
+| `VGrid` + `allFeatures` + `VGridSearch`                                      | 133.3 kB / 44.8 kB |
+| `VGrid` + `currencyRenderer`                                                 | 46.9 kB / 16.1 kB  |
+| everything                                                                   | 187.2 kB / 60.4 kB |
+| `validateGridConfig` (`@nocopypaste/vue-grid/agent`, never in an app bundle) | 78.0 kB / 21.3 kB  |
 
 With `filteringFeature`, the filter popover body and the filter-row editors load on demand. With
 `paginationFeature`, the pager does too, and with `selectionFeature` the "select all N rows" banner.

@@ -1,6 +1,6 @@
 {
   "package": "@nocopypaste/vue-grid",
-  "version": "0.12.0",
+  "version": "0.13.0",
   "component": "VGrid",
   "props": [
     {
@@ -462,6 +462,11 @@
       "description": "A cell was edited (editing feature): update your data with `value`. The grid doesn't."
     },
     {
+      "name": "cells-paste",
+      "payload": "[event: CellsPasteEvent<T>]",
+      "description": "A paste finished (range selection + editing): every changed cell (each also a `cell-edit`), the cells left alone and why, and the `save-cell` calls that failed."
+    },
+    {
       "name": "sub-rows-error",
       "payload": "[event: { row: T; error: unknown }]",
       "description": "`loadSubRows` rejected for a row."
@@ -698,6 +703,12 @@
       "type": "Promise<boolean>",
       "required": true,
       "description": "Copies the selected range as tab-separated text, as the cells show it (Ctrl/⌘+C does the same). Resolves `false` without a range. Range selection feature."
+    },
+    {
+      "name": "pasteText",
+      "type": "Promise<CellsPasteEvent | null>",
+      "required": true,
+      "description": "Pastes tab-separated text (what spreadsheets copy) into the editable cells from the selected range's top-left cell, as Ctrl/⌘+V does; a range a whole number of blocks in size is filled. Resolves the `cells-paste` event, or `null` with nowhere to paste. Range selection and editing features."
     }
   ],
   "column": [

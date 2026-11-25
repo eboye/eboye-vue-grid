@@ -2,7 +2,17 @@ import { computed, onScopeDispose, shallowRef, type Ref } from 'vue'
 import { guardFormula, plainText, toDelimited } from '../core/csv'
 import { getCellValue } from '../core/value'
 import { copyText } from '../internal/clipboard'
-import type { CellRange, CellRef, ColumnDef, CopyEvent, FormatContext, RowKey } from '../types'
+import type { PasteCell } from './useEditing'
+import type {
+  CellRange,
+  CellRef,
+  CellRendererDefinition,
+  CellsPasteEvent,
+  ColumnDef,
+  CopyEvent,
+  FormatContext,
+  RowKey,
+} from '../types'
 
 /** A visible data column, as the grid resolved it (its renderer and options). */
 export interface RangeColumn<T> {
@@ -36,6 +46,10 @@ export interface CellRangeOptions<T> {
   getKey: (row: T) => RowKey
   format: () => FormatContext
   onCopy: (event: CopyEvent<T>) => void
+  /** Editing feature: writes pasted text into cells. Without it there's no pasting. */
+  paste?: (cells: PasteCell<T>[]) => Promise<CellsPasteEvent<T>>
+  /** Ctrl/⌘+V pastes (`parts.pasteShortcut`). */
+  pasteKeys: () => boolean
 }
 
 const ROW = '[role="row"][data-row-key]'
@@ -53,6 +67,8 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
   /** Where the range starts: the last cell clicked or focused (also with a one-cell "range"). */
   const anchor = shallowRef<CellRef | null>(null)
   let dragging = false
+  /** Focus is going back to a cell after a paste: not a new range. */
+  let refocusing = false
 
   /** The body's data rows as laid out, top to bottom: expanded children in, group rows out. */
   const ordered = computed<T[]>(() => {
@@ -240,7 +256,7 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
   // ── Keyboard ─────────────────────────────────────────────────────────────────────────────
   /** A body cell taking focus (click, arrow keys) starts a new range there. */
   function onFocusIn(event: FocusEvent) {
-    if (!opts.enabled()) return
+    if (!opts.enabled() || refocusing) return
     const target = event.target as Element
     if (!target.matches(CELL)) return
     const ref = refOf(target)
@@ -274,6 +290,11 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
         return false
       event.preventDefault()
       void copyRange()
+      return true
+    }
+    if (ctrl && !event.altKey && !event.shiftKey && key.toLowerCase() === 'v') {
+      if (!opts.paste || !opts.pasteKeys() || !start()) return false
+      catchPaste() // the browser's own paste lands in a hidden text area, which reads it
       return true
     }
     if (ctrl && !event.altKey && !event.shiftKey && key.toLowerCase() === 'a') {
@@ -350,6 +371,100 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
     return true
   }
 
+  // ── Pasting ──────────────────────────────────────────────────────────────────────────────
+  /** Where a paste starts: the range's top-left cell, else the anchor (row and column positions). */
+  function start(): { row: number; col: number } | null {
+    const b = bounds.value
+    if (b) return { row: b.top, col: b.left }
+    const a = anchor.value
+    const row = a && rowIndex.value.get(String(a.rowKey))
+    const col = a && colIndex.value.get(a.columnKey)
+    return row == null || col == null ? null : { row, col }
+  }
+
+  /**
+   * Pastes tab-separated text from the start cell: the block as it is (clipped at the grid's
+   * edges), or repeated over the selected range when that's a whole number of blocks. The pasted
+   * area becomes the range. Null when there's nowhere to paste or nothing in the text.
+   */
+  async function pasteText(text: string): Promise<CellsPasteEvent<T> | null> {
+    // where it goes, read before anything else can move the range
+    const from = start()
+    const b = bounds.value
+    const rows = ordered.value
+    const cols = opts.columns()
+    if (!opts.paste || !from) return null
+    // the reading of pasted text loads on the first paste (own chunk)
+    const { parseClipboard, pasteArea } = await import('../core/paste')
+    const block = parseClipboard(text)
+    if (!block.length) return null
+    const width = Math.max(...block.map((r) => r.length))
+    const area = pasteArea(
+      { rows: block.length, cols: width },
+      b && { rows: b.bottom - b.top + 1, cols: b.right - b.left + 1 },
+    )
+    const lastRow = Math.min(rows.length - 1, from.row + area.rows - 1)
+    const lastCol = Math.min(cols.length - 1, from.col + area.cols - 1)
+    const cells: PasteCell<T>[] = []
+    for (let r = from.row; r <= lastRow; r++) {
+      const line = block[(r - from.row) % block.length]!
+      for (let c = from.col; c <= lastCol; c++) {
+        const cellText = line[(c - from.col) % width]
+        if (cellText === undefined) continue // a short line: those cells stay as they are
+        const row = rows[r]!
+        const col = cols[c]!
+        cells.push({
+          row,
+          rowKey: opts.getKey(row),
+          column: col.def,
+          definition: col.definition as CellRendererDefinition | undefined,
+          text: cellText,
+        })
+      }
+    }
+    const corner = (r: number, c: number) => ({
+      rowKey: opts.getKey(rows[r]!),
+      columnKey: cols[c]!.key,
+    })
+    set(corner(from.row, from.col), corner(lastRow, lastCol))
+    return opts.paste(cells)
+  }
+
+  /**
+   * Ctrl/⌘+V: a hidden text area takes focus for this one keystroke, so the browser pastes into it
+   * (cells aren't editable, and reading the clipboard from script needs a permission). Its `paste`
+   * event hands over the text, and focus goes back.
+   */
+  function catchPaste() {
+    const back = document.activeElement as HTMLElement | null
+    const area = document.createElement('textarea')
+    area.setAttribute('aria-hidden', 'true')
+    area.tabIndex = -1
+    area.style.cssText =
+      'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;pointer-events:none'
+    let done = false
+    const finish = () => {
+      if (done) return
+      done = true
+      clearTimeout(timer)
+      area.remove()
+      // focus coming back to its cell isn't a click on it: the range stays
+      refocusing = true
+      back?.focus({ preventScroll: true })
+      refocusing = false
+    }
+    area.addEventListener('paste', (event) => {
+      event.preventDefault()
+      // pasted (and the range set to the pasted area) before focus goes back
+      void pasteText(event.clipboardData?.getData('text/plain') ?? '')
+      finish()
+    })
+    // a paste the browser didn't allow never fires: tidy up anyway
+    const timer = setTimeout(finish, 1000)
+    document.body.append(area)
+    area.focus({ preventScroll: true })
+  }
+
   /** Every cell in the body. False when there are none. */
   function selectAll(): boolean {
     const rows = ordered.value
@@ -395,6 +510,7 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
     values,
     text,
     copyRange,
+    pasteText,
     selectAll,
     clear,
     /** Sets the range from code (`null` clears it). */

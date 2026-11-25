@@ -42,6 +42,7 @@ import type {
   CellActionEvent,
   CellClickEvent,
   CellEditEvent,
+  CellsPasteEvent,
   CellRange,
   CellContext,
   CellRendererDefinition,
@@ -299,6 +300,11 @@ const emit = defineEmits<{
   'cell-action': [event: CellActionEvent<T>]
   /** A cell was edited (editing feature): update your data with `value`. The grid doesn't. */
   'cell-edit': [event: CellEditEvent<T>]
+  /**
+   * A paste finished (range selection + editing): every changed cell (each also a `cell-edit`), the
+   * cells left alone and why, and the `save-cell` calls that failed.
+   */
+  'cells-paste': [event: CellsPasteEvent<T>]
   /** `loadSubRows` rejected for a row. */
   'sub-rows-error': [event: { row: T; error: unknown }]
   /** An item of the body-cell context menu was chosen. */
@@ -1141,6 +1147,7 @@ const editing = features.editing?.useEditing<T>({
   rows: () => sourceRows.value,
   columns: () => props.columns,
   preload: () => features.editing!.preload(),
+  locale: () => formatContext.value.locale,
 })
 
 // ── Cell range ──────────────────────────────────────────────────────────────────────────────
@@ -1160,6 +1167,14 @@ const cellRange = features.rangeSelection?.useCellRange<T>({
   getKey,
   format: () => formatContext.value,
   onCopy: (event) => emit('copy', event),
+  paste:
+    editing &&
+    (async (cells) => {
+      const result = await editing.pasteCells(cells)
+      emit('cells-paste', result)
+      return result
+    }),
+  pasteKeys: () => part('pasteShortcut'),
 })
 
 // ── Status bar ──────────────────────────────────────────────────────────────────────────────
@@ -1448,6 +1463,8 @@ const selectRange = (next: CellRange | null) =>
   cellRange ? cellRange.select(next) : noRange('selectRange')
 const getRangeValues = () => cellRange?.values() ?? (noRange('getRangeValues'), [])
 const copyRange = () => cellRange?.copyRange() ?? (noRange('copyRange'), Promise.resolve(false))
+const pasteText = (text: string) =>
+  cellRange?.pasteText(text) ?? (noRange('pasteText'), Promise.resolve(null))
 
 const startEdit = (rowKey: RowKey, columnKey: string) =>
   editing?.startAt(rowKey, columnKey) ?? false
@@ -1478,6 +1495,7 @@ defineExpose<VGridExposed>({
   selectRange,
   getRangeValues,
   copyRange,
+  pasteText,
 })
 </script>
 

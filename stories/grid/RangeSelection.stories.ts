@@ -1,8 +1,14 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
-import { ref } from 'vue'
+import { reactive, ref } from 'vue'
 import { fn } from 'storybook/test'
-import type { CellRange, CopyEvent } from '@nocopypaste/vue-grid'
-import { betColumns, makeBets } from '../data'
+import {
+  setCellValue,
+  type CellEditEvent,
+  type CellRange,
+  type CellsPasteEvent,
+  type CopyEvent,
+} from '@nocopypaste/vue-grid'
+import { betColumns, makeBets, type Bet } from '../data'
 import { Grid as VGrid, type GridArgs } from '../support'
 
 /**
@@ -51,4 +57,49 @@ export const RangeSelection: Story = {}
 /** With row selection too: checkboxes select rows, dragging across cells selects a range. */
 export const WithRowSelection: Story = {
   args: { selectable: true, statusBar: { summary: ['stake'] } },
+}
+
+/**
+ * Pasting (with `editingFeature`): Ctrl/⌘+V writes tab-separated text, as spreadsheets copy it,
+ * into the `editable` cells from the selected range's top-left cell; one value fills the whole
+ * range. Each changed cell is a `cell-edit` (and a `save-cell`); `cells-paste` reports the lot,
+ * with the cells it left alone. Copy the sample below (or cells of the grid) and paste it.
+ */
+export const PasteIntoARange: Story = {
+  render: (args) => ({
+    components: { VGrid },
+    setup() {
+      const rows = reactive(makeBets(30, 7))
+      const editable = new Set(['player', 'city', 'status', 'stake', 'placedAt'])
+      const columns = betColumns().map((c) =>
+        editable.has(c.key)
+          ? {
+              ...c,
+              editable: true,
+              ...(c.key === 'status'
+                ? { editorOptions: { options: ['Open', 'Won', 'Lost', 'Void'] } }
+                : {}),
+            }
+          : c,
+      )
+      const sample = 'Jovana Test\tNovi Sad\tWon\t1,234.50\nMarko Test\tNiš\tlost\t€99'
+      const report = ref('none yet')
+      const onEdit = (e: CellEditEvent<Bet>) => setCellValue(e.row, e.column, e.value)
+      const onPaste = (e: CellsPasteEvent<Bet>) =>
+        (report.value = `${e.edits.length} changed, ${e.skipped.length} skipped${
+          e.skipped.length
+            ? ` (${e.skipped.map((s) => `${s.columnKey} #${String(s.rowKey)}: ${s.reason}`).join(', ')})`
+            : ''
+        }`)
+      return { args, rows, columns, sample, report, onEdit, onPaste }
+    },
+    template: `
+      <label class="sb-note">Sample to copy
+        <textarea data-testid="sample" rows="2" cols="60" :value="sample"></textarea>
+      </label>
+      <p class="sb-note" data-testid="paste-report">last paste: {{ report }}</p>
+      <div class="sb-frame">
+        <VGrid v-bind="args" :rows="rows" :columns="columns" @cell-edit="onEdit" @cells-paste="onPaste" />
+      </div>`,
+  }),
 }

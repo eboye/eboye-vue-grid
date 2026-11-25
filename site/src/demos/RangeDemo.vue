@@ -1,16 +1,20 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import {
   createColumnHelper,
+  setCellValue,
   VGrid,
+  type CellEditEvent,
   type CellRange,
+  type CellsPasteEvent,
   type CopyEvent,
   type RowKey,
 } from '@nocopypaste/vue-grid'
 import { makeBets, statusTones, type Bet } from '../data'
 
-const few = makeBets(60, 31)
-const many = makeBets(2000, 31)
+// Reactive rows: pasted values are written into them (one `cell-edit` per changed cell).
+const few = reactive(makeBets(60, 31))
+const many = reactive(makeBets(2000, 31))
 const virtual = ref(false)
 const grouped = ref(false)
 const rows = computed(() => (virtual.value ? many : few))
@@ -18,8 +22,19 @@ const rows = computed(() => (virtual.value ? many : few))
 // The selected block: its corners, by row key and column key (null: none).
 const range = ref<CellRange | null>(null)
 const selected = ref<RowKey[]>([])
-const copied = ref('')
-const onCopy = (e: CopyEvent<Bet>) => (copied.value = e.text)
+const log = ref<string[]>([])
+const say = (line: string) => (log.value = [line, ...log.value].slice(0, 4))
+
+const onCopy = (e: CopyEvent<Bet>) =>
+  say(`Copied ${e.rows.length} × ${e.columns.length}: ${e.text.split('\n')[0]}…`)
+const onEdit = (e: CellEditEvent<Bet>) => setCellValue(e.row, e.column, e.value)
+const onPaste = (e: CellsPasteEvent<Bet>) =>
+  say(
+    `Pasted: ${e.edits.length} changed` +
+      (e.skipped.length
+        ? `, ${e.skipped.length} left alone (${[...new Set(e.skipped.map((s) => s.reason))].join(', ')})`
+        : ''),
+  )
 
 const col = createColumnHelper<Bet>()
 const columns = [
@@ -30,18 +45,36 @@ const columns = [
     field: 'player.name',
     width: 'minmax(10rem, 1fr)',
     sortable: true,
+    editable: true,
   }),
-  col({ key: 'city', header: 'City', field: 'player.city', sortable: true, groupable: true }),
+  col({
+    key: 'city',
+    header: 'City',
+    field: 'player.city',
+    sortable: true,
+    groupable: true,
+    editable: true,
+  }),
   col({
     key: 'status',
     header: 'Status',
     renderer: 'status',
     rendererOptions: { tone: statusTones },
     groupable: true,
+    editable: true,
+    editorOptions: { options: ['Open', 'Won', 'Lost', 'Void'] },
   }),
-  col({ key: 'stake', header: 'Stake', renderer: 'currency', sortable: true, aggregate: 'sum' }),
+  col({
+    key: 'stake',
+    header: 'Stake',
+    renderer: 'currency',
+    sortable: true,
+    aggregate: 'sum',
+    editable: true,
+    editorOptions: { min: 0 },
+  }),
   col({ key: 'change', header: 'Δ odds', renderer: 'change', sortable: true }),
-  col({ key: 'placedAt', header: 'Placed', renderer: 'date', sortable: true }),
+  col({ key: 'placedAt', header: 'Placed', renderer: 'date', sortable: true, editable: true }),
 ]
 </script>
 
@@ -72,7 +105,11 @@ const columns = [
     :virtual="virtual ? { rowHeight: 41 } : undefined"
     aria-label="Bets"
     @copy="onCopy"
+    @cell-edit="onEdit"
+    @cells-paste="onPaste"
   />
-  <p class="demo-muted">Copied (paste it into a spreadsheet):</p>
-  <pre class="demo-log" data-testid="copied">{{ copied || '–' }}</pre>
+  <ul class="demo-log" data-testid="log">
+    <li v-for="(line, i) in log" :key="i">{{ line }}</li>
+    <li v-if="!log.length">Copy a block (Ctrl+C), click another cell, paste it (Ctrl+V).</li>
+  </ul>
 </template>

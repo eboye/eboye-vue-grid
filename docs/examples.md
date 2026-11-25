@@ -2525,3 +2525,27 @@ function onCopy(e: CopyEvent<Order>) {
   scrolling hasn't drawn, expanded children included; group and pinned rows are left out.
 - The status bar shows `12 cells: Sum … Average …` (`messages.cellCount` words it).
 - Works next to row selection: checkboxes select rows, Ctrl/⌘+C copies the range while there is one.
+
+### Pasting into a range
+
+With `editingFeature` and `editable` columns, Ctrl/⌘+V pastes what Excel, Sheets or the grid copied:
+
+```vue
+<VGrid
+  v-model:range="range"
+  :rows="orders"
+  :columns="columns"
+  row-key="id"
+  range-selection
+  :features="[rangeSelectionFeature, editingFeature, keyboardNavigationFeature]"
+  @cell-edit="(e) => setCellValue(e.row, e.column, e.value)"
+  @cells-paste="(e) => e.skipped.length && toast(`${e.skipped.length} cells didn't fit`)"
+/>
+```
+
+- It starts at the range's top-left cell (or the clicked cell); one value fills the whole range.
+- Text becomes the column's kind of value (`€1,234.50` → `1234.5`, `23.05.2026` with `locale="de"`,
+  `yes`, a select's label); `validate` and `min` / `max` apply; read-only cells are skipped.
+- Every changed cell is a `cell-edit` (and `save-cell`, if set), like typing; `cells-paste` lists
+  `edits`, `skipped` (with the reason) and `failed` saves, e.g. to save the lot in one request.
+- `grid.pasteText(text)` pastes from code; `parts: { pasteShortcut: false }` turns Ctrl/⌘+V off.

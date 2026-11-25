@@ -351,6 +351,32 @@ export interface CellEditEvent<T = any> {
   oldValue: unknown
 }
 
+/** A pasted cell that wasn't changed (range selection + editing). */
+export interface PasteSkip {
+  rowKey: RowKey
+  columnKey: string
+  /** The pasted text for it. */
+  text: string
+  /**
+   * `read-only`: the column isn't `editable` for the row. `invalid`: the text isn't a value of the
+   * column's kind (a number, a date, a choice…) or `validate` refused it. `unsupported`: the column
+   * has its own editor component, which only it can parse.
+   */
+  reason: 'read-only' | 'invalid' | 'unsupported'
+  /** Why it was invalid. */
+  message?: string
+}
+
+/**
+ * A paste into the grid finished (`cells-paste`): every changed cell (each also emitted as
+ * `cell-edit` and saved with `save-cell`), the cells left alone, and the saves that failed.
+ */
+export interface CellsPasteEvent<T = any> {
+  edits: CellEditEvent<T>[]
+  skipped: PasteSkip[]
+  failed: { edit: CellEditEvent<T>; error: unknown }[]
+}
+
 export interface CellClickEvent<T = any> {
   /** The row the cell belongs to. */
   row: T
@@ -512,6 +538,13 @@ export interface VGridExposed {
    * Resolves `false` without a range. Range selection feature.
    */
   copyRange(): Promise<boolean>
+  /**
+   * Pastes tab-separated text (what spreadsheets copy) into the editable cells from the selected
+   * range's top-left cell, as Ctrl/⌘+V does; a range a whole number of blocks in size is filled.
+   * Resolves the `cells-paste` event, or `null` with nowhere to paste. Range selection and editing
+   * features.
+   */
+  pasteText(text: string): Promise<CellsPasteEvent | null>
 }
 
 /** A cell, by its row's key and its column's key (cell-range selection). */
@@ -1126,6 +1159,8 @@ export interface GridParts {
   headerDrag?: boolean
   /** Export: Ctrl/⌘+C copying in the grid. */
   copyShortcut?: boolean
+  /** Range selection with editing: Ctrl/⌘+V pasting into editable cells (`pasteText()` still works). */
+  pasteShortcut?: boolean
   /** Row grouping: the row count on group rows. */
   groupCounts?: boolean
 }

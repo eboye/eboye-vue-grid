@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.13.0 — 2026-11-25
+
+**Paste into a range** (`rangeSelectionFeature` with `editingFeature`): Ctrl/⌘+V pastes
+tab-separated text, what Excel, Sheets or the grid copy, into the `editable` cells from the
+range's top-left cell (or the clicked cell). One value fills the whole range, as does any block
+the range is a whole number of times; else the block lands as it is, clipped at the grid's edges,
+and becomes the range. Each text is read as its column's kind, like the editors do: numbers in any
+locale and with currency signs (`€1,234.50`, `1.234,50`, `(12)`), dates in ISO or the locale's
+order with an optional time (keeping the cell's type), yes / no (also in the grid's words), a
+select's choices by value or label; `validate` and `editorOptions.min` / `max` apply. Every
+changed cell is a `cell-edit` and goes through `save-cell`, as with typing; then the new
+`cells-paste({ edits, skipped, failed })` event reports the lot: what changed, the cells left
+alone (`read-only`, `invalid` with a message, `unsupported` for custom editor components) and the
+saves that failed. Works in every engine without a clipboard permission (the browser's own paste
+is caught). While an editor is open, Ctrl/⌘+V pastes into it as before. New: `grid.pasteText(text)`,
+types `CellsPasteEvent` and `PasteSkip`, part `pasteShortcut`. The code that reads pasted text (1.8 kB gzipped) loads on the first paste; the editing and range features grow by 0.5 and 0.7 kB, a plain grid by 0.1 kB.
+
 ## 0.12.0 — 2026-11-25
 
 **Cell-range selection** (`rangeSelectionFeature`, opt-in, with `range-selection`): select a

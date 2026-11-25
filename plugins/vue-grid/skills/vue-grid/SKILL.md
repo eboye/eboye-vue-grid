@@ -46,7 +46,8 @@ A working example of each feature, complete component source included:
   (`setCellValue`), or use `:save-cell` for async saves; the grid never writes the value itself.
 - Editable renderers are controlled: handle `@cell-action` and update the data.
 - Selecting / copying a block of cells: `range-selection` + `rangeSelectionFeature` (`v-model:range`),
-  not row selection; Ctrl/⌘+C copies it, the status bar adds it up.
+  not row selection; Ctrl/⌘+C copies it, the status bar adds it up. With `editingFeature`,
+  Ctrl/⌘+V pastes into `editable` cells: each change is a `cell-edit` to store, like typing.
 - Another language: import a pack (`import { de } from '@nocopypaste/vue-grid/locales/de'`; also
   `fr`, `es`, `sr`, `sr-Latn`) as `messages`, plus `locale` for number and date formats. Other
   languages: your own `messages` (`GridMessages`, `locales/en` is the template).
