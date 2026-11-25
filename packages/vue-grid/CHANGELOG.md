@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+Docs: a **Spreadsheet mode** page in the
+[live examples](https://eboye.github.io/eboye-vue-grid/#/spreadsheet): a budget you edit like a
+sheet (typing, paste, the fill handle, find and replace, Delete and cut, undo), with a Total
+column worked out from the months, totals, the status bar and an Excel download.
+
 ## 0.17.0 — 2026-11-25
 
 **Delete and cut** (`rangeSelectionFeature` with `editingFeature`): Delete or Backspace clear the

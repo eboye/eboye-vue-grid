@@ -131,6 +131,23 @@ export const pages: Page[] = [
     files: ['RangeDemo'],
   },
   {
+    id: 'spreadsheet',
+    title: 'Spreadsheet mode',
+    section: 'Rows',
+    summary:
+      'Inline editing, cell ranges, undo, the fill handle, find and replace, totals and the status bar together: a small budget you edit like a sheet, with a Total column worked out from the months and an Excel download.',
+    try: [
+      'Click a month cell and type a number, then Enter: the row Total and the column total follow.',
+      'Copy a block from Excel or Sheets and press Ctrl+V (⌘V) on a cell: the figures land as numbers.',
+      'Select Jan for a few lines and drag the small corner square across to Jun: the figures repeat.',
+      'Press Ctrl+H (⌘H), replace “Sales” with “Revenue” in every cell, then press Ctrl+Z (⌘Z) once to put it back.',
+      'Select a block and press Delete, or Ctrl+X (⌘X) then Ctrl+V (⌘V) to move it; the status bar adds up whatever is selected.',
+      'Add a line, fill in its months, then download the sheet for Excel.',
+    ],
+    docs: '29. Cell-range selection',
+    files: ['SpreadsheetDemo'],
+  },
+  {
     id: 'grouping',
     title: 'Row grouping',
     section: 'Rows',

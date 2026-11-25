@@ -28,7 +28,8 @@
 
 **<https://eboye.github.io/eboye-vue-grid/>**: every feature running in the browser, each page with the complete source of
 its example, in light and dark, on desktop and phone. Renderers · sorting and filtering · server
-data · pagination · live updates · selection and batch actions · row grouping · totals and pinned
+data · pagination · live updates · selection and batch actions · inline editing with undo · cell
+ranges (copy, paste, fill, find and replace) · spreadsheet mode · row grouping · totals and pinned
 rows · sub-grids · detail rows · 100,000-row virtual scrolling · column layout · context menus ·
 CSV / Excel export, printing and copying · status bar · text and parts · theming · your own cells.
 

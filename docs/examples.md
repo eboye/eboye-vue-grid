@@ -2498,7 +2498,9 @@ defineEmits<{ commit: [value?: unknown]; cancel: [] }>()
 ## 29. Cell-range selection
 
 Select a block of cells as in a spreadsheet (needs `rangeSelectionFeature`; Shift+arrows also need
-`keyboardNavigationFeature`, the sum and average `statusBarFeature`):
+`keyboardNavigationFeature`, the sum and average `statusBarFeature`). To see it all together, open
+the [spreadsheet mode](https://eboye.github.io/eboye-vue-grid/#/spreadsheet) live example: a budget
+edited like a sheet, with a worked-out Total column, totals and an Excel download.
 
 ```vue
 <script setup lang="ts">
