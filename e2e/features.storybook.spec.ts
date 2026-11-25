@@ -71,9 +71,12 @@ test('column reorder, pinning and visibility: ignored without their features, wo
   const box = async (key: string) => (await header(page, key).boundingBox())!
   const scrollBy = async (dx: number) => {
     await scroller.evaluate((el) => (el.scrollLeft = 0))
-    await scroller.hover()
-    await page.mouse.wheel(dx, 0)
-    await expect.poll(() => scroller.evaluate((el) => el.scrollLeft)).toBeGreaterThan(100)
+    // again until it scrolls: a busy machine can drop a single wheel event
+    await expect(async () => {
+      await scroller.hover()
+      await page.mouse.wheel(dx, 0)
+      expect(await scroller.evaluate((el) => el.scrollLeft)).toBeGreaterThan(100)
+    }).toPass()
   }
   const drag = async (from: string, to: string) => {
     const a = await box(from)

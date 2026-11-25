@@ -17,6 +17,9 @@ const config: StorybookConfig = {
   viteFinal: (base) =>
     mergeConfig(base, {
       plugins: [vue()],
+      // A built Storybook (what the browser tests use) keeps native `light-dark()`: rewritten into
+      // variables, colours would only follow a color-scheme set in a stylesheet, not dark mode.
+      build: { cssTarget: ['chrome123', 'edge123', 'firefox120', 'safari17.5'] },
       // Stories run against the package sources (like the playground), so edits hot-reload.
       resolve: {
         alias: [

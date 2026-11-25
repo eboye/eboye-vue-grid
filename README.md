@@ -560,6 +560,9 @@ npm run build            # both packages → dist/
 npm run e2e              # browser tests, Chromium + Firefox (first time: npx playwright install chromium firefox);
                          # E2E_WEBKIT=1 adds WebKit (CI runs all three on every push and pull request)
 npm run e2e:storybook    # every story renders without errors; interactive renderers with real input
+                         # (against a static Storybook build it makes itself, or a Storybook already on
+                         # :6006; STORYBOOK_DEV=1 uses the dev server). Locally a failed test is retried
+                         # once and reported as "flaky"; CI retries twice.
 npm run showcase         # re-record docs/media/showcase.* (needs dev + Storybook running, and ffmpeg)
 npm run screenshots      # re-shoot the renderer gallery → docs/media/renderers (needs Storybook running)
 ```

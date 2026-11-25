@@ -19,6 +19,9 @@ const DISABLED_RULES = ['region']
 /** The stories are split across this many tests, so workers check them in parallel. */
 const SHARDS = 12
 
+// the parts are independent: run them on as many workers as there are
+test.describe.configure({ mode: 'parallel' })
+
 for (let shard = 0; shard < SHARDS; shard++) {
   test(`stories pass axe (WCAG 2.1 A / AA), light and dark — part ${shard + 1}/${SHARDS}`, async ({
     page,

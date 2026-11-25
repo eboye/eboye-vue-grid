@@ -63,9 +63,12 @@ test.describe('layout', () => {
     const scroller = grid.locator('.vg')
     const header = grid.locator('[role="columnheader"][data-col-key="player"]')
     const before = await box(header)
-    await scroller.hover()
-    await page.mouse.wheel(0, 400)
-    await expect.poll(() => scroller.evaluate((el) => el.scrollTop)).toBeGreaterThan(100)
+    // again until it scrolls: a busy machine can drop a single wheel event
+    await expect(async () => {
+      await scroller.hover()
+      await page.mouse.wheel(0, 400)
+      expect(await scroller.evaluate((el) => el.scrollTop)).toBeGreaterThan(100)
+    }).toPass()
     const after = await box(header)
     expect(Math.abs(after.y - before.y)).toBeLessThan(1)
     // and the first body row has scrolled under it
@@ -89,9 +92,12 @@ test.describe('layout', () => {
       0,
     )
 
-    await scroller.hover()
-    await page.mouse.wheel(500, 0)
-    await expect.poll(() => scroller.evaluate((el) => el.scrollLeft)).toBeGreaterThan(100)
+    // again until it scrolls: a busy machine can drop a single wheel event
+    await expect(async () => {
+      await scroller.hover()
+      await page.mouse.wheel(500, 0)
+      expect(await scroller.evaluate((el) => el.scrollLeft)).toBeGreaterThan(100)
+    }).toPass()
 
     expect((await box(id)).x).toBeCloseTo(id0.x, 0)
     expect((await box(player)).x).toBeCloseTo(player0.x, 0)
