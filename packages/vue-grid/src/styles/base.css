@@ -660,6 +660,48 @@
     }
   }
 
+  /*
+   * Inline editing: the editor lies over the cell (same padding); the content stays underneath,
+   * hidden, so the column keeps its width.
+   */
+  .vg-cell-editing:not(.vg-pin-left, .vg-pin-right) {
+    position: relative; /* pinned cells are sticky, which positions the editor already */
+  }
+  .vg-cell-editing > .vg-cell-content {
+    visibility: hidden;
+  }
+  .vg-editor {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    padding: inherit;
+  }
+  .vg-editor-control {
+    flex: 1 1 auto;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: inherit;
+  }
+  .vg-editor-control:focus {
+    outline: none;
+  }
+  .vg-edit-error[popover] {
+    position: fixed;
+    inset: auto;
+    margin: 0;
+    position-area: bottom span-right;
+    position-try-fallbacks: flip-block;
+  }
+
   /* A resized column is narrower than its content may be: clip instead of spilling over. */
   .vg-col-sized {
     min-width: 0;

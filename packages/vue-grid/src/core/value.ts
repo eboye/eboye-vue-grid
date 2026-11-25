@@ -22,6 +22,31 @@ export function getCellValue<T>(
   return getByPath(row, column.field ?? column.key)
 }
 
+const UNSAFE = new Set(['__proto__', 'constructor', 'prototype'])
+
+/**
+ * Writes a cell value into its row along the column's `field` (or `key`) path, e.g. in a
+ * `cell-edit` handler: `setCellValue(e.row, e.column, e.value)`. Returns `false` when it can't: a
+ * computed column (`value` without `field`), or a path through a missing object.
+ */
+export function setCellValue<T>(
+  row: T,
+  column: Pick<ColumnDef<T>, 'key' | 'field' | 'value'>,
+  value: unknown,
+): boolean {
+  if (column.value && !column.field) return false
+  const path = (column.field ?? column.key).split('.')
+  if (path.some((p) => UNSAFE.has(p))) return false
+  let target: unknown = row
+  for (const segment of path.slice(0, -1)) {
+    if (target === null || typeof target !== 'object' || !hasOwn(target, segment)) return false
+    target = (target as Record<string, unknown>)[segment]
+  }
+  if (target === null || typeof target !== 'object') return false
+  ;(target as Record<string, unknown>)[path[path.length - 1]!] = value
+  return true
+}
+
 export type RowKeyGetter<T> = keyof T | ((row: T) => RowKey)
 
 export function resolveRowKey<T>(row: T, rowKey: RowKeyGetter<T>): RowKey {

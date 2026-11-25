@@ -24,6 +24,7 @@ export type FeatureId =
   | 'export'
   | 'statusBar'
   | 'serverGrouping'
+  | 'editing'
 
 /** Grid props (and `v-model`s) that need a feature. */
 export const propFeatures: Readonly<Record<string, FeatureId>> = {
@@ -61,6 +62,7 @@ export const propFeatures: Readonly<Record<string, FeatureId>> = {
   multiSort: 'sorting',
   sorts: 'sorting',
   statusBar: 'statusBar',
+  saveCell: 'editing',
 }
 
 /** Column options that need a feature. */
@@ -87,6 +89,10 @@ export const columnFeatures: Readonly<Record<string, FeatureId>> = {
   groupValue: 'rowGrouping',
   exportValue: 'export',
   exportable: 'export',
+  editable: 'editing',
+  editor: 'editing',
+  editorOptions: 'editing',
+  validate: 'editing',
 }
 
 /**

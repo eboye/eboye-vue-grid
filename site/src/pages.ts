@@ -95,6 +95,21 @@ export const pages: Page[] = [
     files: ['SelectionDemo'],
   },
   {
+    id: 'editing',
+    title: 'Inline editing',
+    section: 'Rows',
+    summary:
+      'Edit cells in place: text, numbers, dates, a select and checkboxes, chosen from the column’s renderer. Validation keeps a bad value in the editor; an async save shows its progress and keeps the editor open if the server refuses.',
+    try: [
+      'Double-click a player, type a new name, press Enter.',
+      'Click a cell and just start typing; Tab moves on to the next editable cell, Esc cancels.',
+      'Set a stake over 10,000: the server refuses and the editor stays open with the reason.',
+      'Double-click KYC: it flips at once. Void bets keep their status.',
+    ],
+    docs: '28. Inline editing',
+    files: ['EditingDemo'],
+  },
+  {
     id: 'grouping',
     title: 'Row grouping',
     section: 'Rows',

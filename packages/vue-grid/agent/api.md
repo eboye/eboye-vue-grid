@@ -1,4 +1,4 @@
-# @nocopypaste/vue-grid 0.9.0 — API reference
+# @nocopypaste/vue-grid 0.10.0 — API reference
 
 > Generated from the TypeScript sources (`scripts/gen-agent.mjs`). Machine-readable: `agent/api.json`, `agent/grid-config.schema.json`.
 
@@ -14,6 +14,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `columnReorderFeature` | Column reordering: drag a header (mouse, pen, touch), Alt+←/→ on a focused header, and the header menu's Move left / Move right. Columns opt out with `reorderable: false`. The order is part of `v-model:column-state` and persisted with `storage`; `<VGridColumnMenu>` works without it. |  | `reorderable` |
 | `columnResizingFeature` | Column resizing: drag a header's edge (mouse, pen, touch), use ←/→ on the focused edge (Alt+Shift+←/→ on a header with keyboard navigation), or double-click the edge to fit the content. `minWidth` / `maxWidth` bound it; columns opt out with `resizable: false`. Widths are kept in `columnState.widths` and persisted with `storage`. The header menu gains Fit width / Reset width. |  | `maxWidth` `resizable` |
 | `columnVisibilityFeature` | Column visibility: `hidden: true` columns, `columnState.hidden` (persisted with `storage`), the header menu's Hide column item and `<VGridColumnMenu>`'s checkboxes. Columns opt out with `hideable: false`. Without it, every column shows. |  | `hidden` `hideable` |
+| `editingFeature` |  | `saveCell` | `editable` `editor` `editorOptions` `validate` |
 | `exportFeature` | CSV and Excel export and copying: `grid.exportCsv()` downloads the filtered, sorted rows as a CSV file, `grid.getCsv()` returns the text, `grid.exportXlsx()` / `grid.getXlsx()` write an Excel workbook with typed cells (the writer loads on demand), `grid.print()` prints every matching row as a table with the header on each page, `grid.copyRows()` copies rows as tab-separated text, and Ctrl/⌘+C copies the selected rows, else the focused cell, as displayed. Columns can set `exportValue` and `exportable: false`. Without it those methods only warn. |  | `exportValue` `exportable` |
 | `filteringFeature` | Filtering: header funnels with typed filter popovers on `filterable` columns, the filter row, `<VGridSearch>`, the filter items of the header menu, `v-model:filters` and filter persistence. The popover body and the filter-row editors load on demand (own chunks). | `filterMode` `filterRow` `filterStorage` `noMatchText` `filters` | `filterable` `filter` `filterValue` `filterFn` `filterComponent` `searchable` |
 | `keyboardNavigationFeature` | Keyboard navigation (the ARIA grid pattern): the grid is one tab stop, arrow keys / Home / End / PageUp / PageDown move between cells, Enter activates a cell's control, Space selects a row, →/← expand and collapse, Alt+←/→ move a column, ContextMenu / Shift+F10 open the cell menu. Without it the grid is an ARIA `table`: its own controls (sort buttons, expanders, checkboxes, filter buttons) sit in the normal Tab order instead. |  |  |
@@ -40,6 +41,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `dataSource` | `DataSource<T>` |  | `serverDataFeature` | Server data: called with the current query (sort, filters, search, page) whenever it changes. The grid cancels superseded requests, shows loading and errors, and sorts / filters / pages nothing itself. |
 | `pagination` | `boolean \| PaginationOptions` | `false` | `paginationFeature` | Built-in pagination under the grid (server-side with `dataSource`, client-side otherwise). |
 | `statusBar` | `boolean \| StatusBarOptions` |  | `statusBarFeature` | A status bar under the grid (status bar feature): rows that pass the filters ("84 of 200 rows"), selected rows, active filters with Clear; `{ summary: ['total'] }` adds the sum and average of those columns over the selected rows. `#status-bar` replaces its content. |
+| `saveCell` | `(event: CellEditEvent<T>) => unknown` |  | `editingFeature` | Saves an edited cell (editing feature), after `cell-edit`: return a Promise and the cell shows it saving; a rejection keeps the editor open with the error's message. Without it, `cell-edit` alone carries the change. |
 | `messages` | `GridMessages` |  |  | Built-in text (translations, wording), over `createVueGrid({ messages })`. |
 | `parts` | `GridParts` |  |  | Built-in parts to leave out (`{ progressBar: false }`), over `createVueGrid({ parts })`. |
 | `sortMode` | `'controlled' \| 'client'` | `'controlled'` |  | `controlled` (default): a header click only updates `v-model:sort` (sort on the server or in your own code). `client`: the grid sorts the rows itself. Ignored with `dataSource`. |
@@ -107,6 +109,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `row-click` | `[row: T, event: MouseEvent \| KeyboardEvent]` | A row was clicked (not on a link, button or input inside it, nor a `clickable` column). |
 | `cell-click` | `[event: CellClickEvent<T>]` | A cell of a `clickable: true` column was clicked. |
 | `cell-action` | `[event: CellActionEvent<T>]` | A renderer emitted an action (buttons, toggles, menus, edit, copy). |
+| `cell-edit` | `[event: CellEditEvent<T>]` | A cell was edited (editing feature): update your data with `value`. The grid doesn't. |
 | `sub-rows-error` | `[event: { row: T; error: unknown }]` | `loadSubRows` rejected for a row. |
 | `context-action` | `[event: ContextActionEvent<T>]` | An item of the body-cell context menu was chosen. |
 | `header-action` | `[event: HeaderActionEvent<T>]` | A custom item of the header menu was chosen (built-in items act by themselves). |
@@ -153,6 +156,8 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `exportXlsx` | `Promise<void>` |  | Downloads the rows as an Excel file (`filename`, default `export.xlsx`). Export feature. |
 | `print` | `Promise<void>` |  | Prints the rows as a table (the browser's print dialog): the filtered, sorted rows on every page (not just those in view), as the cells show them, the header repeated on each printed page, numbers right-aligned, the totals in bold. Resolves when printing is over. Export feature. |
 | `copyRows` | `Promise<boolean>` |  | Copies rows to the clipboard as tab-separated text (pastes as cells into spreadsheets): the selected rows by default, as displayed, no header. Resolves `false` if nothing was copied. Export feature. |
+| `startEdit` | `boolean` |  | Opens the editor of a cell (editing feature), if the column is `editable` for that row and the row is on screen. Returns whether it opened. |
+| `stopEdit` | `void` |  | Closes the open editor: saves its value, or with `cancel` drops it. Editing feature. |
 
 ## `ColumnDef<T>`
 
@@ -192,6 +197,10 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `groupValue` | `(row: T) => unknown` | `rowGroupingFeature` | The value rows are grouped by (row grouping feature), e.g. `(row) => row.placedAt.slice(0, 7)` for months. Default: the cell value, shown with the column's renderer; a `groupValue` is shown as text (or with the `#group-<key>` slot). |
 | `exportValue` | `(row: T) => unknown` | `exportFeature` | The value exports and copying use (export feature), e.g. a plain id for a link or an object. Wins over the cell value and the renderer's text. |
 | `exportable` | `boolean` | `exportFeature` | Included in CSV exports and copied rows (export feature)? Default `true`; set `false` on action columns. |
+| `editable` | `boolean \| ((row: T) => boolean)` | `editingFeature` | Cells can be edited in place (editing feature): `true`, or per row. Double-click, Enter or F2 on a focused cell, or typing, opens the editor; the grid emits `cell-edit` and your handler updates the data (the grid never changes rows itself). |
+| `editor` | `EditorName \| Component` | `editingFeature` | The editor (editing feature): `text`, `number`, `date`, `datetime`, `select`, `checkbox`, or your own component (`CellEditorProps`). Default from the renderer: numbers and money → number, dates → date, booleans → checkbox, status / chip → select, else text. |
+| `editorOptions` | `EditorOptions` | `editingFeature` | Options of the editor: the choices of a select, a number's `min` / `max`, a `placeholder`. |
+| `validate` | `(value: unknown, row: T) => string \| null \| undefined \| void` | `editingFeature` | Checks an edited value before it is saved (editing feature): return an error message to keep the editor open with it, or nothing to accept the value. |
 | `cellClass` | `ClassValue \| ((row: T) => ClassValue)` |  | Extra classes for the column's body cells (or a function of the row). |
 | `headerClass` | `ClassValue` |  | Extra classes for the column's header cell. |
 

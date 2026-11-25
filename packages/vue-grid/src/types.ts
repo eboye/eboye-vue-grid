@@ -203,6 +203,25 @@ export interface ColumnDef<T = any, R extends RendererRef = RendererName> {
   exportValue?: (row: T) => unknown
   /** Included in CSV exports and copied rows (export feature)? Default `true`; set `false` on action columns. */
   exportable?: boolean
+  /**
+   * Cells can be edited in place (editing feature): `true`, or per row. Double-click, Enter or F2
+   * on a focused cell, or typing, opens the editor; the grid emits `cell-edit` and your handler
+   * updates the data (the grid never changes rows itself).
+   */
+  editable?: boolean | ((row: T) => boolean)
+  /**
+   * The editor (editing feature): `text`, `number`, `date`, `datetime`, `select`,
+   * `checkbox`, or your own component (`CellEditorProps`). Default from the renderer: numbers
+   * and money → number, dates → date, booleans → checkbox, status / chip → select, else text.
+   */
+  editor?: EditorName | Component
+  /** Options of the editor: the choices of a select, a number's `min` / `max`, a `placeholder`. */
+  editorOptions?: EditorOptions
+  /**
+   * Checks an edited value before it is saved (editing feature): return an error message to keep
+   * the editor open with it, or nothing to accept the value.
+   */
+  validate?: (value: unknown, row: T) => string | null | undefined | void
   /** Extra classes for the column's body cells (or a function of the row). */
   cellClass?: ClassValue | ((row: T) => ClassValue)
   /** Extra classes for the column's header cell. */
@@ -270,6 +289,66 @@ export interface CellActionEvent<T = any> {
   rowKey: RowKey
   /** The cell’s column definition. */
   column: ColumnDef<T>
+}
+
+/** A built-in cell editor (editing feature). */
+export type EditorName = 'text' | 'number' | 'date' | 'datetime' | 'select' | 'checkbox'
+
+/** A choice of a select editor: a value, and the text shown for it (default: the value). */
+export interface EditorOption {
+  value: unknown
+  label?: string
+}
+
+/** Options of a column's editor (`editorOptions`). */
+export interface EditorOptions {
+  /** Select: the choices (default: the column's distinct values in the rows). */
+  options?: readonly (EditorOption | string | number | boolean)[]
+  /** Number: the smallest value. */
+  min?: number
+  /** Number: the largest value. */
+  max?: number
+  /** Text and number: shown while empty. */
+  placeholder?: string
+  /** Text: the longest value. */
+  maxLength?: number
+  /** Anything your own editor component needs. */
+  [option: string]: unknown
+}
+
+/**
+ * Props of your own editor component (`editor: MyEditor`). Emit `update:modelValue` as the value
+ * changes; Enter, Tab and Esc are handled around it (commit, commit and move, cancel). Emit
+ * `commit` / `cancel` yourself where a key or a click should do that.
+ */
+export interface CellEditorProps<T = any> {
+  /** The value being edited (starts as the cell value). */
+  modelValue: unknown
+  row: T
+  column: ColumnDef<T>
+  options: EditorOptions
+  /** The validation or save error, if any. */
+  error?: string
+  /** Saving: the value can't change. */
+  disabled?: boolean
+  /** The accessible name for the control, e.g. "Edit Stake". */
+  label: string
+  /** Editing started by typing a character: it replaces the value. */
+  initial?: string
+}
+
+/** An edited cell value, committed (editing feature): `cell-edit` and `save-cell` get it. */
+export interface CellEditEvent<T = any> {
+  /** The row the cell belongs to. */
+  row: T
+  /** The row's key (`row-key`). */
+  rowKey: RowKey
+  /** The edited column. */
+  column: ColumnDef<T>
+  /** The new value, typed by the editor: a number, a string, a date, a boolean, a select's value. */
+  value: unknown
+  /** The value before the edit. */
+  oldValue: unknown
 }
 
 export interface CellClickEvent<T = any> {
@@ -414,6 +493,13 @@ export interface VGridExposed {
    * Export feature.
    */
   copyRows(options?: ExportOptions): Promise<boolean>
+  /**
+   * Opens the editor of a cell (editing feature), if the column is `editable` for that row and the
+   * row is on screen. Returns whether it opened.
+   */
+  startEdit(rowKey: RowKey, columnKey: string): boolean
+  /** Closes the open editor: saves its value, or with `cancel` drops it. Editing feature. */
+  stopEdit(cancel?: boolean): void
 }
 
 /** Which rows, columns and values an export or copy takes (export feature). */
@@ -630,11 +716,20 @@ export interface StatusBarFeature {
   /** The status bar's default content. */
   StatusBar: Component
 }
+export interface EditingFeature {
+  readonly feature: 'editing'
+  useEditing: typeof import('./composables/useEditing').useEditing
+  /** The cell editor (loads on demand). */
+  Editor: Component
+  /** Loads the editor's chunk ahead of the first edit (when a grid has editable columns). */
+  preload: () => Promise<unknown>
+}
 export interface ServerGroupingFeature {
   readonly feature: 'serverGrouping'
   useServerGroups: typeof import('./composables/useServerGroups').useServerGroups
 }
 export type GridFeature =
+  | EditingFeature
   | ServerGroupingFeature
   | StatusBarFeature
   | ExportFeature
@@ -901,6 +996,18 @@ export interface GridMessages {
   min?: string
   /** Default `Max`. */
   max?: string
+
+  // ── Editing ──
+  /** The editor's accessible name. Default `Edit ${column}`. */
+  editCell?: (column: string) => string
+  /** A number editor holds something else. Default `Enter a number.` */
+  editNotANumber?: string
+  /** A number editor's value is outside `min` / `max`. Default `Enter a number from ${min} to ${max}.` (or at least / at most). */
+  editOutOfRange?: (min: number | undefined, max: number | undefined) => string
+  /** `save-cell` rejected without a message. Default `Couldn't save the change.` */
+  editSaveFailed?: string
+  /** Default `Saving…` (for screen readers while `save-cell` runs). */
+  editSaving?: string
 
   // ── Renderers (a renderer's own `label` options win) ──
   /** `json`'s button. Default `View`. */

@@ -5,6 +5,7 @@ import { columnPinningFeature } from './columnPinning'
 import { columnResizingFeature } from './columnResizing'
 import { columnReorderFeature } from './columnReorder'
 import { columnVisibilityFeature } from './columnVisibility'
+import { editingFeature } from './editing'
 import { exportFeature } from './export'
 import { filteringFeature } from './filtering'
 import { keyboardNavigationFeature } from './keyboardNavigation'
@@ -27,6 +28,7 @@ export {
   columnReorderFeature,
   columnResizingFeature,
   columnVisibilityFeature,
+  editingFeature,
   exportFeature,
   filteringFeature,
   keyboardNavigationFeature,
@@ -65,4 +67,5 @@ export const allFeatures: readonly GridFeature[] = [
   exportFeature,
   statusBarFeature,
   serverGroupingFeature,
+  editingFeature,
 ]

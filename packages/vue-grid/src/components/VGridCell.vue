@@ -67,6 +67,9 @@ function onAction(name: string, payload?: unknown) {
   grid.onCellAction(props.row, props.rowKey, props.column, name, payload)
 }
 
+// Editing feature: whether this cell can be / is being edited, and the keys and double-click that start it.
+const edit = grid.editing?.forCell(() => props)
+
 function onContextMenu(event: MouseEvent) {
   if (props.column.kind !== 'data') return
   grid.onCellContextMenu(
@@ -116,6 +119,7 @@ function onClick(event: MouseEvent) {
         [`vg-pin-${column.pinned}`]: column.pinned,
         'vg-pin-edge': column.pinEdge,
         'vg-col-sized': column.kind === 'data' && grid.resize?.isSized(column.key),
+        'vg-cell-editing': edit?.active.value,
       },
       cellClass,
       grid.ui.value.cell,
@@ -123,9 +127,12 @@ function onClick(event: MouseEvent) {
     :style="grid.pinStyle(column.key)"
     :data-vg-flash="flash?.n"
     :data-vg-flash-dir="flash?.dir"
+    :data-vg-editable="edit?.editable.value || undefined"
     @click="onClick"
     @contextmenu="onContextMenu"
     @pointerdown="onPointerDown"
+    @keydown="edit?.onKeyDown($event)"
+    @dblclick="edit?.onDblClick($event)"
   >
     <template v-if="column.kind === 'select'">
       <component
@@ -169,7 +176,8 @@ function onClick(event: MouseEvent) {
           </svg>
         </button>
       </span>
-      <div class="vg-cell-content">
+      <!-- while editing, the content stays (hidden) and holds the column's width -->
+      <div class="vg-cell-content" :inert="edit?.active.value || undefined">
         <RenderSlot
           v-if="grid.slots[slotName]"
           :fn="grid.slots[slotName]"
@@ -189,6 +197,13 @@ function onClick(event: MouseEvent) {
         />
         <template v-else>{{ value ?? '' }}</template>
       </div>
+      <component
+        :is="grid.editing!.Editor"
+        v-if="edit?.active.value"
+        :row="row"
+        :row-key="rowKey"
+        :column="column"
+      />
     </template>
   </div>
 </template>

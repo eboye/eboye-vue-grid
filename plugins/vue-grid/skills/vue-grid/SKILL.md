@@ -1,6 +1,6 @@
 ---
 name: vue-grid
-description: Use when building, changing or debugging a data table / data grid with @nocopypaste/vue-grid (`<VGrid>`) in a Vue 3 app — columns, cell renderers, sorting, filtering, server data, pagination, selection, sub-grids, detail rows, virtual scrolling, pinned columns or rows, totals, row grouping, CSV export / copy to clipboard, menus, theming — or when a VGrid option "does nothing". Gives the rules that prevent silent failures, the exact API via the vue-grid MCP tools, and a validate-then-verify workflow.
+description: Use when building, changing or debugging a data table / data grid with @nocopypaste/vue-grid (`<VGrid>`) in a Vue 3 app — columns, cell renderers, sorting, filtering, server data, pagination, selection, sub-grids, detail rows, virtual scrolling, pinned columns or rows, totals, row grouping, CSV export / copy to clipboard, inline cell editing, menus, theming — or when a VGrid option "does nothing". Gives the rules that prevent silent failures, the exact API via the vue-grid MCP tools, and a validate-then-verify workflow.
 ---
 
 # Building with @nocopypaste/vue-grid
@@ -42,6 +42,8 @@ A working example of each feature, complete component source included:
 - List every needed feature in `:features="[…]"` (or app-wide in `createVueGrid({ features })`).
 - `row-key`, a bounded height, `sort-mode="client"` when the grid should sort rows itself;
   `multi-sort` + `v-model:sorts` to sort by several columns (Shift-click).
+- Inline editing (`editingFeature`, `editable` columns): handle `@cell-edit` and store `e.value`
+  (`setCellValue`), or use `:save-cell` for async saves; the grid never writes the value itself.
 - Editable renderers are controlled: handle `@cell-action` and update the data.
 
 ## 5. Validate the config

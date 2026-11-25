@@ -31,6 +31,7 @@
           "columnReorderFeature",
           "columnResizingFeature",
           "columnVisibilityFeature",
+          "editingFeature",
           "exportFeature",
           "filteringFeature",
           "keyboardNavigationFeature",
@@ -57,6 +58,9 @@
     },
     "statusBar": {
       "description": "A status bar under the grid (status bar feature): rows that pass the filters (\"84 of 200 rows\"), selected rows, active filters with Clear; `{ summary: ['total'] }` adds the sum and average of those columns over the selected rows. `#status-bar` replaces its content."
+    },
+    "saveCell": {
+      "description": "Saves an edited cell (editing feature), after `cell-edit`: return a Promise and the cell shows it saving; a rejection keeps the editor open with the error's message. Without it, `cell-edit` alone carries the change."
     },
     "messages": {
       "description": "Built-in text (translations, wording), over `createVueGrid({ messages })`."
@@ -687,6 +691,18 @@
         "exportable": {
           "type": "boolean",
           "description": "Included in CSV exports and copied rows (export feature)? Default `true`; set `false` on action columns."
+        },
+        "editable": {
+          "description": "Cells can be edited in place (editing feature): `true`, or per row. Double-click, Enter or F2 on a focused cell, or typing, opens the editor; the grid emits `cell-edit` and your handler updates the data (the grid never changes rows itself)."
+        },
+        "editor": {
+          "description": "The editor (editing feature): `text`, `number`, `date`, `datetime`, `select`, `checkbox`, or your own component (`CellEditorProps`). Default from the renderer: numbers and money → number, dates → date, booleans → checkbox, status / chip → select, else text."
+        },
+        "editorOptions": {
+          "description": "Options of the editor: the choices of a select, a number's `min` / `max`, a `placeholder`."
+        },
+        "validate": {
+          "description": "Checks an edited value before it is saved (editing feature): return an error message to keep the editor open with it, or nothing to accept the value."
         },
         "cellClass": {
           "description": "Extra classes for the column's body cells (or a function of the row)."

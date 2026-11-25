@@ -57,6 +57,8 @@ export interface GridContext {
   sortRows(rows: readonly any[]): any[]
   /** The sorting feature is on and the column is `sortable`. */
   sortable(col: ColumnDef): boolean
+  /** Editing feature: the open editor and how cells start one. */
+  editing?: import('../composables/useEditing').Editing<any> & { Editor: Component }
   /** Sorting feature: a column's number in a multi-column sort. */
   SortMarker?: Component
   /** Only with the column resizing feature. */

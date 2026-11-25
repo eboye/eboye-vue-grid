@@ -18,6 +18,7 @@ import type {
   ServerGroupingFeature,
   SortingFeature,
   StatusBarFeature,
+  EditingFeature,
   SubGridsFeature,
   VirtualScrollingFeature,
 } from '../types'
@@ -43,6 +44,7 @@ export interface FeatureSet {
   rowGrouping?: RowGroupingFeature
   export?: ExportFeature
   statusBar?: StatusBarFeature
+  editing?: EditingFeature
   serverGrouping?: ServerGroupingFeature
 }
 

@@ -13,7 +13,13 @@ export {
   type RendererRegistry,
 } from './registry/registry'
 
-export { getByPath, getCellValue, resolveRowKey, type RowKeyGetter } from './core/value'
+export {
+  getByPath,
+  getCellValue,
+  setCellValue,
+  resolveRowKey,
+  type RowKeyGetter,
+} from './core/value'
 export {
   normalizeColumnState,
   visibleColumns,

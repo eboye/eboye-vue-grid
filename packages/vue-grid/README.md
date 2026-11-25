@@ -135,6 +135,7 @@ an opt-in feature:
 | `serverGroupingFeature`     | With a `data-source`: groups from the server (`query.groupBy` / `groupPath`), each one's contents loaded on expand, groups selected by query (`v-model:selected-groups`). See [Server-side grouping](#server-side-grouping)                                                                                                             |
 | `exportFeature`             | `exportCsv()` / `getCsv()`, `exportXlsx()` / `getXlsx()` (Excel, typed cells), `print()` (every row, header on each page), `copyRows()`, Ctrl/⌘+C for the selected rows or the focused cell, the `copy` event; column `exportValue` / `exportable`                                                                                      |
 | `statusBarFeature`          | `status-bar`: a bar under the grid with the rows that pass the filters, the selected rows, the active filters (with Clear), and `{ summary: [keys] }` columns' sum and average over the selected rows; the `#status-bar` slot                                                                                                           |
+| `editingFeature`            | `editable` columns: an editor in the cell (text, number, date, select, checkbox, or your own) on double-click, Enter / F2 or typing; `cell-edit`, and `save-cell` for async saves. See [Inline editing](#inline-editing)                                                                                                                |
 
 ```ts
 // per grid
@@ -178,34 +179,35 @@ what you import.
 
 | Import (minified / gzip, Vue excluded)                                       | Initial chunk      |
 | ---------------------------------------------------------------------------- | ------------------ |
-| `VGrid` (no features)                                                        | 43.7 kB / 15.0 kB  |
-| `VGrid` + `sortingFeature`                                                   | 46.4 kB / 16.0 kB  |
-| `VGrid` + `filteringFeature`                                                 | 54.5 kB / 18.9 kB  |
-| `VGrid` + `serverDataFeature`                                                | 45.2 kB / 15.6 kB  |
-| `VGrid` + `paginationFeature`                                                | 43.9 kB / 15.1 kB  |
-| `VGrid` + `selectionFeature`                                                 | 47.9 kB / 16.5 kB  |
-| `VGrid` + `subGridsFeature`                                                  | 46.1 kB / 15.8 kB  |
-| `VGrid` + `menusFeature`                                                     | 55.0 kB / 18.8 kB  |
-| `VGrid` + `columnReorderFeature`                                             | 47.4 kB / 16.3 kB  |
-| `VGrid` + `columnPinningFeature`                                             | 46.7 kB / 16.1 kB  |
-| `VGrid` + `virtualScrollingFeature`                                          | 49.5 kB / 17.2 kB  |
-| `VGrid` + `columnVisibilityFeature`                                          | 43.9 kB / 15.1 kB  |
-| `VGrid` + `keyboardNavigationFeature`                                        | 46.5 kB / 16.0 kB  |
-| `VGrid` + `columnResizingFeature`                                            | 47.0 kB / 16.3 kB  |
-| `VGrid` + `columnGroupsFeature`                                              | 45.0 kB / 15.5 kB  |
-| `VGrid` + `rowPinningFeature`                                                | 48.7 kB / 16.3 kB  |
-| `VGrid` + `aggregationFeature`                                               | 48.9 kB / 16.5 kB  |
-| `VGrid` + `rowGroupingFeature`                                               | 54.6 kB / 18.6 kB  |
-| `VGrid` + `exportFeature`                                                    | 48.7 kB / 16.9 kB  |
-| `VGrid` + `statusBarFeature`                                                 | 46.2 kB / 16.0 kB  |
-| `VGrid` + `serverGroupingFeature`                                            | 46.8 kB / 16.2 kB  |
-| `VGrid` + `allFeatures` + `VGridSearch`                                      | 118.3 kB / 39.8 kB |
-| `VGrid` + `currencyRenderer`                                                 | 45.1 kB / 15.5 kB  |
-| `VGrid` + `VGridPagination` + `VGridColumnMenu`                              | 51.0 kB / 17.5 kB  |
+| `VGrid` (no features)                                                        | 44.5 kB / 15.3 kB  |
+| `VGrid` + `sortingFeature`                                                   | 47.2 kB / 16.3 kB  |
+| `VGrid` + `filteringFeature`                                                 | 55.2 kB / 19.1 kB  |
+| `VGrid` + `serverDataFeature`                                                | 45.9 kB / 15.9 kB  |
+| `VGrid` + `paginationFeature`                                                | 44.6 kB / 15.3 kB  |
+| `VGrid` + `selectionFeature`                                                 | 48.6 kB / 16.7 kB  |
+| `VGrid` + `subGridsFeature`                                                  | 46.8 kB / 16.1 kB  |
+| `VGrid` + `menusFeature`                                                     | 55.7 kB / 19.1 kB  |
+| `VGrid` + `columnReorderFeature`                                             | 48.1 kB / 16.5 kB  |
+| `VGrid` + `columnPinningFeature`                                             | 47.4 kB / 16.3 kB  |
+| `VGrid` + `virtualScrollingFeature`                                          | 50.2 kB / 17.5 kB  |
+| `VGrid` + `columnVisibilityFeature`                                          | 44.6 kB / 15.3 kB  |
+| `VGrid` + `keyboardNavigationFeature`                                        | 47.2 kB / 16.3 kB  |
+| `VGrid` + `columnResizingFeature`                                            | 47.7 kB / 16.5 kB  |
+| `VGrid` + `columnGroupsFeature`                                              | 45.8 kB / 15.7 kB  |
+| `VGrid` + `rowPinningFeature`                                                | 49.4 kB / 16.6 kB  |
+| `VGrid` + `aggregationFeature`                                               | 49.6 kB / 16.7 kB  |
+| `VGrid` + `rowGroupingFeature`                                               | 55.3 kB / 18.8 kB  |
+| `VGrid` + `exportFeature`                                                    | 49.4 kB / 17.2 kB  |
+| `VGrid` + `statusBarFeature`                                                 | 46.9 kB / 16.2 kB  |
+| `VGrid` + `serverGroupingFeature`                                            | 47.6 kB / 16.4 kB  |
+| `VGrid` + `editingFeature`                                                   | 48.8 kB / 17.0 kB  |
+| `VGrid` + `allFeatures` + `VGridSearch`                                      | 123.4 kB / 41.7 kB |
+| `VGrid` + `currencyRenderer`                                                 | 45.8 kB / 15.7 kB  |
+| `VGrid` + `VGridPagination` + `VGridColumnMenu`                              | 51.7 kB / 17.7 kB  |
 | `sortRows` only                                                              | 0.7 kB / 0.4 kB    |
 | `toCsv` only                                                                 | 1.1 kB / 0.6 kB    |
-| everything                                                                   | 171.9 kB / 55.2 kB |
-| `validateGridConfig` (`@nocopypaste/vue-grid/agent`, never in an app bundle) | 73.4 kB / 20.0 kB  |
+| everything                                                                   | 177.3 kB / 57.2 kB |
+| `validateGridConfig` (`@nocopypaste/vue-grid/agent`, never in an app bundle) | 75.6 kB / 20.7 kB  |
 
 With `filteringFeature`, the filter popover body and the filter-row editors are **on-demand
 chunks**: they load the first time a popover opens or `filter-row` is on. With
@@ -274,6 +276,7 @@ chunks that on-demand imports share with the entry, even when nothing uses them.
 | `emptyText`                          | `string`                                                                                                                     | `messages.empty`   | Shown when there are no rows (`No data to show.`).                                                                                                                                                                          |
 | `ariaLabel`                          | `string`                                                                                                                     | —                  |                                                                                                                                                                                                                             |
 | `statusBar`                          | `boolean \| StatusBarOptions`                                                                                                | `false`            | A status bar under the grid (status bar feature): counts, and `{ summary: [keys] }` sums of the selected rows. See [Status bar](#status-bar).                                                                               |
+| `saveCell`                           | `(event: CellEditEvent) => unknown`                                                                                          | —                  | Saves an edited cell (editing feature): return a Promise and the cell shows it saving; a rejection keeps the editor open with its message. See [Inline editing](#inline-editing).                                           |
 | `messages`                           | `GridMessages`                                                                                                               | —                  | Built-in text (translations, wording), over `createVueGrid({ messages })`. See [Text and parts](#text-and-parts).                                                                                                           |
 | `parts`                              | `GridParts`                                                                                                                  | —                  | Built-in parts to leave out (`{ filterButtons: false }`), over `createVueGrid({ parts })`.                                                                                                                                  |
 | `contextMenu`                        | `(ctx: { row, rowKey, column, value }) => MenuItem[] \| null`                                                                | —                  | Right-click menu for body cells. Needs `menusFeature`.                                                                                                                                                                      |
@@ -287,6 +290,7 @@ chunks that on-demand imports share with the entry, even when nothing uses them.
 `query-change(query: GridQuery)` (sort + filters + page as one object, on mount and on every real change) ·
 `copy({ kind, text, rows, columns })` (rows or a cell were copied: `exportFeature`) ·
 `load-error(error)` (a `dataSource` call failed) ·
+`cell-edit({ row, rowKey, column, value, oldValue })` (an edited cell: `editingFeature`; update your data) ·
 plus the `update:*` events of every `v-model`.
 
 Clicks on links, buttons and inputs inside a cell never trigger `row-click`.
@@ -313,6 +317,7 @@ grid.value?.clearSelection() // selectionFeature: clears the selection, "all mat
 grid.value?.reloadSubRows('c2') // forget lazily loaded children (of one row, or all): they load again
 grid.value?.pinRow(42, 'top') // pin a row above the body ('bottom' below it, null to unpin): rowPinningFeature
 grid.value?.exportCsv({ filename: 'orders.csv' }) / getCsv() / copyRows() // exportFeature, see Export and copy
+grid.value?.startEdit(42, 'stake') / stopEdit() // editingFeature: open a cell's editor; save (or stopEdit(true): drop) the open one
 ```
 
 `reload()` also forgets lazily loaded children, as does passing a different `load-sub-rows`
@@ -377,6 +382,10 @@ animate on the compositor (GPU): a busy live feed costs the main thread about a 
   groupValue?: (row) => unknown  // what rows are grouped by (default: the cell value), e.g. the month of a date
   exportValue?: (row) => unknown // what CSV exports and copying use (exportFeature), e.g. an id instead of a link
   exportable?: boolean           // in exports and copied rows (default true); false for action columns
+  editable?: boolean | ((row) => boolean)  // edit cells in place (editingFeature)
+  editor?: 'text' | 'number' | 'date' | 'datetime' | 'select' | 'checkbox' | Component  // default from the renderer
+  editorOptions?: { options?, min?, max?, placeholder?, maxLength? }  // a select's choices, a number's range…
+  validate?: (value, row) => string | void  // an error message keeps the editor open
   cellClass?: ClassValue | ((row) => ClassValue); headerClass?: ClassValue
 }
 ```
@@ -1070,6 +1079,65 @@ await grid.value?.print({ title: 'Orders', totals: true, landscape: true })
 - Options: `rows`, `children`, `columns`, `header`, `totals` as for the exports, plus `title`
   (a heading, also the document title) and `landscape`.
 - It resolves when printing is over. The printing code (1.1 kB gzip) loads on first use.
+
+## Inline editing
+
+`editingFeature` edits cells in place. Mark columns `editable` (or `(row) => boolean`). A cell opens
+its editor on double-click, on Enter or F2 when focused, or when you start typing on it (the
+keys replace the value). **Enter** saves, **Tab** / **Shift+Tab** save and edit the next / previous
+editable cell, **Esc** cancels, and clicking elsewhere saves.
+
+The editor follows the column's renderer: numbers and money → a number input, `date` → a date
+picker, `datetime` → date and time, `boolean` → it flips at once (no editor), `status` / `chip`
+→ a select of the column's values, anything else → text. `editor` picks another, or your own
+component (`CellEditorProps`: `v-model`, emit `commit` / `cancel`; Enter, Tab and Esc work around it).
+
+The grid never changes your rows: it emits `cell-edit` with the typed `value` (a number, a date
+string in the cell's own format, a select's value) and `oldValue`, and your handler stores it.
+`setCellValue(row, column, value)` writes along the column's `field` path.
+
+```vue
+<script setup lang="ts">
+import { VGrid, editingFeature, setCellValue, type CellEditEvent } from '@nocopypaste/vue-grid'
+
+const rows = reactive(await loadBets())
+const columns = [
+  col({
+    key: 'player',
+    field: 'player.name',
+    editable: true,
+    validate: (v) => (String(v).trim() ? undefined : 'A player needs a name.'),
+  }),
+  col({ key: 'stake', renderer: currencyRenderer, editable: true, editorOptions: { min: 0 } }),
+  col({
+    key: 'status',
+    renderer: statusRenderer,
+    editable: (bet) => bet.status !== 'Void',
+    editorOptions: { options: ['Open', 'Won', 'Lost', 'Void'] },
+  }),
+  col({ key: 'verified', renderer: booleanRenderer, editable: true }),
+]
+
+// optional: an async save. The cell shows it saving; a rejection keeps the editor open with the message.
+async function saveCell(e: CellEditEvent<Bet>) {
+  await api.patch(`/bets/${e.rowKey}`, { [e.column.key]: e.value }) // throws on a 4xx
+  setCellValue(e.row, e.column, e.value)
+}
+</script>
+
+<template>
+  <VGrid :rows :columns row-key="id" :save-cell="saveCell" :features="[editingFeature]" />
+  <!-- or without a save function: @cell-edit="(e) => setCellValue(e.row, e.column, e.value)" -->
+</template>
+```
+
+`validate` returns a message to keep the editor open with it (shown below the cell, and as the
+input's description for screen readers); a number outside `min` / `max` or not a number is refused
+the same way. One cell edits at a time. With `keyboardNavigationFeature` cells take focus, so typing
+and Enter / F2 work; without it, double-click. Pinned rows and group rows aren't editable. The
+editor's code loads on demand, while the browser is idle, once a grid has an editable column.
+`grid.startEdit(rowKey, columnKey)` opens an editor from code, `grid.stopEdit()` closes it. Its
+text (`Edit {column}`, `Enter a number.`, `Saving…`) is in `messages`.
 
 ## Status bar
 

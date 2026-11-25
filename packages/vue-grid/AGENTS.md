@@ -33,45 +33,50 @@ runs in the [live examples](https://eboye.github.io/eboye-vue-grid/), each with 
    row that height, px) and a bounded height. `pagination` is ignored while `virtual` is on.
 8. **Rows are never mutated** by the grid. To change a cell: assign the field on a reactive row, or
    replace rows (`patchRows(rows, patches, rowKey)` keeps unchanged rows' identity).
-9. **Editable renderers are controlled** (`checkbox`, `switch`, `radio`, `icon-toggle`, `edit`,
-   buttons, menus): they emit `@cell-action="{ name, payload, row, rowKey, column }"`; your handler
-   updates the data.
-10. **Type columns** with `const col = createColumnHelper<Row>()` → `col({ ... })`: `rendererOptions`
+9. **Inline editing is controlled too** (`editingFeature`, `editable` columns): the grid emits
+   `@cell-edit="{ row, rowKey, column, value, oldValue }"` and never writes the value; store it
+   (`setCellValue(e.row, e.column, e.value)` on reactive rows), or do it in `:save-cell` (may return a
+   Promise; a rejection keeps the editor open with the message).
+10. **Editable renderers are controlled** (`checkbox`, `switch`, `radio`, `icon-toggle`, `edit`,
+    buttons, menus): they emit `@cell-action="{ name, payload, row, rowKey, column }"`; your handler
+    updates the data.
+11. **Type columns** with `const col = createColumnHelper<Row>()` → `col({ ... })`: `rendererOptions`
     are then checked against the chosen renderer.
-11. **Server data** (`:data-source` + `serverDataFeature`): don't also pass `rows`; pass the
+12. **Server data** (`:data-source` + `serverDataFeature`): don't also pass `rows`; pass the
     `signal` to `fetch`; return `{ rows, total }` (`total` drives the pager).
-12. Width is any CSS grid track as a **string**: `'8rem'`, `'1fr'`, `'minmax(10rem, 2fr)'`,
+13. Width is any CSS grid track as a **string**: `'8rem'`, `'1fr'`, `'minmax(10rem, 2fr)'`,
     `'min-content'` (default `auto`). Numbers are not accepted.
 
 ## Which feature for what
 
-| The user wants…                                   | Feature(s)                                                            | Props / column options                                                                                                                                                                         |
-| ------------------------------------------------- | --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Click a header to sort                            | `sortingFeature`                                                      | column `sortable: true`; `sort-mode="client"` (or handle `v-model:sort`)                                                                                                                       |
-| Sort by several columns ("city, then stake")      | `sortingFeature`                                                      | `multi-sort`, `v-model:sorts="[{ key, dir }, …]"`; Shift-click adds a column; server: `query.sorts`                                                                                            |
-| Filters per column, a filter row, quick search    | `filteringFeature`                                                    | column `filterable: true` (`filter: 'text' \| 'number' \| 'date' \| 'boolean' \| 'set'`); `filter-row`; `<VGridSearch />` in `#toolbar`                                                        |
-| Pages                                             | `paginationFeature`                                                   | `pagination` (or `{ pageSizes: [10, 25, 50] }`), `v-model:page`, `v-model:page-size`                                                                                                           |
-| Backend sorting / filtering / paging              | `serverDataFeature` (+ the above)                                     | `:data-source="(query, { signal }) => Promise<{ rows, total }>"`                                                                                                                               |
-| Checkboxes / row selection, batch actions         | `selectionFeature`                                                    | `selectable` (or `'single'`), `v-model:selected`, `is-row-selectable`, `prune-selection`; `#toolbar="{ selected, selectedCount, clearSelection }"`; server data: `v-model:select-all-matching` |
-| Nested child rows aligned to the parent's columns | `subGridsFeature`                                                     | `:sub-rows="(row) => row.children"` or `:load-sub-rows` + `:has-sub-rows`                                                                                                                      |
-| An expandable panel under a row                   | —                                                                     | `#detail="{ row }"` slot (`row-expandable` to limit it)                                                                                                                                        |
-| 10,000+ rows                                      | `virtualScrollingFeature`                                             | `:virtual="{ rowHeight: 40 }"` + bounded height                                                                                                                                                |
-| Right-click menus (cells, headers)                | `menusFeature`                                                        | `:context-menu="(ctx) => MenuItem[]"` + `@context-action`; header menu is on by default                                                                                                        |
-| Freeze columns left / right                       | `columnPinningFeature`                                                | column `pinned: 'left' \| 'right'`; on narrow grids they scroll unless `pinned-max-share` allows (default half the width)                                                                      |
-| Show / hide columns                               | `columnVisibilityFeature`                                             | column `hidden: true`; `<VGridColumnMenu>` in `#toolbar`                                                                                                                                       |
-| Drag columns to reorder                           | `columnReorderFeature`                                                | column `reorderable: false` to lock one                                                                                                                                                        |
-| Drag column edges to resize                       | `columnResizingFeature`                                               | `minWidth` / `maxWidth`, `resizable: false`                                                                                                                                                    |
-| Grouped headers ("Q1" over three columns)         | `columnGroupsFeature`                                                 | column `group: 'Q1'`                                                                                                                                                                           |
-| Rows that stay on top / bottom                    | `rowPinningFeature`                                                   | `v-model:pinned-rows="{ top: [id], bottom: [] }"`, `pinRow()`, `pinned-top-rows`                                                                                                               |
-| A totals row (sum, avg, …)                        | `aggregationFeature`                                                  | column `aggregate: 'sum' \| 'avg' \| 'min' \| 'max' \| 'count' \| fn`; `totals` (or `'top'`)                                                                                                   |
-| Group server data across all rows (not the page)  | `serverGroupingFeature` (+ `rowGroupingFeature`, `serverDataFeature`) | return `{ groups: [{ value, count, aggregates }], total }` for `query.groupBy` / `query.groupPath`, `{ rows }` at the last level; `v-model:selected-groups`                                    |
-| Group rows by a column ("by status, then city")   | `rowGroupingFeature`                                                  | `v-model:group-by="['status', 'city']"`, `groups-expanded`; column `groupable: true` (header menu), `groupValue: (row) => …` (e.g. month); `aggregate` shows per group                         |
-| Download CSV / Excel, print, copy rows / cells    | `exportFeature`                                                       | `grid.exportCsv()`, `getCsv()`, `exportXlsx()`, `getXlsx()`, `print()`, `copyRows()`, `@copy`; column `exportValue`, `exportable: false`                                                       |
-| Row / selection counts, sum of the selected rows  | `statusBarFeature`                                                    | `status-bar` (or `{ summary: ['total'], aggregates?: ['sum', 'avg'] }`); `#status-bar="{ rowCount, selectedCount, summary, … }"`                                                               |
-| Translate / reword the grid, drop built-in pieces | —                                                                     | `messages` (`GridMessages`), `parts` (`GridParts`): app-wide in `createVueGrid` or per grid; slots `#load-error`, `#no-match`, `#select-all-banner`                                            |
-| Arrow-key navigation (ARIA grid)                  | `keyboardNavigationFeature`                                           | —                                                                                                                                                                                              |
-| Remember column layout                            | —                                                                     | `storage="orders-grid"` (localStorage key)                                                                                                                                                     |
-| Cell type (money, date, badge, link, …)           | —                                                                     | `renderer: currencyRenderer` etc. (list below)                                                                                                                                                 |
+| The user wants…                                   | Feature(s)                                                            | Props / column options                                                                                                                                                                              |
+| ------------------------------------------------- | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Click a header to sort                            | `sortingFeature`                                                      | column `sortable: true`; `sort-mode="client"` (or handle `v-model:sort`)                                                                                                                            |
+| Sort by several columns ("city, then stake")      | `sortingFeature`                                                      | `multi-sort`, `v-model:sorts="[{ key, dir }, …]"`; Shift-click adds a column; server: `query.sorts`                                                                                                 |
+| Filters per column, a filter row, quick search    | `filteringFeature`                                                    | column `filterable: true` (`filter: 'text' \| 'number' \| 'date' \| 'boolean' \| 'set'`); `filter-row`; `<VGridSearch />` in `#toolbar`                                                             |
+| Pages                                             | `paginationFeature`                                                   | `pagination` (or `{ pageSizes: [10, 25, 50] }`), `v-model:page`, `v-model:page-size`                                                                                                                |
+| Backend sorting / filtering / paging              | `serverDataFeature` (+ the above)                                     | `:data-source="(query, { signal }) => Promise<{ rows, total }>"`                                                                                                                                    |
+| Checkboxes / row selection, batch actions         | `selectionFeature`                                                    | `selectable` (or `'single'`), `v-model:selected`, `is-row-selectable`, `prune-selection`; `#toolbar="{ selected, selectedCount, clearSelection }"`; server data: `v-model:select-all-matching`      |
+| Nested child rows aligned to the parent's columns | `subGridsFeature`                                                     | `:sub-rows="(row) => row.children"` or `:load-sub-rows` + `:has-sub-rows`                                                                                                                           |
+| An expandable panel under a row                   | —                                                                     | `#detail="{ row }"` slot (`row-expandable` to limit it)                                                                                                                                             |
+| 10,000+ rows                                      | `virtualScrollingFeature`                                             | `:virtual="{ rowHeight: 40 }"` + bounded height                                                                                                                                                     |
+| Right-click menus (cells, headers)                | `menusFeature`                                                        | `:context-menu="(ctx) => MenuItem[]"` + `@context-action`; header menu is on by default                                                                                                             |
+| Freeze columns left / right                       | `columnPinningFeature`                                                | column `pinned: 'left' \| 'right'`; on narrow grids they scroll unless `pinned-max-share` allows (default half the width)                                                                           |
+| Show / hide columns                               | `columnVisibilityFeature`                                             | column `hidden: true`; `<VGridColumnMenu>` in `#toolbar`                                                                                                                                            |
+| Drag columns to reorder                           | `columnReorderFeature`                                                | column `reorderable: false` to lock one                                                                                                                                                             |
+| Drag column edges to resize                       | `columnResizingFeature`                                               | `minWidth` / `maxWidth`, `resizable: false`                                                                                                                                                         |
+| Grouped headers ("Q1" over three columns)         | `columnGroupsFeature`                                                 | column `group: 'Q1'`                                                                                                                                                                                |
+| Rows that stay on top / bottom                    | `rowPinningFeature`                                                   | `v-model:pinned-rows="{ top: [id], bottom: [] }"`, `pinRow()`, `pinned-top-rows`                                                                                                                    |
+| A totals row (sum, avg, …)                        | `aggregationFeature`                                                  | column `aggregate: 'sum' \| 'avg' \| 'min' \| 'max' \| 'count' \| fn`; `totals` (or `'top'`)                                                                                                        |
+| Group server data across all rows (not the page)  | `serverGroupingFeature` (+ `rowGroupingFeature`, `serverDataFeature`) | return `{ groups: [{ value, count, aggregates }], total }` for `query.groupBy` / `query.groupPath`, `{ rows }` at the last level; `v-model:selected-groups`                                         |
+| Group rows by a column ("by status, then city")   | `rowGroupingFeature`                                                  | `v-model:group-by="['status', 'city']"`, `groups-expanded`; column `groupable: true` (header menu), `groupValue: (row) => …` (e.g. month); `aggregate` shows per group                              |
+| Download CSV / Excel, print, copy rows / cells    | `exportFeature`                                                       | `grid.exportCsv()`, `getCsv()`, `exportXlsx()`, `getXlsx()`, `print()`, `copyRows()`, `@copy`; column `exportValue`, `exportable: false`                                                            |
+| Row / selection counts, sum of the selected rows  | `statusBarFeature`                                                    | `status-bar` (or `{ summary: ['total'], aggregates?: ['sum', 'avg'] }`); `#status-bar="{ rowCount, selectedCount, summary, … }"`                                                                    |
+| Edit cells in place (spreadsheet-like)            | `editingFeature` (+ `keyboardNavigationFeature` for typing / Enter)   | column `editable: true \| (row) => boolean`, `editor`, `editorOptions`, `validate`; `@cell-edit` (store `value`: `setCellValue(e.row, e.column, e.value)`), `:save-cell` (async, rejection = error) |
+| Translate / reword the grid, drop built-in pieces | —                                                                     | `messages` (`GridMessages`), `parts` (`GridParts`): app-wide in `createVueGrid` or per grid; slots `#load-error`, `#no-match`, `#select-all-banner`                                                 |
+| Arrow-key navigation (ARIA grid)                  | `keyboardNavigationFeature`                                           | —                                                                                                                                                                                                   |
+| Remember column layout                            | —                                                                     | `storage="orders-grid"` (localStorage key)                                                                                                                                                          |
+| Cell type (money, date, badge, link, …)           | —                                                                     | `renderer: currencyRenderer` etc. (list below)                                                                                                                                                      |
 
 ## Renderers (pick by data)
 
@@ -454,6 +459,31 @@ function onAction(e: CellActionEvent<Order>) {
 </template>
 ```
 
+### Inline editing
+
+```ts
+import { editingFeature, keyboardNavigationFeature, setCellValue } from '@nocopypaste/vue-grid'
+const rows = reactive(bets) // the handler writes into them
+const columns = [
+  col({
+    key: 'player',
+    field: 'player.name',
+    editable: true,
+    validate: (v) => (String(v).trim() ? undefined : 'Required'),
+  }),
+  col({ key: 'stake', renderer: currencyRenderer, editable: true, editorOptions: { min: 0 } }), // number
+  col({ key: 'status', renderer: statusRenderer, editable: (b) => b.status !== 'Void' }), // select
+  col({ key: 'verified', renderer: booleanRenderer, editable: true }), // flips at once
+]
+// <VGrid :rows :columns row-key="id" :features="[editingFeature, keyboardNavigationFeature]"
+//        @cell-edit="(e) => setCellValue(e.row, e.column, e.value)" />
+// async: :save-cell="async (e) => { await api.save(e); setCellValue(e.row, e.column, e.value) }"
+```
+
+The editor comes from the renderer (number, date, datetime, select, checkbox, text) or `editor`
+(a name or your component). Double-click / Enter / F2 / typing opens it; Enter saves, Tab moves to
+the next editable cell, Esc cancels.
+
 ### Editable checkbox (controlled)
 
 ```ts
@@ -502,6 +532,10 @@ only sees stylesheet rules. Density:
 ## Pitfalls
 
 - Nothing sorts → `sort-mode="client"` missing (or `sortingFeature` missing).
+- An edited cell snaps back to its old value → nothing stores it: handle `@cell-edit` (or
+  `save-cell`) and write `e.value` into reactive rows (`setCellValue`); the grid never does.
+- Typing / Enter on a cell doesn't start editing → cells only take focus with
+  `keyboardNavigationFeature`; without it, double-click.
 - Shift-click sorts by one column only → add `multi-sort`, and bind `v-model:sorts` (not `sort`) to read every key; a `dataSource` reads `query.sorts`.
 - Columns are squeezed / the page scrolls sideways → give `width`s (`minmax(8rem, 1fr)`); the grid
   scrolls horizontally inside itself when columns are wider than it.

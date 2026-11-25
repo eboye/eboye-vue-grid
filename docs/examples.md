@@ -56,6 +56,7 @@ export interface Order {
 25. [Export and copy](#25-export-and-copy)
 26. [Status bar](#26-status-bar)
 27. [Text and parts](#27-text-and-parts)
+28. [Inline editing](#28-inline-editing)
 
 ---
 
@@ -136,26 +137,27 @@ app.use(createVueGrid({ features: [sortingFeature, filteringFeature] }))
 app.use(createVueGrid({ features: allFeatures })) // all of them
 ```
 
-| Feature                     | Needed for                                                                                           |
-| --------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `sortingFeature`            | `sortable` columns, `v-model:sort` header UI, `sort-mode="client"`, `multi-sort` / `v-model:sorts`   |
-| `filteringFeature`          | `filterable` columns, `filter-row`, `<VGridSearch>`, `v-model:filters`, `filter-storage`             |
-| `serverDataFeature`         | `data-source`                                                                                        |
-| `paginationFeature`         | `pagination`, `v-model:page`, `v-model:page-size`                                                    |
-| `selectionFeature`          | `selectable`, `v-model:selected`, `selection-mode`, `is-row-selectable`                              |
-| `subGridsFeature`           | `sub-rows`, `load-sub-rows`, `has-sub-rows` (detail rows work without it)                            |
-| `menusFeature`              | the header right-click menu (`header-menu`) and `context-menu` for body cells                        |
-| `columnReorderFeature`      | dragging headers, Alt+←/→ on a header, the menu's Move items                                         |
-| `columnPinningFeature`      | `pinned` columns (sticky, with shadows), the menu's Pin items                                        |
-| `virtualScrollingFeature`   | `virtual` (render only the rows in view)                                                             |
-| `columnVisibilityFeature`   | `hidden` columns, `columnState.hidden`, the menu's Hide column item                                  |
-| `keyboardNavigationFeature` | arrow-key navigation between cells (ARIA grid); without it an ARIA table with tabbable controls      |
-| `columnResizingFeature`     | dragging a header edge to resize, double-click to fit, `resizable`, `maxWidth`, `columnState.widths` |
-| `columnGroupsFeature`       | `group` on columns: a sticky row of group headers above the column headers                           |
-| `rowPinningFeature`         | `v-model:pinned-rows`, `pinRow()`, `pinned-top-rows` / `pinned-bottom-rows`                          |
-| `aggregationFeature`        | column `aggregate`, `totals`, `totals-label`, `aggregates`                                           |
-| `rowGroupingFeature`        | `v-model:group-by`, `groups-expanded`, column `groupable` / `groupValue`, `#group-<key>`             |
-| `exportFeature`             | `exportCsv()` / `getCsv()` / `copyRows()`, Ctrl/⌘+C, `@copy`, column `exportValue` / `exportable`    |
+| Feature                     | Needed for                                                                                                           |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `sortingFeature`            | `sortable` columns, `v-model:sort` header UI, `sort-mode="client"`, `multi-sort` / `v-model:sorts`                   |
+| `filteringFeature`          | `filterable` columns, `filter-row`, `<VGridSearch>`, `v-model:filters`, `filter-storage`                             |
+| `serverDataFeature`         | `data-source`                                                                                                        |
+| `paginationFeature`         | `pagination`, `v-model:page`, `v-model:page-size`                                                                    |
+| `selectionFeature`          | `selectable`, `v-model:selected`, `selection-mode`, `is-row-selectable`                                              |
+| `subGridsFeature`           | `sub-rows`, `load-sub-rows`, `has-sub-rows` (detail rows work without it)                                            |
+| `menusFeature`              | the header right-click menu (`header-menu`) and `context-menu` for body cells                                        |
+| `columnReorderFeature`      | dragging headers, Alt+←/→ on a header, the menu's Move items                                                         |
+| `columnPinningFeature`      | `pinned` columns (sticky, with shadows), the menu's Pin items                                                        |
+| `virtualScrollingFeature`   | `virtual` (render only the rows in view)                                                                             |
+| `columnVisibilityFeature`   | `hidden` columns, `columnState.hidden`, the menu's Hide column item                                                  |
+| `keyboardNavigationFeature` | arrow-key navigation between cells (ARIA grid); without it an ARIA table with tabbable controls                      |
+| `columnResizingFeature`     | dragging a header edge to resize, double-click to fit, `resizable`, `maxWidth`, `columnState.widths`                 |
+| `columnGroupsFeature`       | `group` on columns: a sticky row of group headers above the column headers                                           |
+| `rowPinningFeature`         | `v-model:pinned-rows`, `pinRow()`, `pinned-top-rows` / `pinned-bottom-rows`                                          |
+| `aggregationFeature`        | column `aggregate`, `totals`, `totals-label`, `aggregates`                                                           |
+| `rowGroupingFeature`        | `v-model:group-by`, `groups-expanded`, column `groupable` / `groupValue`, `#group-<key>`                             |
+| `exportFeature`             | `exportCsv()` / `getCsv()` / `copyRows()`, Ctrl/⌘+C, `@copy`, column `exportValue` / `exportable`                    |
+| `editingFeature`            | column `editable` / `editor` / `editorOptions` / `validate`, `@cell-edit`, `save-cell`, `startEdit()` / `stopEdit()` |
 
 Without its feature, an option does nothing and a dev warning names the feature to add. A grid
 reads `features` once when it is created.
@@ -2369,3 +2371,94 @@ Per grid (wins over the app's):
   `selectAllBanner`, `filterButtons`, `resizeGrips`, `headerDrag`, `copyShortcut`, `groupCounts`, each
   on unless `false`.
 - Slots that replace a part: `#load-error`, `#no-match`, `#select-all-banner`, `#status-bar`.
+
+---
+
+## 28. Inline editing
+
+Edit cells in place (needs `editingFeature`). Mark columns `editable`; the grid emits `cell-edit` and
+your handler stores the value (the grid never changes rows itself):
+
+```vue
+<script setup lang="ts">
+import { reactive } from 'vue'
+import {
+  VGrid,
+  createColumnHelper,
+  editingFeature,
+  keyboardNavigationFeature,
+  setCellValue,
+  type CellEditEvent,
+} from '@nocopypaste/vue-grid'
+
+const rows = reactive<Order[]>([/* … */])
+const col = createColumnHelper<Order>()
+const columns = [
+  col({ key: 'id', header: '#' }), // read-only
+  col({
+    key: 'customer',
+    field: 'customer.name',
+    editable: true,
+    validate: (v) => (String(v ?? '').trim() ? undefined : 'Required'),
+  }),
+  col({ key: 'total', renderer: 'currency', editable: true, editorOptions: { min: 0 } }), // number
+  col({ key: 'placedAt', renderer: 'date', editable: true }), // date picker
+  col({
+    key: 'status',
+    renderer: 'status',
+    editable: (o) => o.status !== 'Refunded', // per row
+    editorOptions: { options: ['Open', 'Paid', 'Refunded'] }, // select (default: the column's values)
+  }),
+  col({ key: 'paid', renderer: 'boolean', editable: true }), // flips on double-click / Enter
+  col({ key: 'note', editable: true, editor: NoteEditor }), // your own component
+]
+
+const onEdit = (e: CellEditEvent<Order>) => setCellValue(e.row, e.column, e.value)
+</script>
+
+<template>
+  <VGrid
+    :rows="rows"
+    :columns="columns"
+    row-key="id"
+    :features="[editingFeature, keyboardNavigationFeature]"
+    @cell-edit="onEdit"
+  />
+</template>
+```
+
+Double-click a cell, press Enter or F2 on a focused one, or start typing on it. Enter saves, Tab /
+Shift+Tab save and move to the next / previous editable cell, Esc cancels, clicking elsewhere saves.
+
+### Saving to a server
+
+`save-cell` runs after `cell-edit`. Return a Promise: the cell shows it saving, and a rejection
+keeps the editor open with the error's message, so the user can fix the value or press Esc.
+
+```ts
+async function saveCell(e: CellEditEvent<Order>) {
+  const res = await fetch(`/api/orders/${e.rowKey}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ [e.column.key]: e.value }),
+  })
+  if (!res.ok) throw new Error((await res.json()).message) // shown below the cell
+  setCellValue(e.row, e.column, e.value)
+}
+// <VGrid … :save-cell="saveCell" />
+```
+
+### Your own editor
+
+```vue
+<!-- NoteEditor.vue: CellEditorProps; Enter, Tab and Esc are handled around it -->
+<script setup lang="ts">
+import type { CellEditorProps } from '@nocopypaste/vue-grid'
+defineProps<CellEditorProps>()
+const value = defineModel<string>()
+defineEmits<{ commit: [value?: unknown]; cancel: [] }>()
+</script>
+
+<template>
+  <textarea v-model="value" :aria-label="label" :disabled="disabled" rows="1" />
+</template>
+```

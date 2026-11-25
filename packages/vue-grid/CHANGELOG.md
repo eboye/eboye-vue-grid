@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.10.0 — 2026-11-25
+
+**Inline cell editing** (`editingFeature`, opt-in): mark columns `editable` (or `(row) => boolean`).
+A cell opens its editor on double-click, on Enter or F2 when focused, or when you start typing on
+it (the keys replace the value, even typed before the editor has loaded). Enter saves, Tab /
+Shift+Tab save and edit the next / previous editable cell (a checkbox cell only takes focus), Esc
+cancels, clicking elsewhere saves. The editor follows the renderer: number (money, numbers),
+date, date and time, a select of the column's values (status, chip), a checkbox that flips at
+once, else text; `editor` picks another or your own component (`CellEditorProps`), `editorOptions`
+sets a select's choices, a number's `min` / `max`, a placeholder. `validate(value, row)` returns a
+message to keep the editor open with it, shown below the cell (and as the input's description);
+numbers are checked too. The grid emits `cell-edit({ row, rowKey, column, value, oldValue })` and
+never writes the value; `save-cell` may return a Promise: the cell shows it saving, and a rejection
+keeps the editor open with the error. The cell keeps its width while editing. `startEdit(rowKey,
+columnKey)` / `stopEdit(cancel?)` from code. New exports: `editingFeature` (also in
+`allFeatures`), `setCellValue(row, column, value)`, types `CellEditEvent`, `CellEditorProps`,
+`EditorName`, `EditorOptions`, `EditorOption`; messages `editCell`, `editNotANumber`,
+`editOutOfRange`, `editSaveFailed`, `editSaving`. The editor (3.0 kB gzip) loads on demand, while
+the browser is idle, once a grid has an editable column. A plain grid grows by 0.3 kB gzip (to 15.3),
+a grid with editing is 17.0 kB plus the editor's chunk.
+
 ## 0.9.0 — 2026-11-24
 
 **Multi-column sort** (`sortingFeature`): with `multi-sort`, Shift-click a header (Shift+Enter on

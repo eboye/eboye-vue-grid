@@ -1,6 +1,6 @@
 {
   "package": "@nocopypaste/vue-grid",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "component": "VGrid",
   "props": [
     {
@@ -49,6 +49,13 @@
       "required": false,
       "description": "A status bar under the grid (status bar feature): rows that pass the filters (\"84 of 200 rows\"), selected rows, active filters with Clear; `{ summary: ['total'] }` adds the sum and average of those columns over the selected rows. `#status-bar` replaces its content.",
       "feature": "statusBar"
+    },
+    {
+      "name": "saveCell",
+      "type": "(event: CellEditEvent<T>) => unknown",
+      "required": false,
+      "description": "Saves an edited cell (editing feature), after `cell-edit`: return a Promise and the cell shows it saving; a rejection keeps the editor open with the error's message. Without it, `cell-edit` alone carries the change.",
+      "feature": "editing"
     },
     {
       "name": "messages",
@@ -436,6 +443,11 @@
       "description": "A renderer emitted an action (buttons, toggles, menus, edit, copy)."
     },
     {
+      "name": "cell-edit",
+      "payload": "[event: CellEditEvent<T>]",
+      "description": "A cell was edited (editing feature): update your data with `value`. The grid doesn't."
+    },
+    {
       "name": "sub-rows-error",
       "payload": "[event: { row: T; error: unknown }]",
       "description": "`loadSubRows` rejected for a row."
@@ -642,6 +654,18 @@
       "type": "Promise<boolean>",
       "required": true,
       "description": "Copies rows to the clipboard as tab-separated text (pastes as cells into spreadsheets): the selected rows by default, as displayed, no header. Resolves `false` if nothing was copied. Export feature."
+    },
+    {
+      "name": "startEdit",
+      "type": "boolean",
+      "required": true,
+      "description": "Opens the editor of a cell (editing feature), if the column is `editable` for that row and the row is on screen. Returns whether it opened."
+    },
+    {
+      "name": "stopEdit",
+      "type": "void",
+      "required": true,
+      "description": "Closes the open editor: saves its value, or with `cancel` drops it. Editing feature."
     }
   ],
   "column": [
@@ -872,6 +896,34 @@
       "feature": "export"
     },
     {
+      "name": "editable",
+      "type": "boolean | ((row: T) => boolean)",
+      "required": false,
+      "description": "Cells can be edited in place (editing feature): `true`, or per row. Double-click, Enter or F2 on a focused cell, or typing, opens the editor; the grid emits `cell-edit` and your handler updates the data (the grid never changes rows itself).",
+      "feature": "editing"
+    },
+    {
+      "name": "editor",
+      "type": "EditorName | Component",
+      "required": false,
+      "description": "The editor (editing feature): `text`, `number`, `date`, `datetime`, `select`, `checkbox`, or your own component (`CellEditorProps`). Default from the renderer: numbers and money → number, dates → date, booleans → checkbox, status / chip → select, else text.",
+      "feature": "editing"
+    },
+    {
+      "name": "editorOptions",
+      "type": "EditorOptions",
+      "required": false,
+      "description": "Options of the editor: the choices of a select, a number's `min` / `max`, a `placeholder`.",
+      "feature": "editing"
+    },
+    {
+      "name": "validate",
+      "type": "(value: unknown, row: T) => string | null | undefined | void",
+      "required": false,
+      "description": "Checks an edited value before it is saved (editing feature): return an error message to keep the editor open with it, or nothing to accept the value.",
+      "feature": "editing"
+    },
+    {
       "name": "cellClass",
       "type": "ClassValue | ((row: T) => ClassValue)",
       "required": false,
@@ -946,6 +998,20 @@
       "columnOptions": [
         "hidden",
         "hideable"
+      ]
+    },
+    {
+      "id": "editing",
+      "export": "editingFeature",
+      "description": "",
+      "props": [
+        "saveCell"
+      ],
+      "columnOptions": [
+        "editable",
+        "editor",
+        "editorOptions",
+        "validate"
       ]
     },
     {

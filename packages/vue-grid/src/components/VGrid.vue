@@ -41,6 +41,7 @@ import { textRenderer } from '../renderers/text'
 import type {
   CellActionEvent,
   CellClickEvent,
+  CellEditEvent,
   CellContext,
   CellRendererDefinition,
   ClassValue,
@@ -105,6 +106,12 @@ const props = withDefaults(
      * average of those columns over the selected rows. `#status-bar` replaces its content.
      */
     statusBar?: boolean | StatusBarOptions
+    /**
+     * Saves an edited cell (editing feature), after `cell-edit`: return a Promise and the cell shows
+     * it saving; a rejection keeps the editor open with the error's message. Without it, `cell-edit`
+     * alone carries the change.
+     */
+    saveCell?: (event: CellEditEvent<T>) => unknown
     /** Built-in text (translations, wording), over `createVueGrid({ messages })`. */
     messages?: GridMessages
     /** Built-in parts to leave out (`{ progressBar: false }`), over `createVueGrid({ parts })`. */
@@ -278,6 +285,8 @@ const emit = defineEmits<{
   'cell-click': [event: CellClickEvent<T>]
   /** A renderer emitted an action (buttons, toggles, menus, edit, copy). */
   'cell-action': [event: CellActionEvent<T>]
+  /** A cell was edited (editing feature): update your data with `value`. The grid doesn't. */
+  'cell-edit': [event: CellEditEvent<T>]
   /** `loadSubRows` rejected for a row. */
   'sub-rows-error': [event: { row: T; error: unknown }]
   /** An item of the body-cell context menu was chosen. */
@@ -1099,6 +1108,17 @@ const exporter = features.export?.useExport<T>({
   onCopy: (event) => emit('copy', event),
 })
 
+// ── Editing ─────────────────────────────────────────────────────────────────────────────────
+const editing = features.editing?.useEditing<T>({
+  root,
+  messages: () => messages.value,
+  emit: (event) => emit('cell-edit', event),
+  save: () => props.saveCell,
+  rows: () => sourceRows.value,
+  columns: () => props.columns,
+  preload: () => features.editing!.preload(),
+})
+
 // ── Status bar ──────────────────────────────────────────────────────────────────────────────
 const statusBar = features.statusBar?.useStatusBar<T>({
   options: () => props.statusBar,
@@ -1172,6 +1192,9 @@ if (process.env.NODE_ENV !== 'production') {
       missing('rowPinning', '`pinned-rows` / `pinned-top-rows` / `pinned-bottom-rows`')
     if (!features.aggregation && props.totals) missing('aggregation', '`totals`')
     if (!features.statusBar && props.statusBar) missing('statusBar', '`status-bar`')
+    const editCol = props.columns.find((c) => c.editable)?.key
+    if (!features.editing && editCol)
+      missing('editing', `Column "${editCol}" is \`editable\`; that`)
     const exportCol = props.columns.find((c) => c.exportValue)?.key
     if (!features.export && exportCol)
       missing('export', `Column "${exportCol}" has an \`exportValue\`; that`)
@@ -1215,6 +1238,7 @@ const context: GridContext = {
   sortRows: prepareRows,
   sortable,
   SortMarker: features.sorting?.SortMarker,
+  editing: editing && { ...editing, Editor: features.editing!.Editor },
   resize: resize && {
     Handle: features.columnResizing!.Handle,
     can: canResize,
@@ -1365,6 +1389,10 @@ const exportXlsx = viaExport('exportXlsx')
 const print = viaExport('print')
 const copyRows = viaExport('copyRows')
 
+const startEdit = (rowKey: RowKey, columnKey: string) =>
+  editing?.startAt(rowKey, columnKey) ?? false
+const stopEdit = (cancel = false) => editing?.stop(cancel)
+
 defineExpose<VGridExposed>({
   scrollToTop,
   scrollToRow,
@@ -1385,6 +1413,8 @@ defineExpose<VGridExposed>({
   print,
   copyRows,
   clearSelection,
+  startEdit,
+  stopEdit,
 })
 </script>
 
