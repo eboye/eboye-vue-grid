@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.17.0 — 2026-11-25
+
+**Delete and cut** (`rangeSelectionFeature` with `editingFeature`): Delete or Backspace clear the
+selected range (else the selected cell), each editable cell to its column's empty value (blank
+text; no number, date or choice; an unticked checkbox). Ctrl/⌘+X copies the cells, as Ctrl/⌘+C
+does, then clears them, so cut and paste moves cells. Read-only cells and a `validate` that wants
+a value keep a cell as it is. Each change is a `cell-edit` (`source: 'clear'` / `'cut'`) and a
+`save-cell`; the new `cells-clear` event reports the lot, and one Ctrl/⌘+Z undoes it. In an open
+editor the keys edit its text as before. New: `grid.clearRange()`, `grid.cutRange()`, part
+`clearShortcut`. The range selection feature grows by 0.3 kB gzipped; a plain grid stays at
+16.0 kB.
+
+**Fix:** copying a range (Ctrl/⌘+C) where the browser refuses the Clipboard API (pages on plain
+http, headless Chromium) copies through a hidden text area that takes focus for a moment; focus
+coming back to the cell was taken as a click and dropped the range. The range now stays.
+
 ## 0.16.0 — 2026-11-25
 
 **Find and replace** (`rangeSelectionFeature`; replacing with `editingFeature`): Ctrl/⌘+F with focus

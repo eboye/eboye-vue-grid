@@ -351,10 +351,11 @@ export interface CellEditEvent<T = any> {
   oldValue: unknown
   /**
    * What made the change: `edit` (an editor, a checkbox), `paste` (Ctrl/⌘+V into a range), `fill`
-   * (the fill handle, Ctrl/⌘+D), `replace` (find and replace), or
+   * (the fill handle, Ctrl/⌘+D), `replace` (find and replace), `clear` (Delete / Backspace),
+   * `cut` (Ctrl/⌘+X), or
    * `undo` / `redo` (Ctrl/⌘+Z, Ctrl+Y, or the methods). Store it the same way in every case.
    */
-  source?: 'edit' | 'paste' | 'fill' | 'replace' | 'undo' | 'redo'
+  source?: 'edit' | 'paste' | 'fill' | 'replace' | 'clear' | 'cut' | 'undo' | 'redo'
 }
 
 /** A pasted cell that wasn't changed (range selection + editing). */
@@ -565,6 +566,14 @@ export interface VGridExposed {
   openFind(options?: { replace?: boolean; text?: string }): void
   /** Closes the find bar; the current match becomes the selected cell. */
   closeFind(): void
+  /**
+   * Clears the selected range's editable cells (else the selected cell's), as Delete /
+   * Backspace do: blank text, no number or date, an unticked checkbox. Resolves the `cells-clear`
+   * event, or `null` with nothing selected. Range selection and editing features.
+   */
+  clearRange(): Promise<CellsPasteEvent | null>
+  /** Copies the selected cells, then clears them (Ctrl/⌘+X). Range selection and editing features. */
+  cutRange(): Promise<CellsPasteEvent | null>
   /**
    * Undoes the last change made in the grid (an edit, a checkbox, a whole paste): each cell gets
    * its value back through `cell-edit` (`source: 'undo'`) and `save-cell`, as Ctrl/⌘+Z does.
@@ -1231,6 +1240,11 @@ export interface GridParts {
    * (`fillDown()` still works).
    */
   fillHandle?: boolean
+  /**
+   * Range selection with editing: Delete / Backspace clear the selected cells, Ctrl/⌘+X cuts them
+   * (`clearRange()` / `cutRange()` still work).
+   */
+  clearShortcut?: boolean
   /** Range selection: Ctrl/⌘+F and Ctrl/⌘+H open the find bar (`openFind()` still works). */
   findShortcut?: boolean
   /** Editing: Ctrl/⌘+Z and Ctrl+Y / Ctrl/⌘+Shift+Z (`undo()` / `redo()` still work). */

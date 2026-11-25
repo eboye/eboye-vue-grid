@@ -56,6 +56,10 @@ export interface CellRangeOptions<T> {
   fillOn: () => boolean
   /** Editing feature: writes replaced text into cells. Without it, find only finds. */
   replace?: (cells: PasteCell<T>[]) => Promise<CellsPasteEvent<T>>
+  /** Editing feature: empties cells (Delete / Backspace, Ctrl/⌘+X). Without it, no clearing. */
+  clear?: (cells: PasteCell<T>[], source: 'clear' | 'cut') => Promise<CellsPasteEvent<T>>
+  /** Delete / Backspace and Ctrl/⌘+X are on (`parts.clearShortcut`). */
+  clearKeys: () => boolean
   /** Ctrl/⌘+F, Ctrl/⌘+H open the find bar (`parts.findShortcut`). */
   findKeys: () => boolean
   /** Brings a row into view (virtual scrolling renders it first). */
@@ -445,6 +449,27 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
       void copyRange()
       return true
     }
+    if (
+      (key === 'Delete' || key === 'Backspace') &&
+      !ctrl &&
+      !event.altKey &&
+      !event.shiftKey &&
+      opts.clear &&
+      opts.clearKeys() &&
+      selection.value
+    ) {
+      event.preventDefault()
+      void clearRange()
+      return true
+    }
+    if (ctrl && !event.altKey && !event.shiftKey && key.toLowerCase() === 'x') {
+      if (!opts.clear || !opts.clearKeys() || !selection.value) return false
+      const text = globalThis.getSelection?.()
+      if (text && !text.isCollapsed && text.toString()) return false // selected text: the browser's
+      event.preventDefault()
+      void cutRange()
+      return true
+    }
     if (ctrl && !event.altKey && !event.shiftKey && key.toLowerCase() === 'v') {
       if (!opts.paste || !opts.pasteKeys() || !start()) return false
       catchPaste() // the browser's own paste lands in a hidden text area, which reads it
@@ -500,14 +525,12 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
 
   // ── Reading and copying ──────────────────────────────────────────────────────────────────
   /** The range's rows and columns (null without a range). */
-  const cells = computed(() => {
-    const b = bounds.value
-    if (!b) return null
-    return {
-      rows: ordered.value.slice(b.top, b.bottom + 1),
-      columns: opts.columns().slice(b.left, b.right + 1),
-    }
+  /** A block's rows and columns. */
+  const cellsOf = (b: Box) => ({
+    rows: ordered.value.slice(b.top, b.bottom + 1),
+    columns: opts.columns().slice(b.left, b.right + 1),
   })
+  const cells = computed(() => (bounds.value ? cellsOf(bounds.value) : null))
 
   /** The range's values, row by row (raw). */
   function values(): unknown[][] {
@@ -526,8 +549,8 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
   }
 
   /** The range as tab-separated text, as the cells show it (`exportValue` wins). */
-  function text(): string {
-    const c = cells.value
+  function text(b: Box | null = bounds.value): string {
+    const c = b && cellsOf(b)
     if (!c) return ''
     const ctx = opts.format()
     const lines = c.rows.map((row) => c.columns.map((col) => guardFormula(cellText(row, col, ctx))))
@@ -535,13 +558,55 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
   }
 
   /** Copies the range (Ctrl/⌘+C). Resolves `false` when there's none or the copy failed. */
-  async function copyRange(): Promise<boolean> {
-    const c = cells.value
-    if (!c) return false
-    const copied = text()
-    if (!(await copyText(copied))) return false
+  async function copyRange(b: Box | null = bounds.value): Promise<boolean> {
+    if (!b) return false
+    const c = cellsOf(b)
+    const copied = text(b)
+    // Where the Clipboard API is refused (plain http, no permission) the copy goes through a
+    // hidden text area that takes focus for a moment: focus coming back to the cell isn't a
+    // click on it, so the range stays.
+    refocusing = true
+    let ok: boolean
+    try {
+      ok = await copyText(copied)
+    } finally {
+      refocusing = false
+    }
+    if (!ok) return false
     opts.onCopy({ kind: 'range', text: copied, rows: c.rows, columns: c.columns.map((x) => x.def) })
     return true
+  }
+
+  // ── Clearing and cutting ─────────────────────────────────────────────────────────────────
+  /**
+   * Empties the selected cells (the range, else the selected cell): each column's empty value,
+   * through the same checks as a paste (read-only cells and a `validate` that wants a value
+   * leave a cell as it is). Null with nothing selected.
+   */
+  function clearRange(
+    source: 'clear' | 'cut' = 'clear',
+    b: Box | null = selection.value,
+  ): Promise<CellsPasteEvent<T> | null> {
+    if (!b || !opts.clear) return Promise.resolve(null)
+    const c = cellsOf(b)
+    const cells: PasteCell<T>[] = []
+    for (const row of c.rows)
+      for (const col of c.columns)
+        cells.push({
+          row,
+          rowKey: opts.getKey(row),
+          column: col.def,
+          definition: col.definition as CellRendererDefinition | undefined,
+          value: '', // read per column: '' text, no number / date / choice, false
+        })
+    return opts.clear(cells, source)
+  }
+
+  /** Copies the selected cells (as Ctrl/⌘+C would), then clears them. Null when nothing was copied. */
+  async function cutRange(): Promise<CellsPasteEvent<T> | null> {
+    const b = selection.value
+    if (!b || !opts.clear || !(await copyRange(b))) return null
+    return clearRange('cut', b) // the block it copied
   }
 
   // ── Pasting ──────────────────────────────────────────────────────────────────────────────
@@ -817,7 +882,9 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
     onKeyDown,
     values,
     text,
-    copyRange,
+    copyRange: () => copyRange(),
+    clearRange: () => clearRange(),
+    cutRange,
     pasteText,
     /** Fills the range down from its top row (Ctrl/⌘+D). Null without a range of 2+ rows. */
     fillDown() {

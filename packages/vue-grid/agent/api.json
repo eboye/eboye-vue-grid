@@ -1,6 +1,6 @@
 {
   "package": "@nocopypaste/vue-grid",
-  "version": "0.16.0",
+  "version": "0.17.0",
   "component": "VGrid",
   "props": [
     {
@@ -484,6 +484,11 @@
       "description": "A replace in the find bar finished: every changed cell (each also a `cell-edit`, `source: 'replace'`), the cells left alone and why, and the saves that failed."
     },
     {
+      "name": "cells-clear",
+      "payload": "[event: CellsPasteEvent<T>]",
+      "description": "Cells were cleared (Delete / Backspace, or Ctrl/⌘+X after copying them): every changed cell (each also a `cell-edit`, `source: 'clear'` / `'cut'`), the cells left alone and why, and the saves that failed."
+    },
+    {
       "name": "sub-rows-error",
       "payload": "[event: { row: T; error: unknown }]",
       "description": "`loadSubRows` rejected for a row."
@@ -744,6 +749,18 @@
       "type": "void",
       "required": true,
       "description": "Closes the find bar; the current match becomes the selected cell."
+    },
+    {
+      "name": "clearRange",
+      "type": "Promise<CellsPasteEvent | null>",
+      "required": true,
+      "description": "Clears the selected range's editable cells (else the selected cell's), as Delete / Backspace do: blank text, no number or date, an unticked checkbox. Resolves the `cells-clear` event, or `null` with nothing selected. Range selection and editing features."
+    },
+    {
+      "name": "cutRange",
+      "type": "Promise<CellsPasteEvent | null>",
+      "required": true,
+      "description": "Copies the selected cells, then clears them (Ctrl/⌘+X). Range selection and editing features."
     },
     {
       "name": "undo",

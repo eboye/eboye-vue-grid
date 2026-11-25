@@ -124,6 +124,7 @@ export const pages: Page[] = [
       'Select ten Stake cells and paste a single number: it fills all of them. Ctrl+Z (⌘Z) undoes the whole paste.',
       'Drag the small square on a selection’s corner down a few rows: values repeat, two numbers go on in their step, dates day by day. Ctrl+D (⌘D) fills a selection down from its top row.',
       'Click a cell and press Ctrl+F (⌘F) to find, Ctrl+H (⌘H) to replace: Enter goes to the next match, even in rows not drawn yet; Replace all is one Ctrl+Z.',
+      'Select a few cells and press Delete to clear them, or Ctrl+X (⌘X) and Ctrl+V (⌘V) elsewhere to move them; Ctrl+Z (⌘Z) undoes either.',
       'Turn on 2,000 rows and drag past the bottom edge, or Shift+click far below: rows that aren’t drawn still count.',
     ],
     docs: '29. Cell-range selection',

@@ -2604,3 +2604,10 @@ replacing needs `editingFeature`). Or open it from a button:
   stays selected.
 - Replace / Replace all write the new text like a paste (each a `cell-edit` with
   `source: 'replace'`, skipped cells reported); one Ctrl/⌘+Z undoes a Replace all.
+
+### Delete and cut
+
+Delete or Backspace clear the selected cells (each column's empty value); Ctrl/⌘+X copies them
+first, so cutting and pasting moves them. Read-only cells and a `validate` that wants a value keep
+a cell as it is. Each change is a `cell-edit` (`source: 'clear'` / `'cut'`), `cells-clear` reports
+the lot, and one Ctrl/⌘+Z undoes it. `parts: { clearShortcut: false }` turns the keys off.

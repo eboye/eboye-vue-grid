@@ -55,7 +55,8 @@ for (let shard = 0; shard < SHARDS; shard++) {
       await page
         .locator(`${root} > *`)
         .first()
-        .waitFor({ timeout: 15_000 })
+        // a docs page renders every story of its file at once (some with thousands of rows)
+        .waitFor({ timeout: entry.type === 'docs' ? 30_000 : 15_000 })
         .catch(() => errors.push('nothing rendered'))
       if (entry.type === 'story' && entry.title.startsWith('Grid/')) {
         await expect(

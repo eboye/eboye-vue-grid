@@ -320,6 +320,12 @@ const emit = defineEmits<{
    * `source: 'replace'`), the cells left alone and why, and the saves that failed.
    */
   'cells-replace': [event: CellsPasteEvent<T>]
+  /**
+   * Cells were cleared (Delete / Backspace, or Ctrl/⌘+X after copying them): every changed cell
+   * (each also a `cell-edit`, `source: 'clear'` / `'cut'`), the cells left alone and why, and
+   * the saves that failed.
+   */
+  'cells-clear': [event: CellsPasteEvent<T>]
   /** `loadSubRows` rejected for a row. */
   'sub-rows-error': [event: { row: T; error: unknown }]
   /** An item of the body-cell context menu was chosen. */
@@ -1219,6 +1225,14 @@ const cellRange = features.rangeSelection?.useCellRange<T>({
       return result
     }),
   findKeys: () => part('findShortcut'),
+  clear:
+    editing &&
+    (async (cells, source) => {
+      const result = await editing.clearCells(cells, source)
+      emit('cells-clear', result)
+      return result
+    }),
+  clearKeys: () => part('clearShortcut'),
   scrollToRow: (key) => scrollToRow(key),
   preloadFind: () => features.rangeSelection!.preloadFind(),
 })
@@ -1512,6 +1526,8 @@ const copyRange = () => cellRange?.copyRange() ?? (noRange('copyRange'), Promise
 const openFind = (options?: { replace?: boolean; text?: string }) =>
   cellRange ? cellRange.openFind(options) : noRange('openFind')
 const closeFind = () => cellRange?.closeFind()
+const clearRange = () => cellRange?.clearRange() ?? (noRange('clearRange'), Promise.resolve(null))
+const cutRange = () => cellRange?.cutRange() ?? (noRange('cutRange'), Promise.resolve(null))
 const fillDown = () => cellRange?.fillDown() ?? (noRange('fillDown'), Promise.resolve(null))
 const pasteText = (text: string) =>
   cellRange?.pasteText(text) ?? (noRange('pasteText'), Promise.resolve(null))
@@ -1560,6 +1576,8 @@ defineExpose<VGridExposed>({
   fillDown,
   openFind,
   closeFind,
+  clearRange,
+  cutRange,
   undo,
   redo,
   canUndo,

@@ -324,7 +324,7 @@ export function useEditing<T>(opts: EditingOptions<T>) {
    */
   async function writeCells(
     cells: readonly PasteCell<T>[],
-    source: 'paste' | 'fill' | 'replace',
+    source: 'paste' | 'fill' | 'replace' | 'clear' | 'cut',
   ): Promise<CellsPasteEvent<T>> {
     if (state.value && !state.value.saving) state.value = null
     // loads on the first paste or fill (own chunk)
@@ -398,6 +398,9 @@ export function useEditing<T>(opts: EditingOptions<T>) {
   const fillCells = (cells: readonly PasteCell<T>[]) => writeCells(cells, 'fill')
   /** Writes replaced text into cells (find and replace): read like a paste. */
   const replaceCells = (cells: readonly PasteCell<T>[]) => writeCells(cells, 'replace')
+  /** Empties cells (Delete / Backspace, or the clearing half of Ctrl/⌘+X). */
+  const clearCells = (cells: readonly PasteCell<T>[], source: 'clear' | 'cut') =>
+    writeCells(cells, source)
 
   // ── Undo / redo ─────────────────────────────────────────────────────────────────────────
   /** Changes to undo (oldest first) and undone changes to redo; each step is one edit or paste. */
@@ -552,6 +555,7 @@ export function useEditing<T>(opts: EditingOptions<T>) {
     pasteCells,
     fillCells,
     replaceCells,
+    clearCells,
     undo: () => travel('undo'),
     redo: () => travel('redo'),
     canUndo: () => past.value.length > 0,
