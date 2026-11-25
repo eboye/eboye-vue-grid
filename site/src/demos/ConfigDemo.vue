@@ -1,55 +1,35 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
-import {
-  createColumnHelper,
-  VGrid,
-  type GridMessages,
-  type GridParts,
-  type RowKey,
-} from '@nocopypaste/vue-grid'
+import { createColumnHelper, VGrid, type GridParts, type RowKey } from '@nocopypaste/vue-grid'
+// Ready-made language packs: each is bundled only when imported.
+import { de } from '@nocopypaste/vue-grid/locales/de'
+import { es } from '@nocopypaste/vue-grid/locales/es'
+import { fr } from '@nocopypaste/vue-grid/locales/fr'
+import { sr } from '@nocopypaste/vue-grid/locales/sr'
+import { srLatn } from '@nocopypaste/vue-grid/locales/sr-Latn'
 import { makeBets, statusTones, type Bet } from '../data'
 
 const rows = makeBets(80, 24)
 const selected = ref<RowKey[]>([3])
 
-// Built-in text: set the ones you need (app-wide in createVueGrid({ messages }), or per grid).
-const serbian: GridMessages = {
-  empty: 'Nema podataka.',
-  noMatch: 'Nijedan red ne odgovara filterima.',
-  clearFilters: 'Obriši filtere',
-  total: 'Ukupno',
-  sortAscending: 'Rastuće',
-  sortDescending: 'Opadajuće',
-  clearSort: 'Bez sortiranja',
-  clearFilter: 'Obriši filter',
-  clearAllFilters: 'Obriši sve filtere',
-  groupBy: (column) => `Grupiši po: ${column}`,
-  ungroup: 'Razgrupiši',
-  pinLeft: 'Zakači levo',
-  pinRight: 'Zakači desno',
-  unpin: 'Otkači',
-  moveLeft: 'Pomeri levo',
-  moveRight: 'Pomeri desno',
-  fitWidth: 'Prilagodi širinu',
-  resetWidth: 'Vrati širinu',
-  hideColumn: 'Sakrij kolonu',
-  resetColumns: 'Vrati kolone',
-  filterPlaceholder: 'Filtriraj…',
-  filterColumn: (column) => `Filter: ${column}`,
-  rowsPerPage: 'Redova po strani',
-  pageSize: (size) => `${size} po strani`,
-  pageSummary: (from, to, total) => `${from}–${to} od ${total}`,
-  nextPage: 'Sledeća strana',
-  previousPage: 'Prethodna strana',
-  rowCount: (shown, total) => (total ? `${shown} od ${total} redova` : `${shown} redova`),
-  selectedCount: (count) => `izabrano: ${count}`,
-  filterCount: (count) => `filtera: ${count}`,
-  clear: 'Obriši',
-  sum: 'Zbir',
-  average: 'Prosek',
+// Built-in text: a pack, your own wording on top of one ({ ...de, total: 'Gesamt' }), or just the
+// texts you need. App-wide in createVueGrid({ messages }), or per grid. `locale` is separate: it
+// formats money, numbers and dates.
+const languages = {
+  en: { name: 'English', locale: 'en', messages: {} },
+  de: { name: 'Deutsch', locale: 'de', messages: de },
+  fr: { name: 'Français', locale: 'fr', messages: fr },
+  es: { name: 'Español', locale: 'es', messages: es },
+  sr: { name: 'Српски', locale: 'sr', messages: sr },
+  srLatn: {
+    name: 'Srpski (latinica)',
+    locale: 'sr-Latn',
+    messages: { ...srLatn, total: 'Ukupan ulog' },
+  },
 }
-const language = ref<'en' | 'sr'>('sr')
-const messages = computed(() => (language.value === 'sr' ? serbian : {}))
+const language = ref<keyof typeof languages>('de')
+const messages = computed(() => languages[language.value].messages)
+const locale = computed(() => languages[language.value].locale)
 
 // Built-in parts: each is on unless set to false.
 const parts = reactive<
@@ -107,8 +87,9 @@ const columns = [
     <label
       >Language
       <select v-model="language" class="demo-input">
-        <option value="sr">Srpski</option>
-        <option value="en">English</option>
+        <option v-for="(lang, code) in languages" :key="code" :value="code">
+          {{ lang.name }}
+        </option>
       </select>
     </label>
     <label v-for="(label, name) in labels" :key="name">
@@ -129,6 +110,7 @@ const columns = [
     :page-size="10"
     :status-bar="{ summary: ['stake'] }"
     :messages="messages"
+    :locale="locale"
     :parts="parts"
     aria-label="Bets"
   />

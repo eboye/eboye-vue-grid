@@ -237,9 +237,9 @@ export const pages: Page[] = [
     title: 'Text and parts',
     section: 'Look',
     summary:
-      'Every built-in text can be replaced (translations, wording), and every part a feature adds can be turned off or replaced with your own: app-wide or per grid.',
+      'Every built-in text can be replaced: a ready-made language pack (German, French, Spanish, Serbian), your own translation or wording. Every part a feature adds can be turned off or replaced with your own: app-wide or per grid.',
     try: [
-      'Switch the language, then right-click a header.',
+      'Switch the language, then right-click a header: menus, filters, pager, status bar and money all follow.',
       'Untick “Header drag”: headers no longer drag (the header menu still moves columns).',
       'Untick “Filter funnels”: the filter row still filters.',
     ],

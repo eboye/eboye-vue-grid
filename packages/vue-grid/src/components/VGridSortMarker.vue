@@ -9,7 +9,7 @@ const m = useMessages()
 <template>
   <span class="vg-sort-index" aria-hidden="true">{{ position }}</span>
   <span class="vg-sr-only">{{
-    m.sortPosition?.(props.position, props.dir) ??
+    m.sortPosition?.(props.position, props.dir, props.count) ??
     `, sorted ${position} of ${count}, ${dir === 'asc' ? 'ascending' : 'descending'}`
   }}</span>
 </template>

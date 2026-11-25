@@ -28,6 +28,10 @@ const config: StorybookConfig = {
           },
           { find: /^@nocopypaste\/vue-grid$/, replacement: r('../packages/vue-grid/src/index.ts') },
           {
+            find: /^@nocopypaste\/vue-grid\/locales\/(.+)$/,
+            replacement: r('../packages/vue-grid/src/locales/$1.ts'),
+          },
+          {
             find: '@nocopypaste/vue-grid-renderer-template/style.css',
             replacement: r('../packages/cell-renderer-template/src/rating.css'),
           },

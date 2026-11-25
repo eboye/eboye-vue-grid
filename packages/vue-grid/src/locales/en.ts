@@ -1,0 +1,148 @@
+import type { GridMessages } from '../types'
+import { packHelpers } from './plural'
+
+const { num, plural } = packHelpers('en')
+const rows = (n: number, shown?: string) => plural(n, { one: '# row', other: '# rows' }, shown)
+
+/**
+ * English — the grid's built-in text, written out in full. The grid needs none of it (each text has
+ * its default next to it); import it as a starting point for your own wording or language.
+ */
+export const en = {
+  loading: 'Loading…',
+  empty: 'No data to show.',
+  noMatch: 'No rows match the current filters.',
+  clearFilters: 'Clear filters',
+  loadError: "Couldn't load the rows.",
+  staleRows: 'These are from before.',
+  retry: 'Retry',
+  subRowsError: 'Could not load rows.',
+  total: 'Total',
+  blank: '(blank)',
+  groupRowCount: (count) => rows(count),
+
+  selectAllRows: 'Select all rows',
+  selectRow: 'Select row',
+  selectGroup: 'Select group',
+  pageSelected: (count) => `All ${num(count)} rows on this page are selected.`,
+  selectAllMatching: (total) => `Select all ${num(total)} rows`,
+  allSelected: (total) => `All ${num(total)} rows are selected.`,
+  clearSelection: 'Clear selection',
+  expandRow: 'Expand row',
+  collapseRow: 'Collapse row',
+  expandGroup: 'Expand group',
+  collapseGroup: 'Collapse group',
+
+  columnMenu: (column) => `${column} column`,
+  rowActions: 'Row actions',
+  sortAscending: 'Sort ascending',
+  sortDescending: 'Sort descending',
+  clearSort: 'Clear sort',
+  thenSortAscending: 'Then sort ascending',
+  thenSortDescending: 'Then sort descending',
+  sortPosition: (position, dir, count) =>
+    `, sorted ${position} of ${count}, ${dir === 'asc' ? 'ascending' : 'descending'}`,
+  filterMenu: 'Filter…',
+  clearFilter: 'Clear filter',
+  clearAllFilters: 'Clear all filters',
+  groupBy: (column) => `Group by ${column}`,
+  ungroup: 'Ungroup',
+  ungroupAll: 'Ungroup all',
+  pinLeft: 'Pin left',
+  pinRight: 'Pin right',
+  unpin: 'Unpin',
+  moveLeft: 'Move left',
+  moveRight: 'Move right',
+  fitWidth: 'Fit width',
+  resetWidth: 'Reset width',
+  hideColumn: 'Hide column',
+  resetColumns: 'Reset columns',
+  resizeColumn: (column) => `Resize ${column}`,
+  columns: 'Columns',
+  filterColumns: 'Filter columns…',
+  noMatchingColumns: 'No matching columns',
+  menu: 'Menu',
+
+  filterColumn: (column) => `Filter ${column}`,
+  filterColumnActive: (column) => `Filter ${column} (active)`,
+  filterPlaceholder: 'Filter…',
+  filterSummary: (column, summary) => `Filter ${column}: ${summary}`,
+  customFilter: 'Custom',
+  valuesSelected: (count) => `${num(count)} selected`,
+  filterCondition: (column) => `${column}: condition`,
+  filterValue: 'Value',
+  filterFrom: (column) => `${column}: from`,
+  filterTo: (column) => `${column}: to`,
+  opContains: 'Contains',
+  opNotContains: 'Does not contain',
+  opEquals: 'Equals',
+  opNotEquals: 'Does not equal',
+  opStartsWith: 'Starts with',
+  opEndsWith: 'Ends with',
+  opEmpty: 'Is empty',
+  opNotEmpty: 'Is not empty',
+  opBetween: 'Between',
+  opOn: 'On',
+  opBefore: 'Before',
+  opAfter: 'After',
+  any: 'Any',
+  yes: 'Yes',
+  no: 'No',
+  emptyValue: 'Empty',
+  blanks: '(Blanks)',
+  searchValues: 'Search values',
+  all: 'All',
+  allShown: 'All shown',
+  moreValues: (count) => `${num(count)} more — search to narrow the list`,
+  noMatchingValues: 'No matching values',
+  searchPlaceholder: 'Search…',
+  searchLabel: 'Search rows',
+
+  pagination: 'Pagination',
+  rowsPerPage: 'Rows per page',
+  pageSize: (size) => `${size} / page`,
+  pageSummary: (from, to, total) => `${from}–${to} of ${total}`,
+  firstPage: 'First page',
+  previousPage: 'Previous page',
+  nextPage: 'Next page',
+  lastPage: 'Last page',
+  page: (page) => `Page ${page}`,
+
+  statusBar: 'Grid status',
+  rowCount: (shown, total, count, totalCount) =>
+    total === undefined ? rows(count, shown) : `${shown} of ${rows(totalCount ?? count, total)}`,
+  selectedCount: (count, all) => `${all ? 'All ' : ''}${count} selected`,
+  filterCount: (count) => plural(count, { one: '# filter', other: '# filters' }),
+  clear: 'Clear',
+  sum: 'Sum',
+  average: 'Average',
+  min: 'Min',
+  max: 'Max',
+
+  editCell: (column) => `Edit ${column}`,
+  editNotANumber: 'Enter a number.',
+  editOutOfRange: (min, max) =>
+    min !== undefined && max !== undefined
+      ? `Enter a number from ${min} to ${max}.`
+      : min !== undefined
+        ? `Enter a number of at least ${min}.`
+        : `Enter a number of at most ${max}.`,
+  editSaveFailed: "Couldn't save the change.",
+  editSaving: 'Saving…',
+
+  view: 'View',
+  close: 'Close',
+  copy: 'Copy',
+  copied: 'Copied',
+  actions: 'Actions',
+  details: 'Details',
+  moreInfo: 'More info',
+  moreItems: (count) => `+${num(count)} more`,
+  showLess: 'Show less',
+  increased: 'Increased',
+  decreased: 'Decreased',
+  toggle: 'Toggle',
+  edit: 'Edit',
+} satisfies Required<GridMessages>
+
+export default en

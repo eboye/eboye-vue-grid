@@ -5,6 +5,9 @@ import { transform } from 'lightningcss'
 import type { Plugin } from 'vite'
 import { defineConfig } from 'vitest/config'
 
+/** The language packs in `src/locales` (each one an entry, so each one its own import path). */
+const locales = ['en', 'de', 'fr', 'es', 'sr', 'sr-Latn']
+
 const css = (name: string) =>
   readFileSync(fileURLToPath(new URL(`./src/styles/${name}`, import.meta.url)), 'utf8')
 /**
@@ -56,6 +59,13 @@ export default defineConfig({
         index: fileURLToPath(new URL('./src/index.ts', import.meta.url)),
         // `@nocopypaste/vue-grid/agent`: the API as data + validateGridConfig(), for agents and tooling.
         'agent/index': fileURLToPath(new URL('./src/agent/index.ts', import.meta.url)),
+        // `@nocopypaste/vue-grid/locales/<lang>`: optional language packs, bundled only when imported.
+        ...Object.fromEntries(
+          locales.map((lang) => [
+            `locales/${lang}`,
+            fileURLToPath(new URL(`./src/locales/${lang}.ts`, import.meta.url)),
+          ]),
+        ),
       },
       formats: ['es'],
       fileName: 'index',

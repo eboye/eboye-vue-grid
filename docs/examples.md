@@ -2327,23 +2327,31 @@ A custom bar with the same numbers:
 
 ## 27. Text and parts
 
-Translate or reword the built-in text, and leave out pieces a feature adds. App-wide:
+Translate or reword the built-in text, and leave out pieces a feature adds. A ready-made language
+pack translates everything (German, French, Spanish, Serbian in Cyrillic and Latin), app-wide:
 
 ```ts
+import { de } from '@nocopypaste/vue-grid/locales/de' // also fr, es, sr, sr-Latn (srLatn), en
+
 app.use(
   createVueGrid({
     features: allFeatures,
-    // every key is optional; the rest stay English
-    messages: {
-      empty: 'Keine Daten.',
-      sortAscending: 'Aufsteigend sortieren',
-      sortDescending: 'Absteigend sortieren',
-      groupBy: (column) => `Nach ${column} gruppieren`,
-      pageSummary: (from, to, total) => `${from}–${to} von ${total}`,
-    },
+    locale: 'de', // money, numbers and dates; a pack only translates text
+    messages: { ...de, total: 'Gesamt' }, // a pack, with your own wording on top
     parts: { progressBar: false },
   }),
 )
+```
+
+Or only the texts you need (every key is optional; the rest stay English):
+
+```ts
+const messages: GridMessages = {
+  empty: 'Keine Daten.',
+  sortAscending: 'Aufsteigend sortieren',
+  groupBy: (column) => `Nach ${column} gruppieren`,
+  pageSummary: (from, to, total) => `${from}–${to} von ${total}`,
+}
 ```
 
 Per grid (wins over the app's):
@@ -2366,7 +2374,10 @@ Per grid (wins over the app's):
 ```
 
 - `GridMessages` has a key for every built-in text; functions get the values (`groupBy(column)`,
-  `rowCount(shown, total)`…). Props that name a text (`empty-text`, a renderer's `label`) still win.
+  `rowCount(shown, total, count, totalCount)`…; texts with a count get the number too, for plurals).
+  Props that name a text (`empty-text`, a renderer's `label`) still win.
+- Language packs (`@nocopypaste/vue-grid/locales/<lang>`) are bundled only when imported, about
+  2 kB gzipped each; their counts follow the language's plural rules (`1 red`, `2 reda`, `5 redova`).
 - `GridParts`: `progressBar`, `loadErrorNotice`, `retry`, `clearFiltersButton`, `selectAll`,
   `selectAllBanner`, `filterButtons`, `resizeGrips`, `headerDrag`, `copyShortcut`, `groupCounts`, each
   on unless `false`.

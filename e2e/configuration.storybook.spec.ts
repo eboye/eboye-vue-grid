@@ -63,6 +63,48 @@ test.describe('configuration', () => {
     await expect(bar).toContainText('60 redova')
   })
 
+  test('language packs: switching the language translates the whole grid', async ({ page }) => {
+    await story(page, 'language-packs')
+    const bar = page.locator('.vg-status-bar')
+    const pager = page.locator('.vg-pagination')
+    // German (the story's start)
+    await expect(bar).toContainText('60 Zeilen')
+    await expect(bar).toContainText('1 ausgewählt')
+    await expect(pager).toContainText('1–10 von 60')
+    await expect(page.locator('.vg-pinned-rows')).toContainText('Summe')
+    await header(page, 'city').click({ button: 'right' })
+    const menu = page.getByRole('menu')
+    await expect(menu.getByRole('menuitem', { name: 'Aufsteigend sortieren' })).toBeVisible()
+    await expect(menu.getByRole('menuitem', { name: 'Nach City gruppieren' })).toBeVisible()
+    await page.keyboard.press('Escape')
+    // typing a filter: the counts and the funnel follow
+    const filter = header(page, 'city').locator('.vg-filter-input input')
+    await expect(filter).toHaveAttribute('placeholder', 'Filtern…')
+    await filter.click()
+    await page.keyboard.type('Niš')
+    await expect(bar).toContainText(/\d+ von 60 Zeilen/)
+    await expect(bar).toContainText('1 Filter')
+    await expect(header(page, 'city').locator('.vg-filter-button')).toHaveAttribute(
+      'aria-label',
+      'City filtern (aktiv)',
+    )
+    // Serbian, Cyrillic: picked in the select; plurals by Serbian rules
+    await page.getByTestId('language').selectOption('sr')
+    await expect(bar).toContainText(/\d+ од 60 редова/)
+    await expect(bar).toContainText('1 филтер')
+    await expect(bar).toContainText('Изабрано: 1')
+    await bar.getByRole('button', { name: 'Обриши' }).click()
+    await expect(bar).toContainText('60 редова')
+    await expect(pager.getByRole('button', { name: 'Следећа страна' })).toBeVisible()
+    // French
+    await page.getByTestId('language').selectOption('fr')
+    await expect(bar).toContainText('60 lignes')
+    await expect(bar).toContainText('1 sélectionnée')
+    await expect(page.locator('.vg-pinned-rows')).toContainText('Total')
+    await header(page, 'city').click({ button: 'right' })
+    await expect(menu.getByRole('menuitem', { name: 'Grouper par City' })).toBeVisible()
+  })
+
   test('with every part on, dragging a header moves the column (control)', async ({ page }) => {
     await story(page, 'translated')
     expect((await headerKeys(page)).indexOf('status')).toBeGreaterThan(

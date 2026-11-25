@@ -1403,6 +1403,30 @@ A grid's own `:messages` win over the app's, and props that name a text (`empty-
 `<VGridPagination>`, `<VGridSearch>`, `<VGridColumnMenu>` and `<VGridMenu>` use the app's messages on
 their own too. Every key, with its English default, is in the API reference (`GridMessages`).
 
+**Language packs.** Ready-made, complete translations, each its own import (so only the ones you
+import are bundled, about 2 kB gzipped each):
+
+| Import                                  | Export   | Language                                             |
+| --------------------------------------- | -------- | ---------------------------------------------------- |
+| `@nocopypaste/vue-grid/locales/de`      | `de`     | German                                               |
+| `@nocopypaste/vue-grid/locales/fr`      | `fr`     | French                                               |
+| `@nocopypaste/vue-grid/locales/es`      | `es`     | Spanish                                              |
+| `@nocopypaste/vue-grid/locales/sr`      | `sr`     | Serbian, Cyrillic                                    |
+| `@nocopypaste/vue-grid/locales/sr-Latn` | `srLatn` | Serbian, Latin                                       |
+| `@nocopypaste/vue-grid/locales/en`      | `en`     | English (the built-in text, a template for your own) |
+
+```ts
+import { de } from '@nocopypaste/vue-grid/locales/de'
+
+app.use(createVueGrid({ messages: de })) // or per grid: <VGrid :messages="de" />
+// change a few texts on top: { ...de, total: 'Gesamt' }
+```
+
+Counts follow the language's plural rules (`1 red`, `2 reda`, `5 redova`). A pack only translates
+text: money, numbers and dates follow `locale` (`<VGrid locale="de">` or `createVueGrid({ locale })`).
+Text that takes a count gets the number too (`rowCount(shown, total, count, totalCount)`,
+`selectedCount(count, all, amount)`, `sortPosition(position, dir, count)`), for your own plurals.
+
 **Parts.** `GridParts` turns off what a feature adds, each on by default; app-wide in
 `createVueGrid({ parts })`, per grid with `:parts`:
 

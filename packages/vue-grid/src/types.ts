@@ -843,9 +843,9 @@ export interface GridMessages {
   thenSortDescending?: string
   /**
    * Multi-column sort, for screen readers on a sorted header. Default
-   * `` `, sorted ${position} of ${count}, ascending` `` (`count`: how many keys).
+   * `` `, sorted ${position} of ${count}, ascending` `` (`count`: how many keys; the third argument).
    */
-  sortPosition?: (position: number, dir: 'asc' | 'desc') => string
+  sortPosition?: (position: number, dir: 'asc' | 'desc', count: number) => string
   /** The header menu item that opens the column's filter. Default `Filter…`. */
   filterMenu?: string
   /** Default `Clear filter`. */
@@ -964,7 +964,7 @@ export interface GridMessages {
   rowsPerPage?: string
   /** A page size option. Default `` `${size} / page` `` */
   pageSize?: (size: number) => string
-  /** Default `` `${from}–${to} of ${total}` `` (numbers formatted for the locale). */
+  /** Default `` `${from}–${to} of ${total}` `` (the numbers as text). */
   pageSummary?: (from: string, to: string, total: string) => string
   /** Default `First page`. */
   firstPage?: string
@@ -980,10 +980,21 @@ export interface GridMessages {
   // ── Status bar ──
   /** The status bar's name for screen readers. Default `Grid status`. */
   statusBar?: string
-  /** Default `` `${shown} of ${total} rows` `` while filtered, else `` `${shown} rows` `` (`1 row`). */
-  rowCount?: (shown: string, total: string | undefined, count: number) => string
-  /** Default `` `${count} selected` `` (`All ${count} selected` with all matching rows). */
-  selectedCount?: (count: string, all: boolean) => string
+  /**
+   * Default `` `${shown} of ${total} rows` `` while filtered, else `` `${shown} rows` `` (`1 row`).
+   * `shown` and `total` are formatted; `count` and `totalCount` are the numbers, for plurals.
+   */
+  rowCount?: (
+    shown: string,
+    total: string | undefined,
+    count: number,
+    totalCount: number | undefined,
+  ) => string
+  /**
+   * Default `` `${count} selected` `` (`All ${count} selected` with all matching rows). `count` is
+   * formatted; `amount` is the number, for plurals.
+   */
+  selectedCount?: (count: string, all: boolean, amount: number) => string
   /** Default `` `${count} filters` `` (`1 filter`). */
   filterCount?: (count: number) => string
   /** The status bar's button. Default `Clear`. */

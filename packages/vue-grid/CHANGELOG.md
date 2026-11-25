@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.11.0 — 2026-11-25
+
+**Language packs**: ready-made, complete translations of every built-in text, each its own import
+and bundled only when imported (about 2 kB gzipped): `@nocopypaste/vue-grid/locales/de` (`de`),
+`/fr` (`fr`), `/es` (`es`), `/sr` (`sr`, Serbian Cyrillic), `/sr-Latn` (`srLatn`), and `/en`
+(`en`, the built-in English written out, as a template). Use one as `messages` app-wide
+(`createVueGrid({ messages: de })`) or per grid, and spread it to change a few texts
+(`{ ...de, total: 'Gesamt' }`). Counts follow each language's plural rules (`Intl.PluralRules`:
+`1 red`, `2 reda`, `5 redova`). Texts that take a count now also get the number, for plurals:
+`rowCount(shown, total, count, totalCount)`, `selectedCount(count, all, amount)`, and
+`sortPosition(position, dir, count)` gets the number of sort keys (it couldn't say “of 3” before).
+The new arguments come last, so existing functions keep working.
+
 ## 0.10.0 — 2026-11-25
 
 **Inline cell editing** (`editingFeature`, opt-in): mark columns `editable` (or `(row) => boolean`).

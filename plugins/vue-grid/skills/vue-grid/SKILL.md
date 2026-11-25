@@ -45,6 +45,9 @@ A working example of each feature, complete component source included:
 - Inline editing (`editingFeature`, `editable` columns): handle `@cell-edit` and store `e.value`
   (`setCellValue`), or use `:save-cell` for async saves; the grid never writes the value itself.
 - Editable renderers are controlled: handle `@cell-action` and update the data.
+- Another language: import a pack (`import { de } from '@nocopypaste/vue-grid/locales/de'`; also
+  `fr`, `es`, `sr`, `sr-Latn`) as `messages`, plus `locale` for number and date formats. Other
+  languages: your own `messages` (`GridMessages`, `locales/en` is the template).
 
 ## 5. Validate the config
 

@@ -30,7 +30,12 @@ const rowsText = computed(() => {
   const { rowCount, totalRowCount } = scope.value
   const filtered = totalRowCount !== undefined && totalRowCount !== rowCount
   if (m.value.rowCount)
-    return m.value.rowCount(n(rowCount), filtered ? n(totalRowCount) : undefined, rowCount)
+    return m.value.rowCount(
+      n(rowCount),
+      filtered ? n(totalRowCount) : undefined,
+      rowCount,
+      filtered ? totalRowCount : undefined,
+    )
   return filtered
     ? `${n(rowCount)} of ${plural(totalRowCount, 'row', 'rows')}`
     : plural(rowCount, 'row', 'rows')
@@ -38,7 +43,7 @@ const rowsText = computed(() => {
 const selectedText = computed(() => {
   const { selectedCount, allSelected } = scope.value
   return (
-    m.value.selectedCount?.(n(selectedCount), allSelected) ??
+    m.value.selectedCount?.(n(selectedCount), allSelected, selectedCount) ??
     `${allSelected ? 'All ' : ''}${n(selectedCount)} selected`
   )
 })

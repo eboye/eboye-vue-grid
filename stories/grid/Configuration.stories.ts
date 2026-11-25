@@ -1,6 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import { ref } from 'vue'
 import type { GridMessages, RowKey } from '@nocopypaste/vue-grid'
+import { de } from '@nocopypaste/vue-grid/locales/de'
+import { en } from '@nocopypaste/vue-grid/locales/en'
+import { es } from '@nocopypaste/vue-grid/locales/es'
+import { fr } from '@nocopypaste/vue-grid/locales/fr'
+import { sr } from '@nocopypaste/vue-grid/locales/sr'
+import { srLatn } from '@nocopypaste/vue-grid/locales/sr-Latn'
 import { betColumns, makeBets } from '../data'
 import { Grid as VGrid, type GridArgs } from '../support'
 
@@ -95,6 +101,36 @@ type Story = StoryObj<typeof meta>
 /** `:messages` in Serbian: menus, filters, the pager, the status bar and the totals row. */
 export const Translated: Story = {
   args: { messages: serbian, statusBar: { summary: ['stake'] } },
+}
+
+const packs = { en, de, fr, es, sr, srLatn }
+
+/**
+ * Ready-made language packs: `import { de } from '@nocopypaste/vue-grid/locales/de'`, then
+ * `:messages="de"` (or `createVueGrid({ messages: de })`). Each pack is bundled only when imported;
+ * spread it to change a few texts (`{ ...de, total: 'Gesamt' }`). Counts use the language's plural
+ * rules (Serbian: 1 red, 2 reda, 5 redova).
+ */
+export const LanguagePacks: Story = {
+  args: { statusBar: { summary: ['stake'] } },
+  render: (args) => ({
+    components: { VGrid },
+    setup: () => ({
+      args,
+      packs,
+      language: ref<keyof typeof packs>('de'),
+      selected: ref<RowKey[]>([2]),
+    }),
+    template: `
+      <label class="sb-note">Language
+        <select v-model="language" data-testid="language">
+          <option v-for="(_, name) in packs" :key="name" :value="name">{{ name }}</option>
+        </select>
+      </label>
+      <div class="sb-frame">
+        <VGrid v-bind="args" v-model:selected="selected" :messages="packs[language]" />
+      </div>`,
+  }),
 }
 
 /**
