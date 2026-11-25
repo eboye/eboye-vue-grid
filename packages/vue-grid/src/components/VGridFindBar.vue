@@ -24,6 +24,7 @@ const inSelection = ref(!!find.scope.value)
 /** The last thing replaced: shown instead of the count until the search changes. */
 const report = ref('')
 const searchBox = ref<HTMLInputElement>()
+const bar = ref<HTMLElement>()
 
 interface Match {
   row: unknown
@@ -90,6 +91,10 @@ const busy = ref(false)
 async function replace(all: boolean) {
   const list = all ? matches.value : matches.value.slice(index.value, index.value + 1)
   if (!list.length || busy.value) return
+  // the buttons are off while it saves (and Replace all stays off with nothing left to match):
+  // the browser drops the focus of a disabled button, so it's put back afterwards
+  const had = document.activeElement
+  const inBar = !!had && !!bar.value?.contains(had)
   busy.value = true
   try {
     const result = await find.write(
@@ -109,7 +114,18 @@ async function replace(all: boolean) {
       `${n(count)} replaced${skipped ? `, ${n(skipped)} left as they were` : ''}`
   } finally {
     busy.value = false
+    if (inBar) void keepFocus(had as HTMLElement)
   }
+}
+
+/** Focus back where it was, or in the search box if that went off; Esc and the keys keep working. */
+async function keepFocus(had: HTMLElement) {
+  await nextTick()
+  const root = bar.value
+  if (!root) return
+  // a button that stays off loses focus, now or (WebKit) a little later: to the search box
+  if (!had.isConnected || (had as HTMLButtonElement).disabled) searchBox.value?.focus()
+  else if (!root.contains(document.activeElement)) had.focus()
 }
 
 const status = computed(() => {
@@ -171,7 +187,7 @@ watch(
 </script>
 
 <template>
-  <div class="vg-find" role="search" :aria-label="m.find ?? 'Find'" @keydown="onKeyDown">
+  <div ref="bar" class="vg-find" role="search" :aria-label="m.find ?? 'Find'" @keydown="onKeyDown">
     <div class="vg-find-row">
       <input
         ref="searchBox"

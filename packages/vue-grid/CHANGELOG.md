@@ -1,6 +1,11 @@
 # Changelog
 
-## Unreleased
+## 0.17.1 — 2026-11-25
+
+Fix: the find bar no longer loses keyboard focus after **Replace** or **Replace all**. The buttons
+turn off while the change saves (and Replace all stays off once nothing is left to match), and
+the browser moved focus off a disabled button, so Esc no longer closed the bar. Focus now goes
+back to the button, or to the search box when the button stays off.
 
 Docs: a **Spreadsheet mode** page in the
 [live examples](https://eboye.github.io/eboye-vue-grid/#/spreadsheet): a budget you edit like a
