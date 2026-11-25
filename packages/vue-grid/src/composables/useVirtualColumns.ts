@@ -42,7 +42,7 @@ export interface VirtualColumnsState {
 const INITIAL = 24
 
 /** Columns that are always rendered: pinned ones and the selection checkbox. */
-const always = (c: ResolvedColumn) => !!c.pinned || c.kind === 'select'
+const always = (c: ResolvedColumn) => !!c.pinned || c.kind !== 'data'
 
 /**
  * Column virtualization: of the columns between the pinned ones, only those in view (plus

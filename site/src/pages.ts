@@ -148,6 +148,20 @@ export const pages: Page[] = [
     files: ['SpreadsheetDemo'],
   },
   {
+    id: 'reorder',
+    title: 'Row reordering',
+    section: 'Rows',
+    summary:
+      'Drag rows by a handle (mouse, pen or touch) or move them with Alt+↑ / Alt+↓. The grid emits row-move and moveRow() puts the row in its new place; nested rows stay under their parent.',
+    try: [
+      'Drag a task by its handle onto another: a line shows where it lands.',
+      'Click a task and press Alt+↓ a few times: it moves down and keeps focus.',
+      'Sort by Owner: the handles turn off (a moved row would jump back). Sort again to clear it.',
+    ],
+    docs: '31. Row reordering',
+    files: ['ReorderDemo'],
+  },
+  {
     id: 'grouping',
     title: 'Row grouping',
     section: 'Rows',

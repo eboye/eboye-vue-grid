@@ -1,6 +1,6 @@
 {
   "package": "@nocopypaste/vue-grid",
-  "version": "0.19.0",
+  "version": "0.20.0",
   "component": "VGrid",
   "props": [
     {
@@ -197,6 +197,13 @@
       "required": false,
       "description": "Extra attributes for each data row, such as test hooks (`{ 'data-test': ... }`).",
       "feature": "attributes"
+    },
+    {
+      "name": "rowReorder",
+      "type": "boolean",
+      "required": false,
+      "description": "Rows can be moved: a handle column to drag them by, and Alt+↑ / Alt+↓. The grid emits `row-move`; your handler moves the row (`moveRow`). Needs the row reorder feature.",
+      "feature": "rowReorder"
     },
     {
       "name": "cellAttrs",
@@ -508,6 +515,11 @@
       "name": "cells-clear",
       "payload": "[event: CellsPasteEvent<T>]",
       "description": "Cells were cleared (Delete / Backspace, or Ctrl/⌘+X after copying them): every changed cell (each also a `cell-edit`, `source: 'clear'` / `'cut'`), the cells left alone and why, and the saves that failed."
+    },
+    {
+      "name": "row-move",
+      "payload": "[event: RowMoveEvent<T>]",
+      "description": "A row was dragged or moved with Alt+↑ / Alt+↓ (row reorder feature): move it in your rows."
     },
     {
       "name": "sub-rows-error",
@@ -1275,6 +1287,15 @@
         "pinnedTopRows",
         "pinnedBottomRows",
         "pinnedRows"
+      ],
+      "columnOptions": []
+    },
+    {
+      "id": "rowReorder",
+      "export": "rowReorderFeature",
+      "description": "Row reordering (`row-reorder`): a handle column to drag rows by (mouse, pen, touch), and Alt+↑ / Alt+↓ on a row's cells. Rows move among their siblings (a nested row stays under its parent). Controlled, like editing: the grid emits `row-move` and your handler moves the row (`moveRow(rows, event)`). The handles are off while rows are sorted or grouped.",
+      "props": [
+        "rowReorder"
       ],
       "columnOptions": []
     },

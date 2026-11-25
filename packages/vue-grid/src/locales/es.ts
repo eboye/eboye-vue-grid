@@ -21,6 +21,8 @@ export const es = {
   selectAllRows: 'Seleccionar todas las filas',
   selectRow: 'Seleccionar fila',
   selectGroup: 'Seleccionar grupo',
+  moveRow: 'Mover fila',
+  moveRowHint: 'Arrastre, o Alt+↑ / Alt+↓',
   pageSelected: (count) =>
     plural(count, {
       one: 'La fila de esta página está seleccionada.',

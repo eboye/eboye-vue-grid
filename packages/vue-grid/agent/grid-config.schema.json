@@ -42,6 +42,7 @@
           "rangeSelectionFeature",
           "rowGroupingFeature",
           "rowPinningFeature",
+          "rowReorderFeature",
           "selectionFeature",
           "serverDataFeature",
           "serverGroupingFeature",
@@ -152,6 +153,10 @@
     },
     "rowAttrs": {
       "description": "Extra attributes for each data row, such as test hooks (`{ 'data-test': ... }`)."
+    },
+    "rowReorder": {
+      "type": "boolean",
+      "description": "Rows can be moved: a handle column to drag them by, and Alt+↑ / Alt+↓. The grid emits `row-move`; your handler moves the row (`moveRow`). Needs the row reorder feature."
     },
     "cellAttrs": {
       "description": "Extra attributes for each cell of a data row, such as test hooks."

@@ -126,6 +126,7 @@ function onClick(event: MouseEvent) {
       `vg-align-${column.align}`,
       {
         'vg-cell-select': column.kind === 'select',
+        'vg-cell-drag': column.kind === 'drag',
         'vg-cell-tree': column.isTree,
         'vg-cell-clickable': column.def.clickable,
         [`vg-pin-${column.pinned}`]: column.pinned,
@@ -160,6 +161,9 @@ function onClick(event: MouseEvent) {
         :label="grid.messages.value.selectRow ?? 'Select row'"
         @toggle="(range: boolean) => grid.toggleRow(row, range)"
       />
+    </template>
+    <template v-else-if="column.kind === 'drag'">
+      <component :is="grid.reorder?.Handle" v-if="!pinned && grid.reorder" />
     </template>
     <template v-else>
       <span

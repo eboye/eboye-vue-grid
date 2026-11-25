@@ -24,6 +24,8 @@ export const en = {
   selectAllRows: 'Select all rows',
   selectRow: 'Select row',
   selectGroup: 'Select group',
+  moveRow: 'Move row',
+  moveRowHint: 'Drag, or Alt+↑ / Alt+↓',
   pageSelected: (count) => `All ${num(count)} rows on this page are selected.`,
   selectAllMatching: (total) => `Select all ${num(total)} rows`,
   allSelected: (total) => `All ${num(total)} rows are selected.`,

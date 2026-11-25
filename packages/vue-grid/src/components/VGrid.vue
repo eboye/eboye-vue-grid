@@ -43,6 +43,7 @@ import type {
   CellClickEvent,
   CellEditEvent,
   CellsPasteEvent,
+  RowMoveEvent,
   CellRange,
   CellAttrsContext,
   CellContext,
@@ -171,6 +172,11 @@ const props = withDefaults(
     rowClass?: (row: T, index: number) => ClassValue
     /** Extra attributes for each data row, such as test hooks (`{ 'data-test': ... }`). */
     rowAttrs?: (ctx: RowAttrsContext<T>) => ExtraAttrs | null | undefined
+    /**
+     * Rows can be moved: a handle column to drag them by, and Alt+↑ / Alt+↓. The grid emits
+     * `row-move`; your handler moves the row (`moveRow`). Needs the row reorder feature.
+     */
+    rowReorder?: boolean
     /** Extra attributes for each cell of a data row, such as test hooks. */
     cellAttrs?: (ctx: CellAttrsContext<T>) => ExtraAttrs | null | undefined
     /** Keys of rows to highlight (e.g. the row being edited). */
@@ -340,6 +346,8 @@ const emit = defineEmits<{
    * the saves that failed.
    */
   'cells-clear': [event: CellsPasteEvent<T>]
+  /** A row was dragged or moved with Alt+↑ / Alt+↓ (row reorder feature): move it in your rows. */
+  'row-move': [event: RowMoveEvent<T>]
   /** `loadSubRows` rejected for a row. */
   'sub-rows-error': [event: { row: T; error: unknown }]
   /** An item of the body-cell context menu was chosen. */
@@ -544,10 +552,24 @@ const pinsDropped = shallowRef(false)
 const pinOf = (def: ColumnDef<T>, state: ColumnState) =>
   pinsDropped.value ? undefined : effectivePin(def, state)
 
+// ── Row reordering ──────────────────────────────────────────────────────────────────────────
+const rowMoves = features.rowReorder?.useRowReorder<T>({
+  root,
+  on: () => !!props.rowReorder,
+  // a moved row would jump back while the rows are sorted or grouped
+  enabled: () =>
+    !!props.rowReorder && !sort.value && !sorts.value.length && !grouping?.active.value,
+  walk: (visit) => walk(sourceRows.value, visit),
+  getKey: (row) => getKey(row),
+  emit: (e) => emit('row-move', e),
+})
+
 const resolvedColumns = computed<ResolvedColumn[]>(() => {
   const state = effectiveState.value
   const data = visibleColumns(layoutColumns.value, state)
   const list: ResolvedColumn[] = []
+  const pinStart = data.some((c) => pinOf(c, state) === 'left') ? 'left' : undefined
+  if (props.rowReorder && rowMoves) list.push(rowMoves.column(pinStart))
   if (selectMode.value) {
     list.push({
       key: SELECT_COLUMN_KEY,
@@ -557,7 +579,7 @@ const resolvedColumns = computed<ResolvedColumn[]>(() => {
       definition: undefined,
       options: {},
       align: 'center',
-      pinned: data.some((c) => pinOf(c, state) === 'left') ? 'left' : undefined,
+      pinned: pinStart,
       pinEdge: false,
       isTree: false,
     })
@@ -919,7 +941,8 @@ const pinFit = pinning?.usePinFit(root, {
     const keys = visibleColumns(layoutColumns.value, state)
       .filter((c) => effectivePin(c, state))
       .map((c) => c.key)
-    return selectMode.value && keys.length ? [SELECT_COLUMN_KEY, ...keys] : keys
+    const own = resolvedColumns.value.filter((c) => c.kind !== 'data').map((c) => c.key)
+    return keys.length ? [...own, ...keys] : keys
   },
 })
 if (pinFit) watch(pinFit.dropped, (v) => (pinsDropped.value = v), { immediate: true })
@@ -1322,6 +1345,7 @@ if (process.env.NODE_ENV !== 'production') {
     if (!features.virtualScrolling && props.virtual) missing('virtualScrolling', '`virtual`')
     if (!features.columnVirtualization && props.virtualColumns)
       missing('columnVirtualization', '`virtual-columns`')
+    if (!features.rowReorder && props.rowReorder) missing('rowReorder', '`row-reorder`')
     if (!features.selection && props.selectable) missing('selection', '`selectable`')
     if (!features.subGrids && (props.subRows || props.loadSubRows))
       missing('subGrids', '`sub-rows` / `load-sub-rows`')
@@ -1441,6 +1465,7 @@ const context: GridContext = {
   virtual: isVirtual,
   virtualRows: virt?.context,
   cols,
+  reorder: rowMoves,
   shownColumns: cols?.rendered ?? resolvedColumns,
   // with column virtualization, also the cell's track (`grid-column`)
   pinStyle: (key) => {

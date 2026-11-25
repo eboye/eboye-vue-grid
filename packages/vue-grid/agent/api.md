@@ -1,4 +1,4 @@
-# @nocopypaste/vue-grid 0.19.0 — API reference
+# @nocopypaste/vue-grid 0.20.0 — API reference
 
 > Generated from the TypeScript sources (`scripts/gen-agent.mjs`). Machine-readable: `agent/api.json`, `agent/grid-config.schema.json`.
 
@@ -25,6 +25,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `rangeSelectionFeature` |  | `rangeSelection` `range` |  |
 | `rowGroupingFeature` | Row grouping: `v-model:group-by="['region', 'status']"` groups the rows by those columns into collapsible group rows with their value, row count and the aggregates of columns with an `aggregate`. Columns with `groupable: true` get Group by / Ungroup items in the header menu. Without it, `group-by` is ignored. | `groupsExpanded` `groupBy` | `groupable` `groupValue` |
 | `rowPinningFeature` | Pinned rows: `v-model:pinned-rows` (`{ top, bottom }` row keys), `pinned-top-rows` / `pinned-bottom-rows` (extra rows that aren't in the data) and the `pinRow()` method. Pinned rows stay in view (sticky) under the header or at the bottom while the body scrolls, and aren't filtered, sorted or paged. Without it, those options are ignored. | `pinnedTopRows` `pinnedBottomRows` `pinnedRows` |  |
+| `rowReorderFeature` | Row reordering (`row-reorder`): a handle column to drag rows by (mouse, pen, touch), and Alt+↑ / Alt+↓ on a row's cells. Rows move among their siblings (a nested row stays under its parent). Controlled, like editing: the grid emits `row-move` and your handler moves the row (`moveRow(rows, event)`). The handles are off while rows are sorted or grouped. | `rowReorder` |  |
 | `selectionFeature` | Row selection: the `selectable` prop (multi or single), `v-model:selected`, `selection-mode` (cascade through sub-grids), `is-row-selectable`, Space on a row, shift-click (or Shift+Space) for a range, the select-all checkbox, `prune-selection`, and with server data a "select all N matching rows" banner (`v-model:select-all-matching`; it loads on demand, its own chunk). | `selectable` `selectionMode` `isRowSelectable` `pruneSelection` `selected` `selectAllMatching` |  |
 | `serverDataFeature` | Server data: the `dataSource` prop. The grid sends sort, filters and page to your function, cancels superseded requests, and shows loading, error and retry states. | `dataSource` |  |
 | `serverGroupingFeature` | Row grouping with server data: with `group-by` and a `data-source`, the query carries `groupBy` and `groupPath`, the server answers with groups (value, count, aggregates), and each group's contents load when it expands. A group's checkbox selects it by query (`v-model:selected-groups`), without loading its rows. Needs the row grouping and server data features too. Without it, a grouped server grid groups only the rows it has loaded. | `selectedGroups` |  |
@@ -65,6 +66,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `rowClickable` | `boolean` | `false` |  | Pointer cursor on rows (`row-click` is emitted either way). |
 | `rowClass` | `(row: T, index: number) => ClassValue` |  |  | Extra classes for a row. |
 | `rowAttrs` | `(ctx: RowAttrsContext<T>) => ExtraAttrs \| null \| undefined` |  | `attributesFeature` | Extra attributes for each data row, such as test hooks (`{ 'data-test': ... }`). |
+| `rowReorder` | `boolean` |  | `rowReorderFeature` | Rows can be moved: a handle column to drag them by, and Alt+↑ / Alt+↓. The grid emits `row-move`; your handler moves the row (`moveRow`). Needs the row reorder feature. |
 | `cellAttrs` | `(ctx: CellAttrsContext<T>) => ExtraAttrs \| null \| undefined` |  | `attributesFeature` | Extra attributes for each cell of a data row, such as test hooks. |
 | `highlightedRows` | `readonly RowKey[]` |  |  | Keys of rows to highlight (e.g. the row being edited). |
 | `flash` | `FlashMode` |  |  | Briefly highlight cells whose value changes (live data, enrichment). Columns can override. |
@@ -123,6 +125,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `cells-fill` | `[event: CellsPasteEvent<T>]` | A fill finished (the fill handle, Ctrl/⌘+D): every changed cell (each also a `cell-edit`, `source: 'fill'`), the cells left alone and why, and the saves that failed. |
 | `cells-replace` | `[event: CellsPasteEvent<T>]` | A replace in the find bar finished: every changed cell (each also a `cell-edit`, `source: 'replace'`), the cells left alone and why, and the saves that failed. |
 | `cells-clear` | `[event: CellsPasteEvent<T>]` | Cells were cleared (Delete / Backspace, or Ctrl/⌘+X after copying them): every changed cell (each also a `cell-edit`, `source: 'clear'` / `'cut'`), the cells left alone and why, and the saves that failed. |
+| `row-move` | `[event: RowMoveEvent<T>]` | A row was dragged or moved with Alt+↑ / Alt+↓ (row reorder feature): move it in your rows. |
 | `sub-rows-error` | `[event: { row: T; error: unknown }]` | `loadSubRows` rejected for a row. |
 | `context-action` | `[event: ContextActionEvent<T>]` | An item of the body-cell context menu was chosen. |
 | `header-action` | `[event: HeaderActionEvent<T>]` | A custom item of the header menu was chosen (built-in items act by themselves). |

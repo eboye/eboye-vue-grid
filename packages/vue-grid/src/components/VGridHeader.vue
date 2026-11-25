@@ -95,7 +95,7 @@ function ariaSort(col: ResolvedColumn) {
           @toggle="emit('toggleAll')"
         />
       </template>
-      <template v-else>
+      <template v-else-if="col.kind === 'data'">
         <button
           v-if="grid.sortable(col.def)"
           type="button"

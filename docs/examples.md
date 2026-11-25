@@ -156,6 +156,7 @@ app.use(createVueGrid({ features: allFeatures })) // all of them
 | `columnResizingFeature`       | dragging a header edge to resize, double-click to fit, `resizable`, `maxWidth`, `columnState.widths`                  |
 | `columnGroupsFeature`         | `group` on columns: a sticky row of group headers above the column headers                                            |
 | `rowPinningFeature`           | `v-model:pinned-rows`, `pinRow()`, `pinned-top-rows` / `pinned-bottom-rows`                                           |
+| `rowReorderFeature`           | `row-reorder`, `row-move`, `moveRow()` (drag rows by a handle, Alt+↑ / Alt+↓)                                         |
 | `aggregationFeature`          | column `aggregate`, `totals`, `totals-label`, `aggregates`                                                            |
 | `rowGroupingFeature`          | `v-model:group-by`, `groups-expanded`, column `groupable` / `groupValue`, `#group-<key>`                              |
 | `exportFeature`               | `exportCsv()` / `getCsv()` / `copyRows()`, Ctrl/⌘+C, `@copy`, column `exportValue` / `exportable`                     |
@@ -1160,7 +1161,8 @@ const columns = [
 Adjacent visible columns with the same `group` share one header cell, in a sticky row above the
 column headers. Groups follow the layout: reorder a column away and its group splits, hide all
 of a group's columns and it disappears, resize a column and the group widens. A pin boundary
-always splits a group, so pinned groups stay pinned. Keyboard navigation skips the group row.
+always splits a group, so pinned groups stay pinned. A group wider than the view keeps its label
+in sight while it scrolls by, clear of the pinned columns. Keyboard navigation skips the group row.
 
 ### Resizable columns
 
@@ -2682,6 +2684,42 @@ await expect(page.locator('[data-test="row-0"] [data-test="player-0"]')).toHaveT
   scrolling it counts every row, drawn or not. Tree children count from 0 under their parent;
   pinned rows from 0 in their section (`pinned`).
 - `cell-attrs` also gets `column`, `columnKey`, `columnIndex` (from 0, the selection checkbox
-  included), `kind` (`'data'` / `'select'`) and `columnPinned`.
+  included), `kind` (`'data'` / `'select'` / `'drag'`) and `columnPinned`.
 - The grid's own attributes stay: `role`, `aria-*`, `tabindex`, `id`, `class`, `style`, its `data-*`
   hooks and `on…` handlers are ignored here. Group and totals rows get none.
+
+---
+
+## 31. Row reordering
+
+A priority list the user can rearrange (needs `rowReorderFeature`):
+
+```vue
+<script setup lang="ts">
+import { ref } from 'vue'
+import { moveRow, rowReorderFeature, VGrid, type RowMoveEvent } from '@nocopypaste/vue-grid'
+
+const tasks = ref<Task[]>(initialTasks)
+async function onRowMove(e: RowMoveEvent<Task>) {
+  tasks.value = moveRow(tasks.value, e) // move it right away
+  await api.moveTask(e.rowKey, e.position, e.targetKey) // then save it
+}
+</script>
+
+<template>
+  <VGrid
+    :rows="tasks"
+    :columns="columns"
+    row-key="id"
+    row-reorder
+    :features="[rowReorderFeature]"
+    @row-move="onRowMove"
+  />
+</template>
+```
+
+- Drag a row by its handle (the grid scrolls when the pointer nears its top or bottom edge), or
+  press Alt+↑ / Alt+↓ on the row; focus stays with it.
+- `row-move` carries `row`, `target`, `position` (`'before'` / `'after'`), `parent` (for nested
+  rows, which only move among their siblings) and `source` (`'drag'` / `'keyboard'`).
+- While the rows are sorted or grouped the handles are off; clear the sort to reorder.

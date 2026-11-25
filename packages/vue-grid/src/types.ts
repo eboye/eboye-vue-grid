@@ -378,6 +378,26 @@ export interface PasteSkip {
  * A paste into the grid finished (`cells-paste`): every changed cell (each also emitted as
  * `cell-edit` and saved with `save-cell`), the cells left alone, and the saves that failed.
  */
+/**
+ * A row dragged (or moved with Alt+↑ / Alt+↓) to a new place (`row-move`, row reorder feature).
+ * The grid doesn't move it: put `row` just before or after `target` in your rows (`moveRow()`).
+ */
+export interface RowMoveEvent<T = any> {
+  /** The row being moved. */
+  row: T
+  rowKey: RowKey
+  /** The row it goes next to. */
+  target: T
+  targetKey: RowKey
+  /** Just before or just after `target`. */
+  position: 'before' | 'after'
+  /** For a nested row: its parent (rows only move among their siblings); null at the top. */
+  parent: T | null
+  parentKey: RowKey | null
+  /** How it was moved. */
+  source: 'drag' | 'keyboard'
+}
+
 export interface CellsPasteEvent<T = any> {
   edits: CellEditEvent<T>[]
   skipped: PasteSkip[]
@@ -494,8 +514,8 @@ export interface CellAttrsContext<T = any> extends RowAttrsContext<T> {
   columnKey: string
   /** The column’s position, from 0, among the shown columns, the selection checkbox included. */
   columnIndex: number
-  /** `select`: the selection checkbox column; `data`: one of yours. */
-  kind: 'data' | 'select'
+  /** `select`: the selection checkbox column; `drag`: the row handle column; `data`: one of yours. */
+  kind: 'data' | 'select' | 'drag'
   /** Set for a pinned column: its side. */
   columnPinned?: PinSide
 }
@@ -886,6 +906,10 @@ export interface ExportFeature {
   readonly feature: 'export'
   useExport: typeof import('./composables/useGridExport').useGridExport
 }
+export interface RowReorderFeature {
+  readonly feature: 'rowReorder'
+  useRowReorder: typeof import('./composables/useRowReorder').useRowReorder
+}
 export interface ColumnVirtualizationFeature {
   readonly feature: 'columnVirtualization'
   useVirtualColumns: typeof import('./composables/useVirtualColumns').useVirtualColumns
@@ -921,6 +945,7 @@ export interface RangeSelectionFeature {
   preloadFind: () => Promise<unknown>
 }
 export type GridFeature =
+  | RowReorderFeature
   | ColumnVirtualizationFeature
   | AttributesFeature
   | RangeSelectionFeature
@@ -1004,6 +1029,10 @@ export interface GridMessages {
   selectRow?: string
   /** Default `Select group`. */
   selectGroup?: string
+  /** The row handle (row reorder feature). Default `Move row`. */
+  moveRow?: string
+  /** The row handle's tooltip. Default `Drag, or Alt+↑ / Alt+↓`. */
+  moveRowHint?: string
   /** Default `` `All ${count} rows on this page are selected.` `` */
   pageSelected?: (count: number) => string
   /** Default `` `Select all ${total} rows` `` */

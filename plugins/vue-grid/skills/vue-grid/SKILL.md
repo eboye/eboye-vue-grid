@@ -46,6 +46,8 @@ A working example of each feature, complete component source included:
   (`setCellValue`), or use `:save-cell` for async saves; the grid never writes the value itself.
   Undo / redo (Ctrl/⌘+Z, Ctrl+Y) come through the same `@cell-edit` (`e.source`): store them too.
 - Editable renderers are controlled: handle `@cell-action` and update the data.
+- Reorderable rows: `row-reorder` + `rowReorderFeature`; handle `@row-move` with
+  `moveRow(rows, e)` (controlled, like editing).
 - Many columns: `virtual-columns` + `columnVirtualizationFeature` (with `virtual` for rows);
   give columns widths. Not a sliced `columns` array.
 - Test hooks (`data-test`) on rows and cells: `attributesFeature` with `:row-attrs` /

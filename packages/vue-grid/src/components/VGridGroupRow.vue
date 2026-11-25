@@ -33,27 +33,35 @@ const segments = computed<Segment[]>(() => {
   return out
 })
 
-// The column headers stick below this row: publish its height on the scroll container.
+// The column headers stick below this row: publish its height on the scroll container. And the
+// pinned groups' widths, which a scrolling group's sticky label stays clear of.
 const row = shallowRef<HTMLElement>()
 let observer: ResizeObserver | undefined
+const VARS = ['--vg-group-row-height', '--vg-group-stick-start', '--vg-group-stick-end']
 watch(
-  row,
-  (el) => {
+  [row, () => segments.value.map((s) => `${s.first}:${s.span}:${s.pinned ?? ''}`).join('|')],
+  ([el]) => {
     observer?.disconnect()
-    const first = el?.firstElementChild as HTMLElement | null
+    const cells = Array.from((el?.children ?? []) as HTMLCollectionOf<HTMLElement>)
     const grid = el?.closest<HTMLElement>('.vg')
-    if (!first || !grid || typeof ResizeObserver === 'undefined') return
-    observer = new ResizeObserver(() =>
-      grid.style.setProperty('--vg-group-row-height', `${first.offsetHeight}px`),
-    )
-    observer.observe(first)
-    grid.style.setProperty('--vg-group-row-height', `${first.offsetHeight}px`)
+    if (!cells.length || !grid || typeof ResizeObserver === 'undefined') return
+    const pinned = (side: string) => cells.filter((c) => c.classList.contains(`vg-pin-${side}`))
+    const publish = () => {
+      const width = (side: string) => pinned(side).reduce((sum, c) => sum + c.offsetWidth, 0)
+      grid.style.setProperty(VARS[0]!, `${cells[0]!.offsetHeight}px`)
+      grid.style.setProperty(VARS[1]!, `${width('left')}px`)
+      grid.style.setProperty(VARS[2]!, `${width('right')}px`)
+    }
+    observer = new ResizeObserver(publish)
+    for (const c of [cells[0]!, ...pinned('left'), ...pinned('right')]) observer.observe(c)
+    publish()
   },
   { flush: 'post' },
 )
 onBeforeUnmount(() => {
   observer?.disconnect()
-  row.value?.closest<HTMLElement>('.vg')?.style.removeProperty('--vg-group-row-height')
+  const grid = row.value?.closest<HTMLElement>('.vg')
+  for (const v of VARS) grid?.style.removeProperty(v)
 })
 </script>
 

@@ -12,6 +12,7 @@
 @layer vue-grid {
   :root {
     --vg-select-column-width: 2.75rem;
+    --vg-drag-column-width: 2.25rem;
     --vg-expander-size: 1.5rem;
     --vg-subgrid-indent: 1.25rem;
     --vg-z-header: 3;
@@ -160,8 +161,41 @@
   }
 
   .vg-cell-select,
-  .vg-header-select {
+  .vg-header-select,
+  .vg-cell-drag {
     justify-content: center;
+  }
+
+  /* Row reordering: the handle, the row being dragged and the line where it would land. */
+  .vg-row-handle {
+    display: inline-grid;
+    place-items: center;
+    width: var(--vg-expander-size);
+    height: var(--vg-expander-size);
+    cursor: grab;
+    touch-action: none; /* a drag on the handle moves the row, not the page */
+  }
+  .vg-row-handle svg {
+    width: 1rem;
+    height: 1rem;
+    fill: currentColor;
+  }
+  .vg-row-handle:disabled {
+    cursor: not-allowed;
+  }
+  .vg[data-vg-row-drag],
+  .vg[data-vg-row-drag] * {
+    cursor: grabbing !important;
+    user-select: none;
+  }
+  .vg-row[data-vg-dragging] > .vg-cell {
+    opacity: 0.5;
+  }
+  .vg-row[data-vg-drop='before'] > .vg-cell {
+    box-shadow: inset 0 2px 0 var(--vg-color-accent, Highlight);
+  }
+  .vg-row[data-vg-drop='after'] > .vg-cell {
+    box-shadow: inset 0 -2px 0 var(--vg-color-accent, Highlight);
   }
   .vg-pin-left,
   .vg-pin-right {
@@ -606,13 +640,22 @@
     align-items: center;
     justify-content: center;
     min-width: 0;
-    overflow: hidden;
+    /* `clip`, not `hidden`: a scroll container would keep the label's `sticky` to the cell */
+    overflow: clip;
     white-space: nowrap;
   }
   .vg-group-label {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+  /*
+   * A group wider than the view keeps its label in view while it scrolls by, clear of the pinned
+   * columns (their widths are published by the group row).
+   */
+  .vg-group-cell:not(.vg-pin-left, .vg-pin-right) > .vg-group-label {
+    position: sticky;
+    inset-inline: var(--vg-group-stick-start, 0px) var(--vg-group-stick-end, 0px);
   }
   .vg-group-cell.vg-pin-left,
   .vg-group-cell.vg-pin-right {

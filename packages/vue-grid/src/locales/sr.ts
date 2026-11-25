@@ -22,6 +22,8 @@ export const sr = {
   selectAllRows: 'Изабери све редове',
   selectRow: 'Изабери ред',
   selectGroup: 'Изабери групу',
+  moveRow: 'Помери ред',
+  moveRowHint: 'Превуците, или Alt+↑ / Alt+↓',
   pageSelected: (count) => `Изабрани су сви редови на овој страни (${num(count)}).`,
   selectAllMatching: (total) => `Изабери све редове (${num(total)})`,
   allSelected: (total) => `Изабрани су сви редови (${num(total)}).`,

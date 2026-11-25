@@ -435,6 +435,20 @@
   .vg-expander-icon {
     transition: transform var(--vg-transition);
   }
+  .vg-row-handle {
+    padding: 0;
+    border: 0;
+    border-radius: var(--vg-radius-sm);
+    background: none;
+    color: var(--vg-color-text-muted);
+  }
+  .vg-row-handle:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--vg-color-text) 8%, transparent);
+    color: var(--vg-color-text);
+  }
+  .vg-row-handle:disabled {
+    opacity: 0.4;
+  }
   .vg-subgrid {
     border-bottom: var(--vg-subgrid-border);
     border-radius: var(--vg-subgrid-radius);
@@ -535,6 +549,7 @@
   .vg-icon-button:focus-visible,
   .vg-link-button:focus-visible,
   .vg-expander:focus-visible,
+  .vg-row-handle:focus-visible,
   .vg-action-button:focus-visible,
   .vg-menu-item:focus-visible {
     outline: 2px solid var(--vg-color-focus-ring);

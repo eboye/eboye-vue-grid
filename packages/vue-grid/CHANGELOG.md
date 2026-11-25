@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.20.0 — 2026-11-25
+
+**Row reordering** (`rowReorderFeature`, `row-reorder`): a handle column to drag rows by (mouse,
+pen or touch, with a line where the row will land and scrolling at the grid's edges), and Alt+↑ /
+Alt+↓ on a row's cells. Controlled, like editing: the grid emits `row-move` (`row`, `target`,
+`position`, `parent`, `source`) and `moveRow(rows, event)` applies it. Nested rows move among their
+siblings; the handles are off while rows are sorted or grouped; focus stays with the moved row.
+New texts `moveRow` and `moveRowHint` in every language pack, token `--vg-drag-column-width`. Live
+example: Row reordering. The feature is 1.6 kB gzipped; a plain grid grows by 0.2 kB, to 16.5 kB.
+
+Fix: a column group wider than the view keeps its label in sight while it scrolls by, clear of
+the pinned columns (the label was centred across the whole group, so it scrolled out of view).
+
 ## 0.19.0 — 2026-11-25
 
 **Column virtualization** (`columnVirtualizationFeature`, `virtual-columns`): only the columns in

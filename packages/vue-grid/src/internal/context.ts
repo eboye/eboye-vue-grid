@@ -13,6 +13,7 @@ import type {
 } from '../types'
 import type { ExtraAttrsState } from '../composables/useExtraAttrs'
 import type { VirtualColumnsState } from '../composables/useVirtualColumns'
+import type { RowReorderState } from '../composables/useRowReorder'
 import type { ColumnFilter, FilterState, FilterType } from '../core/filter'
 import type { SelectionSummary } from '../core/selection'
 import type { SubRowEntry } from '../composables/useSubRows'
@@ -20,11 +21,12 @@ import type { DistinctValue } from '../composables/useGridFilters'
 import type { VirtualRowsContext } from '../composables/useVirtualRows'
 
 export const SELECT_COLUMN_KEY = '__vg_select'
+export const DRAG_COLUMN_KEY = '__vg_drag'
 
 /** A visible column with everything the cells need precomputed. */
 export interface ResolvedColumn {
   key: string
-  kind: 'data' | 'select'
+  kind: 'data' | 'select' | 'drag'
   def: ColumnDef
   component: Component | undefined
   definition: CellRendererDefinition | undefined
@@ -111,6 +113,8 @@ export interface GridContext {
   rowClass(row: any, index: number): ClassValue
   /** The columns whose cells render: all of them, or with `virtual-columns` those in view. */
   shownColumns: ComputedRef<readonly ResolvedColumn[]>
+  /** `row-reorder` (only with the row reorder feature). */
+  reorder?: RowReorderState
   /** `virtual-columns` (only with the column virtualization feature). */
   cols?: VirtualColumnsState
   /** `row-attrs` / `cell-attrs` (only with the attributes feature). */

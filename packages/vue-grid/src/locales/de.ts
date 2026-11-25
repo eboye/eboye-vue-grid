@@ -21,6 +21,8 @@ export const de = {
   selectAllRows: 'Alle Zeilen auswählen',
   selectRow: 'Zeile auswählen',
   selectGroup: 'Gruppe auswählen',
+  moveRow: 'Zeile verschieben',
+  moveRowHint: 'Ziehen, oder Alt+↑ / Alt+↓',
   pageSelected: (count) => `Alle ${num(count)} Zeilen auf dieser Seite sind ausgewählt.`,
   selectAllMatching: (total) => `Alle ${num(total)} Zeilen auswählen`,
   allSelected: (total) => `Alle ${num(total)} Zeilen sind ausgewählt.`,

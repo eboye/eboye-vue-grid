@@ -129,8 +129,9 @@ an opt-in feature:
 | `columnVisibilityFeature`     | `hidden: true` columns, `columnState.hidden`, the header menu's Hide column item; without it every column shows                                                                                                                                                                                                                         |
 | `keyboardNavigationFeature`   | The ARIA grid pattern: one Tab stop, arrow keys / Home / End / PageUp / PageDown between cells, Enter, Space to select, →/← to expand, Alt+←/→ to move a column. Without it the grid is an ARIA `table` with its controls in the Tab order                                                                                              |
 | `columnResizingFeature`       | Drag a header edge to resize (mouse, pen, touch), double-click it to fit the content, ←/→ on the focused edge (Alt+Shift+←/→ on a header with keyboard navigation); `minWidth` / `maxWidth` bound it, `resizable: false` opts out; widths in `columnState.widths`, persisted with `storage`; Fit width / Reset width in the header menu |
-| `columnGroupsFeature`         | Grouped column headers: columns with the same `group` share a header cell in a sticky row above theirs; groups follow reordering, hiding, resizing and pinning (a pin boundary splits a group)                                                                                                                                          |
+| `columnGroupsFeature`         | Grouped column headers: columns with the same `group` share a header cell in a sticky row above theirs; groups follow reordering, hiding, resizing and pinning (a pin boundary splits a group); a wide group keeps its label in sight while scrolling                                                                                   |
 | `rowPinningFeature`           | `v-model:pinned-rows` / `pinRow()`: rows that stay in view above or below the body, plus `pinned-top-rows` / `pinned-bottom-rows` for rows that aren't in the data                                                                                                                                                                      |
+| `rowReorderFeature`           | `row-reorder`: a handle column to drag rows by (mouse, pen, touch) and Alt+↑ / Alt+↓; emits `row-move`, `moveRow()` applies it. See [Row reordering](#row-reordering)                                                                                                                                                                   |
 | `aggregationFeature`          | Column `aggregate` (`sum`, `avg`, `min`, `max`, `count`, a function) and `totals`: a sticky totals row over the filtered rows                                                                                                                                                                                                           |
 | `rowGroupingFeature`          | `v-model:group-by`: rows grouped by one or more columns into collapsible group rows with the value, row count and aggregates; Group by / Ungroup in the header menu for `groupable` columns                                                                                                                                             |
 | `serverGroupingFeature`       | With a `data-source`: groups from the server (`query.groupBy` / `groupPath`), each one's contents loaded on expand, groups selected by query (`v-model:selected-groups`). See [Server-side grouping](#server-side-grouping)                                                                                                             |
@@ -182,38 +183,39 @@ what you import.
 
 | Import (minified / gzip, Vue excluded)                                       | Initial chunk      |
 | ---------------------------------------------------------------------------- | ------------------ |
-| `VGrid` (no features)                                                        | 47.7 kB / 16.3 kB  |
-| `VGrid` + `sortingFeature`                                                   | 50.4 kB / 17.3 kB  |
-| `VGrid` + `filteringFeature`                                                 | 58.4 kB / 20.2 kB  |
-| `VGrid` + `serverDataFeature`                                                | 49.1 kB / 16.9 kB  |
-| `VGrid` + `paginationFeature`                                                | 47.8 kB / 16.4 kB  |
-| `VGrid` + `selectionFeature`                                                 | 51.8 kB / 17.8 kB  |
-| `VGrid` + `subGridsFeature`                                                  | 50.0 kB / 17.1 kB  |
-| `VGrid` + `menusFeature`                                                     | 59.0 kB / 20.1 kB  |
-| `VGrid` + `columnReorderFeature`                                             | 51.4 kB / 17.6 kB  |
-| `VGrid` + `columnPinningFeature`                                             | 50.6 kB / 17.3 kB  |
-| `VGrid` + `virtualScrollingFeature`                                          | 53.5 kB / 18.5 kB  |
-| `VGrid` + `columnVisibilityFeature`                                          | 47.8 kB / 16.4 kB  |
-| `VGrid` + `keyboardNavigationFeature`                                        | 51.1 kB / 17.6 kB  |
-| `VGrid` + `columnResizingFeature`                                            | 50.9 kB / 17.5 kB  |
-| `VGrid` + `columnGroupsFeature`                                              | 49.0 kB / 16.8 kB  |
-| `VGrid` + `rowPinningFeature`                                                | 52.8 kB / 17.9 kB  |
-| `VGrid` + `aggregationFeature`                                               | 53.0 kB / 18.1 kB  |
-| `VGrid` + `rowGroupingFeature`                                               | 58.8 kB / 20.1 kB  |
-| `VGrid` + `exportFeature`                                                    | 52.6 kB / 18.3 kB  |
-| `VGrid` + `statusBarFeature`                                                 | 50.6 kB / 17.4 kB  |
-| `VGrid` + `serverGroupingFeature`                                            | 50.8 kB / 17.5 kB  |
-| `VGrid` + `editingFeature`                                                   | 55.2 kB / 19.2 kB  |
-| `VGrid` + `rangeSelectionFeature`                                            | 61.8 kB / 21.3 kB  |
-| `VGrid` + `attributesFeature`                                                | 48.7 kB / 16.7 kB  |
-| `VGrid` + `columnVirtualizationFeature`                                      | 50.8 kB / 17.6 kB  |
-| `VGrid` + `allFeatures` + `VGridSearch`                                      | 148.7 kB / 50.1 kB |
-| `VGrid` + `currencyRenderer`                                                 | 49.1 kB / 16.8 kB  |
-| `VGrid` + `VGridPagination` + `VGridColumnMenu`                              | 54.9 kB / 18.8 kB  |
+| `VGrid` (no features)                                                        | 48.2 kB / 16.5 kB  |
+| `VGrid` + `sortingFeature`                                                   | 50.9 kB / 17.5 kB  |
+| `VGrid` + `filteringFeature`                                                 | 58.9 kB / 20.4 kB  |
+| `VGrid` + `serverDataFeature`                                                | 49.6 kB / 17.1 kB  |
+| `VGrid` + `paginationFeature`                                                | 48.3 kB / 16.5 kB  |
+| `VGrid` + `selectionFeature`                                                 | 52.3 kB / 17.9 kB  |
+| `VGrid` + `subGridsFeature`                                                  | 50.5 kB / 17.3 kB  |
+| `VGrid` + `menusFeature`                                                     | 59.5 kB / 20.3 kB  |
+| `VGrid` + `columnReorderFeature`                                             | 51.9 kB / 17.7 kB  |
+| `VGrid` + `columnPinningFeature`                                             | 51.1 kB / 17.5 kB  |
+| `VGrid` + `virtualScrollingFeature`                                          | 54.0 kB / 18.7 kB  |
+| `VGrid` + `columnVisibilityFeature`                                          | 48.3 kB / 16.5 kB  |
+| `VGrid` + `keyboardNavigationFeature`                                        | 51.5 kB / 17.7 kB  |
+| `VGrid` + `columnResizingFeature`                                            | 51.4 kB / 17.7 kB  |
+| `VGrid` + `columnGroupsFeature`                                              | 49.8 kB / 17.1 kB  |
+| `VGrid` + `rowPinningFeature`                                                | 53.3 kB / 18.0 kB  |
+| `VGrid` + `aggregationFeature`                                               | 53.5 kB / 18.2 kB  |
+| `VGrid` + `rowGroupingFeature`                                               | 59.3 kB / 20.2 kB  |
+| `VGrid` + `exportFeature`                                                    | 53.1 kB / 18.4 kB  |
+| `VGrid` + `statusBarFeature`                                                 | 51.1 kB / 17.5 kB  |
+| `VGrid` + `serverGroupingFeature`                                            | 51.3 kB / 17.6 kB  |
+| `VGrid` + `editingFeature`                                                   | 55.7 kB / 19.3 kB  |
+| `VGrid` + `rangeSelectionFeature`                                            | 62.3 kB / 21.4 kB  |
+| `VGrid` + `attributesFeature`                                                | 49.2 kB / 16.9 kB  |
+| `VGrid` + `columnVirtualizationFeature`                                      | 51.3 kB / 17.8 kB  |
+| `VGrid` + `rowReorderFeature`                                                | 53.0 kB / 18.1 kB  |
+| `VGrid` + `allFeatures` + `VGridSearch`                                      | 154.3 kB / 51.8 kB |
+| `VGrid` + `currencyRenderer`                                                 | 49.6 kB / 16.9 kB  |
+| `VGrid` + `VGridPagination` + `VGridColumnMenu`                              | 55.4 kB / 19.0 kB  |
 | `sortRows` only                                                              | 0.7 kB / 0.4 kB    |
 | `toCsv` only                                                                 | 1.1 kB / 0.6 kB    |
-| everything                                                                   | 202.7 kB / 65.7 kB |
-| `validateGridConfig` (`@nocopypaste/vue-grid/agent`, never in an app bundle) | 82.9 kB / 22.7 kB  |
+| everything                                                                   | 208.6 kB / 67.4 kB |
+| `validateGridConfig` (`@nocopypaste/vue-grid/agent`, never in an app bundle) | 83.8 kB / 22.9 kB  |
 
 With `filteringFeature`, the filter popover body and the filter-row editors are **on-demand
 chunks**: they load the first time a popover opens or `filter-row` is on. With
@@ -275,6 +277,7 @@ chunks that on-demand imports share with the entry, even when nothing uses them.
 | `v-model:range`                      | `CellRange \| null`                                                                                                          | `null`             | Cell-range selection: the selected block, `{ start, end }` corner cells (`{ rowKey, columnKey }`). One cell alone is no range.                                                                                              |
 | `rowClickable`                       | `boolean`                                                                                                                    | `false`            | Pointer cursor; `row-click` is always emitted.                                                                                                                                                                              |
 | `rowClass`                           | `(row, index) => ClassValue`                                                                                                 | —                  |                                                                                                                                                                                                                             |
+| `rowReorder`                         | `boolean`                                                                                                                    | `false`            | A handle column to move rows by dragging, and Alt+↑ / Alt+↓; emits `row-move`. Needs `rowReorderFeature`.                                                                                                                   |
 | `rowAttrs`                           | `(ctx: RowAttrsContext) => ExtraAttrs`                                                                                       | —                  | Extra attributes per data row (`attributesFeature`): `{ row, rowKey, rowIndex, depth, pinned }`                                                                                                                             |
 | `cellAttrs`                          | `(ctx: CellAttrsContext) => ExtraAttrs`                                                                                      | —                  | Extra attributes per cell (`attributesFeature`): the row’s fields plus `column`, `columnKey`, `columnIndex`, `kind`, `columnPinned`                                                                                         |
 | `highlightedRows`                    | `RowKey[]`                                                                                                                   | —                  |                                                                                                                                                                                                                             |
@@ -307,6 +310,7 @@ chunks that on-demand imports share with the entry, even when nothing uses them.
 `cells-fill({ edits, skipped, failed })` (a fill-handle drag or Ctrl/⌘+D finished; same features) ·
 `cells-replace({ edits, skipped, failed })` (a Replace / Replace all in the find bar finished) ·
 `cells-clear({ edits, skipped, failed })` (Delete / Backspace or Ctrl/⌘+X cleared cells) ·
+`row-move({ row, target, position, parent, source })` (a row was dragged or moved with Alt+↑ / Alt+↓: `rowReorderFeature`) ·
 plus the `update:*` events of every `v-model`.
 
 Clicks on links, buttons and inputs inside a cell never trigger `row-click`.
@@ -1284,6 +1288,46 @@ const range = ref<CellRange | null>(null) // { start: { rowKey, columnKey }, end
   ahead, while the browser is idle); its colours are `--vg-color-find`, `--vg-color-find-current`
   and `--vg-color-find-border`, its text in `messages` (`find`, `replaceWith`, `findCount`…).
 - Style it with `--vg-color-range` (the cells' tint) and `--vg-color-range-border` (the outline).
+
+## Row reordering
+
+`rowReorderFeature` with `row-reorder` adds a narrow handle column. Drag a row by its handle (mouse,
+pen or touch; the grid scrolls at its edges), or press Alt+↑ / Alt+↓ on any of its cells. Like
+editing, it's controlled: the grid emits `row-move` and your handler moves the row, here with
+`moveRow()`:
+
+```vue
+<script setup lang="ts">
+import { moveRow, rowReorderFeature, VGrid, type RowMoveEvent } from '@nocopypaste/vue-grid'
+const tasks = ref<Task[]>(loadTasks())
+function onRowMove(e: RowMoveEvent<Task>) {
+  if (e.parent)
+    e.parent.children = moveRow(e.parent.children!, e) // a nested row
+  else tasks.value = moveRow(tasks.value, e)
+  // or save it: api.move(e.rowKey, { [e.position]: e.targetKey })
+}
+</script>
+
+<template>
+  <VGrid
+    :rows="tasks"
+    :columns
+    row-key="id"
+    row-reorder
+    :features="[rowReorderFeature]"
+    @row-move="onRowMove"
+  />
+</template>
+```
+
+- The event says where the row goes: just `before` or `after` `target` (`targetKey`), so it
+  works on a filtered or paged view too. `source` is `'drag'` or `'keyboard'`.
+- Nested rows move among their siblings: `parent` / `parentKey` is the row they're under (null at
+  the top). A row can't be dropped under another parent.
+- The handles are off while rows are sorted or grouped (a moved row would jump back to its sorted
+  place); pinned rows and the totals row have none.
+- Focus stays with the moved row, so Alt+↓ can be pressed again. Text: `messages.moveRow`,
+  `messages.moveRowHint`; the column's width is `--vg-drag-column-width`.
 
 ## Test hooks (row and cell attributes)
 

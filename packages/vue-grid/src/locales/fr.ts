@@ -21,6 +21,8 @@ export const fr = {
   selectAllRows: 'Sélectionner toutes les lignes',
   selectRow: 'Sélectionner la ligne',
   selectGroup: 'Sélectionner le groupe',
+  moveRow: 'Déplacer la ligne',
+  moveRowHint: 'Faites glisser, ou Alt+↑ / Alt+↓',
   pageSelected: (count) =>
     plural(count, {
       one: 'La ligne de cette page est sélectionnée.',

@@ -16,6 +16,7 @@ import { paginationFeature } from './pagination'
 import { rangeSelectionFeature } from './rangeSelection'
 import { rowGroupingFeature } from './rowGrouping'
 import { rowPinningFeature } from './rowPinning'
+import { rowReorderFeature } from './rowReorder'
 import { selectionFeature } from './selection'
 import { serverDataFeature } from './serverData'
 import { serverGroupingFeature } from './serverGrouping'
@@ -42,6 +43,7 @@ export {
   rangeSelectionFeature,
   rowGroupingFeature,
   rowPinningFeature,
+  rowReorderFeature,
   selectionFeature,
   serverDataFeature,
   serverGroupingFeature,
@@ -77,4 +79,5 @@ export const allFeatures: readonly GridFeature[] = [
   rangeSelectionFeature,
   attributesFeature,
   columnVirtualizationFeature,
+  rowReorderFeature,
 ]

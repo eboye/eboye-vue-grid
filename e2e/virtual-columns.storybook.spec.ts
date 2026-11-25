@@ -165,3 +165,31 @@ test('column groups, group rows and totals line up with the columns while scroll
     })
   }
 })
+
+test('a column group wider than the view keeps its label in sight, clear of the pinned columns', async ({
+  page,
+}) => {
+  await open(page, 'virtual-columns-grouped')
+  for (const left of [0, 5150, 9000]) {
+    await grid(page).evaluate((g, left) => (g.scrollLeft = left), left)
+    await page.waitForTimeout(100)
+    const labels = await page.evaluate(() => {
+      const g = document.querySelector('#storybook-root .vg')!
+      const v = g.getBoundingClientRect()
+      const edge = g
+        .querySelector('.vg-header-groups > .vg-pin-left')!
+        .getBoundingClientRect().right
+      return [...g.querySelectorAll('.vg-header-groups > .vg-group-cell:not(.vg-pin-left)')]
+        .filter((c) => {
+          const b = c.getBoundingClientRect()
+          return c.querySelector('.vg-group-label') && b.right > edge + 20 && b.left < v.right - 20
+        })
+        .map((c) => {
+          const b = c.querySelector('.vg-group-label')!.getBoundingClientRect()
+          return b.width > 0 && b.left >= edge - 1 && b.right <= v.right + 1
+        })
+    })
+    expect(labels.length).toBeGreaterThan(0)
+    expect(labels).toEqual(labels.map(() => true))
+  }
+})

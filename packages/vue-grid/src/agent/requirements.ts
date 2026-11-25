@@ -28,6 +28,7 @@ export type FeatureId =
   | 'rangeSelection'
   | 'attributes'
   | 'columnVirtualization'
+  | 'rowReorder'
 
 /** Grid props (and `v-model`s) that need a feature. */
 export const propFeatures: Readonly<Record<string, FeatureId>> = {
@@ -72,6 +73,7 @@ export const propFeatures: Readonly<Record<string, FeatureId>> = {
   rowAttrs: 'attributes',
   cellAttrs: 'attributes',
   virtualColumns: 'columnVirtualization',
+  rowReorder: 'rowReorder',
 }
 
 /** Column options that need a feature. */

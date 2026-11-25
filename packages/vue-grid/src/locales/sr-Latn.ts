@@ -22,6 +22,8 @@ export const srLatn = {
   selectAllRows: 'Izaberi sve redove',
   selectRow: 'Izaberi red',
   selectGroup: 'Izaberi grupu',
+  moveRow: 'Pomeri red',
+  moveRowHint: 'Prevucite, ili Alt+↑ / Alt+↓',
   pageSelected: (count) => `Izabrani su svi redovi na ovoj strani (${num(count)}).`,
   selectAllMatching: (total) => `Izaberi sve redove (${num(total)})`,
   allSelected: (total) => `Izabrani su svi redovi (${num(total)}).`,

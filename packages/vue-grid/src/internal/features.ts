@@ -2,6 +2,7 @@ import type {
   AggregationFeature,
   AttributesFeature,
   ColumnVirtualizationFeature,
+  RowReorderFeature,
   ExportFeature,
   RowGroupingFeature,
   RowPinningFeature,
@@ -52,6 +53,7 @@ export interface FeatureSet {
   rangeSelection?: RangeSelectionFeature
   attributes?: AttributesFeature
   columnVirtualization?: ColumnVirtualizationFeature
+  rowReorder?: RowReorderFeature
 }
 
 /** Merges feature lists (app-wide, then per grid); a later entry with the same name wins. */
