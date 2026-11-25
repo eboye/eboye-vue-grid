@@ -64,6 +64,8 @@ export const WithRowSelection: Story = {
  * into the `editable` cells from the selected range's top-left cell; one value fills the whole
  * range. Each changed cell is a `cell-edit` (and a `save-cell`); `cells-paste` reports the lot,
  * with the cells it left alone. Copy the sample below (or cells of the grid) and paste it.
+ * Ctrl/⌘+Z undoes a whole paste (or an edit), Ctrl+Y / Ctrl/⌘+Shift+Z redoes it; the toolbar's
+ * buttons use `undo` / `redo` / `canUndo` / `canRedo` from the `#toolbar` slot.
  */
 export const PasteIntoARange: Story = {
   render: (args) => ({
@@ -99,7 +101,12 @@ export const PasteIntoARange: Story = {
       </label>
       <p class="sb-note" data-testid="paste-report">last paste: {{ report }}</p>
       <div class="sb-frame">
-        <VGrid v-bind="args" :rows="rows" :columns="columns" @cell-edit="onEdit" @cells-paste="onPaste" />
+        <VGrid v-bind="args" :rows="rows" :columns="columns" @cell-edit="onEdit" @cells-paste="onPaste">
+          <template #toolbar="{ undo, redo, canUndo, canRedo }">
+            <button type="button" :disabled="!canUndo" @click="undo()">Undo</button>
+            <button type="button" :disabled="!canRedo" @click="redo()">Redo</button>
+          </template>
+        </VGrid>
       </div>`,
   }),
 }

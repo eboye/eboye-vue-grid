@@ -120,6 +120,11 @@ const props = withDefaults(
      * clear; Ctrl/⌘+C copies it. Bind `v-model:range` to read or set it.
      */
     rangeSelection?: boolean
+    /**
+     * How many changes undo remembers (editing feature): each edit, checkbox flip or paste is one.
+     * Ctrl/⌘+Z undoes, Ctrl+Y / Ctrl/⌘+Shift+Z redo; `0` turns undo off. Default `100`.
+     */
+    undoLimit?: number
     /** Built-in text (translations, wording), over `createVueGrid({ messages })`. */
     messages?: GridMessages
     /** Built-in parts to leave out (`{ progressBar: false }`), over `createVueGrid({ parts })`. */
@@ -386,6 +391,11 @@ defineSlots<{
     selectAllMatching: boolean
     /** Clears the selection (and "all matching"). */
     clearSelection: () => void
+    /** Editing feature: undo / redo the last change in the grid, for your own buttons. */
+    undo: () => Promise<boolean>
+    redo: () => Promise<boolean>
+    canUndo: boolean
+    canRedo: boolean
   }) => unknown
 }>()
 
@@ -937,6 +947,7 @@ const keyboard = features.keyboardNavigation?.useGridKeyboard(root, {
     : undefined,
 })
 const onKeyDown = (event: KeyboardEvent) => {
+  if (editing?.onHistoryKey(event)) return // Ctrl/⌘+Z, Ctrl+Y
   // the range's keys first: Shift+arrows extend it, Ctrl/⌘+C copies it rather than rows
   if (cellRange?.onKeyDown(event)) return
   keyboard?.onKeyDown(event)
@@ -1148,6 +1159,11 @@ const editing = features.editing?.useEditing<T>({
   columns: () => props.columns,
   preload: () => features.editing!.preload(),
   locale: () => formatContext.value.locale,
+  historyLimit: () => props.undoLimit ?? 100,
+  undoKeys: () => part('undoShortcut'),
+  children: childrenOf,
+  getKey,
+  onTravel: (cells) => cellRange?.selectCells(cells),
 })
 
 // ── Cell range ──────────────────────────────────────────────────────────────────────────────
@@ -1466,6 +1482,17 @@ const copyRange = () => cellRange?.copyRange() ?? (noRange('copyRange'), Promise
 const pasteText = (text: string) =>
   cellRange?.pasteText(text) ?? (noRange('pasteText'), Promise.resolve(null))
 
+/** Undo / redo (editing feature); without it they warn (dev) and do nothing. */
+function noEditing(name: string) {
+  if (process.env.NODE_ENV !== 'production')
+    warnOnce('feature:editing', `${name}() needs the editing feature (editingFeature).`)
+}
+const undo = () => editing?.undo() ?? (noEditing('undo'), Promise.resolve(false))
+const redo = () => editing?.redo() ?? (noEditing('redo'), Promise.resolve(false))
+const canUndo = () => !!editing?.canUndo()
+const canRedo = () => !!editing?.canRedo()
+const clearHistory = () => editing?.clearHistory()
+
 const startEdit = (rowKey: RowKey, columnKey: string) =>
   editing?.startAt(rowKey, columnKey) ?? false
 const stopEdit = (cancel = false) => editing?.stop(cancel)
@@ -1496,6 +1523,11 @@ defineExpose<VGridExposed>({
   getRangeValues,
   copyRange,
   pasteText,
+  undo,
+  redo,
+  canUndo,
+  canRedo,
+  clearHistory,
 })
 </script>
 
@@ -1516,6 +1548,10 @@ defineExpose<VGridExposed>({
         :selected-groups="selectedGroups"
         :select-all-matching="selectAllMatching"
         :clear-selection="clearSelection"
+        :undo="undo"
+        :redo="redo"
+        :can-undo="canUndo()"
+        :can-redo="canRedo()"
       />
     </div>
     <template v-if="features.selection && sel?.banner.value && part('selectAllBanner')">

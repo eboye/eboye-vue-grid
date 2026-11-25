@@ -1,4 +1,4 @@
-# @nocopypaste/vue-grid 0.13.1 — API reference
+# @nocopypaste/vue-grid 0.14.0 — API reference
 
 > Generated from the TypeScript sources (`scripts/gen-agent.mjs`). Machine-readable: `agent/api.json`, `agent/grid-config.schema.json`.
 
@@ -14,7 +14,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `columnReorderFeature` | Column reordering: drag a header (mouse, pen, touch), Alt+←/→ on a focused header, and the header menu's Move left / Move right. Columns opt out with `reorderable: false`. The order is part of `v-model:column-state` and persisted with `storage`; `<VGridColumnMenu>` works without it. |  | `reorderable` |
 | `columnResizingFeature` | Column resizing: drag a header's edge (mouse, pen, touch), use ←/→ on the focused edge (Alt+Shift+←/→ on a header with keyboard navigation), or double-click the edge to fit the content. `minWidth` / `maxWidth` bound it; columns opt out with `resizable: false`. Widths are kept in `columnState.widths` and persisted with `storage`. The header menu gains Fit width / Reset width. |  | `maxWidth` `resizable` |
 | `columnVisibilityFeature` | Column visibility: `hidden: true` columns, `columnState.hidden` (persisted with `storage`), the header menu's Hide column item and `<VGridColumnMenu>`'s checkboxes. Columns opt out with `hideable: false`. Without it, every column shows. |  | `hidden` `hideable` |
-| `editingFeature` |  | `saveCell` | `editable` `editor` `editorOptions` `validate` |
+| `editingFeature` |  | `saveCell` `undoLimit` | `editable` `editor` `editorOptions` `validate` |
 | `exportFeature` | CSV and Excel export and copying: `grid.exportCsv()` downloads the filtered, sorted rows as a CSV file, `grid.getCsv()` returns the text, `grid.exportXlsx()` / `grid.getXlsx()` write an Excel workbook with typed cells (the writer loads on demand), `grid.print()` prints every matching row as a table with the header on each page, `grid.copyRows()` copies rows as tab-separated text, and Ctrl/⌘+C copies the selected rows, else the focused cell, as displayed. Columns can set `exportValue` and `exportable: false`. Without it those methods only warn. |  | `exportValue` `exportable` |
 | `filteringFeature` | Filtering: header funnels with typed filter popovers on `filterable` columns, the filter row, `<VGridSearch>`, the filter items of the header menu, `v-model:filters` and filter persistence. The popover body and the filter-row editors load on demand (own chunks). | `filterMode` `filterRow` `filterStorage` `noMatchText` `filters` | `filterable` `filter` `filterValue` `filterFn` `filterComponent` `searchable` |
 | `keyboardNavigationFeature` | Keyboard navigation (the ARIA grid pattern): the grid is one tab stop, arrow keys / Home / End / PageUp / PageDown move between cells, Enter activates a cell's control, Space selects a row, →/← expand and collapse, Alt+←/→ move a column, ContextMenu / Shift+F10 open the cell menu. Without it the grid is an ARIA `table`: its own controls (sort buttons, expanders, checkboxes, filter buttons) sit in the normal Tab order instead. |  |  |
@@ -44,6 +44,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `statusBar` | `boolean \| StatusBarOptions` |  | `statusBarFeature` | A status bar under the grid (status bar feature): rows that pass the filters ("84 of 200 rows"), selected rows, active filters with Clear; `{ summary: ['total'] }` adds the sum and average of those columns over the selected rows. `#status-bar` replaces its content. |
 | `saveCell` | `(event: CellEditEvent<T>) => unknown` |  | `editingFeature` | Saves an edited cell (editing feature), after `cell-edit`: return a Promise and the cell shows it saving; a rejection keeps the editor open with the error's message. Without it, `cell-edit` alone carries the change. |
 | `rangeSelection` | `boolean` |  | `rangeSelectionFeature` | Cell-range selection (range selection feature), as in a spreadsheet: drag across cells or Shift+click to select a block, Shift+arrows to extend it, Ctrl/⌘+A for every cell, Esc to clear; Ctrl/⌘+C copies it. Bind `v-model:range` to read or set it. |
+| `undoLimit` | `number` |  | `editingFeature` | How many changes undo remembers (editing feature): each edit, checkbox flip or paste is one. Ctrl/⌘+Z undoes, Ctrl+Y / Ctrl/⌘+Shift+Z redo; `0` turns undo off. Default `100`. |
 | `messages` | `GridMessages` |  |  | Built-in text (translations, wording), over `createVueGrid({ messages })`. |
 | `parts` | `GridParts` |  |  | Built-in parts to leave out (`{ progressBar: false }`), over `createVueGrid({ parts })`. |
 | `sortMode` | `'controlled' \| 'client'` | `'controlled'` |  | `controlled` (default): a header click only updates `v-model:sort` (sort on the server or in your own code). `client`: the grid sorts the rows itself. Ignored with `dataSource`. |
@@ -135,7 +136,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `status-bar` | `StatusBarScope` | The status bar's content (status bar feature): replaces the counts and the summary. |
 | `loading` |  | Shown while loading with no rows yet. |
 | `sub-rows-loading` | `{ row: T }` | Shown while a row's lazy children load. |
-| `toolbar` | `{ columns: readonly ColumnDef<T>[]; columnState: ColumnState; setColumnState: (state: ColumnState) => void; filters: FilterState; setFilters: (state: FilterState) => void; clearFilters: () => void; activeFilterCount: number; selected: readonly RowKey[]; selectedCount: number; selectedGroups: GroupPath[]; selectAllMatching: boolean; clearSelection: () => void }` | Above the grid: put a search box, column menu, filter summary or batch actions here. |
+| `toolbar` | `{ columns: readonly ColumnDef<T>[]; columnState: ColumnState; setColumnState: (state: ColumnState) => void; filters: FilterState; setFilters: (state: FilterState) => void; clearFilters: () => void; activeFilterCount: number; selected: readonly RowKey[]; selectedCount: number; selectedGroups: GroupPath[]; selectAllMatching: boolean; clearSelection: () => void; undo: () => Promise<boolean>; redo: () => Promise<boolean>; canUndo: boolean; canRedo: boolean }` | Above the grid: put a search box, column menu, filter summary or batch actions here. |
 
 ## Exposed methods (`ref<VGridExposed>()`)
 
@@ -166,6 +167,11 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `getRangeValues` | `unknown[][]` |  | The selected range's raw values, row by row (`[]` without a range). Range selection feature. |
 | `copyRange` | `Promise<boolean>` |  | Copies the selected range as tab-separated text, as the cells show it (Ctrl/⌘+C does the same). Resolves `false` without a range. Range selection feature. |
 | `pasteText` | `Promise<CellsPasteEvent \| null>` |  | Pastes tab-separated text (what spreadsheets copy) into the editable cells from the selected range's top-left cell, as Ctrl/⌘+V does; a range a whole number of blocks in size is filled. Resolves the `cells-paste` event, or `null` with nowhere to paste. Range selection and editing features. |
+| `undo` | `Promise<boolean>` |  | Undoes the last change made in the grid (an edit, a checkbox, a whole paste): each cell gets its value back through `cell-edit` (`source: 'undo'`) and `save-cell`, as Ctrl/⌘+Z does. Cells changed since by something else are left alone. Resolves whether anything changed. Editing feature. |
+| `redo` | `Promise<boolean>` |  | Redoes the last undone change (Ctrl+Y, Ctrl/⌘+Shift+Z). Editing feature. |
+| `canUndo` | `boolean` |  | Whether there's a change to undo (for your own buttons; reactive). |
+| `canRedo` | `boolean` |  | Whether there's an undone change to redo (for your own buttons; reactive). |
+| `clearHistory` | `void` |  | Forgets every change (e.g. after saving or reloading). |
 
 ## `ColumnDef<T>`
 

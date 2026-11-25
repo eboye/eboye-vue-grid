@@ -41,6 +41,24 @@ export interface EditingOptions<T> {
   preload: () => Promise<unknown>
   /** The format locale: how pasted numbers and dates are read. */
   locale: () => string
+  /** How many changes undo remembers (`undo-limit`); 0: none. */
+  historyLimit: () => number
+  /** Ctrl/⌘+Z, Ctrl+Y / Ctrl/⌘+Shift+Z undo and redo (`parts.undoShortcut`). */
+  undoKeys: () => boolean
+  /** Known child rows of a row (sub-grids), to find a row by key for undo. */
+  children: (row: T) => readonly T[] | undefined
+  getKey: (row: T) => RowKey
+  /** After an undo / redo: the cells it changed (to select or show them). */
+  onTravel?: (cells: { rowKey: RowKey; columnKey: string }[]) => void
+}
+
+/** One change to a cell, as undo remembers it: its value before (`from`) and after (`to`). */
+interface HistoryChange<T> {
+  row: T
+  rowKey: RowKey
+  column: ColumnDef<T>
+  from: unknown
+  to: unknown
 }
 
 /** A cell to paste into: its row and column, and the pasted text for it. */
@@ -175,7 +193,7 @@ export function useEditing<T>(opts: EditingOptions<T>) {
     const invalid = column.validate?.(value, row)
     if (invalid) return fail(invalid)
     if (!Object.is(value, oldValue) && !sameDate(value, oldValue)) {
-      const event: CellEditEvent<T> = { row, rowKey, column, value, oldValue }
+      const event: CellEditEvent<T> = { row, rowKey, column, value, oldValue, source: 'edit' }
       opts.emit(event)
       const saver = opts.save()
       if (saver) {
@@ -202,6 +220,7 @@ export function useEditing<T>(opts: EditingOptions<T>) {
           return
         }
       }
+      record([event])
     }
     if (!toggle && !isEditing(rowKey, column.key)) return // another cell took over meanwhile
     state.value = null
@@ -346,7 +365,7 @@ export function useEditing<T>(opts: EditingOptions<T>) {
         continue
       }
       if (Object.is(value, oldValue) || sameDate(value, oldValue)) continue
-      const event: CellEditEvent<T> = { row, rowKey, column, value, oldValue }
+      const event: CellEditEvent<T> = { row, rowKey, column, value, oldValue, source: 'paste' }
       result.edits.push(event)
       opts.emit(event)
     }
@@ -357,7 +376,117 @@ export function useEditing<T>(opts: EditingOptions<T>) {
         if (s.status === 'rejected') result.failed.push({ edit: result.edits[i]!, error: s.reason })
       })
     }
+    const failed = new Set(result.failed.map((f) => f.edit))
+    record(result.edits.filter((e) => !failed.has(e))) // the whole paste is one undo step
     return result
+  }
+
+  // ── Undo / redo ─────────────────────────────────────────────────────────────────────────
+  /** Changes to undo (oldest first) and undone changes to redo; each step is one edit or paste. */
+  const past = shallowRef<HistoryChange<T>[][]>([])
+  const future = shallowRef<HistoryChange<T>[][]>([])
+  let travelling = false
+
+  /** Remembers saved changes as one step; a new change drops what could be redone. */
+  function record(events: readonly CellEditEvent<T>[]) {
+    const limit = opts.historyLimit()
+    if (travelling || limit <= 0 || !events.length) return
+    const step = events.map((e) => ({
+      row: e.row,
+      rowKey: e.rowKey,
+      column: e.column,
+      from: e.oldValue,
+      to: e.value,
+    }))
+    past.value = [...past.value, step].slice(-limit)
+    future.value = []
+  }
+
+  /**
+   * Undo (back to each cell's `from`) or redo (forward to its `to`): every cell still holding the
+   * value the step left is emitted and saved like an edit; one changed since by something else is
+   * left alone. The cells that changed move to the other stack, as one step.
+   */
+  async function travel(dir: 'undo' | 'redo'): Promise<boolean> {
+    const stack = dir === 'undo' ? past : future
+    const step = stack.value.at(-1)
+    if (!step || travelling || state.value?.saving) return false
+    travelling = true
+    try {
+      stack.value = stack.value.slice(0, -1)
+      state.value = null
+      // the rows the grid has now, nested ones too (rows may have been replaced since the edit)
+      const byKey = new Map<string, T>()
+      const walk = (rows: readonly T[]) => {
+        for (const row of rows) {
+          byKey.set(String(opts.getKey(row)), row)
+          const kids = opts.children(row)
+          if (kids?.length) walk(kids)
+        }
+      }
+      walk(opts.rows())
+      const find = (key: RowKey) => byKey.get(String(key))
+      const moves: { change: HistoryChange<T>; event: CellEditEvent<T> }[] = []
+      for (const change of step) {
+        const row = find(change.rowKey) ?? change.row
+        const now = getCellValue(row, change.column)
+        const [expected, value] =
+          dir === 'undo' ? [change.to, change.from] : [change.from, change.to]
+        if (!Object.is(now, expected) && !sameDate(now, expected)) continue // changed since
+        const event: CellEditEvent<T> = {
+          row,
+          rowKey: change.rowKey,
+          column: change.column,
+          value,
+          oldValue: now,
+          source: dir,
+        }
+        moves.push({ change: { ...change, row }, event })
+        opts.emit(event)
+      }
+      const saver = opts.save()
+      let done = moves
+      if (saver && moves.length) {
+        const settled = await Promise.allSettled(moves.map((m) => saver(m.event)))
+        done = moves.filter((_, i) => settled[i]!.status === 'fulfilled')
+        // a save that failed: that change stays where it was, to try again
+        const kept = moves.filter((_, i) => settled[i]!.status === 'rejected')
+        if (kept.length) stack.value = [...stack.value, kept.map((m) => m.change)]
+      }
+      if (!done.length) return false
+      const other = dir === 'undo' ? future : past
+      other.value = [...other.value, done.map((m) => m.change)]
+      const cells = done.map((m) => ({ rowKey: m.change.rowKey, columnKey: m.change.column.key }))
+      await nextTick()
+      // show where it happened: the first cell takes focus if the grid had it
+      if (opts.root.value?.contains(document.activeElement))
+        focusCell(cells[0]!.rowKey, cells[0]!.columnKey)
+      opts.onTravel?.(cells)
+      return true
+    } finally {
+      travelling = false
+    }
+  }
+
+  /** Ctrl/⌘+Z undoes, Ctrl+Y / Ctrl/⌘+Shift+Z redo (not inside an editor: that's its own text). */
+  function onHistoryKey(event: KeyboardEvent): boolean {
+    if (!(event.ctrlKey || event.metaKey) || event.altKey || !opts.undoKeys()) return false
+    if (opts.historyLimit() <= 0) return false
+    const target = event.target as HTMLElement
+    if (target.closest('input, textarea, select, [contenteditable="true"]')) return false
+    const key = event.key.toLowerCase()
+    const dir =
+      key === 'z'
+        ? event.shiftKey
+          ? 'redo'
+          : 'undo'
+        : key === 'y' && !event.shiftKey
+          ? 'redo'
+          : null
+    if (!dir) return false
+    event.preventDefault()
+    void travel(dir)
+    return true
   }
 
   /** A body cell's editing state and handlers. */
@@ -403,6 +532,15 @@ export function useEditing<T>(opts: EditingOptions<T>) {
   return {
     forCell,
     pasteCells,
+    undo: () => travel('undo'),
+    redo: () => travel('redo'),
+    canUndo: () => past.value.length > 0,
+    canRedo: () => future.value.length > 0,
+    clearHistory() {
+      past.value = []
+      future.value = []
+    },
+    onHistoryKey,
     state,
     canEdit,
     isEditing,

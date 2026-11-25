@@ -513,6 +513,22 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
     pasteText,
     selectAll,
     clear,
+    /** Selects the block around these cells (after an undo: the cells it changed). */
+    selectCells(refs: readonly CellRef[]) {
+      const at = refs
+        .map((r) => [rowIndex.value.get(String(r.rowKey)), colIndex.value.get(r.columnKey)])
+        .filter((p): p is [number, number] => p[0] !== undefined && p[1] !== undefined)
+      if (!at.length) return
+      const rs = at.map((p) => p[0])
+      const cs = at.map((p) => p[1])
+      const rows = ordered.value
+      const cols = opts.columns()
+      const corner = (r: number, c: number) => ({
+        rowKey: opts.getKey(rows[r]!),
+        columnKey: cols[c]!.key,
+      })
+      set(corner(Math.min(...rs), Math.min(...cs)), corner(Math.max(...rs), Math.max(...cs)))
+    },
     /** Sets the range from code (`null` clears it). */
     select(range: CellRange | null) {
       if (range) set(range.start, range.end)

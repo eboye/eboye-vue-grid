@@ -483,7 +483,10 @@ const columns = [
 
 The editor comes from the renderer (number, date, datetime, select, checkbox, text) or `editor`
 (a name or your component). Double-click / Enter / F2 / typing opens it; Enter saves, Tab moves to
-the next editable cell, Esc cancels.
+the next editable cell, Esc cancels. Ctrl/⌘+Z undoes the last change (an edit, a checkbox, a whole
+paste) and Ctrl+Y redoes it, through `@cell-edit` like any edit (`e.source` is `'undo'` /
+`'redo'`), so the same handler stores it; `#toolbar="{ undo, redo, canUndo, canRedo }"` for
+buttons, `undo-limit` (default 100, `0` off), `grid.clearHistory()` after reloading data.
 
 ### Cell-range selection
 
@@ -551,6 +554,8 @@ only sees stylesheet rules. Density:
 ## Pitfalls
 
 - Nothing sorts → `sort-mode="client"` missing (or `sortingFeature` missing).
+- Undo does nothing visible → it is an edit too: the `@cell-edit` handler must store `e.value`
+  whatever `e.source` is (writing only when `source === 'edit'` breaks undo, redo and paste).
 - An edited cell snaps back to its old value → nothing stores it: handle `@cell-edit` (or
   `save-cell`) and write `e.value` into reactive rows (`setCellValue`); the grid never does.
 - Ctrl/⌘+V does nothing → pasting needs `range-selection`, `rangeSelectionFeature` and

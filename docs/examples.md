@@ -2443,6 +2443,23 @@ const onEdit = (e: CellEditEvent<Order>) => setCellValue(e.row, e.column, e.valu
 Double-click a cell, press Enter or F2 on a focused one, or start typing on it. Enter saves, Tab /
 Shift+Tab save and move to the next / previous editable cell, Esc cancels, clicking elsewhere saves.
 
+### Undo and redo
+
+Ctrl/⌘+Z undoes the last change (an edit, a checkbox flip, a whole paste), Ctrl+Y or
+Ctrl/⌘+Shift+Z redoes it. Each undone cell is a `cell-edit` with `source: 'undo'`, so the handler
+above stores it as it is; add buttons from the toolbar slot:
+
+```vue
+<VGrid … :undo-limit="50">
+  <template #toolbar="{ undo, redo, canUndo, canRedo }">
+    <button :disabled="!canUndo" @click="undo()">Undo</button>
+    <button :disabled="!canRedo" @click="redo()">Redo</button>
+  </template>
+</VGrid>
+```
+
+Cells changed since by something else are left alone; `grid.clearHistory()` forgets everything.
+
 ### Saving to a server
 
 `save-cell` runs after `cell-edit`. Return a Promise: the cell shows it saving, and a rejection

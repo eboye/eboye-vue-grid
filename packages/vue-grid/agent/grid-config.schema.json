@@ -67,6 +67,10 @@
       "type": "boolean",
       "description": "Cell-range selection (range selection feature), as in a spreadsheet: drag across cells or Shift+click to select a block, Shift+arrows to extend it, Ctrl/⌘+A for every cell, Esc to clear; Ctrl/⌘+C copies it. Bind `v-model:range` to read or set it."
     },
+    "undoLimit": {
+      "type": "number",
+      "description": "How many changes undo remembers (editing feature): each edit, checkbox flip or paste is one. Ctrl/⌘+Z undoes, Ctrl+Y / Ctrl/⌘+Shift+Z redo; `0` turns undo off. Default `100`."
+    },
     "messages": {
       "description": "Built-in text (translations, wording), over `createVueGrid({ messages })`."
     },

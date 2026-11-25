@@ -1,6 +1,6 @@
 {
   "package": "@nocopypaste/vue-grid",
-  "version": "0.13.1",
+  "version": "0.14.0",
   "component": "VGrid",
   "props": [
     {
@@ -63,6 +63,13 @@
       "required": false,
       "description": "Cell-range selection (range selection feature), as in a spreadsheet: drag across cells or Shift+click to select a block, Shift+arrows to extend it, Ctrl/⌘+A for every cell, Esc to clear; Ctrl/⌘+C copies it. Bind `v-model:range` to read or set it.",
       "feature": "rangeSelection"
+    },
+    {
+      "name": "undoLimit",
+      "type": "number",
+      "required": false,
+      "description": "How many changes undo remembers (editing feature): each edit, checkbox flip or paste is one. Ctrl/⌘+Z undoes, Ctrl+Y / Ctrl/⌘+Shift+Z redo; `0` turns undo off. Default `100`.",
+      "feature": "editing"
     },
     {
       "name": "messages",
@@ -550,7 +557,7 @@
     },
     {
       "name": "toolbar",
-      "scope": "{ columns: readonly ColumnDef<T>[]; columnState: ColumnState; setColumnState: (state: ColumnState) => void; filters: FilterState; setFilters: (state: FilterState) => void; clearFilters: () => void; activeFilterCount: number; selected: readonly RowKey[]; selectedCount: number; selectedGroups: GroupPath[]; selectAllMatching: boolean; clearSelection: () => void }",
+      "scope": "{ columns: readonly ColumnDef<T>[]; columnState: ColumnState; setColumnState: (state: ColumnState) => void; filters: FilterState; setFilters: (state: FilterState) => void; clearFilters: () => void; activeFilterCount: number; selected: readonly RowKey[]; selectedCount: number; selectedGroups: GroupPath[]; selectAllMatching: boolean; clearSelection: () => void; undo: () => Promise<boolean>; redo: () => Promise<boolean>; canUndo: boolean; canRedo: boolean }",
       "description": "Above the grid: put a search box, column menu, filter summary or batch actions here."
     }
   ],
@@ -709,6 +716,36 @@
       "type": "Promise<CellsPasteEvent | null>",
       "required": true,
       "description": "Pastes tab-separated text (what spreadsheets copy) into the editable cells from the selected range's top-left cell, as Ctrl/⌘+V does; a range a whole number of blocks in size is filled. Resolves the `cells-paste` event, or `null` with nowhere to paste. Range selection and editing features."
+    },
+    {
+      "name": "undo",
+      "type": "Promise<boolean>",
+      "required": true,
+      "description": "Undoes the last change made in the grid (an edit, a checkbox, a whole paste): each cell gets its value back through `cell-edit` (`source: 'undo'`) and `save-cell`, as Ctrl/⌘+Z does. Cells changed since by something else are left alone. Resolves whether anything changed. Editing feature."
+    },
+    {
+      "name": "redo",
+      "type": "Promise<boolean>",
+      "required": true,
+      "description": "Redoes the last undone change (Ctrl+Y, Ctrl/⌘+Shift+Z). Editing feature."
+    },
+    {
+      "name": "canUndo",
+      "type": "boolean",
+      "required": true,
+      "description": "Whether there's a change to undo (for your own buttons; reactive)."
+    },
+    {
+      "name": "canRedo",
+      "type": "boolean",
+      "required": true,
+      "description": "Whether there's an undone change to redo (for your own buttons; reactive)."
+    },
+    {
+      "name": "clearHistory",
+      "type": "void",
+      "required": true,
+      "description": "Forgets every change (e.g. after saving or reloading)."
     }
   ],
   "column": [
@@ -1048,7 +1085,8 @@
       "export": "editingFeature",
       "description": "",
       "props": [
-        "saveCell"
+        "saveCell",
+        "undoLimit"
       ],
       "columnOptions": [
         "editable",

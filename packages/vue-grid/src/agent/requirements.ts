@@ -64,6 +64,7 @@ export const propFeatures: Readonly<Record<string, FeatureId>> = {
   sorts: 'sorting',
   statusBar: 'statusBar',
   saveCell: 'editing',
+  undoLimit: 'editing',
   rangeSelection: 'rangeSelection',
   range: 'rangeSelection',
 }

@@ -107,7 +107,13 @@ const columns = [
     @copy="onCopy"
     @cell-edit="onEdit"
     @cells-paste="onPaste"
-  />
+  >
+    <!-- Ctrl/⌘+Z and Ctrl+Y work on their own; these are the same as buttons -->
+    <template #toolbar="{ undo, redo, canUndo, canRedo }">
+      <button type="button" class="vg-button" :disabled="!canUndo" @click="undo()">Undo</button>
+      <button type="button" class="vg-button" :disabled="!canRedo" @click="redo()">Redo</button>
+    </template>
+  </VGrid>
   <ul class="demo-log" data-testid="log">
     <li v-for="(line, i) in log" :key="i">{{ line }}</li>
     <li v-if="!log.length">Copy a block (Ctrl+C), click another cell, paste it (Ctrl+V).</li>

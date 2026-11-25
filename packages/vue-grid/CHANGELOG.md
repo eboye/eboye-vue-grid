@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.14.0 — 2026-11-25
+
+**Undo and redo** (`editingFeature`): Ctrl/⌘+Z undoes the last change made in the grid, an edit,
+a checkbox flip or a whole paste (one step, however many cells); Ctrl+Y or Ctrl/⌘+Shift+Z redoes
+it. Inside an open editor the keys stay the text box's own. Undoing works like editing: each cell
+gets its value back through `cell-edit` and `save-cell`, so the app stays in charge of its data;
+`cell-edit` now says what made a change (`source: 'edit' | 'paste' | 'undo' | 'redo'`). A cell
+changed since by something else (a live update) is left alone rather than overwritten, only
+changes that saved are remembered, and a change whose undo fails to save stays undoable. The
+undone cells are selected (range selection) or focused. New: `undo-limit` (default 100; `0`
+turns undo off), `grid.undo()` / `redo()` / `canUndo()` / `canRedo()` / `clearHistory()`,
+`undo`, `redo`, `canUndo`, `canRedo` in the `#toolbar` slot, part `undoShortcut`. The editing feature grows by 0.9 kB gzipped, a plain grid by 0.2 kB (to 15.8).
+
 ## 0.13.1 — 2026-11-25
 
 **Fix:** an open cell editor showed two outlines in apps with a global `:focus-visible` style: the

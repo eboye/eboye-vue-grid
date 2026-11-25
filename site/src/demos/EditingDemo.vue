@@ -58,6 +58,12 @@ async function saveCell(e: CellEditEvent<Bet>) {
     row-key="id"
     :save-cell="saveCell"
     aria-label="Bets"
-  />
+  >
+    <!-- Ctrl/⌘+Z and Ctrl+Y work on their own; these are the same as buttons -->
+    <template #toolbar="{ undo, redo, canUndo, canRedo }">
+      <button type="button" class="vg-button" :disabled="!canUndo" @click="undo()">Undo</button>
+      <button type="button" class="vg-button" :disabled="!canRedo" @click="redo()">Redo</button>
+    </template>
+  </VGrid>
   <p class="demo-log">saved: {{ log.length ? log.join(' · ') : 'nothing yet' }}</p>
 </template>

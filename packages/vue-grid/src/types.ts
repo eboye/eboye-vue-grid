@@ -349,6 +349,11 @@ export interface CellEditEvent<T = any> {
   value: unknown
   /** The value before the edit. */
   oldValue: unknown
+  /**
+   * What made the change: `edit` (an editor, a checkbox), `paste` (Ctrl/⌘+V into a range), or
+   * `undo` / `redo` (Ctrl/⌘+Z, Ctrl+Y, or the methods). Store it the same way in every case.
+   */
+  source?: 'edit' | 'paste' | 'undo' | 'redo'
 }
 
 /** A pasted cell that wasn't changed (range selection + editing). */
@@ -545,6 +550,21 @@ export interface VGridExposed {
    * features.
    */
   pasteText(text: string): Promise<CellsPasteEvent | null>
+  /**
+   * Undoes the last change made in the grid (an edit, a checkbox, a whole paste): each cell gets
+   * its value back through `cell-edit` (`source: 'undo'`) and `save-cell`, as Ctrl/⌘+Z does.
+   * Cells changed since by something else are left alone. Resolves whether anything changed.
+   * Editing feature.
+   */
+  undo(): Promise<boolean>
+  /** Redoes the last undone change (Ctrl+Y, Ctrl/⌘+Shift+Z). Editing feature. */
+  redo(): Promise<boolean>
+  /** Whether there's a change to undo (for your own buttons; reactive). */
+  canUndo(): boolean
+  /** Whether there's an undone change to redo (for your own buttons; reactive). */
+  canRedo(): boolean
+  /** Forgets every change (e.g. after saving or reloading). */
+  clearHistory(): void
 }
 
 /** A cell, by its row's key and its column's key (cell-range selection). */
@@ -1159,6 +1179,8 @@ export interface GridParts {
   headerDrag?: boolean
   /** Export: Ctrl/⌘+C copying in the grid. */
   copyShortcut?: boolean
+  /** Editing: Ctrl/⌘+Z and Ctrl+Y / Ctrl/⌘+Shift+Z (`undo()` / `redo()` still work). */
+  undoShortcut?: boolean
   /** Range selection with editing: Ctrl/⌘+V pasting into editable cells (`pasteText()` still works). */
   pasteShortcut?: boolean
   /** Row grouping: the row count on group rows. */

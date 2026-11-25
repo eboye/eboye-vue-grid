@@ -44,6 +44,7 @@ A working example of each feature, complete component source included:
   `multi-sort` + `v-model:sorts` to sort by several columns (Shift-click).
 - Inline editing (`editingFeature`, `editable` columns): handle `@cell-edit` and store `e.value`
   (`setCellValue`), or use `:save-cell` for async saves; the grid never writes the value itself.
+  Undo / redo (Ctrl/⌘+Z, Ctrl+Y) come through the same `@cell-edit` (`e.source`): store them too.
 - Editable renderers are controlled: handle `@cell-action` and update the data.
 - Selecting / copying a block of cells: `range-selection` + `rangeSelectionFeature` (`v-model:range`),
   not row selection; Ctrl/⌘+C copies it, the status bar adds it up. With `editingFeature`,
