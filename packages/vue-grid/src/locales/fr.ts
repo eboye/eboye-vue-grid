@@ -132,6 +132,22 @@ export const fr = {
   max: 'Max.',
   cellCount: (count) => plural(count, { one: '# cellule', other: '# cellules' }),
 
+  find: 'Rechercher',
+  replaceWith: 'Remplacer par',
+  matchCase: 'Respecter la casse',
+  wholeCell: 'Cellule entière',
+  inSelection: 'Dans la sélection',
+  findNext: 'Résultat suivant',
+  findPrevious: 'Résultat précédent',
+  showReplace: 'Remplacer…',
+  replace: 'Remplacer',
+  replaceAll: 'Tout remplacer',
+  findCount: (current, total) => `${current} sur ${total}`,
+  noMatches: 'Aucun résultat',
+  replacedCount: (count, skipped) =>
+    plural(count, { one: '# remplacée', other: '# remplacées' }) +
+    (skipped ? `, ${plural(skipped, { one: '# inchangée', other: '# inchangées' })}` : ''),
+
   editCell: (column) => `Modifier ${column}`,
   editNotANumber: 'Saisissez un nombre.',
   editOutOfRange: (min, max) =>

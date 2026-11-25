@@ -49,7 +49,8 @@ A working example of each feature, complete component source included:
 - Selecting / copying a block of cells: `range-selection` + `rangeSelectionFeature` (`v-model:range`),
   not row selection; Ctrl/⌘+C copies it, the status bar adds it up. With `editingFeature`,
   Ctrl/⌘+V pastes into `editable` cells, and the fill handle / Ctrl/⌘+D fill them: each change is
-  a `cell-edit` to store, like typing.
+  a `cell-edit` to store, like typing. Ctrl/⌘+F / Ctrl/⌘+H open find and replace (`openFind()`);
+  replacements come through `@cell-edit` too (`source: 'replace'`).
 - Another language: import a pack (`import { de } from '@nocopypaste/vue-grid/locales/de'`; also
   `fr`, `es`, `sr`, `sr-Latn`) as `messages`, plus `locale` for number and date formats. Other
   languages: your own `messages` (`GridMessages`, `locales/en` is the template).

@@ -1,4 +1,4 @@
-import { computed, onScopeDispose, shallowRef, type Ref } from 'vue'
+import { computed, nextTick, onScopeDispose, shallowRef, watch, type Ref } from 'vue'
 import { guardFormula, plainText, toDelimited } from '../core/csv'
 import { getCellValue } from '../core/value'
 import { copyText } from '../internal/clipboard'
@@ -54,6 +54,14 @@ export interface CellRangeOptions<T> {
   fill?: (cells: PasteCell<T>[]) => Promise<CellsPasteEvent<T>>
   /** The fill handle and Ctrl/⌘+D are on (`parts.fillHandle`). */
   fillOn: () => boolean
+  /** Editing feature: writes replaced text into cells. Without it, find only finds. */
+  replace?: (cells: PasteCell<T>[]) => Promise<CellsPasteEvent<T>>
+  /** Ctrl/⌘+F, Ctrl/⌘+H open the find bar (`parts.findShortcut`). */
+  findKeys: () => boolean
+  /** Brings a row into view (virtual scrolling renders it first). */
+  scrollToRow: (key: RowKey) => void
+  /** Loads the find bar's chunk. */
+  preloadFind?: () => Promise<unknown>
 }
 
 /** A block of cells by position: first and last row, first and last column. */
@@ -83,6 +91,27 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
   let refocusing = false
   /** A fill-handle drag: the cells it fills from, and the area it covers so far. */
   const filling = shallowRef<{ source: Box; area: Box } | null>(null)
+
+  // Find and replace: the bar's state; the bar (own chunk) does the searching.
+  const findOpen = shallowRef(false)
+  /** The replace row shows. */
+  const findReplace = shallowRef(false)
+  /** The range when find opened with one ("In selection"); null: every cell. */
+  const findScope = shallowRef<Box | null>(null)
+  /** Text to search for when it opens (`openFind({ text })`). */
+  const findText = shallowRef('')
+  /**
+   * The bar's search box has focus. Until then (it loads on demand, then takes focus), keys
+   * typed in the grid go into `findText` instead of reaching the cells.
+   */
+  const findMounted = shallowRef(false)
+  /** Bumped to send focus back into the bar's search box (Ctrl/⌘+F again). */
+  const findFocus = shallowRef(0)
+  /** The matching cells, and the current one, as `cellId`s. */
+  const findHits = shallowRef<ReadonlySet<string>>(new Set())
+  const findCurrent = shallowRef<string | null>(null)
+  /** A cell's id for find: its row key and column key. */
+  const cellId = (rowKey: RowKey, columnKey: string) => `${String(rowKey)}\u0000${columnKey}`
 
   /** The body's data rows as laid out, top to bottom: expanded children in, group rows out. */
   const ordered = computed<T[]>(() => {
@@ -345,6 +374,21 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
 
   onScopeDispose(stopDrag)
 
+  // The find bar's chunk loads while the browser is idle, once range selection is on, so the
+  // first keys typed after Ctrl/⌘+F (or a Find button) aren't lost while it loads.
+  if (typeof window !== 'undefined' && opts.preloadFind) {
+    const stop = watch(
+      opts.enabled,
+      (on) => {
+        if (!on) return
+        const idle = window.requestIdleCallback ?? ((fn: () => void) => setTimeout(fn, 200))
+        idle(() => void opts.preloadFind!().catch(() => {}))
+        queueMicrotask(() => stop())
+      },
+      { immediate: true },
+    )
+  }
+
   // ── Keyboard ─────────────────────────────────────────────────────────────────────────────
   /** A body cell taking focus (click, arrow keys) starts a new range there. */
   function onFocusIn(event: FocusEvent) {
@@ -361,6 +405,23 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
     ArrowLeft: [0, -1],
     ArrowRight: [0, 1],
   }
+
+  /**
+   * While the find bar is opening (its chunk loads, then it takes focus), what's typed is the
+   * search, wherever focus still is: a cell (where the first letter would start an edit) or the
+   * button that opened it. Listens on the document, in the capture phase, until the bar's box
+   * has focus.
+   */
+  function bufferKey(event: KeyboardEvent) {
+    if (!findOpen.value || findMounted.value) return stopBuffer()
+    if (event.key.length !== 1 || event.ctrlKey || event.metaKey || event.altKey) return
+    findText.value += event.key
+    event.preventDefault()
+    event.stopPropagation()
+  }
+  const stopBuffer = () => document.removeEventListener('keydown', bufferKey, true)
+  watch(findMounted, (ready) => ready && stopBuffer())
+  onScopeDispose(stopBuffer)
 
   /** Handles the range keys; true when it did (the grid then skips its other key handling). */
   function onKeyDown(event: KeyboardEvent): boolean {
@@ -387,6 +448,17 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
     if (ctrl && !event.altKey && !event.shiftKey && key.toLowerCase() === 'v') {
       if (!opts.paste || !opts.pasteKeys() || !start()) return false
       catchPaste() // the browser's own paste lands in a hidden text area, which reads it
+      return true
+    }
+    if (
+      ctrl &&
+      !event.altKey &&
+      !event.shiftKey &&
+      (key.toLowerCase() === 'f' || key.toLowerCase() === 'h')
+    ) {
+      if (!opts.findKeys()) return false
+      event.preventDefault() // the grid's find, not the browser's (only with focus in the grid)
+      openFind({ replace: key.toLowerCase() === 'h' })
       return true
     }
     if (ctrl && !event.altKey && !event.shiftKey && key.toLowerCase() === 'd') {
@@ -444,20 +516,21 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
     return c.rows.map((row) => c.columns.map((col) => getCellValue(row, col.def)))
   }
 
+  /** A cell's text as it shows (`exportValue` wins): what's copied and what find searches. */
+  function cellText(row: T, col: RangeColumn<T>, ctx = opts.format()): string {
+    if (col.def.exportValue) return plainText(col.def.exportValue(row))
+    const value = getCellValue(row, col.def)
+    const format = col.definition?.format as
+      ((v: unknown, o: unknown, ctx: FormatContext, row: unknown) => string) | undefined
+    return plainText(format ? format(value, col.options, ctx, row) : value)
+  }
+
   /** The range as tab-separated text, as the cells show it (`exportValue` wins). */
   function text(): string {
     const c = cells.value
     if (!c) return ''
     const ctx = opts.format()
-    const lines = c.rows.map((row) =>
-      c.columns.map((col) => {
-        if (col.def.exportValue) return guardFormula(plainText(col.def.exportValue(row)))
-        const value = getCellValue(row, col.def)
-        const format = col.definition?.format as
-          ((v: unknown, o: unknown, ctx: FormatContext, row: unknown) => string) | undefined
-        return guardFormula(plainText(format ? format(value, col.options, ctx, row) : value))
-      }),
-    )
+    const lines = c.rows.map((row) => c.columns.map((col) => guardFormula(cellText(row, col, ctx))))
     return toDelimited(lines, '\t', '\n')
   }
 
@@ -615,6 +688,75 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
     return opts.fill(cells)
   }
 
+  // ── Find and replace ─────────────────────────────────────────────────────────────────────
+  /** Opens the find bar: in the selected range if there is one, else every cell. */
+  function openFind(o: { replace?: boolean; text?: string } = {}) {
+    if (!opts.enabled()) return
+    if (!findOpen.value) findScope.value = bounds.value
+    if (o.text !== undefined) findText.value = o.text
+    if (o.replace && opts.replace) findReplace.value = true
+    findOpen.value = true
+    if (!findMounted.value) document.addEventListener('keydown', bufferKey, true)
+    findFocus.value++
+  }
+
+  /** Closes the bar; the current match becomes the selected cell, with focus. */
+  function closeFind() {
+    if (!findOpen.value) return
+    findOpen.value = false
+    findReplace.value = false
+    findText.value = ''
+    stopBuffer()
+    findHits.value = new Set()
+    const id = findCurrent.value
+    findCurrent.value = null
+    const [rowKey, columnKey] = id ? id.split('\u0000') : []
+    const r = rowKey !== undefined ? rowIndex.value.get(rowKey) : undefined
+    if (r !== undefined && columnKey !== undefined) {
+      const ref = { rowKey: opts.getKey(ordered.value[r]!), columnKey }
+      set(ref, ref)
+      refocusing = true
+      ;(cellEl(ref) ?? opts.root.value)?.focus({ preventScroll: true })
+      refocusing = false
+    } else opts.root.value?.focus({ preventScroll: true })
+  }
+
+  /** What find searches: the rows and columns of its scope (or of every cell). */
+  function findArea(inSelection: boolean) {
+    const b = inSelection ? findScope.value : null
+    const rows = ordered.value
+    const cols = opts.columns()
+    return b
+      ? { rows: rows.slice(b.top, b.bottom + 1), columns: cols.slice(b.left, b.right + 1) }
+      : { rows, columns: cols }
+  }
+
+  /** Marks a match as the current one and brings it into view. */
+  async function showMatch(row: T, col: RangeColumn<T>) {
+    const rowKey = opts.getKey(row)
+    findCurrent.value = cellId(rowKey, col.key)
+    opts.scrollToRow(rowKey)
+    await nextTick()
+    cellEl({ rowKey, columnKey: col.key })?.scrollIntoView?.({
+      block: 'nearest',
+      inline: 'nearest',
+    })
+  }
+
+  /** Writes replaced text into cells (like a paste: read as each column's kind). */
+  function replaceIn(cells: { row: T; column: RangeColumn<T>; text: string }[]) {
+    if (!opts.replace) return Promise.resolve(null)
+    return opts.replace(
+      cells.map(({ row, column, text }) => ({
+        row,
+        rowKey: opts.getKey(row),
+        column: column.def,
+        definition: column.definition as CellRendererDefinition | undefined,
+        text,
+      })),
+    )
+  }
+
   /** Every cell in the body. False when there are none. */
   function selectAll(): boolean {
     const rows = ordered.value
@@ -635,7 +777,8 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
     return computed<string[] | null>(() => {
       const sel = selection.value
       const f = filling.value
-      if (!sel && !f) return null
+      const hits = findHits.value
+      if (!sel && !f && !hits.size) return null
       const c = cell()
       if (!c.data) return null
       const r = rowIndex.value.get(String(c.rowKey))
@@ -656,6 +799,11 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
       // the handle sits on the selection's last cell
       else if (!f && sel && canFill() && r === sel.bottom && col === sel.right)
         classes.push('vg-range-corner')
+      if (hits.size) {
+        const id = cellId(c.rowKey, c.columnKey)
+        if (hits.has(id)) classes.push('vg-find-match')
+        if (findCurrent.value === id) classes.push('vg-find-current')
+      }
       return classes.length ? classes : null
     })
   }
@@ -678,6 +826,27 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
     },
     selectAll,
     clear,
+    /** Find and replace: the bar's state and what it works with. */
+    find: {
+      open: findOpen,
+      mounted: findMounted,
+      replace: findReplace,
+      scope: findScope,
+      text: findText,
+      focus: findFocus,
+      hits: findHits,
+      current: findCurrent,
+      canReplace: () => !!opts.replace,
+      cellId,
+      rowKey: opts.getKey,
+      cellText,
+      area: findArea,
+      show: showMatch,
+      write: replaceIn,
+      close: closeFind,
+    },
+    openFind,
+    closeFind,
     /** Selects the block around these cells (after an undo: the cells it changed). */
     selectCells(refs: readonly CellRef[]) {
       const at = refs

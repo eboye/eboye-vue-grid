@@ -109,7 +109,10 @@ const columns = [
     @cells-paste="onPaste"
   >
     <!-- Ctrl/⌘+Z and Ctrl+Y work on their own; these are the same as buttons -->
-    <template #toolbar="{ undo, redo, canUndo, canRedo }">
+    <template #toolbar="{ undo, redo, canUndo, canRedo, openFind }">
+      <button type="button" class="vg-button" @click="openFind({ replace: true })">
+        Find and replace
+      </button>
       <button type="button" class="vg-button" :disabled="!canUndo" @click="undo()">Undo</button>
       <button type="button" class="vg-button" :disabled="!canRedo" @click="redo()">Redo</button>
     </template>

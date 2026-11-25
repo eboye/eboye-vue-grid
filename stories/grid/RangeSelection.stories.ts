@@ -110,3 +110,46 @@ export const PasteIntoARange: Story = {
       </div>`,
   }),
 }
+
+/**
+ * Find and replace: Ctrl/⌘+F in the grid (or the toolbar's button, `openFind` from the `#toolbar`
+ * slot) opens a find bar; with `editingFeature`, Ctrl/⌘+H shows the replace row too. It searches
+ * what the cells show, in the selected range if there is one, and goes to matches in rows virtual
+ * scrolling hasn't drawn yet. Replacing goes through `cell-edit` (`source: 'replace'`) and undoes in
+ * one step.
+ */
+export const FindAndReplace: Story = {
+  render: (args) => ({
+    components: { VGrid },
+    setup() {
+      const rows = reactive(makeBets(300, 11))
+      const editable = new Set(['player', 'city', 'status', 'stake'])
+      const columns = betColumns().map((c) =>
+        editable.has(c.key)
+          ? {
+              ...c,
+              editable: true,
+              ...(c.key === 'status'
+                ? { editorOptions: { options: ['Open', 'Won', 'Lost', 'Void'] } }
+                : {}),
+            }
+          : c,
+      )
+      const report = ref('none yet')
+      const onEdit = (e: CellEditEvent<Bet>) => setCellValue(e.row, e.column, e.value)
+      const onReplace = (e: CellsPasteEvent<Bet>) =>
+        (report.value = `${e.edits.length} replaced, ${e.skipped.length} skipped`)
+      return { args, rows, columns, report, onEdit, onReplace }
+    },
+    template: `
+      <p class="sb-note" data-testid="replace-report">last replace: {{ report }}</p>
+      <div class="sb-frame">
+        <VGrid v-bind="args" :rows="rows" :columns="columns" :virtual="{ rowHeight: 40 }"
+          @cell-edit="onEdit" @cells-replace="onReplace">
+          <template #toolbar="{ openFind }">
+            <button type="button" @click="openFind({ replace: true })">Find and replace</button>
+          </template>
+        </VGrid>
+      </div>`,
+  }),
+}

@@ -47,6 +47,14 @@ export const WithSummary: Story = {}
 /** `status-bar` alone: the counts, no summary. */
 export const CountsOnly: Story = { args: { statusBar: true } }
 
+/**
+ * With virtual scrolling: the bar (loaded on demand) appears under the scrolling rows and makes the
+ * grid shorter; the rendered window follows without a ResizeObserver loop.
+ */
+export const WithVirtualScrolling: Story = {
+  args: { rows: makeBets(2000, 5), virtual: { rowHeight: 40 }, statusBar: { summary: ['stake'] } },
+}
+
 /** `aggregates` picks what each summary column shows: here the smallest and largest stake. */
 export const MinAndMax: Story = {
   args: { statusBar: { summary: ['stake', 'change'], aggregates: ['min', 'max'] } },

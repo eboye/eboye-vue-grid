@@ -2584,3 +2584,23 @@ day, anything else repeats as a pattern. Ctrl/⌘+D fills the range down from it
 
 Each filled cell is a `cell-edit` with `source: 'fill'` (and a `save-cell`); one Ctrl/⌘+Z undoes the
 whole fill. `parts: { fillHandle: false }` removes the handle and Ctrl/⌘+D.
+
+### Find and replace
+
+With `range-selection`, Ctrl/⌘+F in the grid opens a find bar (Ctrl/⌘+H with the replace row;
+replacing needs `editingFeature`). Or open it from a button:
+
+```vue
+<VGrid … range-selection @cells-replace="(e) => toast(`${e.edits.length} replaced`)">
+  <template #toolbar="{ openFind }">
+    <button @click="openFind({ replace: true })">Find and replace</button>
+  </template>
+</VGrid>
+```
+
+- It searches what the cells show, in the selected range if there was one, else every cell
+  (rows not drawn by virtual scrolling too); Match case and Whole cell narrow it.
+- Enter / Shift+Enter: next / previous match, scrolled into view; Esc closes, the current match
+  stays selected.
+- Replace / Replace all write the new text like a paste (each a `cell-edit` with
+  `source: 'replace'`, skipped cells reported); one Ctrl/⌘+Z undoes a Replace all.

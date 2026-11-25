@@ -53,9 +53,16 @@ function call(fn: (...args: never[]) => string, name: string): string[] {
               ]
             : name === 'filterSummary' || name === 'pageSummary'
               ? [['A', 'B', 'C']]
-              : columnTexts.has(name)
-                ? [['Stake']]
-                : [[1], [2], [5], [1234]]
+              : name === 'findCount'
+                ? [['1', '12', 12]]
+                : name === 'replacedCount'
+                  ? [
+                      [3, 0],
+                      [1, 2],
+                    ]
+                  : columnTexts.has(name)
+                    ? [['Stake']]
+                    : [[1], [2], [5], [1234]]
   for (const args of samples) out.push((fn as (...a: unknown[]) => string)(...args))
   return out
 }

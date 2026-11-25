@@ -118,6 +118,21 @@ export const sr = {
   max: 'Макс.',
   cellCount: (count) => plural(count, { one: '# ћелија', few: '# ћелије', other: '# ћелија' }),
 
+  find: 'Пронађи',
+  replaceWith: 'Замени са',
+  matchCase: 'Велика и мала слова',
+  wholeCell: 'Цела ћелија',
+  inSelection: 'У избору',
+  findNext: 'Следећи погодак',
+  findPrevious: 'Претходни погодак',
+  showReplace: 'Замени…',
+  replace: 'Замени',
+  replaceAll: 'Замени све',
+  findCount: (current, total) => `${current} од ${total}`,
+  noMatches: 'Нема погодака',
+  replacedCount: (count, skipped) =>
+    `Замењено: ${num(count)}${skipped ? `, без измене: ${num(skipped)}` : ''}`,
+
   editCell: (column) => `Измени: ${column}`,
   editNotANumber: 'Унесите број.',
   editOutOfRange: (min, max) =>

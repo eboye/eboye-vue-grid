@@ -118,6 +118,21 @@ export const srLatn = {
   max: 'Maks.',
   cellCount: (count) => plural(count, { one: '# ćelija', few: '# ćelije', other: '# ćelija' }),
 
+  find: 'Pronađi',
+  replaceWith: 'Zameni sa',
+  matchCase: 'Velika i mala slova',
+  wholeCell: 'Cela ćelija',
+  inSelection: 'U izboru',
+  findNext: 'Sledeći pogodak',
+  findPrevious: 'Prethodni pogodak',
+  showReplace: 'Zameni…',
+  replace: 'Zameni',
+  replaceAll: 'Zameni sve',
+  findCount: (current, total) => `${current} od ${total}`,
+  noMatches: 'Nema pogodaka',
+  replacedCount: (count, skipped) =>
+    `Zamenjeno: ${num(count)}${skipped ? `, bez izmene: ${num(skipped)}` : ''}`,
+
   editCell: (column) => `Izmeni: ${column}`,
   editNotANumber: 'Unesite broj.',
   editOutOfRange: (min, max) =>

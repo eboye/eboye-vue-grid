@@ -315,6 +315,11 @@ const emit = defineEmits<{
    * `source: 'fill'`), the cells left alone and why, and the saves that failed.
    */
   'cells-fill': [event: CellsPasteEvent<T>]
+  /**
+   * A replace in the find bar finished: every changed cell (each also a `cell-edit`,
+   * `source: 'replace'`), the cells left alone and why, and the saves that failed.
+   */
+  'cells-replace': [event: CellsPasteEvent<T>]
   /** `loadSubRows` rejected for a row. */
   'sub-rows-error': [event: { row: T; error: unknown }]
   /** An item of the body-cell context menu was chosen. */
@@ -396,6 +401,8 @@ defineSlots<{
     selectAllMatching: boolean
     /** Clears the selection (and "all matching"). */
     clearSelection: () => void
+    /** Range selection feature: opens the find bar (`{ replace: true }`: with the replace row). */
+    openFind: (options?: { replace?: boolean; text?: string }) => void
     /** Editing feature: undo / redo the last change in the grid, for your own buttons. */
     undo: () => Promise<boolean>
     redo: () => Promise<boolean>
@@ -1204,6 +1211,16 @@ const cellRange = features.rangeSelection?.useCellRange<T>({
       return result
     }),
   fillOn: () => part('fillHandle'),
+  replace:
+    editing &&
+    (async (cells) => {
+      const result = await editing.replaceCells(cells)
+      emit('cells-replace', result)
+      return result
+    }),
+  findKeys: () => part('findShortcut'),
+  scrollToRow: (key) => scrollToRow(key),
+  preloadFind: () => features.rangeSelection!.preloadFind(),
 })
 
 // ── Status bar ──────────────────────────────────────────────────────────────────────────────
@@ -1421,7 +1438,7 @@ function scrollToRow(key: RowKey) {
   const cell = root.value?.querySelector<HTMLElement>(
     `[data-row-key="${CSS.escape(String(key))}"] > .vg-cell`,
   )
-  cell?.scrollIntoView({ block: 'nearest' })
+  cell?.scrollIntoView?.({ block: 'nearest' })
 }
 
 function expandAll() {
@@ -1492,6 +1509,9 @@ const selectRange = (next: CellRange | null) =>
   cellRange ? cellRange.select(next) : noRange('selectRange')
 const getRangeValues = () => cellRange?.values() ?? (noRange('getRangeValues'), [])
 const copyRange = () => cellRange?.copyRange() ?? (noRange('copyRange'), Promise.resolve(false))
+const openFind = (options?: { replace?: boolean; text?: string }) =>
+  cellRange ? cellRange.openFind(options) : noRange('openFind')
+const closeFind = () => cellRange?.closeFind()
 const fillDown = () => cellRange?.fillDown() ?? (noRange('fillDown'), Promise.resolve(null))
 const pasteText = (text: string) =>
   cellRange?.pasteText(text) ?? (noRange('pasteText'), Promise.resolve(null))
@@ -1538,6 +1558,8 @@ defineExpose<VGridExposed>({
   copyRange,
   pasteText,
   fillDown,
+  openFind,
+  closeFind,
   undo,
   redo,
   canUndo,
@@ -1563,6 +1585,7 @@ defineExpose<VGridExposed>({
         :selected-groups="selectedGroups"
         :select-all-matching="selectAllMatching"
         :clear-selection="clearSelection"
+        :open-find="openFind"
         :undo="undo"
         :redo="redo"
         :can-undo="canUndo()"
@@ -1600,6 +1623,11 @@ defineExpose<VGridExposed>({
       </slot>
     </template>
     <div class="vg-viewport">
+      <component
+        :is="features.rangeSelection.FindBar"
+        v-if="cellRange?.find.open.value && features.rangeSelection"
+        :range="cellRange"
+      />
       <div v-if="isLoading && part('progressBar')" class="vg-progress" aria-hidden="true" />
       <div
         ref="root"

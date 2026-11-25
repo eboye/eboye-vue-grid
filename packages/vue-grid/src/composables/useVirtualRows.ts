@@ -88,6 +88,7 @@ export function useVirtualRows<T>(opts: VirtualRowsOptions<T>) {
   const viewportHeight = ref(0)
   let scrollFrame = 0
   let resizeObserver: ResizeObserver | undefined
+  let viewportFrame = 0
 
   // A scroll in progress: lazy sub-rows wait until it settles, so flying past expanded rows doesn't
   // request their children. Settled = `SETTLE_MS` after `scrollend` with no new scrolling (a fast
@@ -121,7 +122,13 @@ export function useVirtualRows<T>(opts: VirtualRowsOptions<T>) {
         onCleanup(() => el.removeEventListener('scrollend', onScrollEnd))
       }
       if (typeof ResizeObserver === 'undefined') return
-      resizeObserver = new ResizeObserver(() => (viewportHeight.value = el.clientHeight))
+      // The new height applies on the next frame, like measured rows below: applied inside the
+      // callback it re-renders rows in the same frame, a "ResizeObserver loop" (WebKit reports it
+      // when something below the grid, such as the status bar, appears and shrinks it).
+      resizeObserver = new ResizeObserver(() => {
+        cancelAnimationFrame(viewportFrame)
+        viewportFrame = requestAnimationFrame(() => (viewportHeight.value = el.clientHeight))
+      })
       resizeObserver.observe(el)
       viewportHeight.value = el.clientHeight
     },
@@ -189,6 +196,7 @@ export function useVirtualRows<T>(opts: VirtualRowsOptions<T>) {
     resizeObserver?.disconnect()
     measurer?.disconnect()
     cancelAnimationFrame(measureFrame)
+    cancelAnimationFrame(viewportFrame)
     cancelAnimationFrame(scrollFrame)
     window.clearTimeout(idleTimer)
   })

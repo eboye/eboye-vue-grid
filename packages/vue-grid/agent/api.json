@@ -1,6 +1,6 @@
 {
   "package": "@nocopypaste/vue-grid",
-  "version": "0.15.0",
+  "version": "0.16.0",
   "component": "VGrid",
   "props": [
     {
@@ -479,6 +479,11 @@
       "description": "A fill finished (the fill handle, Ctrl/⌘+D): every changed cell (each also a `cell-edit`, `source: 'fill'`), the cells left alone and why, and the saves that failed."
     },
     {
+      "name": "cells-replace",
+      "payload": "[event: CellsPasteEvent<T>]",
+      "description": "A replace in the find bar finished: every changed cell (each also a `cell-edit`, `source: 'replace'`), the cells left alone and why, and the saves that failed."
+    },
+    {
       "name": "sub-rows-error",
       "payload": "[event: { row: T; error: unknown }]",
       "description": "`loadSubRows` rejected for a row."
@@ -562,7 +567,7 @@
     },
     {
       "name": "toolbar",
-      "scope": "{ columns: readonly ColumnDef<T>[]; columnState: ColumnState; setColumnState: (state: ColumnState) => void; filters: FilterState; setFilters: (state: FilterState) => void; clearFilters: () => void; activeFilterCount: number; selected: readonly RowKey[]; selectedCount: number; selectedGroups: GroupPath[]; selectAllMatching: boolean; clearSelection: () => void; undo: () => Promise<boolean>; redo: () => Promise<boolean>; canUndo: boolean; canRedo: boolean }",
+      "scope": "{ columns: readonly ColumnDef<T>[]; columnState: ColumnState; setColumnState: (state: ColumnState) => void; filters: FilterState; setFilters: (state: FilterState) => void; clearFilters: () => void; activeFilterCount: number; selected: readonly RowKey[]; selectedCount: number; selectedGroups: GroupPath[]; selectAllMatching: boolean; clearSelection: () => void; openFind: (options?: { replace?: boolean; text?: string }) => void; undo: () => Promise<boolean>; redo: () => Promise<boolean>; canUndo: boolean; canRedo: boolean }",
       "description": "Above the grid: put a search box, column menu, filter summary or batch actions here."
     }
   ],
@@ -727,6 +732,18 @@
       "type": "Promise<CellsPasteEvent | null>",
       "required": true,
       "description": "Fills the selected range down from its top row, as Ctrl/⌘+D does (the fill handle's rules: one value repeats). Resolves the `cells-fill` event, or `null` without a range of two or more rows. Range selection and editing features."
+    },
+    {
+      "name": "openFind",
+      "type": "void",
+      "required": true,
+      "description": "Opens the find bar (Ctrl/⌘+F in the grid; `replace: true` also shows the replace row, as Ctrl/⌘+H does), searching the selected range if there is one, else every cell. Range selection feature (replacing needs the editing feature too)."
+    },
+    {
+      "name": "closeFind",
+      "type": "void",
+      "required": true,
+      "description": "Closes the find bar; the current match becomes the selected cell."
     },
     {
       "name": "undo",
@@ -1167,7 +1184,7 @@
     {
       "id": "rangeSelection",
       "export": "rangeSelectionFeature",
-      "description": "Cell-range selection, as in a spreadsheet (`range-selection`, `v-model:range`): drag across cells or Shift+click to select a block, Shift+arrows to extend it (with `keyboardNavigationFeature`), Ctrl/⌘+A for every cell, Esc to clear. Ctrl/⌘+C copies it as tab-separated text, as the cells show it, and the status bar (`statusBarFeature`) shows its count, sum and average. Separate from row selection (`selectable`): both can be on.",
+      "description": "",
       "props": [
         "rangeSelection",
         "range"

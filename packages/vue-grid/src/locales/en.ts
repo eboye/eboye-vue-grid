@@ -120,6 +120,21 @@ export const en = {
   max: 'Max',
   cellCount: (count) => plural(count, { one: '# cell', other: '# cells' }),
 
+  find: 'Find',
+  replaceWith: 'Replace with',
+  matchCase: 'Match case',
+  wholeCell: 'Whole cell',
+  inSelection: 'In selection',
+  findNext: 'Next match',
+  findPrevious: 'Previous match',
+  showReplace: 'Replace…',
+  replace: 'Replace',
+  replaceAll: 'Replace all',
+  findCount: (current, total) => `${current} of ${total}`,
+  noMatches: 'No matches',
+  replacedCount: (count, skipped) =>
+    `${num(count)} replaced${skipped ? `, ${num(skipped)} left as they were` : ''}`,
+
   editCell: (column) => `Edit ${column}`,
   editNotANumber: 'Enter a number.',
   editOutOfRange: (min, max) =>

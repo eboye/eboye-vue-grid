@@ -351,10 +351,10 @@ export interface CellEditEvent<T = any> {
   oldValue: unknown
   /**
    * What made the change: `edit` (an editor, a checkbox), `paste` (Ctrl/⌘+V into a range), `fill`
-   * (the fill handle, Ctrl/⌘+D), or
+   * (the fill handle, Ctrl/⌘+D), `replace` (find and replace), or
    * `undo` / `redo` (Ctrl/⌘+Z, Ctrl+Y, or the methods). Store it the same way in every case.
    */
-  source?: 'edit' | 'paste' | 'fill' | 'undo' | 'redo'
+  source?: 'edit' | 'paste' | 'fill' | 'replace' | 'undo' | 'redo'
 }
 
 /** A pasted cell that wasn't changed (range selection + editing). */
@@ -557,6 +557,14 @@ export interface VGridExposed {
    * more rows. Range selection and editing features.
    */
   fillDown(): Promise<CellsPasteEvent | null>
+  /**
+   * Opens the find bar (Ctrl/⌘+F in the grid; `replace: true` also shows the replace row, as
+   * Ctrl/⌘+H does), searching the selected range if there is one, else every cell. Range
+   * selection feature (replacing needs the editing feature too).
+   */
+  openFind(options?: { replace?: boolean; text?: string }): void
+  /** Closes the find bar; the current match becomes the selected cell. */
+  closeFind(): void
   /**
    * Undoes the last change made in the grid (an edit, a checkbox, a whole paste): each cell gets
    * its value back through `cell-edit` (`source: 'undo'`) and `save-cell`, as Ctrl/⌘+Z does.
@@ -835,6 +843,10 @@ export interface ServerGroupingFeature {
 export interface RangeSelectionFeature {
   readonly feature: 'rangeSelection'
   useCellRange: typeof import('./composables/useCellRange').useCellRange
+  /** The find bar (loads on demand). */
+  FindBar: Component
+  /** Loads the find bar's chunk ahead of the first Ctrl/⌘+F (while the browser is idle). */
+  preloadFind: () => Promise<unknown>
 }
 export type GridFeature =
   | RangeSelectionFeature
@@ -1119,6 +1131,34 @@ export interface GridMessages {
   /** A selected cell range's size (range selection). Default `` `${count} cells` `` (`1 cell`). */
   cellCount?: (count: number) => string
 
+  // ── Find and replace (range selection) ──
+  /** The find bar's name and its search box. Default `Find`. */
+  find?: string
+  /** The replacement box. Default `Replace with`. */
+  replaceWith?: string
+  /** Default `Match case`. */
+  matchCase?: string
+  /** Only cells whose whole text matches. Default `Whole cell`. */
+  wholeCell?: string
+  /** Search the selected range only. Default `In selection`. */
+  inSelection?: string
+  /** Default `Next match`. */
+  findNext?: string
+  /** Default `Previous match`. */
+  findPrevious?: string
+  /** Shows the replace row. Default `Replace…`. */
+  showReplace?: string
+  /** Replaces the current match. Default `Replace`. */
+  replace?: string
+  /** Default `Replace all`. */
+  replaceAll?: string
+  /** Default `` `${current} of ${total}` `` (numbers formatted). */
+  findCount?: (current: string, total: string, count: number) => string
+  /** Default `No matches`. */
+  noMatches?: string
+  /** After replacing. Default `` `${count} replaced` `` (`, ${skipped} left as they were`). */
+  replacedCount?: (count: number, skipped: number) => string
+
   // ── Editing ──
   /** The editor's accessible name. Default `Edit ${column}`. */
   editCell?: (column: string) => string
@@ -1191,6 +1231,8 @@ export interface GridParts {
    * (`fillDown()` still works).
    */
   fillHandle?: boolean
+  /** Range selection: Ctrl/⌘+F and Ctrl/⌘+H open the find bar (`openFind()` still works). */
+  findShortcut?: boolean
   /** Editing: Ctrl/⌘+Z and Ctrl+Y / Ctrl/⌘+Shift+Z (`undo()` / `redo()` still work). */
   undoShortcut?: boolean
   /** Range selection with editing: Ctrl/⌘+V pasting into editable cells (`pasteText()` still works). */

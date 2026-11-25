@@ -112,7 +112,7 @@ export const pages: Page[] = [
   },
   {
     id: 'range',
-    title: 'Cell ranges: copy and paste',
+    title: 'Cell ranges: copy, paste, find',
     section: 'Rows',
     summary:
       'Select a block of cells as in a spreadsheet: drag, Shift+click or Shift+arrows. Ctrl+C copies it as rows and columns that paste into Excel or Sheets, Ctrl+V pastes a block from them into the editable cells, and the status bar adds it up. Row selection still works alongside.',
@@ -123,6 +123,7 @@ export const pages: Page[] = [
       'Copy cells from Excel or Sheets (or from the grid), click a Player cell and press Ctrl+V (⌘V): numbers, dates and statuses are read as such, and the # and Δ odds columns are left alone.',
       'Select ten Stake cells and paste a single number: it fills all of them. Ctrl+Z (⌘Z) undoes the whole paste.',
       'Drag the small square on a selection’s corner down a few rows: values repeat, two numbers go on in their step, dates day by day. Ctrl+D (⌘D) fills a selection down from its top row.',
+      'Click a cell and press Ctrl+F (⌘F) to find, Ctrl+H (⌘H) to replace: Enter goes to the next match, even in rows not drawn yet; Replace all is one Ctrl+Z.',
       'Turn on 2,000 rows and drag past the bottom edge, or Shift+click far below: rows that aren’t drawn still count.',
     ],
     docs: '29. Cell-range selection',

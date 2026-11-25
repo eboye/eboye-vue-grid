@@ -1,4 +1,4 @@
-# @nocopypaste/vue-grid 0.15.0 — API reference
+# @nocopypaste/vue-grid 0.16.0 — API reference
 
 > Generated from the TypeScript sources (`scripts/gen-agent.mjs`). Machine-readable: `agent/api.json`, `agent/grid-config.schema.json`.
 
@@ -20,7 +20,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `keyboardNavigationFeature` | Keyboard navigation (the ARIA grid pattern): the grid is one tab stop, arrow keys / Home / End / PageUp / PageDown move between cells, Enter activates a cell's control, Space selects a row, →/← expand and collapse, Alt+←/→ move a column, ContextMenu / Shift+F10 open the cell menu. Without it the grid is an ARIA `table`: its own controls (sort buttons, expanders, checkboxes, filter buttons) sit in the normal Tab order instead. |  |  |
 | `menusFeature` | Context menus: the built-in header menu (sort, filter, pin, move, hide, reset, your own items via `header-menu`) and body-cell menus (`context-menu`), opened by right-click, the ContextMenu key or Shift+F10. Without it the browser's own menu shows. The standalone `<VGridMenu>` and the `actions-menu` renderer don't need it. | `contextMenu` `headerMenu` |  |
 | `paginationFeature` | Built-in pagination: the `pagination` prop and `v-model:page` / `v-model:page-size`. Pages the client rows, or asks the `dataSource` for pages. The pager loads on demand (own chunk). Not needed for the standalone `<VGridPagination>` component. | `pagination` `page` `pageSize` |  |
-| `rangeSelectionFeature` | Cell-range selection, as in a spreadsheet (`range-selection`, `v-model:range`): drag across cells or Shift+click to select a block, Shift+arrows to extend it (with `keyboardNavigationFeature`), Ctrl/⌘+A for every cell, Esc to clear. Ctrl/⌘+C copies it as tab-separated text, as the cells show it, and the status bar (`statusBarFeature`) shows its count, sum and average. Separate from row selection (`selectable`): both can be on. | `rangeSelection` `range` |  |
+| `rangeSelectionFeature` |  | `rangeSelection` `range` |  |
 | `rowGroupingFeature` | Row grouping: `v-model:group-by="['region', 'status']"` groups the rows by those columns into collapsible group rows with their value, row count and the aggregates of columns with an `aggregate`. Columns with `groupable: true` get Group by / Ungroup items in the header menu. Without it, `group-by` is ignored. | `groupsExpanded` `groupBy` | `groupable` `groupValue` |
 | `rowPinningFeature` | Pinned rows: `v-model:pinned-rows` (`{ top, bottom }` row keys), `pinned-top-rows` / `pinned-bottom-rows` (extra rows that aren't in the data) and the `pinRow()` method. Pinned rows stay in view (sticky) under the header or at the bottom while the body scrolls, and aren't filtered, sorted or paged. Without it, those options are ignored. | `pinnedTopRows` `pinnedBottomRows` `pinnedRows` |  |
 | `selectionFeature` | Row selection: the `selectable` prop (multi or single), `v-model:selected`, `selection-mode` (cascade through sub-grids), `is-row-selectable`, Space on a row, shift-click (or Shift+Space) for a range, the select-all checkbox, `prune-selection`, and with server data a "select all N matching rows" banner (`v-model:select-all-matching`; it loads on demand, its own chunk). | `selectable` `selectionMode` `isRowSelectable` `pruneSelection` `selected` `selectAllMatching` |  |
@@ -116,6 +116,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `cell-edit` | `[event: CellEditEvent<T>]` | A cell was edited (editing feature): update your data with `value`. The grid doesn't. |
 | `cells-paste` | `[event: CellsPasteEvent<T>]` | A paste finished (range selection + editing): every changed cell (each also a `cell-edit`), the cells left alone and why, and the `save-cell` calls that failed. |
 | `cells-fill` | `[event: CellsPasteEvent<T>]` | A fill finished (the fill handle, Ctrl/⌘+D): every changed cell (each also a `cell-edit`, `source: 'fill'`), the cells left alone and why, and the saves that failed. |
+| `cells-replace` | `[event: CellsPasteEvent<T>]` | A replace in the find bar finished: every changed cell (each also a `cell-edit`, `source: 'replace'`), the cells left alone and why, and the saves that failed. |
 | `sub-rows-error` | `[event: { row: T; error: unknown }]` | `loadSubRows` rejected for a row. |
 | `context-action` | `[event: ContextActionEvent<T>]` | An item of the body-cell context menu was chosen. |
 | `header-action` | `[event: HeaderActionEvent<T>]` | A custom item of the header menu was chosen (built-in items act by themselves). |
@@ -137,7 +138,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `status-bar` | `StatusBarScope` | The status bar's content (status bar feature): replaces the counts and the summary. |
 | `loading` |  | Shown while loading with no rows yet. |
 | `sub-rows-loading` | `{ row: T }` | Shown while a row's lazy children load. |
-| `toolbar` | `{ columns: readonly ColumnDef<T>[]; columnState: ColumnState; setColumnState: (state: ColumnState) => void; filters: FilterState; setFilters: (state: FilterState) => void; clearFilters: () => void; activeFilterCount: number; selected: readonly RowKey[]; selectedCount: number; selectedGroups: GroupPath[]; selectAllMatching: boolean; clearSelection: () => void; undo: () => Promise<boolean>; redo: () => Promise<boolean>; canUndo: boolean; canRedo: boolean }` | Above the grid: put a search box, column menu, filter summary or batch actions here. |
+| `toolbar` | `{ columns: readonly ColumnDef<T>[]; columnState: ColumnState; setColumnState: (state: ColumnState) => void; filters: FilterState; setFilters: (state: FilterState) => void; clearFilters: () => void; activeFilterCount: number; selected: readonly RowKey[]; selectedCount: number; selectedGroups: GroupPath[]; selectAllMatching: boolean; clearSelection: () => void; openFind: (options?: { replace?: boolean; text?: string }) => void; undo: () => Promise<boolean>; redo: () => Promise<boolean>; canUndo: boolean; canRedo: boolean }` | Above the grid: put a search box, column menu, filter summary or batch actions here. |
 
 ## Exposed methods (`ref<VGridExposed>()`)
 
@@ -169,6 +170,8 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `copyRange` | `Promise<boolean>` |  | Copies the selected range as tab-separated text, as the cells show it (Ctrl/⌘+C does the same). Resolves `false` without a range. Range selection feature. |
 | `pasteText` | `Promise<CellsPasteEvent \| null>` |  | Pastes tab-separated text (what spreadsheets copy) into the editable cells from the selected range's top-left cell, as Ctrl/⌘+V does; a range a whole number of blocks in size is filled. Resolves the `cells-paste` event, or `null` with nowhere to paste. Range selection and editing features. |
 | `fillDown` | `Promise<CellsPasteEvent \| null>` |  | Fills the selected range down from its top row, as Ctrl/⌘+D does (the fill handle's rules: one value repeats). Resolves the `cells-fill` event, or `null` without a range of two or more rows. Range selection and editing features. |
+| `openFind` | `void` |  | Opens the find bar (Ctrl/⌘+F in the grid; `replace: true` also shows the replace row, as Ctrl/⌘+H does), searching the selected range if there is one, else every cell. Range selection feature (replacing needs the editing feature too). |
+| `closeFind` | `void` |  | Closes the find bar; the current match becomes the selected cell. |
 | `undo` | `Promise<boolean>` |  | Undoes the last change made in the grid (an edit, a checkbox, a whole paste): each cell gets its value back through `cell-edit` (`source: 'undo'`) and `save-cell`, as Ctrl/⌘+Z does. Cells changed since by something else are left alone. Resolves whether anything changed. Editing feature. |
 | `redo` | `Promise<boolean>` |  | Redoes the last undone change (Ctrl+Y, Ctrl/⌘+Shift+Z). Editing feature. |
 | `canUndo` | `boolean` |  | Whether there's a change to undo (for your own buttons; reactive). |

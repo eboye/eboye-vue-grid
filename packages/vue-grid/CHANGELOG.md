@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.16.0 — 2026-11-25
+
+**Find and replace** (`rangeSelectionFeature`; replacing with `editingFeature`): Ctrl/⌘+F with focus
+in the grid opens a find bar in its top corner (outside the grid the browser's find stays),
+Ctrl/⌘+H with the replace row. It searches what the cells show (`€1,200.00`, `05/23/2026`), with
+Match case and Whole cell, in the selected range if there was one ("In selection"), else every
+cell, rows virtual scrolling hasn't drawn included. Matches are highlighted; Enter / Shift+Enter go
+to the next / previous (scrolled into view; "3 of 12" is announced), Esc closes the bar and
+leaves the current match selected. Replace changes the current match and moves on, Replace all
+every match: the new text is read as each column's kind like a paste (read-only and invalid
+cells skipped), each change is a `cell-edit` with `source: 'replace'` and a `save-cell`, the new
+`cells-replace` event reports it, and one Ctrl/⌘+Z undoes a Replace all. Keys typed while the
+bar opens go into its search box. New: `grid.openFind({ replace, text })` / `closeFind()`,
+`openFind` in the `#toolbar` slot, part `findShortcut`, colour tokens `--vg-color-find`,
+`--vg-color-find-current`, `--vg-color-find-border`, and 13 messages (`find`, `replaceWith`,
+`matchCase`, `wholeCell`, `inSelection`, `findNext`, `findPrevious`, `showReplace`, `replace`,
+`replaceAll`, `findCount`, `noMatches`, `replacedCount`), in every language pack. The bar is its
+own chunk (2.9 kB gzipped), loaded while the browser is idle once range selection is on; the range selection feature grows by 1.0 kB, a plain grid by 0.2 kB (to 16.0).
+
+**Fixes:** virtual scrolling with something below the grid that changes its height (the status
+bar appearing) caused a "ResizeObserver loop" error in Safari / WebKit; the new height now applies
+on the next frame. `grid.scrollToRow()` no longer throws where `scrollIntoView` is missing (jsdom).
+
 ## 0.15.0 — 2026-11-25
 
 **Fill handle** (`rangeSelectionFeature` with `editingFeature`): the selection's last cell

@@ -117,6 +117,21 @@ export const de = {
   max: 'Max.',
   cellCount: (count) => plural(count, { one: '# Zelle', other: '# Zellen' }),
 
+  find: 'Suchen',
+  replaceWith: 'Ersetzen durch',
+  matchCase: 'Groß-/Kleinschreibung',
+  wholeCell: 'Ganze Zelle',
+  inSelection: 'In Auswahl',
+  findNext: 'Nächster Treffer',
+  findPrevious: 'Vorheriger Treffer',
+  showReplace: 'Ersetzen…',
+  replace: 'Ersetzen',
+  replaceAll: 'Alle ersetzen',
+  findCount: (current, total) => `${current} von ${total}`,
+  noMatches: 'Keine Treffer',
+  replacedCount: (count, skipped) =>
+    `${num(count)} ersetzt${skipped ? `, ${num(skipped)} unverändert` : ''}`,
+
   editCell: (column) => `${column} bearbeiten`,
   editNotANumber: 'Geben Sie eine Zahl ein.',
   editOutOfRange: (min, max) =>

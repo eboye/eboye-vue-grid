@@ -324,7 +324,7 @@ export function useEditing<T>(opts: EditingOptions<T>) {
    */
   async function writeCells(
     cells: readonly PasteCell<T>[],
-    source: 'paste' | 'fill',
+    source: 'paste' | 'fill' | 'replace',
   ): Promise<CellsPasteEvent<T>> {
     if (state.value && !state.value.saving) state.value = null
     // loads on the first paste or fill (own chunk)
@@ -396,6 +396,8 @@ export function useEditing<T>(opts: EditingOptions<T>) {
   const pasteCells = (cells: readonly PasteCell<T>[]) => writeCells(cells, 'paste')
   /** Fills cells with values (the fill handle, Ctrl/⌘+D): like pasting, without reading text. */
   const fillCells = (cells: readonly PasteCell<T>[]) => writeCells(cells, 'fill')
+  /** Writes replaced text into cells (find and replace): read like a paste. */
+  const replaceCells = (cells: readonly PasteCell<T>[]) => writeCells(cells, 'replace')
 
   // ── Undo / redo ─────────────────────────────────────────────────────────────────────────
   /** Changes to undo (oldest first) and undone changes to redo; each step is one edit or paste. */
@@ -549,6 +551,7 @@ export function useEditing<T>(opts: EditingOptions<T>) {
     forCell,
     pasteCells,
     fillCells,
+    replaceCells,
     undo: () => travel('undo'),
     redo: () => travel('redo'),
     canUndo: () => past.value.length > 0,
