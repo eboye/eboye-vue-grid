@@ -1,6 +1,6 @@
 {
   "package": "@nocopypaste/vue-grid",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "component": "VGrid",
   "props": [
     {
@@ -56,6 +56,13 @@
       "required": false,
       "description": "Saves an edited cell (editing feature), after `cell-edit`: return a Promise and the cell shows it saving; a rejection keeps the editor open with the error's message. Without it, `cell-edit` alone carries the change.",
       "feature": "editing"
+    },
+    {
+      "name": "rangeSelection",
+      "type": "boolean",
+      "required": false,
+      "description": "Cell-range selection (range selection feature), as in a spreadsheet: drag across cells or Shift+click to select a block, Shift+arrows to extend it, Ctrl/⌘+A for every cell, Esc to clear; Ctrl/⌘+C copies it. Bind `v-model:range` to read or set it.",
+      "feature": "rangeSelection"
     },
     {
       "name": "messages",
@@ -414,6 +421,13 @@
       "default": "[]",
       "description": "Server data with row grouping: groups selected by query, by their paths, without loading their rows (a group's checkbox). Act on these with `selected` and the filters. Ends when the filters or the grouping change. Needs the selection and row grouping features.",
       "feature": "serverGrouping"
+    },
+    {
+      "name": "range",
+      "type": "CellRange | null",
+      "default": "null",
+      "description": "The selected block of cells (`range-selection`): `{ start, end }` corner cells by row key and column key, or null. One cell alone is no range. Needs the range selection feature.",
+      "feature": "rangeSelection"
     }
   ],
   "events": [
@@ -666,6 +680,24 @@
       "type": "void",
       "required": true,
       "description": "Closes the open editor: saves its value, or with `cancel` drops it. Editing feature."
+    },
+    {
+      "name": "selectRange",
+      "type": "void",
+      "required": true,
+      "description": "Selects a block of cells (`null` clears it), as `v-model:range` does. Range selection feature, with `range-selection`."
+    },
+    {
+      "name": "getRangeValues",
+      "type": "unknown[][]",
+      "required": true,
+      "description": "The selected range's raw values, row by row (`[]` without a range). Range selection feature."
+    },
+    {
+      "name": "copyRange",
+      "type": "Promise<boolean>",
+      "required": true,
+      "description": "Copies the selected range as tab-separated text, as the cells show it (Ctrl/⌘+C does the same). Resolves `false` without a range. Range selection feature."
     }
   ],
   "column": [
@@ -1069,6 +1101,16 @@
         "pagination",
         "page",
         "pageSize"
+      ],
+      "columnOptions": []
+    },
+    {
+      "id": "rangeSelection",
+      "export": "rangeSelectionFeature",
+      "description": "Cell-range selection, as in a spreadsheet (`range-selection`, `v-model:range`): drag across cells or Shift+click to select a block, Shift+arrows to extend it (with `keyboardNavigationFeature`), Ctrl/⌘+A for every cell, Esc to clear. Ctrl/⌘+C copies it as tab-separated text, as the cells show it, and the status bar (`statusBarFeature`) shows its count, sum and average. Separate from row selection (`selectable`): both can be on.",
+      "props": [
+        "rangeSelection",
+        "range"
       ],
       "columnOptions": []
     },

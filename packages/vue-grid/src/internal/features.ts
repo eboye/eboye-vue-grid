@@ -13,6 +13,7 @@ import type {
   GridFeature,
   MenusFeature,
   PaginationFeature,
+  RangeSelectionFeature,
   SelectionFeature,
   ServerDataFeature,
   ServerGroupingFeature,
@@ -46,6 +47,7 @@ export interface FeatureSet {
   statusBar?: StatusBarFeature
   editing?: EditingFeature
   serverGrouping?: ServerGroupingFeature
+  rangeSelection?: RangeSelectionFeature
 }
 
 /** Merges feature lists (app-wide, then per grid); a later entry with the same name wins. */

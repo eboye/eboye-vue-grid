@@ -130,6 +130,7 @@ export const fr = {
   average: 'Moyenne',
   min: 'Min.',
   max: 'Max.',
+  cellCount: (count) => plural(count, { one: '# cellule', other: '# cellules' }),
 
   editCell: (column) => `Modifier ${column}`,
   editNotANumber: 'Saisissez un nombre.',

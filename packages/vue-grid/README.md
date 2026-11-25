@@ -136,6 +136,7 @@ an opt-in feature:
 | `exportFeature`             | `exportCsv()` / `getCsv()`, `exportXlsx()` / `getXlsx()` (Excel, typed cells), `print()` (every row, header on each page), `copyRows()`, Ctrl/⌘+C for the selected rows or the focused cell, the `copy` event; column `exportValue` / `exportable`                                                                                      |
 | `statusBarFeature`          | `status-bar`: a bar under the grid with the rows that pass the filters, the selected rows, the active filters (with Clear), and `{ summary: [keys] }` columns' sum and average over the selected rows; the `#status-bar` slot                                                                                                           |
 | `editingFeature`            | `editable` columns: an editor in the cell (text, number, date, select, checkbox, or your own) on double-click, Enter / F2 or typing; `cell-edit`, and `save-cell` for async saves. See [Inline editing](#inline-editing)                                                                                                                |
+| `rangeSelectionFeature`     | `range-selection`: drag, Shift+click or Shift+arrows select a block of cells, Ctrl/⌘+C copies it (tab-separated, pastes into spreadsheets), the status bar adds it up; `v-model:range`. See [Cell-range selection](#cell-range-selection)                                                                                               |
 
 ```ts
 // per grid
@@ -179,35 +180,36 @@ what you import.
 
 | Import (minified / gzip, Vue excluded)                                       | Initial chunk      |
 | ---------------------------------------------------------------------------- | ------------------ |
-| `VGrid` (no features)                                                        | 44.5 kB / 15.3 kB  |
-| `VGrid` + `sortingFeature`                                                   | 47.2 kB / 16.3 kB  |
-| `VGrid` + `filteringFeature`                                                 | 55.2 kB / 19.1 kB  |
-| `VGrid` + `serverDataFeature`                                                | 45.9 kB / 15.9 kB  |
-| `VGrid` + `paginationFeature`                                                | 44.6 kB / 15.3 kB  |
-| `VGrid` + `selectionFeature`                                                 | 48.6 kB / 16.7 kB  |
-| `VGrid` + `subGridsFeature`                                                  | 46.8 kB / 16.1 kB  |
-| `VGrid` + `menusFeature`                                                     | 55.7 kB / 19.1 kB  |
-| `VGrid` + `columnReorderFeature`                                             | 48.1 kB / 16.5 kB  |
-| `VGrid` + `columnPinningFeature`                                             | 47.4 kB / 16.3 kB  |
-| `VGrid` + `virtualScrollingFeature`                                          | 50.2 kB / 17.5 kB  |
-| `VGrid` + `columnVisibilityFeature`                                          | 44.6 kB / 15.3 kB  |
-| `VGrid` + `keyboardNavigationFeature`                                        | 47.2 kB / 16.3 kB  |
-| `VGrid` + `columnResizingFeature`                                            | 47.7 kB / 16.5 kB  |
-| `VGrid` + `columnGroupsFeature`                                              | 45.8 kB / 15.7 kB  |
-| `VGrid` + `rowPinningFeature`                                                | 49.4 kB / 16.6 kB  |
-| `VGrid` + `aggregationFeature`                                               | 49.6 kB / 16.7 kB  |
-| `VGrid` + `rowGroupingFeature`                                               | 55.3 kB / 18.8 kB  |
-| `VGrid` + `exportFeature`                                                    | 49.4 kB / 17.2 kB  |
-| `VGrid` + `statusBarFeature`                                                 | 46.9 kB / 16.2 kB  |
-| `VGrid` + `serverGroupingFeature`                                            | 47.6 kB / 16.4 kB  |
-| `VGrid` + `editingFeature`                                                   | 48.8 kB / 17.0 kB  |
-| `VGrid` + `allFeatures` + `VGridSearch`                                      | 123.4 kB / 41.7 kB |
-| `VGrid` + `currencyRenderer`                                                 | 45.8 kB / 15.7 kB  |
-| `VGrid` + `VGridPagination` + `VGridColumnMenu`                              | 51.7 kB / 17.7 kB  |
+| `VGrid` (no features)                                                        | 45.3 kB / 15.5 kB  |
+| `VGrid` + `sortingFeature`                                                   | 48.0 kB / 16.5 kB  |
+| `VGrid` + `filteringFeature`                                                 | 56.0 kB / 19.4 kB  |
+| `VGrid` + `serverDataFeature`                                                | 46.7 kB / 16.1 kB  |
+| `VGrid` + `paginationFeature`                                                | 45.4 kB / 15.6 kB  |
+| `VGrid` + `selectionFeature`                                                 | 49.4 kB / 17.0 kB  |
+| `VGrid` + `subGridsFeature`                                                  | 47.6 kB / 16.3 kB  |
+| `VGrid` + `menusFeature`                                                     | 56.6 kB / 19.3 kB  |
+| `VGrid` + `columnReorderFeature`                                             | 49.0 kB / 16.8 kB  |
+| `VGrid` + `columnPinningFeature`                                             | 48.2 kB / 16.5 kB  |
+| `VGrid` + `virtualScrollingFeature`                                          | 51.0 kB / 17.7 kB  |
+| `VGrid` + `columnVisibilityFeature`                                          | 45.5 kB / 15.6 kB  |
+| `VGrid` + `keyboardNavigationFeature`                                        | 48.1 kB / 16.5 kB  |
+| `VGrid` + `columnResizingFeature`                                            | 48.6 kB / 16.7 kB  |
+| `VGrid` + `columnGroupsFeature`                                              | 46.6 kB / 16.0 kB  |
+| `VGrid` + `rowPinningFeature`                                                | 50.2 kB / 16.9 kB  |
+| `VGrid` + `aggregationFeature`                                               | 50.4 kB / 17.0 kB  |
+| `VGrid` + `rowGroupingFeature`                                               | 56.1 kB / 19.1 kB  |
+| `VGrid` + `exportFeature`                                                    | 50.2 kB / 17.4 kB  |
+| `VGrid` + `statusBarFeature`                                                 | 48.2 kB / 16.6 kB  |
+| `VGrid` + `serverGroupingFeature`                                            | 48.4 kB / 16.7 kB  |
+| `VGrid` + `editingFeature`                                                   | 49.7 kB / 17.2 kB  |
+| `VGrid` + `rangeSelectionFeature`                                            | 51.7 kB / 17.8 kB  |
+| `VGrid` + `allFeatures` + `VGridSearch`                                      | 130.4 kB / 43.8 kB |
+| `VGrid` + `currencyRenderer`                                                 | 46.7 kB / 16.0 kB  |
+| `VGrid` + `VGridPagination` + `VGridColumnMenu`                              | 52.6 kB / 18.0 kB  |
 | `sortRows` only                                                              | 0.7 kB / 0.4 kB    |
 | `toCsv` only                                                                 | 1.1 kB / 0.6 kB    |
-| everything                                                                   | 177.3 kB / 57.2 kB |
-| `validateGridConfig` (`@nocopypaste/vue-grid/agent`, never in an app bundle) | 75.6 kB / 20.7 kB  |
+| everything                                                                   | 184.4 kB / 59.3 kB |
+| `validateGridConfig` (`@nocopypaste/vue-grid/agent`, never in an app bundle) | 77.4 kB / 21.1 kB  |
 
 With `filteringFeature`, the filter popover body and the filter-row editors are **on-demand
 chunks**: they load the first time a popover opens or `filter-row` is on. With
@@ -265,6 +267,7 @@ chunks that on-demand imports share with the entry, even when nothing uses them.
 | `v-model:groupBy`                    | `string[] \| string \| null`                                                                                                 | `null`             | Column keys to group the rows by, outermost first. Needs `rowGroupingFeature` (as does the next one). See [Row grouping](#row-grouping).                                                                                    |
 | `groupsExpanded`                     | `boolean`                                                                                                                    | `false`            | Groups start expanded.                                                                                                                                                                                                      |
 | `v-model:selectedGroups`             | `GroupPath[]`                                                                                                                | `[]`               | Server-side grouping: groups selected by query, by path (`[[{ key, value }]]`), without their rows.                                                                                                                         |
+| `v-model:range`                      | `CellRange \| null`                                                                                                          | `null`             | Cell-range selection: the selected block, `{ start, end }` corner cells (`{ rowKey, columnKey }`). One cell alone is no range.                                                                                              |
 | `rowClickable`                       | `boolean`                                                                                                                    | `false`            | Pointer cursor; `row-click` is always emitted.                                                                                                                                                                              |
 | `rowClass`                           | `(row, index) => ClassValue`                                                                                                 | —                  |                                                                                                                                                                                                                             |
 | `highlightedRows`                    | `RowKey[]`                                                                                                                   | —                  |                                                                                                                                                                                                                             |
@@ -277,6 +280,7 @@ chunks that on-demand imports share with the entry, even when nothing uses them.
 | `ariaLabel`                          | `string`                                                                                                                     | —                  |                                                                                                                                                                                                                             |
 | `statusBar`                          | `boolean \| StatusBarOptions`                                                                                                | `false`            | A status bar under the grid (status bar feature): counts, and `{ summary: [keys] }` sums of the selected rows. See [Status bar](#status-bar).                                                                               |
 | `saveCell`                           | `(event: CellEditEvent) => unknown`                                                                                          | —                  | Saves an edited cell (editing feature): return a Promise and the cell shows it saving; a rejection keeps the editor open with its message. See [Inline editing](#inline-editing).                                           |
+| `rangeSelection`                     | `boolean`                                                                                                                    | `false`            | Cell-range selection (range selection feature): drag across cells, Shift+click or Shift+arrows; Ctrl/⌘+C copies the block. `v-model:range` holds it. See [Cell-range selection](#cell-range-selection).                     |
 | `messages`                           | `GridMessages`                                                                                                               | —                  | Built-in text (translations, wording), over `createVueGrid({ messages })`. See [Text and parts](#text-and-parts).                                                                                                           |
 | `parts`                              | `GridParts`                                                                                                                  | —                  | Built-in parts to leave out (`{ filterButtons: false }`), over `createVueGrid({ parts })`.                                                                                                                                  |
 | `contextMenu`                        | `(ctx: { row, rowKey, column, value }) => MenuItem[] \| null`                                                                | —                  | Right-click menu for body cells. Needs `menusFeature`.                                                                                                                                                                      |
@@ -288,7 +292,7 @@ chunks that on-demand imports share with the entry, even when nothing uses them.
 `row-click(row, event)` · `cell-click({ row, rowKey, column, value, event })` (columns with `clickable: true`) ·
 `cell-action({ name, payload, row, rowKey, column })` (from renderers) · `sub-rows-error({ row, error })` · `context-action({ name, item, row, rowKey, column, value })` · `header-action({ name, item, column })` ·
 `query-change(query: GridQuery)` (sort + filters + page as one object, on mount and on every real change) ·
-`copy({ kind, text, rows, columns })` (rows or a cell were copied: `exportFeature`) ·
+`copy({ kind, text, rows, columns })` (rows or a cell were copied: `exportFeature`; a cell range: `rangeSelectionFeature`, `kind: 'range'`) ·
 `load-error(error)` (a `dataSource` call failed) ·
 `cell-edit({ row, rowKey, column, value, oldValue })` (an edited cell: `editingFeature`; update your data) ·
 plus the `update:*` events of every `v-model`.
@@ -318,6 +322,11 @@ grid.value?.reloadSubRows('c2') // forget lazily loaded children (of one row, or
 grid.value?.pinRow(42, 'top') // pin a row above the body ('bottom' below it, null to unpin): rowPinningFeature
 grid.value?.exportCsv({ filename: 'orders.csv' }) / getCsv() / copyRows() // exportFeature, see Export and copy
 grid.value?.startEdit(42, 'stake') / stopEdit() // editingFeature: open a cell's editor; save (or stopEdit(true): drop) the open one
+grid.value?.selectRange({
+  start: { rowKey: 1, columnKey: 'stake' },
+  end: { rowKey: 9, columnKey: 'stake' },
+}) // rangeSelectionFeature (null clears)
+grid.value?.getRangeValues() / copyRange() // the selected block's raw values, row by row / copy it as tab-separated text
 ```
 
 `reload()` also forgets lazily loaded children, as does passing a different `load-sub-rows`
@@ -1139,6 +1148,52 @@ editor's code loads on demand, while the browser is idle, once a grid has an edi
 `grid.startEdit(rowKey, columnKey)` opens an editor from code, `grid.stopEdit()` closes it. Its
 text (`Edit {column}`, `Enter a number.`, `Saving…`) is in `messages`.
 
+## Cell-range selection
+
+`rangeSelectionFeature` selects blocks of cells, as in a spreadsheet:
+
+```vue
+<script setup lang="ts">
+import { ref } from 'vue'
+import {
+  VGrid,
+  keyboardNavigationFeature,
+  rangeSelectionFeature,
+  statusBarFeature,
+  type CellRange,
+} from '@nocopypaste/vue-grid'
+const range = ref<CellRange | null>(null) // { start: { rowKey, columnKey }, end: { rowKey, columnKey } }
+</script>
+
+<template>
+  <VGrid
+    v-model:range="range"
+    :rows
+    :columns
+    row-key="id"
+    range-selection
+    status-bar
+    :features="[rangeSelectionFeature, statusBarFeature, keyboardNavigationFeature]"
+    @copy="(e) => e.kind === 'range' && notify('Copied')"
+  />
+</template>
+```
+
+- **Mouse**: press on a cell and drag; past an edge the grid scrolls and the block follows.
+  Shift+click stretches it from the last clicked cell. A plain click is one cell again (no range).
+  Touch drags still scroll.
+- **Keyboard** (with `keyboardNavigationFeature`): Shift+arrows extend it from the focused cell,
+  Ctrl/⌘+A selects every cell, Esc clears it.
+- **Copy**: Ctrl/⌘+C copies it as tab-separated lines, as the cells show them (`exportValue` wins),
+  so it pastes into Excel or Google Sheets as cells; the grid emits `copy` with `kind: 'range'`.
+  `grid.copyRange()` does it from code, `grid.getRangeValues()` returns the raw values.
+- **Status bar** (`statusBarFeature`): the number of cells, and the sum and average of its numbers.
+- **What it covers**: the corner cells are kept by row key and column key, so the block follows
+  sorting and filtering and spans rows virtual scrolling hasn't drawn; expanded child rows are in
+  it, group rows and pinned rows are not. Row selection (`selectable`) works alongside: checkboxes
+  select rows, dragging over cells selects a range, and Ctrl/⌘+C copies the range while there is one.
+- Style it with `--vg-color-range` (the cells' tint) and `--vg-color-range-border` (the outline).
+
 ## Status bar
 
 `statusBarFeature` adds a bar under the grid, like a spreadsheet's:
@@ -1164,7 +1219,10 @@ text (`Edit {column}`, `Enter a number.`, `Saving…`) is in `messages`.
   like the column's cells. Selected child rows count too. With "select all N matching rows" on
   (server data) the summary hides: only the loaded page is known.
 - **Your own content**: the `#status-bar` slot gets `{ rowCount, totalRowCount, selectedCount,
-allSelected, filterCount, summary, clearFilters }` and replaces the default content.
+allSelected, filterCount, summary, range, clearFilters }` and replaces the default content.
+- **Cell range**: with `rangeSelectionFeature`, a selected block of cells shows its size and the
+  `aggregates` of its numbers (`12 cells: Sum 1,135.47 Average 283.87`), formatted like the cells
+  when they all come from one column.
 - Leave items out with `rows: false`, `selected: false`, `filters: false` or `clear: false`.
 - The bar is a `group` labelled "Grid status"; style it with `.vg-status-bar`. Its component loads
   on demand (own chunk).
@@ -1258,6 +1316,9 @@ With `keyboardNavigationFeature` it is an ARIA `grid` (`treegrid` with sub-grids
 `Home`/`End`, `Ctrl+Home`/`Ctrl+End`, `PageUp`/`PageDown`; `ContextMenu` / `Shift+F10` opens the context menu. `Enter` sorts a header (`Shift+Enter` adds it with `multi-sort`) or activates the
 cell's control; `Space` toggles row selection; `→`/`←` on a tree cell expands/collapses; `Alt+←/→` on a
 header moves the column; `Alt+Shift+←/→` on a header resizes it (with `columnResizingFeature`).
+With `range-selection` (`rangeSelectionFeature`), `Shift+arrows` select a block of cells from the
+focused one, `Ctrl/⌘+A` every cell, `Esc` clears it and `Ctrl/⌘+C` copies it; cells in it carry
+`aria-selected`.
 
 ## Touch, phones and tablets
 

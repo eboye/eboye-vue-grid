@@ -116,6 +116,7 @@ export const srLatn = {
   average: 'Prosek',
   min: 'Min.',
   max: 'Maks.',
+  cellCount: (count) => plural(count, { one: '# ćelija', few: '# ćelije', other: '# ćelija' }),
 
   editCell: (column) => `Izmeni: ${column}`,
   editNotANumber: 'Unesite broj.',

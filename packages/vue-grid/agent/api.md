@@ -1,4 +1,4 @@
-# @nocopypaste/vue-grid 0.11.0 — API reference
+# @nocopypaste/vue-grid 0.12.0 — API reference
 
 > Generated from the TypeScript sources (`scripts/gen-agent.mjs`). Machine-readable: `agent/api.json`, `agent/grid-config.schema.json`.
 
@@ -20,6 +20,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `keyboardNavigationFeature` | Keyboard navigation (the ARIA grid pattern): the grid is one tab stop, arrow keys / Home / End / PageUp / PageDown move between cells, Enter activates a cell's control, Space selects a row, →/← expand and collapse, Alt+←/→ move a column, ContextMenu / Shift+F10 open the cell menu. Without it the grid is an ARIA `table`: its own controls (sort buttons, expanders, checkboxes, filter buttons) sit in the normal Tab order instead. |  |  |
 | `menusFeature` | Context menus: the built-in header menu (sort, filter, pin, move, hide, reset, your own items via `header-menu`) and body-cell menus (`context-menu`), opened by right-click, the ContextMenu key or Shift+F10. Without it the browser's own menu shows. The standalone `<VGridMenu>` and the `actions-menu` renderer don't need it. | `contextMenu` `headerMenu` |  |
 | `paginationFeature` | Built-in pagination: the `pagination` prop and `v-model:page` / `v-model:page-size`. Pages the client rows, or asks the `dataSource` for pages. The pager loads on demand (own chunk). Not needed for the standalone `<VGridPagination>` component. | `pagination` `page` `pageSize` |  |
+| `rangeSelectionFeature` | Cell-range selection, as in a spreadsheet (`range-selection`, `v-model:range`): drag across cells or Shift+click to select a block, Shift+arrows to extend it (with `keyboardNavigationFeature`), Ctrl/⌘+A for every cell, Esc to clear. Ctrl/⌘+C copies it as tab-separated text, as the cells show it, and the status bar (`statusBarFeature`) shows its count, sum and average. Separate from row selection (`selectable`): both can be on. | `rangeSelection` `range` |  |
 | `rowGroupingFeature` | Row grouping: `v-model:group-by="['region', 'status']"` groups the rows by those columns into collapsible group rows with their value, row count and the aggregates of columns with an `aggregate`. Columns with `groupable: true` get Group by / Ungroup items in the header menu. Without it, `group-by` is ignored. | `groupsExpanded` `groupBy` | `groupable` `groupValue` |
 | `rowPinningFeature` | Pinned rows: `v-model:pinned-rows` (`{ top, bottom }` row keys), `pinned-top-rows` / `pinned-bottom-rows` (extra rows that aren't in the data) and the `pinRow()` method. Pinned rows stay in view (sticky) under the header or at the bottom while the body scrolls, and aren't filtered, sorted or paged. Without it, those options are ignored. | `pinnedTopRows` `pinnedBottomRows` `pinnedRows` |  |
 | `selectionFeature` | Row selection: the `selectable` prop (multi or single), `v-model:selected`, `selection-mode` (cascade through sub-grids), `is-row-selectable`, Space on a row, shift-click (or Shift+Space) for a range, the select-all checkbox, `prune-selection`, and with server data a "select all N matching rows" banner (`v-model:select-all-matching`; it loads on demand, its own chunk). | `selectable` `selectionMode` `isRowSelectable` `pruneSelection` `selected` `selectAllMatching` |  |
@@ -42,6 +43,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `pagination` | `boolean \| PaginationOptions` | `false` | `paginationFeature` | Built-in pagination under the grid (server-side with `dataSource`, client-side otherwise). |
 | `statusBar` | `boolean \| StatusBarOptions` |  | `statusBarFeature` | A status bar under the grid (status bar feature): rows that pass the filters ("84 of 200 rows"), selected rows, active filters with Clear; `{ summary: ['total'] }` adds the sum and average of those columns over the selected rows. `#status-bar` replaces its content. |
 | `saveCell` | `(event: CellEditEvent<T>) => unknown` |  | `editingFeature` | Saves an edited cell (editing feature), after `cell-edit`: return a Promise and the cell shows it saving; a rejection keeps the editor open with the error's message. Without it, `cell-edit` alone carries the change. |
+| `rangeSelection` | `boolean` |  | `rangeSelectionFeature` | Cell-range selection (range selection feature), as in a spreadsheet: drag across cells or Shift+click to select a block, Shift+arrows to extend it, Ctrl/⌘+A for every cell, Esc to clear; Ctrl/⌘+C copies it. Bind `v-model:range` to read or set it. |
 | `messages` | `GridMessages` |  |  | Built-in text (translations, wording), over `createVueGrid({ messages })`. |
 | `parts` | `GridParts` |  |  | Built-in parts to leave out (`{ progressBar: false }`), over `createVueGrid({ parts })`. |
 | `sortMode` | `'controlled' \| 'client'` | `'controlled'` |  | `controlled` (default): a header click only updates `v-model:sort` (sort on the server or in your own code). `client`: the grid sorts the rows itself. Ignored with `dataSource`. |
@@ -99,6 +101,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `v-model:groupBy` | `readonly string[] \| string \| null` | `null` | `rowGroupingFeature` | Column keys to group the rows by, outermost first (`['region', 'status']`, or one key). Group rows show the value, the row count and the columns' aggregates. Needs the row grouping feature. |
 | `v-model:selectAllMatching` | `boolean` | `false` | `selectionFeature` | Server data: every row matching the query is selected, not just the loaded ones (set from the "Select all N rows" banner; ends when filters change or a row is unticked). Act on the query then, not on `selected`. Needs the selection feature. |
 | `v-model:selectedGroups` | `GroupPath[]` | `[]` | `serverGroupingFeature` | Server data with row grouping: groups selected by query, by their paths, without loading their rows (a group's checkbox). Act on these with `selected` and the filters. Ends when the filters or the grouping change. Needs the selection and row grouping features. |
+| `v-model:range` | `CellRange \| null` | `null` | `rangeSelectionFeature` | The selected block of cells (`range-selection`): `{ start, end }` corner cells by row key and column key, or null. One cell alone is no range. Needs the range selection feature. |
 
 ## Events
 
@@ -158,6 +161,9 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `copyRows` | `Promise<boolean>` |  | Copies rows to the clipboard as tab-separated text (pastes as cells into spreadsheets): the selected rows by default, as displayed, no header. Resolves `false` if nothing was copied. Export feature. |
 | `startEdit` | `boolean` |  | Opens the editor of a cell (editing feature), if the column is `editable` for that row and the row is on screen. Returns whether it opened. |
 | `stopEdit` | `void` |  | Closes the open editor: saves its value, or with `cancel` drops it. Editing feature. |
+| `selectRange` | `void` |  | Selects a block of cells (`null` clears it), as `v-model:range` does. Range selection feature, with `range-selection`. |
+| `getRangeValues` | `unknown[][]` |  | The selected range's raw values, row by row (`[]` without a range). Range selection feature. |
+| `copyRange` | `Promise<boolean>` |  | Copies the selected range as tab-separated text, as the cells show it (Ctrl/⌘+C does the same). Resolves `false` without a range. Range selection feature. |
 
 ## `ColumnDef<T>`
 

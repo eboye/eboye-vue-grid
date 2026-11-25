@@ -83,6 +83,17 @@ const label = (name: StatusBarAggregate) =>
           >
         </span>
       </span>
+      <span v-if="scope.range" class="vg-status-summary vg-status-range">
+        <span class="vg-status-item">
+          <span class="vg-status-label"
+            >{{ m.cellCount?.(scope.range.cells) ?? plural(scope.range.cells, 'cell', 'cells')
+            }}{{ scope.range.items.length ? ':' : '' }}</span
+          >
+          <span v-for="item in scope.range.items" :key="item.name" class="vg-status-value"
+            >{{ label(item.name) }} <strong>{{ item.text }}</strong></span
+          >
+        </span>
+      </span>
     </template>
   </div>
 </template>

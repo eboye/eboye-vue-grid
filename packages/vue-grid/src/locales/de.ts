@@ -115,6 +115,7 @@ export const de = {
   average: 'Durchschnitt',
   min: 'Min.',
   max: 'Max.',
+  cellCount: (count) => plural(count, { one: '# Zelle', other: '# Zellen' }),
 
   editCell: (column) => `${column} bearbeiten`,
   editNotANumber: 'Geben Sie eine Zahl ein.',

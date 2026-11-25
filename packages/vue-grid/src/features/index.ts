@@ -11,6 +11,7 @@ import { filteringFeature } from './filtering'
 import { keyboardNavigationFeature } from './keyboardNavigation'
 import { menusFeature } from './menus'
 import { paginationFeature } from './pagination'
+import { rangeSelectionFeature } from './rangeSelection'
 import { rowGroupingFeature } from './rowGrouping'
 import { rowPinningFeature } from './rowPinning'
 import { selectionFeature } from './selection'
@@ -34,6 +35,7 @@ export {
   keyboardNavigationFeature,
   menusFeature,
   paginationFeature,
+  rangeSelectionFeature,
   rowGroupingFeature,
   rowPinningFeature,
   selectionFeature,
@@ -68,4 +70,5 @@ export const allFeatures: readonly GridFeature[] = [
   statusBarFeature,
   serverGroupingFeature,
   editingFeature,
+  rangeSelectionFeature,
 ]

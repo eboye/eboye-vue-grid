@@ -116,6 +116,7 @@ export const sr = {
   average: 'Просек',
   min: 'Мин.',
   max: 'Макс.',
+  cellCount: (count) => plural(count, { one: '# ћелија', few: '# ћелије', other: '# ћелија' }),
 
   editCell: (column) => `Измени: ${column}`,
   editNotANumber: 'Унесите број.',

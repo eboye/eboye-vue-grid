@@ -42,6 +42,7 @@ import type {
   CellActionEvent,
   CellClickEvent,
   CellEditEvent,
+  CellRange,
   CellContext,
   CellRendererDefinition,
   ClassValue,
@@ -112,6 +113,12 @@ const props = withDefaults(
      * alone carries the change.
      */
     saveCell?: (event: CellEditEvent<T>) => unknown
+    /**
+     * Cell-range selection (range selection feature), as in a spreadsheet: drag across cells or
+     * Shift+click to select a block, Shift+arrows to extend it, Ctrl/⌘+A for every cell, Esc to
+     * clear; Ctrl/⌘+C copies it. Bind `v-model:range` to read or set it.
+     */
+    rangeSelection?: boolean
     /** Built-in text (translations, wording), over `createVueGrid({ messages })`. */
     messages?: GridMessages
     /** Built-in parts to leave out (`{ progressBar: false }`), over `createVueGrid({ parts })`. */
@@ -273,6 +280,11 @@ const selectAllMatching = defineModel<boolean>('selectAllMatching', { default: f
  * the grouping change. Needs the selection and row grouping features.
  */
 const selectedGroups = defineModel<GroupPath[]>('selectedGroups', { default: () => [] })
+/**
+ * The selected block of cells (`range-selection`): `{ start, end }` corner cells by row key and
+ * column key, or null. One cell alone is no range. Needs the range selection feature.
+ */
+const range = defineModel<CellRange | null>('range', { default: null })
 
 const emit = defineEmits<{
   /** The combined query (sort, filters, search, page) — on mount and whenever it changes. */
@@ -919,10 +931,16 @@ const keyboard = features.keyboardNavigation?.useGridKeyboard(root, {
     : undefined,
 })
 const onKeyDown = (event: KeyboardEvent) => {
+  // the range's keys first: Shift+arrows extend it, Ctrl/⌘+C copies it rather than rows
+  if (cellRange?.onKeyDown(event)) return
   keyboard?.onKeyDown(event)
   if (part('copyShortcut')) exporter?.onKeyDown(event)
 }
-const onFocusIn = (event: FocusEvent) => keyboard?.onFocusIn(event)
+const onFocusIn = (event: FocusEvent) => {
+  keyboard?.onFocusIn(event)
+  cellRange?.onFocusIn(event)
+}
+const onPointerDown = (event: PointerEvent) => cellRange?.onPointerDown(event)
 /** ARIA grid with keyboard navigation; a plain table (and tabbable controls) without it. */
 const gridRole = computed(() =>
   !keyboardNav ? 'table' : context.treeMode.value ? 'treegrid' : 'grid',
@@ -1025,27 +1043,33 @@ const topRows = computed(() => {
 const displayRows = computed<readonly T[]>(() =>
   grouping?.active.value ? (grouping.groups.value as unknown as T[]) : topRows.value,
 )
+// How the body nests: shared by virtual scrolling's layout and the cell range's row order.
+const levelKeyOf = grouping ? () => grouping.keyOf(keyReader()) : keyReader
+const openKeys = () => grouping?.expanded(expandedSet.value) ?? expandedSet.value
+const subRowsReader = () => {
+  const tree = treeMode.value && sub ? sub.snapshot : null
+  return grouping ? grouping.tree(tree) : tree
+}
+const isGroupReader = () => (grouping?.active.value ? grouping.isGroup : undefined)
+const levelPreparer = () => {
+  const visible = filt?.visibleKeys.value ?? null
+  const sorter = makeSorter()
+  const key = keyReader()
+  const prepare = (rows: readonly T[]) =>
+    sorter(visible ? rows.filter((row) => visible.has(key(toRaw(row)))) : rows)
+  return grouping ? grouping.preparer(prepare) : prepare
+}
 const virt = features.virtualScrolling?.useVirtualRows<T>({
   root,
   options: () => virtualOptions.value,
   rows: () => displayRows.value,
-  keyOf: grouping ? () => grouping.keyOf(keyReader()) : keyReader,
-  expanded: () => grouping?.expanded(expandedSet.value) ?? expandedSet.value,
-  subRows: () => {
-    const tree = treeMode.value && sub ? sub.snapshot : null
-    return grouping ? grouping.tree(tree) : tree
-  },
+  keyOf: levelKeyOf,
+  expanded: openKeys,
+  subRows: subRowsReader,
   hasDetail: () => hasDetail.value,
-  isGroup: () => (grouping?.active.value ? grouping.isGroup : undefined),
+  isGroup: isGroupReader,
   rowExpandable: () => props.rowExpandable,
-  preparer: () => {
-    const visible = filt?.visibleKeys.value ?? null
-    const sorter = makeSorter()
-    const key = keyReader()
-    const prepare = (rows: readonly T[]) =>
-      sorter(visible ? rows.filter((row) => visible.has(key(toRaw(row)))) : rows)
-    return grouping ? grouping.preparer(prepare) : prepare
-  },
+  preparer: levelPreparer,
 })
 const onScroll = () => virt?.onScroll()
 /** Virtual mode: positions of every visible row, detail row and sub-grid. */
@@ -1119,6 +1143,25 @@ const editing = features.editing?.useEditing<T>({
   preload: () => features.editing!.preload(),
 })
 
+// ── Cell range ──────────────────────────────────────────────────────────────────────────────
+const cellRange = features.rangeSelection?.useCellRange<T>({
+  root,
+  enabled: () => !!props.rangeSelection,
+  model: range,
+  levels: {
+    top: () => windowRows.value,
+    keyOf: levelKeyOf,
+    open: openKeys,
+    tree: subRowsReader,
+    prepare: levelPreparer,
+    isGroup: isGroupReader,
+  },
+  columns: () => resolvedColumns.value.filter((c) => c.kind === 'data'),
+  getKey,
+  format: () => formatContext.value,
+  onCopy: (event) => emit('copy', event),
+})
+
 // ── Status bar ──────────────────────────────────────────────────────────────────────────────
 const statusBar = features.statusBar?.useStatusBar<T>({
   options: () => props.statusBar,
@@ -1141,6 +1184,7 @@ const statusBar = features.statusBar?.useStatusBar<T>({
   columns: () => props.columns,
   resolve: resolveRenderer,
   format: formatContext,
+  range: () => cellRange?.cells.value ?? null,
 })
 
 if (process.env.NODE_ENV !== 'production') {
@@ -1195,6 +1239,8 @@ if (process.env.NODE_ENV !== 'production') {
     const editCol = props.columns.find((c) => c.editable)?.key
     if (!features.editing && editCol)
       missing('editing', `Column "${editCol}" is \`editable\`; that`)
+    if (!features.rangeSelection && props.rangeSelection)
+      missing('rangeSelection', '`range-selection`')
     const exportCol = props.columns.find((c) => c.exportValue)?.key
     if (!features.export && exportCol)
       missing('export', `Column "${exportCol}" has an \`exportValue\`; that`)
@@ -1239,6 +1285,7 @@ const context: GridContext = {
   sortable,
   SortMarker: features.sorting?.SortMarker,
   editing: editing && { ...editing, Editor: features.editing!.Editor },
+  range: cellRange,
   resize: resize && {
     Handle: features.columnResizing!.Handle,
     can: canResize,
@@ -1389,6 +1436,19 @@ const exportXlsx = viaExport('exportXlsx')
 const print = viaExport('print')
 const copyRows = viaExport('copyRows')
 
+/** The range selection feature's methods; without it they warn (dev) and do nothing. */
+function noRange(name: string) {
+  if (process.env.NODE_ENV !== 'production')
+    warnOnce(
+      'feature:rangeSelection',
+      `${name}() needs the range selection feature (rangeSelectionFeature) and \`range-selection\`.`,
+    )
+}
+const selectRange = (next: CellRange | null) =>
+  cellRange ? cellRange.select(next) : noRange('selectRange')
+const getRangeValues = () => cellRange?.values() ?? (noRange('getRangeValues'), [])
+const copyRange = () => cellRange?.copyRange() ?? (noRange('copyRange'), Promise.resolve(false))
+
 const startEdit = (rowKey: RowKey, columnKey: string) =>
   editing?.startAt(rowKey, columnKey) ?? false
 const stopEdit = (cancel = false) => editing?.stop(cancel)
@@ -1415,6 +1475,9 @@ defineExpose<VGridExposed>({
   clearSelection,
   startEdit,
   stopEdit,
+  selectRange,
+  getRangeValues,
+  copyRange,
 })
 </script>
 
@@ -1497,7 +1560,9 @@ defineExpose<VGridExposed>({
             : undefined
         "
         :aria-colcount="resolvedColumns.length"
-        :aria-multiselectable="(keyboardNav && selectMode === 'multi') || undefined"
+        :aria-multiselectable="
+          (keyboardNav && (selectMode === 'multi' || (!!cellRange && rangeSelection))) || undefined
+        "
         :style="{
           '--vg-columns': template,
           '--vg-row-height': virtualOptions ? `${virtualOptions.rowHeight}px` : undefined,
@@ -1505,6 +1570,7 @@ defineExpose<VGridExposed>({
         @scroll.passive="onScroll"
         @keydown="onKeyDown"
         @focusin="onFocusIn"
+        @pointerdown="onPointerDown"
       >
         <component :is="features.columnGroups.GroupRow" v-if="hasGroups && features.columnGroups" />
         <VGridHeader

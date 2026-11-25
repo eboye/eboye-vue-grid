@@ -118,6 +118,7 @@ export const en = {
   average: 'Average',
   min: 'Min',
   max: 'Max',
+  cellCount: (count) => plural(count, { one: '# cell', other: '# cells' }),
 
   editCell: (column) => `Edit ${column}`,
   editNotANumber: 'Enter a number.',

@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.12.0 — 2026-11-25
+
+**Cell-range selection** (`rangeSelectionFeature`, opt-in, with `range-selection`): select a
+block of cells as in a spreadsheet. Drag across cells (past an edge the grid scrolls and the block
+follows), Shift+click to stretch it from the last clicked cell, Shift+arrows from the focused cell
+(with `keyboardNavigationFeature`), Ctrl/⌘+A for every cell, Esc to clear; a plain click is one cell
+again, and touch drags still scroll. Ctrl/⌘+C copies it as tab-separated text as the cells show it
+(`exportValue` wins), so it pastes into Excel or Sheets as cells, and the grid emits `copy` with
+`kind: 'range'`. `v-model:range` holds its corners (`{ start, end }`, each `{ rowKey, columnKey }`),
+so it follows sorting and filtering, spans rows virtual scrolling hasn't drawn, and covers expanded
+child rows (not group or pinned rows). With `statusBarFeature` the bar shows its size and the sum and
+average of its numbers (formatted like the cells when they come from one column; `#status-bar` gets
+`range`). Cells in it are tinted and outlined (`--vg-color-range`, `--vg-color-range-border`) and
+carry `aria-selected`. It works next to row selection. Methods `selectRange(range)`,
+`getRangeValues()`, `copyRange()`; types `CellRange`, `CellRef`, `StatusBarRange`; message
+`cellCount` (in every language pack). The feature adds 2.3 kB gzipped to a grid that uses it; a
+plain grid grows by 0.2 kB (to 15.5).
+
 ## 0.11.0 — 2026-11-25
 
 **Language packs**: ready-made, complete translations of every built-in text, each its own import

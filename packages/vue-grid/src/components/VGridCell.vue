@@ -69,6 +69,12 @@ function onAction(name: string, payload?: unknown) {
 
 // Editing feature: whether this cell can be / is being edited, and the keys and double-click that start it.
 const edit = grid.editing?.forCell(() => props)
+// Range selection feature: the cell's classes while it is in the selected range (its edges too).
+const inRange = grid.range?.forCell(() => ({
+  rowKey: props.rowKey,
+  columnKey: props.column.key,
+  data: props.column.kind === 'data' && !props.pinned,
+}))
 
 function onContextMenu(event: MouseEvent) {
   if (props.column.kind !== 'data') return
@@ -121,6 +127,7 @@ function onClick(event: MouseEvent) {
         'vg-col-sized': column.kind === 'data' && grid.resize?.isSized(column.key),
         'vg-cell-editing': edit?.active.value,
       },
+      inRange,
       cellClass,
       grid.ui.value.cell,
     ]"
@@ -128,6 +135,7 @@ function onClick(event: MouseEvent) {
     :data-vg-flash="flash?.n"
     :data-vg-flash-dir="flash?.dir"
     :data-vg-editable="edit?.editable.value || undefined"
+    :aria-selected="(grid.keyboardNav && !!inRange) || undefined"
     @click="onClick"
     @contextmenu="onContextMenu"
     @pointerdown="onPointerDown"

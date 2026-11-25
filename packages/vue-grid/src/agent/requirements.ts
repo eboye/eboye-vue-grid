@@ -25,6 +25,7 @@ export type FeatureId =
   | 'statusBar'
   | 'serverGrouping'
   | 'editing'
+  | 'rangeSelection'
 
 /** Grid props (and `v-model`s) that need a feature. */
 export const propFeatures: Readonly<Record<string, FeatureId>> = {
@@ -63,6 +64,8 @@ export const propFeatures: Readonly<Record<string, FeatureId>> = {
   sorts: 'sorting',
   statusBar: 'statusBar',
   saveCell: 'editing',
+  rangeSelection: 'rangeSelection',
+  range: 'rangeSelection',
 }
 
 /** Column options that need a feature. */

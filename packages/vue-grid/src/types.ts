@@ -500,6 +500,33 @@ export interface VGridExposed {
   startEdit(rowKey: RowKey, columnKey: string): boolean
   /** Closes the open editor: saves its value, or with `cancel` drops it. Editing feature. */
   stopEdit(cancel?: boolean): void
+  /**
+   * Selects a block of cells (`null` clears it), as `v-model:range` does. Range selection feature,
+   * with `range-selection`.
+   */
+  selectRange(range: CellRange | null): void
+  /** The selected range's raw values, row by row (`[]` without a range). Range selection feature. */
+  getRangeValues(): unknown[][]
+  /**
+   * Copies the selected range as tab-separated text, as the cells show it (Ctrl/⌘+C does the same).
+   * Resolves `false` without a range. Range selection feature.
+   */
+  copyRange(): Promise<boolean>
+}
+
+/** A cell, by its row's key and its column's key (cell-range selection). */
+export interface CellRef {
+  rowKey: RowKey
+  columnKey: string
+}
+
+/**
+ * A block of cells (`v-model:range`): from the cell where it started (`start`) to the opposite
+ * corner (`end`), in the rows' and columns' current order.
+ */
+export interface CellRange {
+  start: CellRef
+  end: CellRef
 }
 
 /** Which rows, columns and values an export or copy takes (export feature). */
@@ -539,9 +566,12 @@ export interface PrintOptions extends Omit<ExportOptions, 'delimiter' | 'guard' 
   landscape?: boolean
 }
 
-/** Something was copied to the clipboard (export feature): rows (`copyRows`, Ctrl+C) or one cell. */
+/**
+ * Something was copied to the clipboard: rows (`copyRows`, Ctrl+C) or one cell (export feature), or
+ * a block of cells (`range`: range selection feature; `rows` and `columns` are the range's).
+ */
 export interface CopyEvent<T = any> {
-  kind: 'rows' | 'cell'
+  kind: 'rows' | 'cell' | 'range'
   text: string
   rows: readonly T[]
   columns: readonly ColumnDef<T>[]
@@ -593,6 +623,14 @@ export interface StatusBarSummary {
   items: { name: StatusBarAggregate; value: unknown; text: string }[]
 }
 
+/** The status bar's figures for a selected cell range. */
+export interface StatusBarRange {
+  /** Cells in the range. */
+  cells: number
+  /** Each aggregate over the range's values (sum and average skip what isn't a number). */
+  items: { name: StatusBarAggregate; value: unknown; text: string }[]
+}
+
 /** The `#status-bar` slot's props (status bar feature). */
 export interface StatusBarScope {
   /** Top-level rows that pass the filters, on every page (the server's `total` with a data source). */
@@ -607,6 +645,12 @@ export interface StatusBarScope {
   filterCount: number
   /** The `summary` columns over the selected rows (empty when none are selected). */
   summary: StatusBarSummary[]
+  /**
+   * The selected cell range (range selection feature), while it covers more than one cell: how many
+   * cells, and the `aggregates` (sum, average…) of its numbers, formatted like the cells when they
+   * all come from one column. Null without a range.
+   */
+  range: StatusBarRange | null
   clearFilters: () => void
 }
 
@@ -728,7 +772,12 @@ export interface ServerGroupingFeature {
   readonly feature: 'serverGrouping'
   useServerGroups: typeof import('./composables/useServerGroups').useServerGroups
 }
+export interface RangeSelectionFeature {
+  readonly feature: 'rangeSelection'
+  useCellRange: typeof import('./composables/useCellRange').useCellRange
+}
 export type GridFeature =
+  | RangeSelectionFeature
   | EditingFeature
   | ServerGroupingFeature
   | StatusBarFeature
@@ -1007,6 +1056,8 @@ export interface GridMessages {
   min?: string
   /** Default `Max`. */
   max?: string
+  /** A selected cell range's size (range selection). Default `` `${count} cells` `` (`1 cell`). */
+  cellCount?: (count: number) => string
 
   // ── Editing ──
   /** The editor's accessible name. Default `Edit ${column}`. */

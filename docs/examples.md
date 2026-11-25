@@ -57,6 +57,7 @@ export interface Order {
 26. [Status bar](#26-status-bar)
 27. [Text and parts](#27-text-and-parts)
 28. [Inline editing](#28-inline-editing)
+29. [Cell-range selection](#29-cell-range-selection)
 
 ---
 
@@ -137,27 +138,28 @@ app.use(createVueGrid({ features: [sortingFeature, filteringFeature] }))
 app.use(createVueGrid({ features: allFeatures })) // all of them
 ```
 
-| Feature                     | Needed for                                                                                                           |
-| --------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `sortingFeature`            | `sortable` columns, `v-model:sort` header UI, `sort-mode="client"`, `multi-sort` / `v-model:sorts`                   |
-| `filteringFeature`          | `filterable` columns, `filter-row`, `<VGridSearch>`, `v-model:filters`, `filter-storage`                             |
-| `serverDataFeature`         | `data-source`                                                                                                        |
-| `paginationFeature`         | `pagination`, `v-model:page`, `v-model:page-size`                                                                    |
-| `selectionFeature`          | `selectable`, `v-model:selected`, `selection-mode`, `is-row-selectable`                                              |
-| `subGridsFeature`           | `sub-rows`, `load-sub-rows`, `has-sub-rows` (detail rows work without it)                                            |
-| `menusFeature`              | the header right-click menu (`header-menu`) and `context-menu` for body cells                                        |
-| `columnReorderFeature`      | dragging headers, Alt+←/→ on a header, the menu's Move items                                                         |
-| `columnPinningFeature`      | `pinned` columns (sticky, with shadows), the menu's Pin items                                                        |
-| `virtualScrollingFeature`   | `virtual` (render only the rows in view)                                                                             |
-| `columnVisibilityFeature`   | `hidden` columns, `columnState.hidden`, the menu's Hide column item                                                  |
-| `keyboardNavigationFeature` | arrow-key navigation between cells (ARIA grid); without it an ARIA table with tabbable controls                      |
-| `columnResizingFeature`     | dragging a header edge to resize, double-click to fit, `resizable`, `maxWidth`, `columnState.widths`                 |
-| `columnGroupsFeature`       | `group` on columns: a sticky row of group headers above the column headers                                           |
-| `rowPinningFeature`         | `v-model:pinned-rows`, `pinRow()`, `pinned-top-rows` / `pinned-bottom-rows`                                          |
-| `aggregationFeature`        | column `aggregate`, `totals`, `totals-label`, `aggregates`                                                           |
-| `rowGroupingFeature`        | `v-model:group-by`, `groups-expanded`, column `groupable` / `groupValue`, `#group-<key>`                             |
-| `exportFeature`             | `exportCsv()` / `getCsv()` / `copyRows()`, Ctrl/⌘+C, `@copy`, column `exportValue` / `exportable`                    |
-| `editingFeature`            | column `editable` / `editor` / `editorOptions` / `validate`, `@cell-edit`, `save-cell`, `startEdit()` / `stopEdit()` |
+| Feature                     | Needed for                                                                                                            |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `sortingFeature`            | `sortable` columns, `v-model:sort` header UI, `sort-mode="client"`, `multi-sort` / `v-model:sorts`                    |
+| `filteringFeature`          | `filterable` columns, `filter-row`, `<VGridSearch>`, `v-model:filters`, `filter-storage`                              |
+| `serverDataFeature`         | `data-source`                                                                                                         |
+| `paginationFeature`         | `pagination`, `v-model:page`, `v-model:page-size`                                                                     |
+| `selectionFeature`          | `selectable`, `v-model:selected`, `selection-mode`, `is-row-selectable`                                               |
+| `subGridsFeature`           | `sub-rows`, `load-sub-rows`, `has-sub-rows` (detail rows work without it)                                             |
+| `menusFeature`              | the header right-click menu (`header-menu`) and `context-menu` for body cells                                         |
+| `columnReorderFeature`      | dragging headers, Alt+←/→ on a header, the menu's Move items                                                          |
+| `columnPinningFeature`      | `pinned` columns (sticky, with shadows), the menu's Pin items                                                         |
+| `virtualScrollingFeature`   | `virtual` (render only the rows in view)                                                                              |
+| `columnVisibilityFeature`   | `hidden` columns, `columnState.hidden`, the menu's Hide column item                                                   |
+| `keyboardNavigationFeature` | arrow-key navigation between cells (ARIA grid); without it an ARIA table with tabbable controls                       |
+| `columnResizingFeature`     | dragging a header edge to resize, double-click to fit, `resizable`, `maxWidth`, `columnState.widths`                  |
+| `columnGroupsFeature`       | `group` on columns: a sticky row of group headers above the column headers                                            |
+| `rowPinningFeature`         | `v-model:pinned-rows`, `pinRow()`, `pinned-top-rows` / `pinned-bottom-rows`                                           |
+| `aggregationFeature`        | column `aggregate`, `totals`, `totals-label`, `aggregates`                                                            |
+| `rowGroupingFeature`        | `v-model:group-by`, `groups-expanded`, column `groupable` / `groupValue`, `#group-<key>`                              |
+| `exportFeature`             | `exportCsv()` / `getCsv()` / `copyRows()`, Ctrl/⌘+C, `@copy`, column `exportValue` / `exportable`                     |
+| `editingFeature`            | column `editable` / `editor` / `editorOptions` / `validate`, `@cell-edit`, `save-cell`, `startEdit()` / `stopEdit()`  |
+| `rangeSelectionFeature`     | `range-selection`, `v-model:range`, `selectRange()` / `getRangeValues()` / `copyRange()`, `copy` with `kind: 'range'` |
 
 Without its feature, an option does nothing and a dev warning names the feature to add. A grid
 reads `features` once when it is created.
@@ -2473,3 +2475,53 @@ defineEmits<{ commit: [value?: unknown]; cancel: [] }>()
   <textarea v-model="value" :aria-label="label" :disabled="disabled" rows="1" />
 </template>
 ```
+
+---
+
+## 29. Cell-range selection
+
+Select a block of cells as in a spreadsheet (needs `rangeSelectionFeature`; Shift+arrows also need
+`keyboardNavigationFeature`, the sum and average `statusBarFeature`):
+
+```vue
+<script setup lang="ts">
+import { ref } from 'vue'
+import {
+  VGrid,
+  keyboardNavigationFeature,
+  rangeSelectionFeature,
+  statusBarFeature,
+  type CellRange,
+  type CopyEvent,
+} from '@nocopypaste/vue-grid'
+
+const range = ref<CellRange | null>(null)
+function onCopy(e: CopyEvent<Order>) {
+  if (e.kind === 'range') toast(`Copied ${e.rows.length} × ${e.columns.length} cells`)
+}
+</script>
+
+<template>
+  <VGrid
+    v-model:range="range"
+    :rows="orders"
+    :columns="columns"
+    row-key="id"
+    range-selection
+    status-bar
+    :features="[rangeSelectionFeature, keyboardNavigationFeature, statusBarFeature]"
+    style="height: 480px"
+    @copy="onCopy"
+  />
+</template>
+```
+
+- Drag across cells (the grid scrolls at its edges), Shift+click to stretch from the last clicked
+  cell, Shift+arrows from the focused one, Ctrl/⌘+A for every cell, Esc to clear.
+- Ctrl/⌘+C copies the block as tab-separated text, as displayed: it pastes into Excel or Sheets as
+  cells. `grid.copyRange()` does the same from code; `grid.getRangeValues()` gives the raw values.
+- `range` is `{ start, end }`, each `{ rowKey, columnKey }`; set it to select a block from code
+  (`grid.selectRange(range)` too). It follows sorting and filtering and spans rows virtual
+  scrolling hasn't drawn, expanded children included; group and pinned rows are left out.
+- The status bar shows `12 cells: Sum … Average …` (`messages.cellCount` words it).
+- Works next to row selection: checkboxes select rows, Ctrl/⌘+C copies the range while there is one.

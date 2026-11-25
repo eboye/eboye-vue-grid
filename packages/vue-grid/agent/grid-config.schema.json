@@ -37,6 +37,7 @@
           "keyboardNavigationFeature",
           "menusFeature",
           "paginationFeature",
+          "rangeSelectionFeature",
           "rowGroupingFeature",
           "rowPinningFeature",
           "selectionFeature",
@@ -61,6 +62,10 @@
     },
     "saveCell": {
       "description": "Saves an edited cell (editing feature), after `cell-edit`: return a Promise and the cell shows it saving; a rejection keeps the editor open with the error's message. Without it, `cell-edit` alone carries the change."
+    },
+    "rangeSelection": {
+      "type": "boolean",
+      "description": "Cell-range selection (range selection feature), as in a spreadsheet: drag across cells or Shift+click to select a block, Shift+arrows to extend it, Ctrl/⌘+A for every cell, Esc to clear; Ctrl/⌘+C copies it. Bind `v-model:range` to read or set it."
     },
     "messages": {
       "description": "Built-in text (translations, wording), over `createVueGrid({ messages })`."
@@ -467,6 +472,9 @@
       "type": "array",
       "items": {},
       "description": "Server data with row grouping: groups selected by query, by their paths, without loading their rows (a group's checkbox). Act on these with `selected` and the filters. Ends when the filters or the grouping change. Needs the selection and row grouping features."
+    },
+    "range": {
+      "description": "The selected block of cells (`range-selection`): `{ start, end }` corner cells by row key and column key, or null. One cell alone is no range. Needs the range selection feature."
     }
   },
   "required": [

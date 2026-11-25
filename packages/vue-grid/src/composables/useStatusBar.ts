@@ -9,6 +9,7 @@ import type {
   RowKey,
   StatusBarAggregate,
   StatusBarOptions,
+  StatusBarRange,
   StatusBarScope,
   StatusBarSummary,
 } from '../types'
@@ -39,6 +40,8 @@ export interface UseStatusBarOptions<T> {
   /** The grid's renderer lookup for a column. */
   resolve: (col: ColumnDef<T>) => { definition?: CellRendererDefinition; fallback?: boolean }
   format: Ref<FormatContext>
+  /** The selected cell range's rows and columns (range selection feature), if any. */
+  range?: () => { rows: readonly T[]; columns: readonly { def: ColumnDef<T> }[] } | null
 }
 
 const DEFAULT_AGGREGATES: readonly StatusBarAggregate[] = ['sum', 'avg']
@@ -105,6 +108,27 @@ export function useStatusBar<T>(opts: UseStatusBarOptions<T>) {
     return out
   })
 
+  /** The selected cell range: its size and aggregates, like a spreadsheet's status bar. */
+  const range = computed<StatusBarRange | null>(() => {
+    const r = config.value && opts.range?.()
+    if (!r) return null
+    const values: unknown[] = []
+    for (const row of r.rows) for (const col of r.columns) values.push(getCellValue(row, col.def))
+    const aggregates = config.value?.aggregates ?? DEFAULT_AGGREGATES
+    // one column: formatted like its cells (money stays money); several: plain numbers
+    const only = r.columns.length === 1 ? r.columns[0]!.def : undefined
+    const items = aggregates
+      .map((name) => ({ name, value: aggregateValues(name, values, values) }))
+      .filter((item) => item.value !== null && item.value !== undefined)
+      .map((item) => ({
+        ...item,
+        text: only
+          ? text(item.value, only)
+          : formatNumber(item.value, opts.format.value, { maximumFractionDigits: 2 }),
+      }))
+    return { cells: values.length, items }
+  })
+
   return {
     enabled: computed(() => !!config.value),
     /** Which items show (each on unless `false`). */
@@ -125,6 +149,7 @@ export function useStatusBar<T>(opts: UseStatusBarOptions<T>) {
       allSelected: opts.allMatching.value,
       filterCount: opts.filterCount.value,
       summary: summary.value,
+      range: range.value,
       clearFilters: opts.clearFilters,
     })),
   }

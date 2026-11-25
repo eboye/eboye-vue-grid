@@ -664,6 +664,11 @@
    * Inline editing: the editor lies over the cell (same padding); the content stays underneath,
    * hidden, so the column keeps its width.
    */
+  /* Dragging out a cell range: no text selection on the way. */
+  .vg-range-dragging {
+    user-select: none;
+    cursor: cell;
+  }
   .vg-cell-editing:not(.vg-pin-left, .vg-pin-right) {
     position: relative; /* pinned cells are sticky, which positions the editor already */
   }

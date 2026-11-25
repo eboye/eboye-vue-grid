@@ -18,7 +18,7 @@ const points = [
   },
   {
     title: 'Pay for what you use',
-    text: 'A plain grid is 15.3 kB gzipped. Sorting, filtering, grouping, export and the rest are opt-in imports that tree-shake away.',
+    text: 'A plain grid is 15.5 kB gzipped. Sorting, filtering, grouping, export and the rest are opt-in imports that tree-shake away.',
   },
   {
     title: 'Keyboard and screen readers',

@@ -110,6 +110,21 @@ export const pages: Page[] = [
     files: ['EditingDemo'],
   },
   {
+    id: 'range',
+    title: 'Cell-range selection',
+    section: 'Rows',
+    summary:
+      'Select a block of cells as in a spreadsheet: drag, Shift+click or Shift+arrows. Ctrl+C copies it as rows and columns that paste into Excel or Sheets, and the status bar adds it up. Row selection still works alongside.',
+    try: [
+      'Drag from a Stake cell down a few rows: the status bar shows the count, sum and average.',
+      'Shift+click another cell to stretch the block, then press Ctrl+C (⌘C) and paste it into a spreadsheet.',
+      'Click a cell and use Shift+arrow keys; Ctrl+A (⌘A) takes every cell, Esc clears.',
+      'Turn on 2,000 rows and drag past the bottom edge, or Shift+click far below: rows that aren’t drawn still count.',
+    ],
+    docs: '29. Cell-range selection',
+    files: ['RangeDemo'],
+  },
+  {
     id: 'grouping',
     title: 'Row grouping',
     section: 'Rows',

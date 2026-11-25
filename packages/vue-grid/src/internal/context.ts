@@ -59,6 +59,8 @@ export interface GridContext {
   sortable(col: ColumnDef): boolean
   /** Editing feature: the open editor and how cells start one. */
   editing?: import('../composables/useEditing').Editing<any> & { Editor: Component }
+  /** Range selection feature: whether a cell is in the selected range, and on which edges. */
+  range?: import('../composables/useCellRange').CellRangeState
   /** Sorting feature: a column's number in a multi-column sort. */
   SortMarker?: Component
   /** Only with the column resizing feature. */
