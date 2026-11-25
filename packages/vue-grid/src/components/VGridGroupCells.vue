@@ -53,6 +53,16 @@ const parts = computed<Part[]>(() => {
   return out
 })
 
+/** With column virtualization: the parts with something in view (the pinned ones always). */
+const shown = computed(() => {
+  const cv = grid.cols
+  if (!cv?.active.value) return parts.value
+  const cols = grid.columns.value
+  return parts.value.filter(
+    (p) => p.column.pinned || p.kind === 'select' || cv.shows(cols.indexOf(p.column), p.span),
+  )
+})
+
 const count = computed(() =>
   format ? formatNumber(props.group.count, format.value) : String(props.group.count),
 )
@@ -92,7 +102,7 @@ function onLabelClick(event: MouseEvent) {
 
 <template>
   <div
-    v-for="part in parts"
+    v-for="part in shown"
     :key="part.column.key"
     :role="grid.cellRole"
     :tabindex="grid.rovingTabindex"
@@ -114,9 +124,11 @@ function onLabelClick(event: MouseEvent) {
       grid.ui.value.cell,
     ]"
     :style="[
-      part.span > 1 ? { 'grid-column': `span ${part.span}` } : undefined,
       grid.pinStyle(part.column.key),
+      grid.cols?.place(part.column.key, part.span) ??
+        (part.span > 1 ? { 'grid-column': `span ${part.span}` } : undefined),
     ]"
+    :aria-colindex="grid.cols?.at(part.column.key)"
     @click="part.kind === 'label' ? onLabelClick($event) : undefined"
   >
     <template v-if="part.kind === 'select'">

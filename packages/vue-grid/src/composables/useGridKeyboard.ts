@@ -10,6 +10,11 @@ export interface GridKeyboardOptions {
   moveColumn: (key: string, direction: -1 | 1) => void
   /** Alt+Shift+ArrowLeft/Right on a header cell (column resizing feature). */
   resizeColumn?: (key: string, delta: number) => void
+  /**
+   * Column virtualization: brings a column (0-based) into view so its cells render. Cells then
+   * carry `aria-colindex`, which the keys go by (and the grid `aria-colcount`).
+   */
+  revealColumn?: (index: number) => Promise<void>
 }
 
 /** Px per Alt+Shift+Arrow resize step. */
@@ -40,6 +45,11 @@ export function useGridKeyboard(root: Ref<HTMLElement | undefined>, opts: GridKe
 
   /** Columns a cell covers: a group row's label spans several (`aria-colspan`). */
   const spanOf = (cell: Element) => Number(cell.getAttribute('aria-colspan')) || 1
+  /** A cell's column (0-based) when columns are virtualized (`aria-colindex`), else undefined. */
+  const colOf = (cell: Element) => {
+    const n = Number(cell.getAttribute('aria-colindex'))
+    return n ? n - 1 : undefined
+  }
 
   /**
    * ↑ / ↓ / PageUp / PageDown keep the column they started in, even through a cell spanning
@@ -53,8 +63,8 @@ export function useGridKeyboard(root: Ref<HTMLElement | undefined>, opts: GridKe
     const rowIndex = row ? allRows.indexOf(row) : -1
     const cells = row ? cellsOf(row) : []
     const colIndex = cells.indexOf(cell)
-    let col = 0
-    for (let i = 0; i < colIndex; i++) col += spanOf(cells[i]!)
+    let col = colOf(cell) ?? 0
+    if (colOf(cell) === undefined) for (let i = 0; i < colIndex; i++) col += spanOf(cells[i]!)
     if (sticky?.cell === cell) col = sticky.col
     return { allRows, rowIndex, colIndex, col }
   }
@@ -64,6 +74,9 @@ export function useGridKeyboard(root: Ref<HTMLElement | undefined>, opts: GridKe
     const row = allRows[rowIndex]
     if (!row) return undefined
     const cells = cellsOf(row)
+    // virtualized columns: the cell whose track range holds `col`, if it is rendered
+    if (cells.length && cells.every((c) => colOf(c) !== undefined))
+      return cells.find((c) => colOf(c)! <= col && col < colOf(c)! + spanOf(c))
     let start = 0
     let found = cells[0]
     for (const cell of cells) {
@@ -124,6 +137,10 @@ export function useGridKeyboard(root: Ref<HTMLElement | undefined>, opts: GridKe
     const expander = cell.querySelector<HTMLButtonElement>(':scope .vg-expander')
     let next: HTMLElement | undefined
     let vertical = false
+    /** Virtualized columns: the column a horizontal key goes to, and the row it is in. */
+    let target: { row: number; col: number } | undefined
+    const count = Number(root.value?.getAttribute('aria-colcount')) || 0
+    const byIndex = colOf(cell) !== undefined && !!opts.revealColumn
     switch (event.key) {
       case 'ArrowRight':
         if (expander && expander.getAttribute('aria-expanded') === 'false') {
@@ -131,7 +148,8 @@ export function useGridKeyboard(root: Ref<HTMLElement | undefined>, opts: GridKe
           event.preventDefault()
           return
         }
-        next = cellsOf(allRows[rowIndex]!)[colIndex + 1]
+        if (byIndex) target = { row: rowIndex, col: col + spanOf(cell) }
+        else next = cellsOf(allRows[rowIndex]!)[colIndex + 1]
         break
       case 'ArrowLeft':
         if (expander && expander.getAttribute('aria-expanded') === 'true') {
@@ -139,7 +157,8 @@ export function useGridKeyboard(root: Ref<HTMLElement | undefined>, opts: GridKe
           event.preventDefault()
           return
         }
-        next = cellsOf(allRows[rowIndex]!)[colIndex - 1]
+        if (byIndex) target = { row: rowIndex, col: col - 1 }
+        else next = cellsOf(allRows[rowIndex]!)[colIndex - 1]
         break
       case 'ArrowDown':
         next = cellAt(allRows, rowIndex + 1, col)
@@ -150,9 +169,14 @@ export function useGridKeyboard(root: Ref<HTMLElement | undefined>, opts: GridKe
         vertical = true
         break
       case 'Home':
-        next = ctrl ? cellAt(allRows, 0, 0) : cellsOf(allRows[rowIndex]!)[0]
+        if (byIndex) target = { row: ctrl ? 0 : rowIndex, col: 0 }
+        else next = ctrl ? cellAt(allRows, 0, 0) : cellsOf(allRows[rowIndex]!)[0]
         break
       case 'End': {
+        if (byIndex) {
+          target = { row: ctrl ? allRows.length - 1 : rowIndex, col: count - 1 }
+          break
+        }
         const row = ctrl ? allRows[allRows.length - 1] : allRows[rowIndex]
         const cells = row ? cellsOf(row) : []
         next = cells[cells.length - 1]
@@ -198,6 +222,22 @@ export function useGridKeyboard(root: Ref<HTMLElement | undefined>, opts: GridKe
       }
       default:
         return
+    }
+    if (target) {
+      if (target.col < 0 || target.col >= count) return
+      event.preventDefault()
+      const { row, col: at } = target
+      next = cellAt(allRows, row, at)
+      if (next) return void focusCell(next)
+      // not rendered yet: scroll it into view, then focus it in the row as it is then
+      const rowEl = allRows[row]
+      void opts.revealColumn!(at).then(() => {
+        const rows_ = rows()
+        const i = rowEl ? rows_.indexOf(rowEl) : -1
+        focusCell(cellAt(rows_, i < 0 ? row : i, at))
+      })
+      sticky = null
+      return
     }
     if (next) {
       event.preventDefault()

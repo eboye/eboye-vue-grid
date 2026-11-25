@@ -138,6 +138,7 @@ function onClick(event: MouseEvent) {
       grid.ui.value.cell,
     ]"
     :style="grid.pinStyle(column.key)"
+    :aria-colindex="grid.cols?.at(column.key)"
     :data-vg-flash="flash?.n"
     :data-vg-flash-dir="flash?.dir"
     :data-vg-editable="edit?.editable.value || undefined"

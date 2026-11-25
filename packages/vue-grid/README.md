@@ -113,31 +113,32 @@ Out of the box `<VGrid>` is a plain, read-only table: columns with any renderer 
 saved column state (`storage`), detail rows, tabbable controls and theming. Everything else is
 an opt-in feature:
 
-| Feature                     | Turns on                                                                                                                                                                                                                                                                                                                                |
-| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `sortingFeature`            | Sort buttons on `sortable` headers, the header menu's sort items, `sort-mode="client"` sorting                                                                                                                                                                                                                                          |
-| `filteringFeature`          | Funnels on `filterable` headers, `filter-row`, `<VGridSearch>`, `v-model:filters`, `filter-storage`, the header menu's filter items                                                                                                                                                                                                     |
-| `serverDataFeature`         | `data-source`: the grid fetches sorted, filtered pages itself                                                                                                                                                                                                                                                                           |
-| `paginationFeature`         | `pagination` and `v-model:page` / `v-model:page-size` (the standalone `<VGridPagination>` doesn't need it)                                                                                                                                                                                                                              |
-| `selectionFeature`          | `selectable` (multi or single), `v-model:selected`, `selection-mode`, `is-row-selectable`, select-all, Space to select, shift-click / Shift+Space ranges, `prune-selection`, the selection in `#toolbar` for batch actions, "select all N matching rows" with server data (`v-model:select-all-matching`)                               |
-| `subGridsFeature`           | `sub-rows` / `load-sub-rows` / `has-sub-rows`: nested rows in a CSS `subgrid` (detail rows don't need it)                                                                                                                                                                                                                               |
-| `menusFeature`              | The header right-click menu (`header-menu`) and body-cell menus (`context-menu`); without it the browser's menu shows. The standalone `<VGridMenu>` and the `actions-menu` renderer don't need it                                                                                                                                       |
-| `columnReorderFeature`      | Dragging headers to reorder (mouse and pen; on touch, hold the header first), Alt+←/→ on a header, the header menu's Move items                                                                                                                                                                                                         |
-| `columnPinningFeature`      | Sticky `pinned: 'left' \| 'right'` columns with edge shadows, the header menu's Pin items; while they'd take more than `pinned-max-share` of the grid (half), they scroll like the others; without it pins are ignored                                                                                                                  |
-| `virtualScrollingFeature`   | `virtual: { rowHeight, overscan?, detailHeight? }`: only the rows in view render, sub-grids and detail rows included; without it every row renders                                                                                                                                                                                      |
-| `columnVisibilityFeature`   | `hidden: true` columns, `columnState.hidden`, the header menu's Hide column item; without it every column shows                                                                                                                                                                                                                         |
-| `keyboardNavigationFeature` | The ARIA grid pattern: one Tab stop, arrow keys / Home / End / PageUp / PageDown between cells, Enter, Space to select, →/← to expand, Alt+←/→ to move a column. Without it the grid is an ARIA `table` with its controls in the Tab order                                                                                              |
-| `columnResizingFeature`     | Drag a header edge to resize (mouse, pen, touch), double-click it to fit the content, ←/→ on the focused edge (Alt+Shift+←/→ on a header with keyboard navigation); `minWidth` / `maxWidth` bound it, `resizable: false` opts out; widths in `columnState.widths`, persisted with `storage`; Fit width / Reset width in the header menu |
-| `columnGroupsFeature`       | Grouped column headers: columns with the same `group` share a header cell in a sticky row above theirs; groups follow reordering, hiding, resizing and pinning (a pin boundary splits a group)                                                                                                                                          |
-| `rowPinningFeature`         | `v-model:pinned-rows` / `pinRow()`: rows that stay in view above or below the body, plus `pinned-top-rows` / `pinned-bottom-rows` for rows that aren't in the data                                                                                                                                                                      |
-| `aggregationFeature`        | Column `aggregate` (`sum`, `avg`, `min`, `max`, `count`, a function) and `totals`: a sticky totals row over the filtered rows                                                                                                                                                                                                           |
-| `rowGroupingFeature`        | `v-model:group-by`: rows grouped by one or more columns into collapsible group rows with the value, row count and aggregates; Group by / Ungroup in the header menu for `groupable` columns                                                                                                                                             |
-| `serverGroupingFeature`     | With a `data-source`: groups from the server (`query.groupBy` / `groupPath`), each one's contents loaded on expand, groups selected by query (`v-model:selected-groups`). See [Server-side grouping](#server-side-grouping)                                                                                                             |
-| `exportFeature`             | `exportCsv()` / `getCsv()`, `exportXlsx()` / `getXlsx()` (Excel, typed cells), `print()` (every row, header on each page), `copyRows()`, Ctrl/⌘+C for the selected rows or the focused cell, the `copy` event; column `exportValue` / `exportable`                                                                                      |
-| `statusBarFeature`          | `status-bar`: a bar under the grid with the rows that pass the filters, the selected rows, the active filters (with Clear), and `{ summary: [keys] }` columns' sum and average over the selected rows; the `#status-bar` slot                                                                                                           |
-| `editingFeature`            | `editable` columns: an editor in the cell (text, number, date, select, checkbox, or your own) on double-click, Enter / F2 or typing; `cell-edit`, and `save-cell` for async saves. See [Inline editing](#inline-editing)                                                                                                                |
-| `rangeSelectionFeature`     | `range-selection`: drag, Shift+click or Shift+arrows select a block of cells, Ctrl/⌘+C copies it (tab-separated, pastes into spreadsheets), the status bar adds it up; `v-model:range`. See [Cell-range selection](#cell-range-selection)                                                                                               |
-| `attributesFeature`         | `row-attrs` / `cell-attrs`: your own attributes on each row and cell, such as test hooks (`data-test`), from the row, its position and the column. See [Test hooks](#test-hooks-row-and-cell-attributes)                                                                                                                                |
+| Feature                       | Turns on                                                                                                                                                                                                                                                                                                                                |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sortingFeature`              | Sort buttons on `sortable` headers, the header menu's sort items, `sort-mode="client"` sorting                                                                                                                                                                                                                                          |
+| `filteringFeature`            | Funnels on `filterable` headers, `filter-row`, `<VGridSearch>`, `v-model:filters`, `filter-storage`, the header menu's filter items                                                                                                                                                                                                     |
+| `serverDataFeature`           | `data-source`: the grid fetches sorted, filtered pages itself                                                                                                                                                                                                                                                                           |
+| `paginationFeature`           | `pagination` and `v-model:page` / `v-model:page-size` (the standalone `<VGridPagination>` doesn't need it)                                                                                                                                                                                                                              |
+| `selectionFeature`            | `selectable` (multi or single), `v-model:selected`, `selection-mode`, `is-row-selectable`, select-all, Space to select, shift-click / Shift+Space ranges, `prune-selection`, the selection in `#toolbar` for batch actions, "select all N matching rows" with server data (`v-model:select-all-matching`)                               |
+| `subGridsFeature`             | `sub-rows` / `load-sub-rows` / `has-sub-rows`: nested rows in a CSS `subgrid` (detail rows don't need it)                                                                                                                                                                                                                               |
+| `menusFeature`                | The header right-click menu (`header-menu`) and body-cell menus (`context-menu`); without it the browser's menu shows. The standalone `<VGridMenu>` and the `actions-menu` renderer don't need it                                                                                                                                       |
+| `columnReorderFeature`        | Dragging headers to reorder (mouse and pen; on touch, hold the header first), Alt+←/→ on a header, the header menu's Move items                                                                                                                                                                                                         |
+| `columnPinningFeature`        | Sticky `pinned: 'left' \| 'right'` columns with edge shadows, the header menu's Pin items; while they'd take more than `pinned-max-share` of the grid (half), they scroll like the others; without it pins are ignored                                                                                                                  |
+| `virtualScrollingFeature`     | `virtual: { rowHeight, overscan?, detailHeight? }`: only the rows in view render, sub-grids and detail rows included; without it every row renders                                                                                                                                                                                      |
+| `columnVirtualizationFeature` | `virtual-columns`: only the columns in view render their cells (pinned ones and the checkbox always), every column keeping its CSS grid track; `scrollToColumn(key)`. See [Column virtualization](#column-virtualization)                                                                                                               |
+| `columnVisibilityFeature`     | `hidden: true` columns, `columnState.hidden`, the header menu's Hide column item; without it every column shows                                                                                                                                                                                                                         |
+| `keyboardNavigationFeature`   | The ARIA grid pattern: one Tab stop, arrow keys / Home / End / PageUp / PageDown between cells, Enter, Space to select, →/← to expand, Alt+←/→ to move a column. Without it the grid is an ARIA `table` with its controls in the Tab order                                                                                              |
+| `columnResizingFeature`       | Drag a header edge to resize (mouse, pen, touch), double-click it to fit the content, ←/→ on the focused edge (Alt+Shift+←/→ on a header with keyboard navigation); `minWidth` / `maxWidth` bound it, `resizable: false` opts out; widths in `columnState.widths`, persisted with `storage`; Fit width / Reset width in the header menu |
+| `columnGroupsFeature`         | Grouped column headers: columns with the same `group` share a header cell in a sticky row above theirs; groups follow reordering, hiding, resizing and pinning (a pin boundary splits a group)                                                                                                                                          |
+| `rowPinningFeature`           | `v-model:pinned-rows` / `pinRow()`: rows that stay in view above or below the body, plus `pinned-top-rows` / `pinned-bottom-rows` for rows that aren't in the data                                                                                                                                                                      |
+| `aggregationFeature`          | Column `aggregate` (`sum`, `avg`, `min`, `max`, `count`, a function) and `totals`: a sticky totals row over the filtered rows                                                                                                                                                                                                           |
+| `rowGroupingFeature`          | `v-model:group-by`: rows grouped by one or more columns into collapsible group rows with the value, row count and aggregates; Group by / Ungroup in the header menu for `groupable` columns                                                                                                                                             |
+| `serverGroupingFeature`       | With a `data-source`: groups from the server (`query.groupBy` / `groupPath`), each one's contents loaded on expand, groups selected by query (`v-model:selected-groups`). See [Server-side grouping](#server-side-grouping)                                                                                                             |
+| `exportFeature`               | `exportCsv()` / `getCsv()`, `exportXlsx()` / `getXlsx()` (Excel, typed cells), `print()` (every row, header on each page), `copyRows()`, Ctrl/⌘+C for the selected rows or the focused cell, the `copy` event; column `exportValue` / `exportable`                                                                                      |
+| `statusBarFeature`            | `status-bar`: a bar under the grid with the rows that pass the filters, the selected rows, the active filters (with Clear), and `{ summary: [keys] }` columns' sum and average over the selected rows; the `#status-bar` slot                                                                                                           |
+| `editingFeature`              | `editable` columns: an editor in the cell (text, number, date, select, checkbox, or your own) on double-click, Enter / F2 or typing; `cell-edit`, and `save-cell` for async saves. See [Inline editing](#inline-editing)                                                                                                                |
+| `rangeSelectionFeature`       | `range-selection`: drag, Shift+click or Shift+arrows select a block of cells, Ctrl/⌘+C copies it (tab-separated, pastes into spreadsheets), the status bar adds it up; `v-model:range`. See [Cell-range selection](#cell-range-selection)                                                                                               |
+| `attributesFeature`           | `row-attrs` / `cell-attrs`: your own attributes on each row and cell, such as test hooks (`data-test`), from the row, its position and the column. See [Test hooks](#test-hooks-row-and-cell-attributes)                                                                                                                                |
 
 ```ts
 // per grid
@@ -181,37 +182,38 @@ what you import.
 
 | Import (minified / gzip, Vue excluded)                                       | Initial chunk      |
 | ---------------------------------------------------------------------------- | ------------------ |
-| `VGrid` (no features)                                                        | 47.0 kB / 16.1 kB  |
-| `VGrid` + `sortingFeature`                                                   | 49.7 kB / 17.2 kB  |
-| `VGrid` + `filteringFeature`                                                 | 57.7 kB / 20.0 kB  |
-| `VGrid` + `serverDataFeature`                                                | 48.5 kB / 16.8 kB  |
-| `VGrid` + `paginationFeature`                                                | 47.2 kB / 16.2 kB  |
-| `VGrid` + `selectionFeature`                                                 | 51.2 kB / 17.6 kB  |
-| `VGrid` + `subGridsFeature`                                                  | 49.4 kB / 16.9 kB  |
-| `VGrid` + `menusFeature`                                                     | 58.3 kB / 19.9 kB  |
-| `VGrid` + `columnReorderFeature`                                             | 50.7 kB / 17.4 kB  |
-| `VGrid` + `columnPinningFeature`                                             | 50.0 kB / 17.2 kB  |
-| `VGrid` + `virtualScrollingFeature`                                          | 52.8 kB / 18.4 kB  |
-| `VGrid` + `columnVisibilityFeature`                                          | 47.2 kB / 16.2 kB  |
-| `VGrid` + `keyboardNavigationFeature`                                        | 49.8 kB / 17.2 kB  |
-| `VGrid` + `columnResizingFeature`                                            | 50.3 kB / 17.4 kB  |
-| `VGrid` + `columnGroupsFeature`                                              | 48.3 kB / 16.6 kB  |
-| `VGrid` + `rowPinningFeature`                                                | 52.0 kB / 17.7 kB  |
-| `VGrid` + `aggregationFeature`                                               | 52.3 kB / 17.8 kB  |
-| `VGrid` + `rowGroupingFeature`                                               | 57.8 kB / 19.8 kB  |
-| `VGrid` + `exportFeature`                                                    | 52.0 kB / 18.1 kB  |
-| `VGrid` + `statusBarFeature`                                                 | 49.9 kB / 17.2 kB  |
-| `VGrid` + `serverGroupingFeature`                                            | 50.1 kB / 17.3 kB  |
-| `VGrid` + `editingFeature`                                                   | 54.6 kB / 19.0 kB  |
-| `VGrid` + `rangeSelectionFeature`                                            | 61.1 kB / 21.1 kB  |
-| `VGrid` + `attributesFeature`                                                | 48.1 kB / 16.6 kB  |
-| `VGrid` + `allFeatures` + `VGridSearch`                                      | 143.9 kB / 48.4 kB |
-| `VGrid` + `currencyRenderer`                                                 | 48.4 kB / 16.6 kB  |
-| `VGrid` + `VGridPagination` + `VGridColumnMenu`                              | 54.3 kB / 18.6 kB  |
+| `VGrid` (no features)                                                        | 47.7 kB / 16.3 kB  |
+| `VGrid` + `sortingFeature`                                                   | 50.4 kB / 17.3 kB  |
+| `VGrid` + `filteringFeature`                                                 | 58.4 kB / 20.2 kB  |
+| `VGrid` + `serverDataFeature`                                                | 49.1 kB / 16.9 kB  |
+| `VGrid` + `paginationFeature`                                                | 47.8 kB / 16.4 kB  |
+| `VGrid` + `selectionFeature`                                                 | 51.8 kB / 17.8 kB  |
+| `VGrid` + `subGridsFeature`                                                  | 50.0 kB / 17.1 kB  |
+| `VGrid` + `menusFeature`                                                     | 59.0 kB / 20.1 kB  |
+| `VGrid` + `columnReorderFeature`                                             | 51.4 kB / 17.6 kB  |
+| `VGrid` + `columnPinningFeature`                                             | 50.6 kB / 17.3 kB  |
+| `VGrid` + `virtualScrollingFeature`                                          | 53.5 kB / 18.5 kB  |
+| `VGrid` + `columnVisibilityFeature`                                          | 47.8 kB / 16.4 kB  |
+| `VGrid` + `keyboardNavigationFeature`                                        | 51.1 kB / 17.6 kB  |
+| `VGrid` + `columnResizingFeature`                                            | 50.9 kB / 17.5 kB  |
+| `VGrid` + `columnGroupsFeature`                                              | 49.0 kB / 16.8 kB  |
+| `VGrid` + `rowPinningFeature`                                                | 52.8 kB / 17.9 kB  |
+| `VGrid` + `aggregationFeature`                                               | 53.0 kB / 18.1 kB  |
+| `VGrid` + `rowGroupingFeature`                                               | 58.8 kB / 20.1 kB  |
+| `VGrid` + `exportFeature`                                                    | 52.6 kB / 18.3 kB  |
+| `VGrid` + `statusBarFeature`                                                 | 50.6 kB / 17.4 kB  |
+| `VGrid` + `serverGroupingFeature`                                            | 50.8 kB / 17.5 kB  |
+| `VGrid` + `editingFeature`                                                   | 55.2 kB / 19.2 kB  |
+| `VGrid` + `rangeSelectionFeature`                                            | 61.8 kB / 21.3 kB  |
+| `VGrid` + `attributesFeature`                                                | 48.7 kB / 16.7 kB  |
+| `VGrid` + `columnVirtualizationFeature`                                      | 50.8 kB / 17.6 kB  |
+| `VGrid` + `allFeatures` + `VGridSearch`                                      | 148.7 kB / 50.1 kB |
+| `VGrid` + `currencyRenderer`                                                 | 49.1 kB / 16.8 kB  |
+| `VGrid` + `VGridPagination` + `VGridColumnMenu`                              | 54.9 kB / 18.8 kB  |
 | `sortRows` only                                                              | 0.7 kB / 0.4 kB    |
 | `toCsv` only                                                                 | 1.1 kB / 0.6 kB    |
-| everything                                                                   | 197.9 kB / 64.0 kB |
-| `validateGridConfig` (`@nocopypaste/vue-grid/agent`, never in an app bundle) | 81.9 kB / 22.4 kB  |
+| everything                                                                   | 202.7 kB / 65.7 kB |
+| `validateGridConfig` (`@nocopypaste/vue-grid/agent`, never in an app bundle) | 82.9 kB / 22.7 kB  |
 
 With `filteringFeature`, the filter popover body and the filter-row editors are **on-demand
 chunks**: they load the first time a popover opens or `filter-row` is on. With
@@ -261,6 +263,7 @@ chunks that on-demand imports share with the entry, even when nothing uses them.
 | `pruneSelection`                     | `boolean`                                                                                                                    | `false`            | Drop selected keys whose rows left the data (reload, delete, another server page).                                                                                                                                          |
 | `v-model:selectAllMatching`          | `boolean`                                                                                                                    | `false`            | Server data: every row matching the query is selected (from the banner).                                                                                                                                                    |
 | `virtual`                            | `{ rowHeight: number; overscan?: number; detailHeight?: number } \| false`                                                   | `false`            | Virtual scrolling (fixed-height rows; sub-grids and measured detail rows included). Needs `virtualScrollingFeature`.                                                                                                        |
+| `virtualColumns`                     | `boolean \| { overscan?: number; width?: string }`                                                                           | `false`            | Column virtualization: only the columns in view (plus `overscan`, default 2) render cells. Content-sized columns get `width` (default `10rem`). Needs `columnVirtualizationFeature`.                                        |
 | `v-model:pinnedRows`                 | `{ top?: RowKey[]; bottom?: RowKey[] } \| null`                                                                              | `null`             | Top-level rows pinned above / below the body. Needs `rowPinningFeature` (as do the next two). See [Pinned rows and totals](#pinned-rows-and-totals).                                                                        |
 | `pinnedTopRows` / `pinnedBottomRows` | `T[]`                                                                                                                        | —                  | Extra pinned rows that aren't part of `rows` (a target, last year's figures).                                                                                                                                               |
 | `totals`                             | `boolean \| 'top' \| 'bottom'`                                                                                               | `false`            | A totals row with each column's `aggregate`; `true` = `'bottom'`. Needs `aggregationFeature` (as do the next two).                                                                                                          |
@@ -322,7 +325,12 @@ Clicks on links, buttons and inputs inside a cell never trigger `row-click`.
 
 ```ts
 const grid = ref<VGridExposed>()
-grid.value?.scrollToTop() / scrollToRow(key) / expandAll() / collapseAll() / setColumnState(state)
+grid.value?.scrollToTop() /
+  scrollToRow(key) /
+  scrollToColumn(key) /
+  expandAll() /
+  collapseAll() /
+  setColumnState(state)
 grid.value?.patchLoadedRows([{ id: 'c2', city: 'Niš' }]) // field updates for lazy children and dataSource rows
 grid.value?.setFilters({ columns: { city: { type: 'text', op: 'contains', value: 'nis' } } })
 grid.value?.clearFilters() / openFilter('city') / reload() // reload: re-run the dataSource query
@@ -1380,6 +1388,39 @@ tree of tens of thousands of rows still renders about a screenful.
 - `scrollToRow(key)` reaches child rows too; `aria-rowcount` / `aria-rowindex` count every
   rendered row (data, detail and loading / error rows).
 
+### Column virtualization
+
+For grids with many columns (a sheet of months, a wide report), `columnVirtualizationFeature`
+renders only the cells of the columns in view, plus `overscan` (default 2) on each side:
+
+```vue
+<VGrid
+  :rows
+  :columns="monthColumns"
+  row-key="id"
+  :features="[columnVirtualizationFeature, virtualScrollingFeature]"
+  :virtual="{ rowHeight: 40 }"
+  virtual-columns
+  style="height: 600px"
+/>
+```
+
+It keeps the CSS grid as it is: every column keeps its track in `grid-template-columns`, rows and
+sub-grids keep their `subgrid`, and the rendered cells are placed on their own tracks
+(`grid-column`, with `aria-colindex` for assistive technology). So widths, pinning, resizing,
+reordering, column groups, row groups and totals line up as without it. With `virtual` too, the
+live example's 100,000 rows × 66 columns keep about a screenful of cells in the DOM.
+
+- **Always rendered:** pinned columns, the selection checkbox, and the column holding focus (so an
+  open editor or the keyboard position survives scrolling away).
+- **Widths:** a column whose own width follows its content (`auto`, the default; `min-content`; a
+  bare `1fr`) can't be measured while its cells aren't there, so it gets `:virtual-columns="{ width:
+'8rem' }"` (default `10rem`; a bare `fr` stretches from it). Give columns widths for full control.
+- **Keys:** arrows, Home / End and Ctrl+Home / End go by column, scrolling one in when it isn't
+  rendered; find and replace and cell ranges reach every column. `grid.scrollToColumn(key)` scrolls
+  to one from code.
+- Row heights come from the rendered cells; keep cells to one line (as with `virtual`).
+
 ## Performance
 
 What the grid does for you, and what helps on your side. The repository README lists the
@@ -1393,6 +1434,11 @@ switching density) touches every cell. Tips:
 - Set `detailHeight` close to your typical detail row: rows that render near their estimate settle
   without visible correction.
 - Raise `overscan` (default 6) only if fast scrolling shows blank rows on slow devices.
+
+**Many columns.** Past a few dozen columns, add `columnVirtualizationFeature` and `virtual-columns`
+(see [Column virtualization](#column-virtualization)): in a 2,000 × 122 test grid it cut the cells
+in the DOM from about 2,100 to about 230, the first render by about a third and the time to
+scroll by about 40%.
 
 **Changing data.** Re-render only what changed:
 

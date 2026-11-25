@@ -12,6 +12,7 @@ import type {
   RowKey,
 } from '../types'
 import type { ExtraAttrsState } from '../composables/useExtraAttrs'
+import type { VirtualColumnsState } from '../composables/useVirtualColumns'
 import type { ColumnFilter, FilterState, FilterType } from '../core/filter'
 import type { SelectionSummary } from '../core/selection'
 import type { SubRowEntry } from '../composables/useSubRows'
@@ -108,6 +109,10 @@ export interface GridContext {
   // presentation & events
   isHighlighted(key: RowKey): boolean
   rowClass(row: any, index: number): ClassValue
+  /** The columns whose cells render: all of them, or with `virtual-columns` those in view. */
+  shownColumns: ComputedRef<readonly ResolvedColumn[]>
+  /** `virtual-columns` (only with the column virtualization feature). */
+  cols?: VirtualColumnsState
   /** `row-attrs` / `cell-attrs` (only with the attributes feature). */
   attrs?: ExtraAttrsState
   rowClickable: ComputedRef<boolean>

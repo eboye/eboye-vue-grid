@@ -1,6 +1,7 @@
 import type {
   AggregationFeature,
   AttributesFeature,
+  ColumnVirtualizationFeature,
   ExportFeature,
   RowGroupingFeature,
   RowPinningFeature,
@@ -50,6 +51,7 @@ export interface FeatureSet {
   serverGrouping?: ServerGroupingFeature
   rangeSelection?: RangeSelectionFeature
   attributes?: AttributesFeature
+  columnVirtualization?: ColumnVirtualizationFeature
 }
 
 /** Merges feature lists (app-wide, then per grid); a later entry with the same name wins. */

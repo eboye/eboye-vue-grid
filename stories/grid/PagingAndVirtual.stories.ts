@@ -158,3 +158,91 @@ export const VirtualDetailRows: Story = {
       </div>`,
   }),
 }
+
+interface Sheet {
+  id: number
+  name: string
+  [month: string]: number | string
+}
+/** 120 number columns (M001 … M120) after a name. */
+const sheetColumns = [
+  { key: 'name', header: 'Name', width: '10rem', pinned: 'left' as const, editable: true },
+  ...Array.from({ length: 120 }, (_, i) => ({
+    key: `m${i + 1}`,
+    header: `M${String(i + 1).padStart(3, '0')}`,
+    renderer: 'number' as const,
+    width: '7rem',
+    sortable: true,
+    editable: true,
+  })),
+]
+const sheetRows: Sheet[] = Array.from({ length: 2000 }, (_, r) => {
+  const row: Sheet = { id: r + 1, name: `Row ${r + 1}` }
+  for (let c = 1; c <= 120; c++) row[`m${c}`] = ((r + 1) * 31 + c * 17) % 1000
+  return row
+})
+
+/**
+ * `virtual-columns` with `virtual`: 2,000 rows × 121 columns, but only the cells in view render
+ * (plus a little overscan), with the Name column pinned, row selection, keyboard navigation,
+ * editing and cell ranges. Every column keeps its track in the CSS grid; scroll sideways and only
+ * the cells change.
+ */
+export const VirtualColumns: Story = {
+  args: {
+    rows: sheetRows,
+    columns: sheetColumns,
+    rowKey: 'id',
+    ariaLabel: 'Sheet',
+    virtual: { rowHeight: 40 },
+    virtualColumns: true,
+    sortMode: 'client',
+    selectable: true,
+    rangeSelection: true,
+    statusBar: true,
+  },
+  render: (args) => ({
+    components: { VGrid },
+    setup: () => ({ args }),
+    template:
+      '<div class="sb-frame"><VGrid v-bind="args" @cell-edit="(e) => (e.row[e.column.key] = e.value)" /></div>',
+  }),
+}
+
+const teams = ['North', 'South', 'East', 'West']
+/** 120 months in ten years (column groups), a team to group the rows by, and totals. */
+const groupedSheetColumns = [
+  { key: 'name', header: 'Name', width: '10rem', pinned: 'left' as const },
+  { key: 'team', header: 'Team', width: '7rem', groupable: true },
+  ...Array.from({ length: 120 }, (_, i) => ({
+    key: `m${i + 1}`,
+    header: `M${String(i + 1).padStart(3, '0')}`,
+    group: `Year ${Math.floor(i / 12) + 1}`,
+    renderer: 'number' as const,
+    width: '7rem',
+    aggregate: 'sum' as const,
+  })),
+]
+const groupedSheetRows = sheetRows.slice(0, 200).map((r, i) => ({ ...r, team: teams[i % 4]! }))
+
+/**
+ * Column virtualization with column groups (the Year header row), row grouping (the group label
+ * spans the columns up to the first total) and a totals row.
+ */
+export const VirtualColumnsGrouped: Story = {
+  args: {
+    rows: groupedSheetRows,
+    columns: groupedSheetColumns,
+    rowKey: 'id',
+    ariaLabel: 'Sheet by team',
+    virtualColumns: true,
+    groupBy: ['team'],
+    groupsExpanded: true,
+    totals: true,
+  },
+  render: (args) => ({
+    components: { VGrid },
+    setup: () => ({ args }),
+    template: '<div class="sb-frame"><VGrid v-bind="args" /></div>',
+  }),
+}

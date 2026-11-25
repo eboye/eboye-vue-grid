@@ -5,6 +5,7 @@ import { columnGroupsFeature } from './columnGroups'
 import { columnPinningFeature } from './columnPinning'
 import { columnResizingFeature } from './columnResizing'
 import { columnReorderFeature } from './columnReorder'
+import { columnVirtualizationFeature } from './columnVirtualization'
 import { columnVisibilityFeature } from './columnVisibility'
 import { editingFeature } from './editing'
 import { exportFeature } from './export'
@@ -30,6 +31,7 @@ export {
   columnPinningFeature,
   columnReorderFeature,
   columnResizingFeature,
+  columnVirtualizationFeature,
   columnVisibilityFeature,
   editingFeature,
   exportFeature,
@@ -74,4 +76,5 @@ export const allFeatures: readonly GridFeature[] = [
   editingFeature,
   rangeSelectionFeature,
   attributesFeature,
+  columnVirtualizationFeature,
 ]

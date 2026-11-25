@@ -123,7 +123,7 @@ watchEffect(() => {
       />
       <template v-else>
         <VGridCell
-          v-for="column in grid.columns.value"
+          v-for="column in grid.shownColumns.value"
           :key="column.key"
           :row="item.row"
           :row-key="item.key"

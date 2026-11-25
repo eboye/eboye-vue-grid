@@ -73,6 +73,7 @@ import type {
   GridMessages,
   GridParts,
   VGridExposed,
+  VirtualColumnsOptions,
   VirtualOptions,
 } from '../types'
 import VGridHeader from './VGridHeader.vue'
@@ -181,6 +182,12 @@ const props = withDefaults(
      * the grid needs a bounded height. Needs the virtual scrolling feature.
      */
     virtual?: VirtualOptions | false
+    /**
+     * Column virtualization: only the columns in view (plus `overscan`) render cells, besides the
+     * pinned ones and the checkbox. `true` or `{ overscan, width }`. Needs the column
+     * virtualization feature.
+     */
+    virtualColumns?: VirtualColumnsOptions | boolean
     /** Persist column state (order, hidden, pins, widths): a localStorage key or your own storage. */
     storage?: ColumnStateStorage | string
     /**
@@ -605,7 +612,18 @@ const sizedColumns = computed(() =>
   }),
 )
 
-const template = computed(() => gridTemplate(sizedColumns.value.map((c) => c.def)))
+// ── Column virtualization ───────────────────────────────────────────────────────────────────
+const cols = features.columnVirtualization?.useVirtualColumns({
+  root,
+  options: () => props.virtualColumns,
+  columns: () => resolvedColumns.value,
+})
+
+const template = computed(() =>
+  cols?.active.value
+    ? cols.template(sizedColumns.value)
+    : gridTemplate(sizedColumns.value.map((c) => c.def)),
+)
 
 /** A row of column group headers is shown (column groups feature, some visible column grouped). */
 const hasGroups = computed(
@@ -956,6 +974,7 @@ function moveColumnBy(key: string, direction: -1 | 1): boolean {
 
 const keyboardNav = !!features.keyboardNavigation
 const keyboard = features.keyboardNavigation?.useGridKeyboard(root, {
+  revealColumn: cols && ((i) => cols.reveal(resolvedColumns.value[i]?.key ?? '')),
   moveColumn(key, direction) {
     if (!moveColumnBy(key, direction)) return
     nextTick(() =>
@@ -1241,6 +1260,7 @@ const cellRange = features.rangeSelection?.useCellRange<T>({
     }),
   clearKeys: () => part('clearShortcut'),
   scrollToRow: (key) => scrollToRow(key),
+  scrollToColumn: (key) => scrollToColumn(key),
   preloadFind: () => features.rangeSelection!.preloadFind(),
 })
 
@@ -1300,6 +1320,8 @@ if (process.env.NODE_ENV !== 'production') {
     if (!features.serverData && props.dataSource) missing('serverData', '`data-source`')
     if (!features.pagination && props.pagination) missing('pagination', '`pagination`')
     if (!features.virtualScrolling && props.virtual) missing('virtualScrolling', '`virtual`')
+    if (!features.columnVirtualization && props.virtualColumns)
+      missing('columnVirtualization', '`virtual-columns`')
     if (!features.selection && props.selectable) missing('selection', '`selectable`')
     if (!features.subGrids && (props.subRows || props.loadSubRows))
       missing('subGrids', '`sub-rows` / `load-sub-rows`')
@@ -1418,9 +1440,13 @@ const context: GridContext = {
   },
   virtual: isVirtual,
   virtualRows: virt?.context,
+  cols,
+  shownColumns: cols?.rendered ?? resolvedColumns,
+  // with column virtualization, also the cell's track (`grid-column`)
   pinStyle: (key) => {
     const offset = pinOffsets?.value[key]
-    return offset === undefined ? undefined : { '--vg-pin-offset': offset }
+    const place = cols?.place(key)
+    return offset === undefined ? place : { '--vg-pin-offset': offset, ...place }
   },
   onRowClick: (row, _key, event) => emit('row-click', row, event),
   onCellClick: (row, rowKey, column, event) =>
@@ -1463,6 +1489,15 @@ function scrollToRow(key: RowKey) {
     `[data-row-key="${CSS.escape(String(key))}"] > .vg-cell`,
   )
   cell?.scrollIntoView?.({ block: 'nearest' })
+}
+
+/** Scrolls a column into view sideways (with column virtualization, renders it first). */
+function scrollToColumn(key: string): Promise<void> {
+  if (cols?.active.value) return cols.reveal(key)
+  root.value
+    ?.querySelector<HTMLElement>(`:scope > .vg-header > [data-col-key="${CSS.escape(key)}"]`)
+    ?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' })
+  return Promise.resolve()
 }
 
 function expandAll() {
@@ -1560,6 +1595,7 @@ const stopEdit = (cancel = false) => editing?.stop(cancel)
 defineExpose<VGridExposed>({
   scrollToTop,
   scrollToRow,
+  scrollToColumn,
   expandAll,
   collapseAll,
   setColumnState,

@@ -64,6 +64,8 @@ export interface CellRangeOptions<T> {
   findKeys: () => boolean
   /** Brings a row into view (virtual scrolling renders it first). */
   scrollToRow: (key: RowKey) => void
+  /** Brings a column into view (column virtualization renders it first). */
+  scrollToColumn?: (key: string) => Promise<void>
   /** Loads the find bar's chunk. */
   preloadFind?: () => Promise<unknown>
 }
@@ -801,6 +803,7 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
     const rowKey = opts.getKey(row)
     findCurrent.value = cellId(rowKey, col.key)
     opts.scrollToRow(rowKey)
+    await opts.scrollToColumn?.(col.key)
     await nextTick()
     cellEl({ rowKey, columnKey: col.key })?.scrollIntoView?.({
       block: 'nearest',

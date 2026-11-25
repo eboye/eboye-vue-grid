@@ -69,8 +69,8 @@ onBeforeUnmount(() => {
         { 'vg-group-empty': !seg.label, [`vg-pin-${seg.pinned}`]: seg.pinned },
       ]"
       :style="[
-        { 'grid-column': `${seg.start} / span ${seg.span}` },
         grid.pinStyle(seg.pinned === 'right' ? seg.last : seg.first),
+        { 'grid-column': `${seg.start} / span ${seg.span}` },
       ]"
     >
       <span v-if="seg.label" class="vg-group-label">{{ seg.label }}</span>

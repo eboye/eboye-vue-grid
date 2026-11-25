@@ -50,6 +50,7 @@ const cellClass = computed(() =>
       grid.ui.value.cell,
     ]"
     :style="grid.pinStyle(column.key)"
+    :aria-colindex="grid.cols?.at(column.key)"
   >
     <template v-if="column.kind === 'data'">
       <span

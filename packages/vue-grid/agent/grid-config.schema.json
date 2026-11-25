@@ -31,6 +31,7 @@
           "columnPinningFeature",
           "columnReorderFeature",
           "columnResizingFeature",
+          "columnVirtualizationFeature",
           "columnVisibilityFeature",
           "editingFeature",
           "exportFeature",
@@ -204,6 +205,9 @@
         }
       ],
       "description": "Virtual scrolling: only the rows in view render. Rows share one height (`rowHeight`, px) and the grid needs a bounded height. Needs the virtual scrolling feature."
+    },
+    "virtualColumns": {
+      "description": "Column virtualization: only the columns in view (plus `overscan`) render cells, besides the pinned ones and the checkbox. `true` or `{ overscan, width }`. Needs the column virtualization feature."
     },
     "storage": {
       "description": "Persist column state (order, hidden, pins, widths): a localStorage key or your own storage."

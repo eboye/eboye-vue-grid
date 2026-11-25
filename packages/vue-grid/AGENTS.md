@@ -60,6 +60,7 @@ runs in the [live examples](https://eboye.github.io/eboye-vue-grid/), each with 
 | Nested child rows aligned to the parent's columns | `subGridsFeature`                                                           | `:sub-rows="(row) => row.children"` or `:load-sub-rows` + `:has-sub-rows`                                                                                                                                                                                                                                                                                                                                                                                         |
 | An expandable panel under a row                   | —                                                                           | `#detail="{ row }"` slot (`row-expandable` to limit it)                                                                                                                                                                                                                                                                                                                                                                                                           |
 | 10,000+ rows                                      | `virtualScrollingFeature`                                                   | `:virtual="{ rowHeight: 40 }"` + bounded height                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| Dozens / hundreds of columns                      | `columnVirtualizationFeature` (+ `virtualScrollingFeature` for rows)        | `virtual-columns` (or `{ overscan, width }`); give columns a `width`; `scrollToColumn(key)`                                                                                                                                                                                                                                                                                                                                                                       |
 | Right-click menus (cells, headers)                | `menusFeature`                                                              | `:context-menu="(ctx) => MenuItem[]"` + `@context-action`; header menu is on by default                                                                                                                                                                                                                                                                                                                                                                           |
 | Freeze columns left / right                       | `columnPinningFeature`                                                      | column `pinned: 'left' \| 'right'`; on narrow grids they scroll unless `pinned-max-share` allows (default half the width)                                                                                                                                                                                                                                                                                                                                         |
 | Show / hide columns                               | `columnVisibilityFeature`                                                   | column `hidden: true`; `<VGridColumnMenu>` in `#toolbar`                                                                                                                                                                                                                                                                                                                                                                                                          |
@@ -316,6 +317,24 @@ the banner's "Select all N rows" sets `v-model:select-all-matching`; act on the 
   style="height: 600px"
 />
 ```
+
+### Many columns (a sheet of months, a wide report)
+
+```vue
+<VGrid
+  :rows
+  :columns="monthColumns"
+  row-key="id"
+  :virtual="{ rowHeight: 40 }"
+  virtual-columns
+  :features="[virtualScrollingFeature, columnVirtualizationFeature]"
+  style="height: 600px"
+/>
+```
+
+Only the columns in view render cells; pinned columns, the checkbox and the focused column
+always do. Columns without a definite `width` get `10rem` (`:virtual-columns="{ width: '8rem' }"`).
+Don't build your own column windowing with `hidden` or a sliced `columns` array.
 
 ### Totals and pinned rows
 

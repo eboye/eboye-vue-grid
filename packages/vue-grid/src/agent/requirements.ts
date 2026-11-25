@@ -27,6 +27,7 @@ export type FeatureId =
   | 'editing'
   | 'rangeSelection'
   | 'attributes'
+  | 'columnVirtualization'
 
 /** Grid props (and `v-model`s) that need a feature. */
 export const propFeatures: Readonly<Record<string, FeatureId>> = {
@@ -70,6 +71,7 @@ export const propFeatures: Readonly<Record<string, FeatureId>> = {
   range: 'rangeSelection',
   rowAttrs: 'attributes',
   cellAttrs: 'attributes',
+  virtualColumns: 'columnVirtualization',
 }
 
 /** Column options that need a feature. */

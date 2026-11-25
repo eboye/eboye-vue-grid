@@ -212,8 +212,14 @@ export const pages: Page[] = [
     title: 'Virtual scrolling',
     section: 'Rows',
     summary:
-      'Only the rows in view render. 100,000 rows sort, scroll and jump instantly, in the same CSS grid layout.',
-    try: ['Scroll fast.', 'Jump to a row.', 'Sort by Stake.'],
+      'Only the rows in view render. 100,000 rows sort, scroll and jump instantly, in the same CSS grid layout. With virtual-columns, only the columns in view render too.',
+    try: [
+      'Scroll fast.',
+      'Jump to a row.',
+      'Sort by Stake.',
+      'Tick “60 more columns” and scroll sideways: the # column stays pinned and only the cells in view are in the DOM.',
+      'Click a cell, then press End and Home: the keys reach columns that weren’t rendered yet.',
+    ],
     docs: '16. Virtual scrolling',
     files: ['VirtualDemo'],
   },

@@ -43,7 +43,7 @@ CSV / Excel export, printing and copying · status bar · text and parts · them
 - **Small by default, everything optional.** ESM, one file per module, zero runtime dependencies.
   Sorting, filtering, server data, pagination, selection, sub-grids, menus, column reordering,
   resizing, pinning, visibility and grouping, pinned rows, totals, row grouping, inline editing, CSV and Excel export, printing, copying, a status bar, virtual scrolling and keyboard navigation are opt-in **features**, and
-  renderers are opt-in too. A plain grid with text cells is **16.1 kB gzipped**, and each feature or renderer you add costs
+  renderers are opt-in too. A plain grid with text cells is **16.3 kB gzipped**, and each feature or renderer you add costs
   only itself.
 - **Fast where it counts.** Virtual scrolling renders a screenful out of tens of thousands of rows,
   expanded sub-grids and detail rows included. Data changes re-render only the cells that changed,
@@ -467,32 +467,33 @@ bundler in Vite (minified / gzip, Vue excluded; the entry plus every chunk it lo
 
 | You import                                                                   | Initial chunk      |
 | ---------------------------------------------------------------------------- | ------------------ |
-| `VGrid` (no features)                                                        | 47.0 kB / 16.1 kB  |
-| `VGrid` + `sortingFeature`                                                   | 49.7 kB / 17.2 kB  |
-| `VGrid` + `filteringFeature`                                                 | 57.7 kB / 20.0 kB  |
-| `VGrid` + `selectionFeature`                                                 | 51.2 kB / 17.6 kB  |
-| `VGrid` + `subGridsFeature`                                                  | 49.4 kB / 16.9 kB  |
-| `VGrid` + `menusFeature`                                                     | 58.3 kB / 19.9 kB  |
-| `VGrid` + `columnReorderFeature`                                             | 50.7 kB / 17.4 kB  |
-| `VGrid` + `columnPinningFeature`                                             | 50.0 kB / 17.2 kB  |
-| `VGrid` + `virtualScrollingFeature`                                          | 52.8 kB / 18.4 kB  |
-| `VGrid` + `columnVisibilityFeature`                                          | 47.2 kB / 16.2 kB  |
-| `VGrid` + `keyboardNavigationFeature`                                        | 49.8 kB / 17.2 kB  |
-| `VGrid` + `columnResizingFeature`                                            | 50.3 kB / 17.4 kB  |
-| `VGrid` + `columnGroupsFeature`                                              | 48.3 kB / 16.6 kB  |
-| `VGrid` + `rowPinningFeature`                                                | 52.0 kB / 17.7 kB  |
-| `VGrid` + `aggregationFeature`                                               | 52.3 kB / 17.8 kB  |
-| `VGrid` + `rowGroupingFeature`                                               | 57.8 kB / 19.8 kB  |
-| `VGrid` + `exportFeature`                                                    | 52.0 kB / 18.1 kB  |
-| `VGrid` + `statusBarFeature`                                                 | 49.9 kB / 17.2 kB  |
-| `VGrid` + `serverGroupingFeature`                                            | 50.1 kB / 17.3 kB  |
-| `VGrid` + `editingFeature`                                                   | 54.6 kB / 19.0 kB  |
-| `VGrid` + `rangeSelectionFeature`                                            | 61.1 kB / 21.1 kB  |
-| `VGrid` + `attributesFeature`                                                | 48.1 kB / 16.6 kB  |
-| `VGrid` + `allFeatures` + `VGridSearch`                                      | 143.9 kB / 48.4 kB |
-| `VGrid` + `currencyRenderer`                                                 | 48.4 kB / 16.6 kB  |
-| everything                                                                   | 197.9 kB / 64.0 kB |
-| `validateGridConfig` (`@nocopypaste/vue-grid/agent`, never in an app bundle) | 81.9 kB / 22.4 kB  |
+| `VGrid` (no features)                                                        | 47.7 kB / 16.3 kB  |
+| `VGrid` + `sortingFeature`                                                   | 50.4 kB / 17.3 kB  |
+| `VGrid` + `filteringFeature`                                                 | 58.4 kB / 20.2 kB  |
+| `VGrid` + `selectionFeature`                                                 | 51.8 kB / 17.8 kB  |
+| `VGrid` + `subGridsFeature`                                                  | 50.0 kB / 17.1 kB  |
+| `VGrid` + `menusFeature`                                                     | 59.0 kB / 20.1 kB  |
+| `VGrid` + `columnReorderFeature`                                             | 51.4 kB / 17.6 kB  |
+| `VGrid` + `columnPinningFeature`                                             | 50.6 kB / 17.3 kB  |
+| `VGrid` + `virtualScrollingFeature`                                          | 53.5 kB / 18.5 kB  |
+| `VGrid` + `columnVisibilityFeature`                                          | 47.8 kB / 16.4 kB  |
+| `VGrid` + `keyboardNavigationFeature`                                        | 51.1 kB / 17.6 kB  |
+| `VGrid` + `columnResizingFeature`                                            | 50.9 kB / 17.5 kB  |
+| `VGrid` + `columnGroupsFeature`                                              | 49.0 kB / 16.8 kB  |
+| `VGrid` + `rowPinningFeature`                                                | 52.8 kB / 17.9 kB  |
+| `VGrid` + `aggregationFeature`                                               | 53.0 kB / 18.1 kB  |
+| `VGrid` + `rowGroupingFeature`                                               | 58.8 kB / 20.1 kB  |
+| `VGrid` + `exportFeature`                                                    | 52.6 kB / 18.3 kB  |
+| `VGrid` + `statusBarFeature`                                                 | 50.6 kB / 17.4 kB  |
+| `VGrid` + `serverGroupingFeature`                                            | 50.8 kB / 17.5 kB  |
+| `VGrid` + `editingFeature`                                                   | 55.2 kB / 19.2 kB  |
+| `VGrid` + `rangeSelectionFeature`                                            | 61.8 kB / 21.3 kB  |
+| `VGrid` + `attributesFeature`                                                | 48.7 kB / 16.7 kB  |
+| `VGrid` + `columnVirtualizationFeature`                                      | 50.8 kB / 17.6 kB  |
+| `VGrid` + `allFeatures` + `VGridSearch`                                      | 148.7 kB / 50.1 kB |
+| `VGrid` + `currencyRenderer`                                                 | 49.1 kB / 16.8 kB  |
+| everything                                                                   | 202.7 kB / 65.7 kB |
+| `validateGridConfig` (`@nocopypaste/vue-grid/agent`, never in an app bundle) | 82.9 kB / 22.7 kB  |
 
 With `filteringFeature`, the filter popover body and the filter-row editors load on demand. With
 `paginationFeature`, the pager does too, and with `selectionFeature` the "select all N rows" banner.

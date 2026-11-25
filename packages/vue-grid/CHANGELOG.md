@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.19.0 — 2026-11-25
+
+**Column virtualization** (`columnVirtualizationFeature`, `virtual-columns`): only the columns in
+view (plus `overscan`, default 2) render their cells; pinned columns, the selection checkbox and
+the focused cell's column always do. The CSS grid stays as it is: every column keeps its track in
+`grid-template-columns`, rows and sub-grids keep `subgrid`, and rendered cells sit on their own
+track (`grid-column`, `aria-colindex`), so pinning, resizing, column groups, row groups and totals
+line up as before. Columns sized by their content get a definite width while it's on (`width`,
+default `10rem`). Arrow keys, Home / End, find and cell ranges reach columns not rendered yet;
+new `grid.scrollToColumn(key)`. With `virtual` too, a 2,000 × 122 grid keeps about 230 cells in the
+DOM instead of 2,100, renders a third faster and scrolls about 40% faster. Live example: Virtual
+scrolling → “60 more columns”. The feature is 1.3 kB gzipped; a plain grid grows by 0.2 kB, to
+16.3 kB.
+
 ## 0.18.0 — 2026-11-25
 
 **Test hooks on rows and cells** (`attributesFeature`): `row-attrs` and `cell-attrs` add your own

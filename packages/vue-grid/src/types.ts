@@ -412,6 +412,19 @@ export interface VirtualOptions {
   detailHeight?: number
 }
 
+/** `virtual-columns` options (column virtualization feature). */
+export interface VirtualColumnsOptions {
+  /** Extra columns rendered on each side of the ones in view. Default 2. */
+  overscan?: number
+  /**
+   * The width of a column whose own `width` follows its content (`auto`, the default,
+   * `min-content`, a bare `1fr`), which can't be measured while its cells aren't rendered; a
+   * bare `fr` keeps stretching from it. Pinned columns and the checkbox keep their own sizing.
+   * Default `'10rem'`.
+   */
+  width?: string
+}
+
 export type MenuTone = 'success' | 'danger' | 'warning' | 'info' | 'neutral' | 'accent'
 
 export interface MenuAction {
@@ -515,6 +528,8 @@ export interface VGridExposed {
   scrollToTop(): void
   /** Scrolls a row (top-level or nested, also in virtual mode) into view. */
   scrollToRow(key: RowKey): void
+  /** Scrolls a column into view sideways (with `virtual-columns`, renders it first). */
+  scrollToColumn(key: string): Promise<void>
   /** Expands every expandable row (sub-grids and detail rows) that passes the filters. */
   expandAll(): void
   /** Collapses every row. */
@@ -871,6 +886,10 @@ export interface ExportFeature {
   readonly feature: 'export'
   useExport: typeof import('./composables/useGridExport').useGridExport
 }
+export interface ColumnVirtualizationFeature {
+  readonly feature: 'columnVirtualization'
+  useVirtualColumns: typeof import('./composables/useVirtualColumns').useVirtualColumns
+}
 export interface AttributesFeature {
   readonly feature: 'attributes'
   useExtraAttrs: typeof import('./composables/useExtraAttrs').useExtraAttrs
@@ -902,6 +921,7 @@ export interface RangeSelectionFeature {
   preloadFind: () => Promise<unknown>
 }
 export type GridFeature =
+  | ColumnVirtualizationFeature
   | AttributesFeature
   | RangeSelectionFeature
   | EditingFeature

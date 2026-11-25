@@ -1,6 +1,6 @@
 {
   "package": "@nocopypaste/vue-grid",
-  "version": "0.18.0",
+  "version": "0.19.0",
   "component": "VGrid",
   "props": [
     {
@@ -224,6 +224,13 @@
       "default": "false",
       "description": "Virtual scrolling: only the rows in view render. Rows share one height (`rowHeight`, px) and the grid needs a bounded height. Needs the virtual scrolling feature.",
       "feature": "virtualScrolling"
+    },
+    {
+      "name": "virtualColumns",
+      "type": "VirtualColumnsOptions | boolean",
+      "required": false,
+      "description": "Column virtualization: only the columns in view (plus `overscan`) render cells, besides the pinned ones and the checkbox. `true` or `{ overscan, width }`. Needs the column virtualization feature.",
+      "feature": "columnVirtualization"
     },
     {
       "name": "storage",
@@ -602,6 +609,12 @@
       "type": "void",
       "required": true,
       "description": "Scrolls a row (top-level or nested, also in virtual mode) into view."
+    },
+    {
+      "name": "scrollToColumn",
+      "type": "Promise<void>",
+      "required": true,
+      "description": "Scrolls a column into view sideways (with `virtual-columns`, renders it first)."
     },
     {
       "name": "expandAll",
@@ -1138,6 +1151,15 @@
         "maxWidth",
         "resizable"
       ]
+    },
+    {
+      "id": "columnVirtualization",
+      "export": "columnVirtualizationFeature",
+      "description": "Column virtualization (`virtual-columns`): for grids with many columns, only the columns in view (plus `overscan`) render their cells, alongside the pinned ones and the checkbox. Every column keeps its place in the CSS grid, so widths, pinning, resizing and sub-grids work as before. Columns sized by their content (`auto`, `min-content`) get a definite width while it's on (`{ width: '10rem' }`). Combines with `virtual` (rows) for large sheets both ways.",
+      "props": [
+        "virtualColumns"
+      ],
+      "columnOptions": []
     },
     {
       "id": "columnVisibility",

@@ -49,7 +49,7 @@ function ariaSort(col: ResolvedColumn) {
     @click.capture="emit('headerClick', $event)"
   >
     <div
-      v-for="col in grid.columns.value"
+      v-for="col in grid.shownColumns.value"
       :key="col.key"
       role="columnheader"
       :tabindex="grid.rovingTabindex"
@@ -77,6 +77,7 @@ function ariaSort(col: ResolvedColumn) {
         grid.ui.value.headerCell,
       ]"
       :style="grid.pinStyle(col.key)"
+      :aria-colindex="grid.cols?.at(col.key)"
       @pointerdown="col.kind === 'data' && part('headerDrag') && emit('dragStart', $event, col.key)"
       @contextmenu="
         col.kind === 'data' &&
