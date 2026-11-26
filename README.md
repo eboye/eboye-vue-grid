@@ -607,12 +607,17 @@ trusted publishing: npm trusts the workflow through GitHub's OIDC token, so no n
    `npm install` (lockfile) and `npm run build` (regenerates the agent reference).
 2. Turn the CHANGELOG's `## Unreleased` into `## <version> — <date>`. Its text becomes the GitHub
    release notes.
-3. Commit, tag and push the tag to GitHub:
+3. Commit, tag and push the tag:
 
    ```sh
    git commit -am "chore: release 0.4.0" && git tag -a v0.4.0 -m v0.4.0
-   git push origin main --follow-tags && git push github main --follow-tags
+   git push origin main --follow-tags
    ```
+
+   `origin` (Gitea) has a push mirror to GitHub with "Sync when commits are pushed", so the tag
+   reaches GitHub within seconds and starts the workflow. The mirror makes GitHub an exact copy:
+   push only to Gitea, since anything pushed only to GitHub is removed on the next sync. If
+   GitHub missed a push (an outage), use "Synchronize now" in the repository's Mirror Settings.
 
 The workflow checks that the tag matches every package version, builds, type-checks and tests,
 publishes the grid, then the MCP server and the renderer template (skipping versions npm already
