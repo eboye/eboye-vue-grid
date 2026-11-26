@@ -425,6 +425,17 @@ export const ActionsMenu: Story = {
         { name: 'edit', label: 'Edit', hint: 'E' },
         { name: 'duplicate', label: 'Duplicate' },
         { name: 'archive', label: 'Archive', disabled: row.id === 2 },
+        {
+          // a submenu: hover, click, → / Enter opens it; ← or Esc goes back
+          name: 'move',
+          label: 'Move to',
+          items: [
+            { name: 'move-open', label: 'Open' },
+            { name: 'move-review', label: 'In review' },
+            { separator: true },
+            { name: 'move-closed', label: 'Closed', disabled: 'Close it from its detail page' },
+          ],
+        },
         { separator: true },
         {
           name: 'delete',

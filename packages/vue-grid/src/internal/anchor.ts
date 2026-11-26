@@ -21,7 +21,7 @@ export function anchorNameFor(id: string): string {
 
 export type AnchorTarget = HTMLElement | { x: number; y: number }
 
-export type Placement = 'bottom-start' | 'bottom-end' | 'point' | 'top'
+export type Placement = 'bottom-start' | 'bottom-end' | 'point' | 'top' | 'right-start'
 
 /** JS placement used only when CSS anchor positioning is unavailable. Flips to stay in the viewport. */
 export function placeWithoutAnchorSupport(
@@ -37,6 +37,15 @@ export function placeWithoutAnchorSupport(
   const pop = floating.getBoundingClientRect()
   const vw = window.innerWidth
   const vh = window.innerHeight
+
+  if (placement === 'right-start') {
+    // a submenu: beside its item, on the left when there's no room on the right
+    let side = rect.right
+    if (side + pop.width > vw - gap) side = rect.left - pop.width
+    floating.style.left = `${Math.max(gap, side)}px`
+    floating.style.top = `${Math.max(gap, Math.min(rect.top, vh - gap - pop.height))}px`
+    return
+  }
 
   let left =
     placement === 'bottom-end'

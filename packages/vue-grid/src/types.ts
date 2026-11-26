@@ -464,6 +464,11 @@ export interface MenuAction {
   icon?: Component
   /** Shown right-aligned, e.g. a shortcut hint. */
   hint?: string
+  /**
+   * A submenu: this item opens these items beside it (hover, click, → / Enter / Space) instead of
+   * being chosen; ← or Esc goes back. Choosing one of them emits it like any other item.
+   */
+  items?: readonly MenuItem[]
 }
 
 export interface MenuSeparator {

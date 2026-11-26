@@ -102,6 +102,8 @@ const FMT_ID: Record<XlsxFormat, number> = {
 const STYLE_FMTS = [0, 164, 165, 166, 10]
 /** The cellXfs index: one style per number format, plain and bold. */
 const styleOf = (fmt: number, bold: boolean) => STYLE_FMTS.indexOf(fmt) * 2 + (bold ? 1 : 0)
+/** Text with line breaks: wrapped, so it shows on several lines (plain, bold), after the others. */
+const WRAP = STYLE_FMTS.length * 2
 
 const DAY = 86_400_000
 const EPOCH = Date.UTC(1899, 11, 30)
@@ -167,6 +169,8 @@ interface Cell {
   xml: string
   /** Characters shown, for the column width. */
   width: number
+  /** Lines of text, for the row height. */
+  lines?: number
 }
 
 function cell(
@@ -219,8 +223,9 @@ function cell(
   if (!text) return null
   const space = /^\s|\s$/.test(text) ? ' xml:space="preserve"' : ''
   return {
-    xml: `<c r="${ref}" s="${styleOf(0, bold)}" t="inlineStr"><is><t${space}>${xml(text)}</t></is></c>`,
+    xml: `<c r="${ref}" s="${text.includes('\n') ? WRAP + (bold ? 1 : 0) : styleOf(0, bold)}" t="inlineStr"><is><t${space}>${xml(text)}</t></is></c>`,
     width: Math.max(...text.split('\n').map((l) => l.length)),
+    lines: text.split('\n').length,
   }
 }
 
@@ -232,13 +237,18 @@ function sheetXml(sheet: XlsxSheet): string {
   const addRow = (values: readonly unknown[], bold: boolean, formats: readonly XlsxFormat[]) => {
     const r = lines.length + 1
     const cells: string[] = []
+    let rowLines = 1
     values.forEach((value, i) => {
       const c = cell(`${columnName(i)}${r}`, value, formats[i] ?? 'auto', bold, sheet.timeZone)
       if (!c) return
       cells.push(c.xml)
       widths[i] = Math.max(widths[i] ?? 8, c.width + 2)
+      rowLines = Math.max(rowLines, c.lines ?? 1)
     })
-    lines.push(`<row r="${r}">${cells.join('')}</row>`)
+    // wrapped text: tall enough for every line (15 pt each, Calibri 11's row height); readers
+    // that don't fit rows to wrapped text themselves (Gnumeric) would show the first line only
+    const height = rowLines > 1 ? ` ht="${Math.min(409, rowLines * 15)}" customHeight="1"` : ''
+    lines.push(`<row r="${r}"${height}>${cells.join('')}</row>`)
   }
   const text = sheet.formats.map((): XlsxFormat => 'auto')
   if (sheet.header) addRow(sheet.header, true, text)
@@ -273,6 +283,13 @@ function stylesXml(): string {
         `${fmt ? ' applyNumberFormat="1"' : ''}${bold ? ' applyFont="1"' : ''}/>`,
     ),
   ).join('')
+  const wrap = [0, 1]
+    .map(
+      (bold) =>
+        `<xf numFmtId="0" fontId="${bold}" fillId="0" borderId="0" xfId="0"` +
+        `${bold ? ' applyFont="1"' : ''} applyAlignment="1"><alignment wrapText="1"/></xf>`,
+    )
+    .join('')
   return (
     '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' +
     '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
@@ -283,7 +300,7 @@ function stylesXml(): string {
     '<fill><patternFill patternType="gray125"/></fill></fills>' +
     '<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>' +
     '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>' +
-    `<cellXfs count="${STYLE_FMTS.length * 2}">${xfs}</cellXfs>` +
+    `<cellXfs count="${WRAP + 2}">${xfs}${wrap}</cellXfs>` +
     '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>' +
     '</styleSheet>'
   )

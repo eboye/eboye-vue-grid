@@ -261,7 +261,12 @@ export const pages: Page[] = [
     section: 'Columns',
     summary:
       'A built-in header menu (sort, filter, pin, move, hide) you can extend, and your own menu for body cells. They open on right-click, the ContextMenu key or a long press.',
-    try: ['Right-click a cell.', 'Right-click a header.', 'Open a row’s ⋯ menu.'],
+    try: [
+      'Right-click a cell.',
+      'Hover “Copy as”, or press → on it: a submenu (← or Esc goes back).',
+      'Right-click a header.',
+      'Open a row’s ⋯ menu: “Set status” is a submenu; a void bet says why it can’t be voided.',
+    ],
     docs: '12. Context menus',
     files: ['MenusDemo'],
   },

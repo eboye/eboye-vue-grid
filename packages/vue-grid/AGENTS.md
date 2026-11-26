@@ -82,6 +82,7 @@ runs in the [live examples](https://eboye.github.io/eboye-vue-grid/), each with 
 | Placeholder rows while loading                     | —                                                                           | `skeleton` (or a row count)                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | Tooltips, a popup with lines and copy buttons      | —                                                                           | text `tooltip` (`'always'`, `'overflow'`, lines), `hoverCard: (v, row) => ({ title, lines, copy })`; own renderers: `tooltipAttrs(text)`                                                                                                                                                                                                                                                                                                                          |
 | Say why a menu item is off                         | `menusFeature` / `actionsMenuRenderer`                                      | item `disabled: 'reason'`                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| A submenu ("Copy as ›", "Move to ›")               | `menusFeature` / `actionsMenuRenderer`                                      | item `items: [{ name, label }, …]`; choosing one emits it like any item                                                                                                                                                                                                                                                                                                                                                                                           |
 | Remember column layout                             | —                                                                           | `storage="orders-grid"` (localStorage key)                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | Cell type (money, date, badge, link, …)            | —                                                                           | `renderer: currencyRenderer` etc. (list below)                                                                                                                                                                                                                                                                                                                                                                                                                    |
 
@@ -449,7 +450,7 @@ raw values; `copyRows` and Ctrl/⌘+C to the selected rows as displayed, tab-sep
 `rows: 'filtered' | 'all' | 'page' | 'selected'`, `columns: [keys]`, `values: 'raw' | 'formatted'`,
 `header`, `totals`, `children`, `delimiter`. `toCsv(rows, columns)` works without a grid.
 `exportXlsx({ filename, sheetName })` / `getXlsx()` (a Promise) write an Excel file with typed cells
-(numbers, dates, booleans) and number formats from the renderers; `toXlsx(rows, columns)` without a grid.
+(numbers, dates, booleans), number formats from the renderers and wrapped multi-line text; `toXlsx(rows, columns)` without a grid.
 `print({ title, totals, landscape })` prints every matching row as a table (header on each page);
 Ctrl+P on the page only prints what is on screen.
 
@@ -618,6 +619,7 @@ col({
 ```
 
 Menu items say why they are off: `{ name: 'void', label: 'Void', disabled: 'Settled bets can’t be voided' }`.
+A submenu: `{ name: 'copy-as', label: 'Copy as', items: [{ name: 'copy-id', label: 'ID' }] }` (hover, →, Enter open it; ← / Esc go back).
 
 ### Theming
 

@@ -1,6 +1,6 @@
 {
   "package": "@nocopypaste/vue-grid",
-  "version": "0.23.0",
+  "version": "0.24.0",
   "component": "VGrid",
   "props": [
     {
@@ -2648,6 +2648,12 @@
         "type": "string",
         "required": false,
         "description": "Shown right-aligned, e.g. a shortcut hint."
+      },
+      {
+        "name": "items",
+        "type": "readonly MenuItem[]",
+        "required": false,
+        "description": "A submenu: this item opens these items beside it (hover, click, → / Enter / Space) instead of being chosen; ← or Esc goes back. Choosing one of them emits it like any other item."
       }
     ],
     "CellContext": [

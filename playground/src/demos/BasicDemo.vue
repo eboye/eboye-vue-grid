@@ -77,6 +77,15 @@ function contextMenu({ row, column }: CellContext<Bet>): MenuItem[] {
   return [
     { name: 'copy', label: `Copy ${column.header || column.key}`, hint: 'Ctrl+C' },
     { name: 'open', label: `Open bet #${row.id}` },
+    {
+      name: 'copy-as',
+      label: 'Copy as',
+      items: [
+        { name: 'copy-id', label: 'Bet ID' },
+        { name: 'copy-link', label: 'Link' },
+        { name: 'copy-json', label: 'JSON', disabled: 'Not for this column' },
+      ],
+    },
     { separator: true },
     { name: 'void', label: 'Void bet', disabled: row.status === 'Void' },
     { name: 'delete', label: 'Delete', tone: 'danger' },

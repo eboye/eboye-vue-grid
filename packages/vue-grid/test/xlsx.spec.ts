@@ -27,8 +27,8 @@ function unzip(bytes: Uint8Array): Record<string, string> {
 const sheetOf = (bytes: Uint8Array) => unzip(bytes)['xl/worksheets/sheet1.xml']!
 /** The cells of a row as `[ref, style, type, value]`. */
 function cells(sheet: string, row: number) {
-  const xml = new RegExp(`<row r="${row}">(.*?)</row>`).exec(sheet)?.[1] ?? ''
-  return [...xml.matchAll(/<c r="([A-Z]+\d+)" s="(\d+)"(?: t="(\w+)")?>(.*?)<\/c>/g)].map(
+  const xml = new RegExp(`<row r="${row}"[^>]*>(.*?)</row>`, 's').exec(sheet)?.[1] ?? ''
+  return [...xml.matchAll(/<c r="([A-Z]+\d+)" s="(\d+)"(?: t="(\w+)")?>(.*?)<\/c>/gs)].map(
     ([, ref, style, type, body]) => [
       ref,
       Number(style),
@@ -172,6 +172,31 @@ describe('toXlsx', () => {
     // shown as 1,000,000,000,000,000,000,000.00 (32 characters)
     expect(widths(1e21, 'currency')).toBeGreaterThanOrEqual(34)
     expect(widths(1234.5, 'currency')).toBe(10) // 1,234.50 and 2 to spare
+  })
+
+  it('text with line breaks is wrapped; one-line text is not', () => {
+    const files = unzip(
+      toXlsx([{ a: 'Line one\nLine two', b: 'one line' }], [{ key: 'a' }, { key: 'b' }], {
+        header: false,
+      }),
+    )
+    const [wrapped, plain] = cells(files['xl/worksheets/sheet1.xml']!, 1)
+    const [wrapStyle, plainStyle] = [wrapped?.[1], plain?.[1]]
+    expect(plainStyle).toBe(S.text)
+    // the wrap styles come after the 10 number-format styles: 10 plain, 11 bold
+    expect(wrapStyle).toBe(10)
+    const xfs = [...files['xl/styles.xml']!.matchAll(/<xf [^>]*?(?:\/>|>.*?<\/xf>)/g)].map(
+      (m) => m[0],
+    )
+    const cellXfs = xfs.slice(1) // the first is the cellStyleXfs entry
+    expect(cellXfs).toHaveLength(12)
+    expect(cellXfs[10]).toContain('<alignment wrapText="1"/>')
+    expect(cellXfs[11]).toContain('fontId="1"')
+    expect(files['xl/styles.xml']).toContain('<cellXfs count="12">')
+    // its row is two lines tall (15 pt each), for readers that don't fit rows themselves
+    expect(files['xl/worksheets/sheet1.xml']).toContain('<row r="1" ht="30" customHeight="1">')
+    // its column is as wide as its longest line, not the whole text
+    expect(files['xl/worksheets/sheet1.xml']).toMatch(/<col min="1" max="1" width="10"/)
   })
 
   it('drops characters XML does not allow', () => {

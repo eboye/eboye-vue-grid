@@ -185,12 +185,12 @@ what you import.
 | ---------------------------------------------------------------------------- | ------------------ |
 | `VGrid` (no features)                                                        | 49.4 kB / 16.8 kB  |
 | `VGrid` + `sortingFeature`                                                   | 52.2 kB / 17.9 kB  |
-| `VGrid` + `filteringFeature`                                                 | 61.0 kB / 21.1 kB  |
+| `VGrid` + `filteringFeature`                                                 | 61.1 kB / 21.1 kB  |
 | `VGrid` + `serverDataFeature`                                                | 50.4 kB / 17.4 kB  |
 | `VGrid` + `paginationFeature`                                                | 49.1 kB / 16.8 kB  |
 | `VGrid` + `selectionFeature`                                                 | 53.5 kB / 18.3 kB  |
 | `VGrid` + `subGridsFeature`                                                  | 51.8 kB / 17.6 kB  |
-| `VGrid` + `menusFeature`                                                     | 61.3 kB / 20.8 kB  |
+| `VGrid` + `menusFeature`                                                     | 63.0 kB / 21.4 kB  |
 | `VGrid` + `columnReorderFeature`                                             | 53.1 kB / 18.1 kB  |
 | `VGrid` + `columnPinningFeature`                                             | 52.4 kB / 17.9 kB  |
 | `VGrid` + `virtualScrollingFeature`                                          | 55.3 kB / 19.1 kB  |
@@ -209,13 +209,13 @@ what you import.
 | `VGrid` + `attributesFeature`                                                | 50.0 kB / 17.1 kB  |
 | `VGrid` + `columnVirtualizationFeature`                                      | 52.0 kB / 18.1 kB  |
 | `VGrid` + `rowReorderFeature`                                                | 53.7 kB / 18.4 kB  |
-| `VGrid` + `allFeatures` + `VGridSearch`                                      | 156.8 kB / 52.6 kB |
+| `VGrid` + `allFeatures` + `VGridSearch`                                      | 158.5 kB / 53.1 kB |
 | `VGrid` + `currencyRenderer`                                                 | 50.8 kB / 17.3 kB  |
 | `VGrid` + `VGridPagination` + `VGridColumnMenu`                              | 56.2 kB / 19.2 kB  |
 | `sortRows` only                                                              | 0.7 kB / 0.4 kB    |
 | `toCsv` only                                                                 | 1.1 kB / 0.6 kB    |
-| everything                                                                   | 213.2 kB / 69.1 kB |
-| `validateGridConfig` (`@nocopypaste/vue-grid/agent`, never in an app bundle) | 86.4 kB / 23.6 kB  |
+| everything                                                                   | 215.3 kB / 69.7 kB |
+| `validateGridConfig` (`@nocopypaste/vue-grid/agent`, never in an app bundle) | 86.6 kB / 23.7 kB  |
 
 With `filteringFeature`, the filter popover body and the filter-row editors are **on-demand
 chunks**: they load the first time a popover opens or `filter-row` is on. With
@@ -543,11 +543,30 @@ scrolls. No JS positioning, except a small fallback for browsers without anchor 
 
 Right-click opens the menu at the pointer; the **ContextMenu** key or **Shift+F10** opens it under the
 focused cell. Return `[]`/`null` to keep the browser's native menu for that cell. Items:
-`{ name, label, disabled?, tone?, icon?, hint? }` or `{ separator: true }`. Arrow keys, Home/End and
+`{ name, label, disabled?, tone?, icon?, hint?, items? }` or `{ separator: true }`. Arrow keys, Home/End and
 typeahead move through items; focus returns to the cell on close. `disabled` may also say why
 (`disabled: 'Settled bets can’t be voided'`): the reason shows under the label and is read out as the
 item's description, and the item stays reachable by keyboard (`aria-disabled`) but does nothing. The
 same works in `actions-menu` items.
+
+**Submenus**: give an item `items` and it opens them beside it instead of being chosen. Hover
+(after a short pause), click, → / Enter / Space open it with focus on its first item; ← or Esc go
+back to the item, Tab closes the whole menu. Choosing a nested item emits it like any other.
+
+```ts
+const cellMenu = ({ row }: CellContext<Order>): MenuItem[] => [
+  { name: 'open', label: 'Open' },
+  {
+    name: 'copy-as',
+    label: 'Copy as',
+    items: [
+      { name: 'copy-id', label: 'Order ID' },
+      { name: 'copy-json', label: 'JSON', disabled: row.draft && 'Drafts have no JSON yet' },
+    ],
+  },
+]
+// @context-action="(e) => e.name === 'copy-id' && copy(e.row.id)"
+```
 
 ### Column headers
 
@@ -1096,6 +1115,8 @@ await grid.value?.exportXlsx({ filename: 'orders.xlsx', sheetName: 'Orders', tot
   `yyyy-mm-dd hh:mm`, in the grid's `time-zone` (date-only values stay that day). Dates before
   1900-03-01, which Excel can't show right, are written as text (`1899-12-31`).
 - A bold header frozen at the top, the totals as a bold last line, column widths from the content.
+- Text with line breaks is wrapped and its row is as tall as its lines, so every line shows (in
+  Excel, LibreOffice and Gnumeric alike) instead of running together.
 - Text is written as text, never as a formula. `values: 'formatted'` writes the cells as shown.
 - The writer (2.9 kB gzip) loads the first time you export; it has no dependencies.
 

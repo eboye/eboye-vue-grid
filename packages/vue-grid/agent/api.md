@@ -1,4 +1,4 @@
-# @nocopypaste/vue-grid 0.23.0 — API reference
+# @nocopypaste/vue-grid 0.24.0 — API reference
 
 > Generated from the TypeScript sources (`scripts/gen-agent.mjs`). Machine-readable: `agent/api.json`, `agent/grid-config.schema.json`.
 
@@ -644,6 +644,7 @@ The first items of a list, with a “+N more” toggle. Emits `expand`. Align: `
 | `tone`? | `MenuTone` | Colour, e.g. `danger` for a delete item. |
 | `icon`? | `Component` | An icon component before the label. |
 | `hint`? | `string` | Shown right-aligned, e.g. a shortcut hint. |
+| `items`? | `readonly MenuItem[]` | A submenu: this item opens these items beside it (hover, click, → / Enter / Space) instead of being chosen; ← or Esc goes back. Choosing one of them emits it like any other item. |
 
 ### `CellContext`
 

@@ -1241,6 +1241,15 @@ function contextMenu({ row, column, value }: CellContext<Order>): MenuItem[] {
   return [
     { name: 'copy', label: `Copy ${column.header ?? column.key}`, hint: 'Ctrl+C' },
     { name: 'open', label: `Open order #${row.id}` },
+    // a submenu: hover, click, → / Enter open it; ← / Esc go back; its items emit like any other
+    {
+      name: 'copy-as',
+      label: 'Copy as',
+      items: [
+        { name: 'copy-id', label: 'Order ID' },
+        { name: 'copy-link', label: 'Link' },
+      ],
+    },
     { separator: true },
     { name: 'refund', label: 'Refund', disabled: row.status !== 'Paid' },
     { name: 'delete', label: 'Delete', tone: 'danger' },
@@ -2338,6 +2347,7 @@ Excel instead of CSV, with real numbers and dates (the writer loads on first use
 - Numbers, booleans and dates are typed cells; `currency` columns get `#,##0.00`, percent
   `number` columns `0.00%`, `date` / `datetime` columns Excel date formats in the grid's time zone.
 - A bold, frozen header and a bold totals line; column widths from the content.
+- Text with line breaks is wrapped, in a row tall enough for every line.
 - `getXlsx()` resolves to a `Blob` (to upload it); `toXlsx(rows, columns)` works without a grid.
 
 Print every row that passes the filters (a virtual grid only has the visible ones on screen):

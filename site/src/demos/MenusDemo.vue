@@ -41,7 +41,17 @@ const columns = [
     rendererOptions: {
       actions: (row: Bet): MenuItem[] => [
         { name: 'open', label: 'Open bet' },
-        { name: 'void', label: 'Void bet', disabled: row.status === 'Void' },
+        { name: 'void', label: 'Void bet', disabled: row.status === 'Void' && 'Already void' },
+        {
+          // a submenu: hover, click, → / Enter open it; ← / Esc go back
+          name: 'status',
+          label: 'Set status',
+          items: [
+            { name: 'status-open', label: 'Open' },
+            { name: 'status-won', label: 'Won' },
+            { name: 'status-lost', label: 'Lost' },
+          ],
+        },
         { separator: true },
         { name: 'delete', label: 'Delete', tone: 'danger' },
       ],
@@ -55,6 +65,14 @@ function contextMenu({ row, column }: CellContext<Bet>): MenuItem[] {
   return [
     { name: 'copy', label: `Copy ${column.header || column.key}`, hint: 'Ctrl+C' },
     { name: 'open', label: `Open bet #${row.id}` },
+    {
+      name: 'copy-as',
+      label: 'Copy as',
+      items: [
+        { name: 'copy-id', label: 'Bet ID' },
+        { name: 'copy-player', label: 'Player' },
+      ],
+    },
     { separator: true },
     { name: 'void', label: 'Void bet', disabled: row.status === 'Void' },
     { name: 'delete', label: 'Delete', tone: 'danger' },

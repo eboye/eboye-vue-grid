@@ -23,6 +23,8 @@ const props = withDefaults(
     id?: string
     /** `anchor-name` set on an external trigger (declarative mode). */
     anchorName?: string
+    /** A submenu (rendered by its parent menu): ← closes it. */
+    nested?: boolean
   }>(),
   { placement: 'bottom-end' },
 )
@@ -32,6 +34,8 @@ const emit = defineEmits<{
   select: [item: MenuAction]
   open: []
   close: []
+  /** A submenu was left with Tab: the whole menu closes. */
+  dismiss: []
 }>()
 
 const uid = useId()
@@ -51,10 +55,61 @@ let stopTracking = () => {}
 onBeforeUnmount(() => stopTracking())
 
 const isAction = (item: MenuItem): item is MenuAction => !('separator' in item)
+// this menu's own items, not a submenu's (which sits inside it)
 const enabledItems = () =>
   Array.from(
-    menu.value?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]:not(:disabled)') ?? [],
+    menu.value?.querySelectorAll<HTMLButtonElement>(':scope > [role="menuitem"]:not(:disabled)') ??
+      [],
   )
+
+// ── Submenus (`items` on an item) ───────────────────────────────────────────────────────────
+const hasSub = (item: MenuAction) => !!item.items?.length
+/** Which item's submenu is open (its index). */
+const subIndex = ref<number | null>(null)
+const subMenu = shallowRef<{ openAt: typeof openAt; close: () => void }>()
+let subTimer = 0
+onBeforeUnmount(() => clearTimeout(subTimer))
+// a function ref: inside `v-for` a plain one would be an array
+const setSubMenu = (c: unknown) => (subMenu.value = (c ?? undefined) as typeof subMenu.value)
+
+async function openSub(index: number, item: HTMLElement) {
+  clearTimeout(subTimer)
+  if (subIndex.value === index) return
+  subMenu.value?.close()
+  subIndex.value = index
+  await nextTick()
+  // focus goes back to the item when the submenu closes (←, Esc)
+  await subMenu.value?.openAt(item, item)
+}
+function closeSub() {
+  clearTimeout(subTimer)
+  subMenu.value?.close()
+  subIndex.value = null
+}
+/** Hover: an item with a submenu opens it, another item closes the open one, after a pause. */
+function onPointerOver(event: PointerEvent) {
+  if (event.pointerType !== 'mouse') return
+  const button = (event.target as Element).closest<HTMLElement>('[role="menuitem"]')
+  // inside the open submenu: keep it
+  if (!button || button.parentElement !== menu.value) return clearTimeout(subTimer)
+  const index = Number(button.dataset.index)
+  const item = props.items[index]
+  if (index === subIndex.value) return clearTimeout(subTimer)
+  clearTimeout(subTimer)
+  subTimer = window.setTimeout(() => {
+    if (item && isAction(item) && hasSub(item) && !reasonOf(item) && item.disabled !== true)
+      void openSub(index, button)
+    else closeSub()
+  }, 200)
+}
+function onSubSelect(item: MenuAction) {
+  close()
+  emit('select', item)
+}
+function onSubDismiss() {
+  close()
+  if (props.nested) emit('dismiss')
+}
 
 function releaseAnchor() {
   if (anchoredElement?.style.getPropertyValue('anchor-name') === ownAnchor) {
@@ -116,6 +171,8 @@ function onToggle(event: Event) {
     point.value = null
     fallbackTarget = null
     returnFocus = null
+    clearTimeout(subTimer)
+    subIndex.value = null
     emit('close')
   }
 }
@@ -137,8 +194,20 @@ function onKeydown(event: KeyboardEvent) {
     case 'End':
       move(list.length - 1)
       break
+    case 'ArrowRight': {
+      const button = list[index]
+      const item = button && props.items[Number(button.dataset.index)]
+      if (button && item && isAction(item) && hasSub(item) && !reasonOf(item))
+        void openSub(Number(button.dataset.index), button)
+      break
+    }
+    case 'ArrowLeft':
+      if (!props.nested) return
+      close() // focus goes back to the item that opened it
+      break
     case 'Tab':
       close()
+      if (props.nested) emit('dismiss')
       return
     default: {
       // Typeahead: jump to the next item starting with the typed character.
@@ -158,8 +227,10 @@ function onKeydown(event: KeyboardEvent) {
 const reasonOf = (item: MenuAction) =>
   typeof item.disabled === 'string' && item.disabled ? item.disabled : undefined
 
-function choose(item: MenuAction) {
+function choose(item: MenuAction, index: number, event: MouseEvent) {
   if (reasonOf(item)) return
+  // an item with a submenu opens it (click, Enter, Space) instead of being chosen
+  if (hasSub(item)) return void openSub(index, event.currentTarget as HTMLElement)
   close()
   emit('select', item)
 }
@@ -185,6 +256,7 @@ defineExpose({ id: menuId, openAt, close, isOpen })
     :style="{ 'position-anchor': anchorName }"
     @toggle="onToggle"
     @keydown="onKeydown"
+    @pointerover="onPointerOver"
     @click.stop
     @contextmenu.prevent
   >
@@ -195,7 +267,10 @@ defineExpose({ id: menuId, openAt, close, isOpen })
         type="button"
         role="menuitem"
         tabindex="-1"
+        :data-index="i"
         :disabled="item.disabled === true"
+        :aria-haspopup="hasSub(item) ? 'menu' : undefined"
+        :aria-expanded="hasSub(item) ? subIndex === i : undefined"
         :aria-disabled="reasonOf(item) ? 'true' : undefined"
         :aria-labelledby="reasonOf(item) ? `${menuId}-l${i}` : undefined"
         :aria-describedby="reasonOf(item) ? `${menuId}-r${i}` : undefined"
@@ -204,7 +279,7 @@ defineExpose({ id: menuId, openAt, close, isOpen })
           item.tone && `vg-tone-${item.tone}`,
           { 'vg-menu-item-unavailable': reasonOf(item) },
         ]"
-        @click="choose(item)"
+        @click="choose(item, i, $event)"
       >
         <component
           :is="toRaw(item.icon)"
@@ -214,10 +289,25 @@ defineExpose({ id: menuId, openAt, close, isOpen })
         />
         <span :id="`${menuId}-l${i}`" class="vg-menu-label">{{ item.label }}</span>
         <span v-if="item.hint" class="vg-menu-hint">{{ item.hint }}</span>
+        <svg v-if="hasSub(item)" class="vg-menu-chevron" viewBox="0 0 16 16" aria-hidden="true">
+          <path d="m6 3.5 4.5 4.5L6 12.5" />
+        </svg>
         <span v-if="reasonOf(item)" :id="`${menuId}-r${i}`" class="vg-menu-reason">{{
           reasonOf(item)
         }}</span>
       </button>
+      <!-- its submenu: a popover inside this one, so the browser stacks and dismisses them together -->
+      <VGridMenu
+        v-if="isAction(item) && item.items?.length && subIndex === i"
+        :ref="setSubMenu"
+        :items="item.items"
+        :label="item.label"
+        placement="right-start"
+        nested
+        @select="onSubSelect"
+        @dismiss="onSubDismiss"
+        @close="subIndex = null"
+      />
     </template>
   </div>
 </template>

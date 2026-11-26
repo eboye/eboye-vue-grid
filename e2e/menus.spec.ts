@@ -206,6 +206,88 @@ test.describe('cell context menu', () => {
   })
 })
 
+test.describe('submenus', () => {
+  const sub = (page: Page) => page.getByRole('menu', { name: 'Copy as' })
+
+  test('keyboard: → / Enter open it with focus on its first item; ← and Esc go back; Enter chooses', async ({
+    page,
+  }) => {
+    const grid = demo(page, 'basic')
+    const cell = grid.locator('[data-row-key="2"] > [data-col-key="city"]')
+    await cell.click()
+    await page.keyboard.press('Shift+F10')
+    const parent = page.getByRole('menuitem', { name: 'Copy as' })
+    await page.keyboard.press('ArrowDown')
+    await page.keyboard.press('ArrowDown')
+    await expect(parent).toBeFocused()
+    await expect(parent).toHaveAttribute('aria-haspopup', 'menu')
+    await expect(parent).toHaveAttribute('aria-expanded', 'false')
+    await page.keyboard.press('ArrowRight')
+    await expect(sub(page)).toBeVisible()
+    await expect(parent).toHaveAttribute('aria-expanded', 'true')
+    await expect(sub(page).getByRole('menuitem', { name: 'Bet ID' })).toBeFocused()
+    // beside its item, not over it
+    const [p, s] = [await box(parent), await box(sub(page))]
+    expect(s.x >= p.x + p.width - 4 || s.x + s.width <= p.x + 4).toBe(true)
+    expect(Math.abs(s.y - p.y)).toBeLessThan(12)
+    // its own items only: the arrows stay in it, a reason shows on the disabled one
+    await page.keyboard.press('ArrowDown')
+    await expect(sub(page).getByRole('menuitem', { name: 'Link' })).toBeFocused()
+    await expect(sub(page).getByRole('menuitem', { name: 'JSON' })).toHaveAccessibleDescription(
+      'Not for this column',
+    )
+    await page.keyboard.press('ArrowLeft')
+    await expect(sub(page)).toHaveCount(0)
+    await expect(parent).toBeFocused()
+    await expect(openMenu(page)).toHaveCount(1) // the menu itself stays
+    await page.keyboard.press('Enter')
+    await expect(sub(page).getByRole('menuitem', { name: 'Bet ID' })).toBeFocused()
+    await page.keyboard.press('Escape')
+    await expect(sub(page)).toHaveCount(0)
+    await expect(parent).toBeFocused()
+    await page.keyboard.press('ArrowRight')
+    await page.keyboard.press('Enter')
+    await expect(openMenu(page)).toHaveCount(0)
+    await expect(page.getByTestId('log')).toHaveText('context-action copy-id #2 city')
+    await expect(cell).toBeFocused()
+  })
+
+  test('mouse: hovering its item opens it, another item closes it; a click chooses', async ({
+    page,
+  }) => {
+    const grid = demo(page, 'basic')
+    const cell = grid.locator('[data-row-key="1"] > [data-col-key="city"]')
+    const c = await box(cell)
+    await page.mouse.click(c.x + 12, c.y + c.height / 2, { button: 'right' })
+    const parent = page.getByRole('menuitem', { name: 'Copy as' })
+    await parent.hover()
+    await expect(sub(page)).toBeVisible()
+    await page.getByRole('menuitem', { name: /Open bet/ }).hover()
+    await expect(sub(page)).toHaveCount(0)
+    await parent.hover()
+    await expect(sub(page)).toBeVisible()
+    // across to the submenu: it stays
+    await sub(page).getByRole('menuitem', { name: 'Link' }).hover()
+    await page.waitForTimeout(400)
+    await expect(sub(page)).toBeVisible()
+    await sub(page).getByRole('menuitem', { name: 'Link' }).click()
+    await expect(openMenu(page)).toHaveCount(0)
+    await expect(page.getByTestId('log')).toHaveText('context-action copy-link #1 city')
+  })
+
+  test('Tab in a submenu closes the whole menu', async ({ page }) => {
+    const grid = demo(page, 'basic')
+    await grid.locator('[data-row-key="2"] > [data-col-key="city"]').click()
+    await page.keyboard.press('Shift+F10')
+    await page.keyboard.press('ArrowDown')
+    await page.keyboard.press('ArrowDown')
+    await page.keyboard.press('ArrowRight')
+    await expect(sub(page)).toBeVisible()
+    await page.keyboard.press('Tab')
+    await expect(openMenu(page)).toHaveCount(0)
+  })
+})
+
 test.describe('header context menu', () => {
   test('sorts and runs custom items', async ({ page }) => {
     const grid = demo(page, 'basic')

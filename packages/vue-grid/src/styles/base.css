@@ -390,6 +390,14 @@
   .vg-menu[data-placement='bottom-start'] {
     position-area: bottom span-right;
   }
+  .vg-menu[data-placement='right-start'] {
+    margin: 0 2px;
+    position-area: right span-bottom;
+    position-try-fallbacks:
+      flip-inline,
+      flip-block,
+      flip-block flip-inline;
+  }
   .vg-menu[data-placement='point'] {
     position-area: bottom right;
     margin: 2px;
@@ -442,6 +450,17 @@
   }
   .vg-menu-label {
     flex: 1 1 auto;
+  }
+  .vg-menu-chevron {
+    flex: none;
+    width: 0.875rem;
+    height: 0.875rem;
+    margin-inline-start: auto;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.75;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
   .vg-menu-icon {
     flex: none;

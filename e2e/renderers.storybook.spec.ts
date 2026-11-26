@@ -199,6 +199,25 @@ test('actions menu: a disabled item with a reason shows it, reads it out, stays 
   await expect(menu.getByRole('menuitem', { name: 'Archive' })).toBeDisabled()
 })
 
+test('actions menu: a submenu opens with →, chooses with Enter and closes everything, focus back on ⋯', async ({
+  page,
+}) => {
+  await story(page, 'renderers--actions-menu')
+  const trigger = valueCell(page, 1).getByRole('button', { name: 'Row actions' })
+  await trigger.focus()
+  await page.keyboard.press('Enter')
+  await page.keyboard.press('m') // typeahead → "Move to"
+  const parent = page.getByRole('menuitem', { name: 'Move to' })
+  await expect(parent).toBeFocused()
+  await page.keyboard.press('ArrowRight')
+  const sub = page.getByRole('menu', { name: 'Move to' })
+  await expect(sub.getByRole('menuitem', { name: 'Open' })).toBeFocused()
+  await page.keyboard.press('ArrowDown')
+  await page.keyboard.press('Enter') // "In review"
+  await expect(page.locator('[role="menu"]:popover-open')).toHaveCount(0)
+  await expect(trigger).toBeFocused()
+})
+
 test('details: popover anchored under its button, lists items, closes with Esc and the close button', async ({
   page,
 }) => {

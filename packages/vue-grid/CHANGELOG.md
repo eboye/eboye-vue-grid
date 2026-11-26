@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.24.0 — 2026-11-26
+
+- New: **submenus**. A menu item with `items` opens them beside it instead of being chosen: in
+  context menus, header menus (your own items) and `actions-menu`. Hover (after a short pause),
+  click, → / Enter / Space open it with focus on its first item; ← or Esc go back to the item;
+  Tab closes the whole menu. The item shows a chevron and is announced as opening a menu
+  (`aria-haspopup="menu"`, `aria-expanded`). Choosing a nested item emits it like any other
+  (`context-action`, `header-action`, `cell-action`) and closes every level. A submenu is its own
+  popover nested in its parent's, so the browser stacks and dismisses them together; it flips to
+  the left when there's no room on the right.
+- New: the Excel export wraps text with line breaks (a multi-line note, `preserveNewlines` text),
+  and its row is as tall as its lines, so Excel, LibreOffice and Gnumeric show every line instead
+  of running them together.
+
 ## 0.23.0 — 2026-11-26
 
 - New: `skeleton` (`true` = 8 rows, or a number). While the grid loads with no rows to show yet,
