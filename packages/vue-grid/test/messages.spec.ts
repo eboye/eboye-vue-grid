@@ -120,6 +120,7 @@ describe('messages', () => {
     })
     await vi.waitFor(() => expect(w.find('.vg-pagination').exists()).toBe(true))
     await vi.waitFor(() => expect(w.find('.vg-status-bar').text()).not.toBe(''))
+    await vi.waitFor(() => expect(w.find('.vg-filter-input input').exists()).toBe(true))
     const input = w.find('.vg-filter-input input')
     expect(input.attributes('placeholder')).toBe('Filtriraj…')
     expect(input.attributes('aria-label')).toBe('Filter za Player')

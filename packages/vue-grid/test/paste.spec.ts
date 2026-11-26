@@ -18,6 +18,10 @@ describe('parseClipboard', () => {
     expect(parseClipboard('one')).toEqual([['one']])
     expect(parseClipboard('a\t\tc')).toEqual([['a', '', 'c']])
   })
+  it('keeps an explicitly quoted empty cell at the end', () => {
+    expect(parseClipboard('""')).toEqual([['']])
+    expect(parseClipboard('first\n""')).toEqual([['first'], ['']])
+  })
   it('quoted cells hold tabs, line breaks and quotes; a quote inside text is text', () => {
     expect(parseClipboard('"two\nlines"\t"say ""hi"""\n5" screen\tx')).toEqual([
       ['two\nlines', 'say "hi"'],

@@ -1,11 +1,16 @@
 import { describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
-import { reactive } from 'vue'
+import { reactive, shallowRef } from 'vue'
+import CopyButton from '../src/renderers/parts/CopyButton.vue'
+import { createTooltip } from '../src/internal/tooltipController'
 import { setCellValue } from '../src/core/value'
 import type { CellEditEvent, VGridExposed } from '../src/types'
 import VGridComponent from '../src/components/VGrid.vue'
 import VGridMenu from '../src/components/VGridMenu.vue'
+import VGridFilterInput from '../src/components/VGridFilterInput.vue'
 import VGridFilterPanel from '../src/components/VGridFilterPanel.vue'
+import VGridSearch from '../src/components/VGridSearch.vue'
+import { createVueGrid } from '../src/registry/plugin'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const VGrid = VGridComponent as any
@@ -47,7 +52,10 @@ describe('review regressions', () => {
       w.unmount()
     }
   })
-  it.each([['a sparse array', Array(2)]])('renders %s without throwing', (_label, value) => {
+  it.each([
+    ['a sparse array', Array(2)],
+    ['an invalid Date', new Date('invalid')],
+  ])('renders %s without throwing', (_label, value) => {
     const w = mount(VGrid, {
       props: {
         rows: [{ id: 1, value }],
@@ -114,6 +122,17 @@ describe('review regressions', () => {
     } finally {
       w.unmount()
       vi.useRealTimers()
+    }
+  })
+  it('syncs the focused search input after an external reset', async () => {
+    const w = mount(VGridSearch, { props: { modelValue: 'before' } })
+    try {
+      await w.get('input').trigger('focus')
+      await w.setProps({ modelValue: '' })
+      await w.get('input').trigger('blur')
+      expect(w.get('input').element.value).toBe('')
+    } finally {
+      w.unmount()
     }
   })
 })
@@ -209,4 +228,99 @@ it('renders ordinary objects that contain BigInt or cycles', () => {
   })
   expect(w.findAll('.vg-row .vg-text')).toHaveLength(2)
   w.unmount()
+})
+
+it('reports the exact text sent to the clipboard', async () => {
+  let finish!: () => void
+  const writeText = vi.fn(
+    () =>
+      new Promise<void>((resolve) => {
+        finish = resolve
+      }),
+  )
+  vi.stubGlobal('navigator', { clipboard: { writeText } })
+  const w = mount(CopyButton, { props: { text: 'before' } })
+  try {
+    await w.get('button').trigger('click')
+    await w.setProps({ text: 'after' })
+    finish()
+    await flushPromises()
+    expect(writeText).toHaveBeenCalledWith('before')
+    expect(w.emitted('copied')).toEqual([['before']])
+  } finally {
+    w.unmount()
+    vi.unstubAllGlobals()
+  }
+})
+
+it('cancels the queued tooltip when the pointer returns', async () => {
+  vi.useFakeTimers()
+  const a = document.createElement('span')
+  const b = document.createElement('span')
+  const popover = document.createElement('div')
+  a.setAttribute('data-vg-tip', 'a')
+  b.setAttribute('data-vg-tip', 'b')
+  popover.showPopover = vi.fn()
+  vi.spyOn(popover, 'matches').mockReturnValue(false)
+  document.body.append(a, b, popover)
+  const control = createTooltip(shallowRef(popover), '--tip')
+  const over = (target: HTMLElement) =>
+    control.pointerover({ target, pointerType: 'mouse' } as unknown as PointerEvent)
+  try {
+    over(a)
+    await vi.advanceTimersByTimeAsync(401)
+    expect(popover.textContent).toBe('a')
+    over(b)
+    over(a)
+    await vi.advanceTimersByTimeAsync(401)
+    expect(popover.textContent).toBe('a')
+  } finally {
+    control.hide()
+    a.remove()
+    b.remove()
+    popover.remove()
+    vi.useRealTimers()
+  }
+})
+
+it('uses the visible JSON title as the accessible dialog name', () => {
+  const w = mount(VGrid, {
+    props: {
+      rows: [{ id: 1, payload: { k: 'value' } }],
+      rowKey: 'id',
+      columns: [{ key: 'payload', header: 'Payload', renderer: 'json' }],
+    },
+  })
+  const dialog = w.get('dialog')
+  const label = dialog.get('strong')
+  expect(label.text()).toBe('Payload')
+  expect(label.attributes('id')).toBeTruthy()
+  expect(dialog.attributes('aria-labelledby')).toBe(label.attributes('id'))
+  w.unmount()
+})
+
+it('localizes an advanced filter summary and the panel clear action', () => {
+  const global = {
+    plugins: [
+      createVueGrid({
+        messages: {
+          filterColumn: (name: string) => `Filter für ${name}`,
+          customFilter: 'Benutzerdefiniert',
+          clearFilter: 'Löschen',
+        },
+      }),
+    ],
+  }
+  const props = {
+    type: 'text' as const,
+    column: { key: 'name', header: 'Name' },
+    modelValue: { type: 'text' as const, op: 'notContains' as const, value: 'A' },
+  }
+  const input = mount(VGridFilterInput, { global, props })
+  const panel = mount(VGridFilterPanel, { global, props: { ...props, values: [] } })
+  expect(input.get('button').text()).toBe('Benutzerdefiniert')
+  expect(input.get('button').attributes('aria-label')).toBe('Filter für Name')
+  expect(panel.get('header button').text()).toBe('Löschen')
+  input.unmount()
+  panel.unmount()
 })

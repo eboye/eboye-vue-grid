@@ -13,9 +13,10 @@ const done = ref(false)
 let timer = 0
 
 async function copy() {
-  const ok = await copyText(props.text)
-  if (!ok) return emit('failed', props.text)
-  emit('copied', props.text)
+  const text = props.text
+  const ok = await copyText(text)
+  if (!ok) return emit('failed', text)
+  emit('copied', text)
   done.value = true
   window.clearTimeout(timer)
   timer = window.setTimeout(() => (done.value = false), 1500)

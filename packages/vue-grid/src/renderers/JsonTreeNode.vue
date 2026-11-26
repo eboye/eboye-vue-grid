@@ -43,7 +43,8 @@ const open = ref(props.level < props.collapseAt)
 const primitive = computed(() => {
   const v = resolved.value
   if (v === null) return { type: 'null', text: 'null' }
-  if (v instanceof Date) return { type: 'date', text: v.toISOString() }
+  if (v instanceof Date)
+    return { type: 'date', text: Number.isNaN(v.getTime()) ? String(v) : v.toISOString() }
   if (typeof v === 'string') return { type: 'string', text: JSON.stringify(v) }
   return { type: typeof v, text: String(v) }
 })

@@ -213,7 +213,7 @@ const customComponent = computed(
     <header class="vg-filter-head">
       <strong :id="`${uid}-title`">{{ title }}</strong>
       <button type="button" class="vg-link-button" :disabled="!modelValue" @click="clearFilter">
-        Clear
+        {{ m.clearFilter ?? 'Clear' }}
       </button>
     </header>
 

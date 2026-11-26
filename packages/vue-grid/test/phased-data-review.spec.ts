@@ -178,6 +178,22 @@ it('provides a status summary over individually selected grouped rows', async ()
   w.unmount()
 })
 
+it('does not refetch when the same query values are supplied again', async () => {
+  const source = vi.fn<DataSource<Row>>(async () => ({
+    rows: [{ id: 1, group: 'A', name: 'First' }],
+  }))
+  const sameFilters = () => ({ search: '', columns: {} })
+  const w = mount(grid, {
+    props: { dataSource: source, rowKey: 'id', columns, filters: sameFilters() },
+  })
+  await flushPromises()
+  expect(source).toHaveBeenCalledTimes(1)
+  await w.setProps({ filters: sameFilters() })
+  await flushPromises()
+  expect(source).toHaveBeenCalledTimes(1)
+  w.unmount()
+})
+
 it('renders a server group label when the row renderer requires a data row', async () => {
   const label = vi.fn((_value: unknown, row: Row) => row.name)
   const dataSource: DataSource<Row> = async () => ({ groups: [{ value: 'A', count: 2 }] })

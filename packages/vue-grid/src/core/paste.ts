@@ -38,6 +38,11 @@ export function parseClipboard(text: string): string[][] {
       }
       // only a real quoted cell if the cell ends right after it; else the quote is text
       if (closed && (j === s.length || s[j] === '\t' || s[j] === '\n')) {
+        if (j === s.length) {
+          row.push(quoted)
+          rows.push(row)
+          return rows
+        }
         cell = quoted
         i = j
         continue

@@ -8,3 +8,6 @@ import { allRenderers } from '../src/renderers'
 // The opt-in behaviour itself is covered in VGrid.spec.ts ("renderers are opt-in").
 // Same for features; the opt-in behaviour is covered in features.spec.ts.
 config.global.plugins = [createVueGrid({ renderers: allRenderers, features: allFeatures })]
+
+// jsdom dispatches animation frames but has no layout or element scrolling methods.
+HTMLElement.prototype.scrollBy ??= () => {}

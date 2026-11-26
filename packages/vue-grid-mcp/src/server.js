@@ -19,6 +19,14 @@ const INSTRUCTIONS =
  * Exported for tests.
  */
 export async function handle(message, docs, version) {
+  if (
+    !message ||
+    typeof message !== 'object' ||
+    Array.isArray(message) ||
+    message.jsonrpc !== '2.0' ||
+    typeof message.method !== 'string'
+  )
+    return { jsonrpc: '2.0', id: null, error: { code: -32600, message: 'Invalid Request' } }
   const { id, method, params = {} } = message
   const reply = (result) => (id === undefined ? undefined : { jsonrpc: '2.0', id, result })
   const fail = (code, msg) =>
@@ -112,7 +120,7 @@ export async function serve({
       )
       continue
     }
-    const batch = Array.isArray(message) ? message : [message]
+    const batch = Array.isArray(message) && message.length ? message : [message]
     for (const m of batch) {
       const response = await handle(m, docs, version)
       if (response) output.write(JSON.stringify(response) + '\n')

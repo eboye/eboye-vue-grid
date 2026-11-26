@@ -109,11 +109,10 @@ export function useDataSource<T>(opts: DataSourceOptions<T>) {
   }
 
   // Serialised so equal queries (e.g. a re-set identical filter) don't refetch.
-  watch(
-    () => [opts.source(), JSON.stringify(opts.query())] as const,
-    () => void load(),
-    { immediate: true, flush: 'post' },
-  )
+  watch([opts.source, () => JSON.stringify(opts.query())], () => void load(), {
+    immediate: true,
+    flush: 'post',
+  })
   onBeforeUnmount(() => controller?.abort())
 
   /** Field patches for the loaded rows (same semantics as `patchRows`). Returns rows changed. */
