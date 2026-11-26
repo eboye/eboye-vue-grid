@@ -182,6 +182,9 @@ function onKeydown(event: KeyboardEvent) {
   const index = list.indexOf(document.activeElement as HTMLButtonElement)
   const move = (i: number) => list[(i + list.length) % list.length]?.focus({ preventScroll: true })
   switch (event.key) {
+    case ' ':
+      event.stopPropagation()
+      return
     case 'ArrowDown':
       move(index + 1)
       break

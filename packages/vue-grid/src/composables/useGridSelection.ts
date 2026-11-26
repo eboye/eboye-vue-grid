@@ -139,9 +139,10 @@ export function useGridSelection<T>(opts: GridSelectionOptions<T>) {
       const to = keys.indexOf(key)
       if (from >= 0 && to >= 0) {
         const next = new Set(current)
+        const canSelect = opts.view().ctx.isRowSelectable
         for (let i = Math.min(from, to); i <= Math.max(from, to); i++) {
           const r = shown[i]!
-          if (!isRowSelectable(r)) continue
+          if (!canSelect(r)) continue
           for (const k of [keys[i]!, ...(cascade ? descendantKeys(r) : [])]) {
             if (select) next.add(k)
             else next.delete(k)

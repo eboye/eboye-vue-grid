@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, shallowRef } from 'vue'
+import { computed, shallowRef, useId } from 'vue'
 import type { CellRendererProps } from '../types'
 import { stringifyJson } from './format'
 import { resolveOption, type JsonOptions } from './options'
@@ -9,6 +9,7 @@ const props = defineProps<CellRendererProps<unknown, unknown, JsonOptions>>()
 const m = useMessages()
 
 const dialog = shallowRef<HTMLDialogElement>()
+const titleId = useId()
 const hasValue = computed(
   () => props.value !== null && props.value !== undefined && props.value !== '',
 )
@@ -39,9 +40,16 @@ function onDialogClick(event: MouseEvent) {
     <button type="button" class="vg-link-button" @click.stop="open">
       {{ options.label ?? m.view ?? 'View' }}
     </button>
-    <dialog ref="dialog" class="vg-dialog" closedby="any" @click.stop="onDialogClick" @keydown.stop>
+    <dialog
+      ref="dialog"
+      class="vg-dialog"
+      closedby="any"
+      :aria-labelledby="titleId"
+      @click.stop="onDialogClick"
+      @keydown.stop
+    >
       <header class="vg-dialog-header">
-        <strong>{{ title }}</strong>
+        <strong :id="titleId">{{ title || 'JSON' }}</strong>
         <form method="dialog">
           <button class="vg-icon-button" :aria-label="m.close ?? 'Close'">✕</button>
         </form>

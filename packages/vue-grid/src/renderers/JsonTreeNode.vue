@@ -31,7 +31,7 @@ const isObject = computed(
 const isArray = computed(() => Array.isArray(resolved.value))
 const entries = computed<[string | number, unknown][]>(() =>
   isArray.value
-    ? (resolved.value as unknown[]).map((v, i) => [i, v])
+    ? Array.from(resolved.value as unknown[], (v, i) => [i, v])
     : isObject.value
       ? Object.entries(resolved.value as Record<string, unknown>)
       : [],
@@ -43,7 +43,8 @@ const open = ref(props.level < props.collapseAt)
 const primitive = computed(() => {
   const v = resolved.value
   if (v === null) return { type: 'null', text: 'null' }
-  if (v instanceof Date) return { type: 'date', text: v.toISOString() }
+  if (v instanceof Date)
+    return { type: 'date', text: Number.isNaN(v.getTime()) ? String(v) : v.toISOString() }
   if (typeof v === 'string') return { type: 'string', text: JSON.stringify(v) }
   return { type: typeof v, text: String(v) }
 })

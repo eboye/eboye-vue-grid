@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- rows are an opaque, type-erased T inside the grid internals. */
-import { computed, shallowReactive, toRaw, watch, type Ref } from 'vue'
+import { computed, onScopeDispose, shallowReactive, toRaw, watch, watchEffect, type Ref } from 'vue'
 import { groupedLevels, isRowGroup, pathKey, serverGroups, type RowGroup } from '../core/grouping'
 import type { ColumnDef, RowKey } from '../types'
 import type { DataSourceResult, GroupPath, ServerGroup } from './useDataSource'
@@ -8,6 +8,8 @@ import type { SubRowEntry } from './useSubRows'
 export interface ServerGroupsOptions<T> {
   /** The top-level groups the data source returned for a grouped query; undefined: it sent rows. */
   top: () => readonly ServerGroup[] | undefined
+  /** Changes on a successful fetch, even when its group metadata is reused. */
+  revision?: () => number | undefined
   /** A group's contents: its sub-groups or (at the last level) its rows. */
   load: (path: GroupPath, signal: AbortSignal) => Promise<DataSourceResult<T>>
   /** Groups selected by query (`v-model:selected-groups`). */
@@ -31,14 +33,17 @@ export function useServerGroups<T>(opts: ServerGroupsOptions<T>) {
   /** Loaded rows → the key of the group they were loaded in. */
   const rowGroup = new WeakMap<object, string>()
   // A new answer to the top-level query (sort, filters, page, grouping): load contents again.
-  watch(opts.top, () => {
+  function clear() {
     for (const c of requests.values()) c.abort()
     requests.clear()
     cache.clear()
-  })
+  }
+  watch([opts.top, () => opts.revision?.()], clear)
+  onScopeDispose(clear)
 
   /** The top-level groups, as group rows (undefined: the server sent rows). */
   const groups = (by: readonly ColumnDef<T>[]) => {
+    opts.revision?.()
     const top = opts.top()
     return top && by[0] ? serverGroups(top, by[0]) : undefined
   }
@@ -125,12 +130,21 @@ export function useServerGroups<T>(opts: ServerGroupsOptions<T>) {
   }
   /** Rows of the selected groups (they aren't loaded: the server's counts). */
   function selectedCount(each: (visit: (g: RowGroup<T>) => void) => void) {
-    let n = 0
-    if (selectedKeys.value.size)
-      each((g) => {
-        if (selectedKeys.value.has(g.key)) n += g.count
-      })
-    return n
+    const counts = computed<Map<string, number>>((previous) => {
+      const next = new Map<string, number>()
+      for (const key of selectedKeys.value) {
+        const count = previous?.get(key)
+        if (count !== undefined) next.set(key, count)
+      }
+      if (selectedKeys.value.size)
+        each((group) => {
+          if (selectedKeys.value.has(group.key)) next.set(group.key, group.count)
+        })
+      return next
+    })
+    // Record counts as pages arrive, even when no toolbar or status bar is reading them.
+    watchEffect(() => void counts.value, { flush: 'post' })
+    return computed(() => [...counts.value.values()].reduce((total, count) => total + count, 0))
   }
   /** The header checkbox: every top-level group, or none. */
   function allState(top: readonly RowGroup<T>[]): 'all' | 'some' | 'none' {

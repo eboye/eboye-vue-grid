@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
-import { reactive } from 'vue'
+import { h, reactive } from 'vue'
 import VGridComponent from '../src/components/VGrid.vue'
 import { setCellValue } from '../src/core/value'
 import type {
@@ -172,4 +172,67 @@ describe('Ctrl/⌘+X', () => {
     expect(await api(w).cutRange()).toBeNull()
     expect(rows.map((r) => r.note)).toEqual(['a', 'b', 'c'])
   })
+})
+
+it('cuts the original cells when sort changes during the clipboard write', async () => {
+  let finishCopy!: () => void
+  Object.defineProperty(navigator, 'clipboard', {
+    configurable: true,
+    value: {
+      writeText: (text: string) =>
+        new Promise<void>((resolve) => {
+          clipboard.push(text)
+          finishCopy = resolve
+        }),
+    },
+  })
+  const { w, rows } = make({
+    columns: columns.map((col) => ({ ...col, sortable: true })),
+    sortMode: 'client',
+    sort: { key: 'id', dir: 'asc' },
+  })
+  api(w).selectRange(range([1, 'note'], [1, 'note']))
+  await flushPromises()
+  const cut = api(w).cutRange()
+  await w.setProps({ sort: { key: 'id', dir: 'desc' } })
+  finishCopy()
+  await cut
+  expect(clipboard).toEqual(['a'])
+  expect(rows.map((row) => row.note)).toEqual(['', 'b', 'c'])
+})
+
+it('routes Delete to the nested detail grid only', async () => {
+  const child = reactive({ id: 1, note: 'Child' })
+  const rows = reactive([{ id: 1, note: 'a' }])
+  const parent = mount(VGrid, {
+    props: {
+      rows,
+      columns: [{ key: 'note', editable: true }],
+      rowKey: 'id',
+      rangeSelection: true,
+      expanded: [1],
+      'onCell-edit': (edit: CellEditEvent<(typeof rows)[number]>) =>
+        setCellValue(edit.row, edit.column, edit.value),
+    },
+    slots: {
+      detail: () =>
+        h(VGrid, {
+          rows: [child],
+          columns: [{ key: 'note', editable: true }],
+          rowKey: 'id',
+          rangeSelection: true,
+          'onCell-edit': (edit: CellEditEvent<typeof child>) =>
+            setCellValue(edit.row, edit.column, edit.value),
+        }),
+    },
+  })
+  mounted.push(parent)
+  api(parent).selectRange(range([1, 'note'], [1, 'note']))
+  const cell = parent.get('.vg-detail [data-col-key="note"].vg-cell')
+  await cell.trigger('pointerdown', { button: 0 })
+  window.dispatchEvent(new MouseEvent('pointerup'))
+  await cell.trigger('keydown', { key: 'Delete' })
+  await flushPromises()
+  expect(child.note).toBe('')
+  expect(rows[0]!.note).toBe('a')
 })

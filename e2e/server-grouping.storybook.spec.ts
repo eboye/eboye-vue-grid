@@ -28,8 +28,18 @@ test('top-level groups from the server: their counts, sums, no rows yet', async 
 test('expanding loads sub-groups, then rows, with a loading row meanwhile', async ({ page }) => {
   await open(page)
   const won = group(page, 0, 'Won')
+  const grid = page.getByRole('treegrid')
+  // Record the transient loading row at render time, even if the next browser action runs late.
+  await grid.evaluate((el) => {
+    const observer = new MutationObserver(() => {
+      if (!el.querySelector('.vg-status-row')?.textContent?.includes('Loading…')) return
+      el.setAttribute('data-test-saw-group-loading', 'true')
+      observer.disconnect()
+    })
+    observer.observe(el, { childList: true, subtree: true })
+  })
   await won.getByRole('button', { name: 'Expand group' }).click()
-  await expect(page.locator('.vg-status-row')).toContainText('Loading…')
+  await expect(grid).toHaveAttribute('data-test-saw-group-loading', 'true')
   await expect(requests(page).first()).toHaveText('groups in Won: 6')
   await expect(groups(page, 1)).toHaveCount(6)
   const nis = group(page, 1, 'Niš')

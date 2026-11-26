@@ -42,11 +42,11 @@ const source = computed(() =>
 )
 
 const text = ref(source.value)
-const focused = ref(false)
-watch(source, (s) => {
-  if (!focused.value) text.value = s
-})
 let timer = 0
+watch(source, (value) => {
+  window.clearTimeout(timer)
+  text.value = value
+})
 onBeforeUnmount(() => window.clearTimeout(timer))
 function onInput(value: string) {
   text.value = value
@@ -65,8 +65,6 @@ function onInput(value: string) {
     :placeholder="placeholder ?? m.searchPlaceholder ?? 'Search…'"
     :aria-label="label ?? m.searchLabel ?? 'Search rows'"
     :value="text"
-    @focus="focused = true"
-    @blur="focused = false"
     @input="onInput(($event.target as HTMLInputElement).value)"
   />
 </template>

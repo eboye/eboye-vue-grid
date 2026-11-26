@@ -125,21 +125,6 @@ function safeStringify(value: unknown): string {
   }
 }
 
-// The same filter object is matched against every row: fold its query and build its value
-// set once, not once per row.
-const foldedQueries = new WeakMap<TextFilter, string>()
-const foldedQuery = (filter: TextFilter) => {
-  let q = foldedQueries.get(filter)
-  if (q === undefined) foldedQueries.set(filter, (q = foldText(filter.value)))
-  return q
-}
-const valueSets = new WeakMap<string[], Set<string>>()
-const valueSet = (values: string[]) => {
-  let set = valueSets.get(values)
-  if (!set) valueSets.set(values, (set = new Set(values)))
-  return set
-}
-
 /** The value-list key of a cell value: its string form, `''` for blanks. */
 export function setKey(value: unknown): string {
   if (isBlank(value)) return ''
@@ -181,13 +166,30 @@ export function matchesFilter(
   filter: ColumnFilter,
   opts: { timeZone?: string } = {},
 ): boolean {
+  return matchValue(value, filter, opts.timeZone)
+}
+
+/** Prepares values once per pass over the rows, tracking reactive filter edits. */
+export function createFilterMatcher(filter: ColumnFilter, timeZone?: string) {
+  const query = filter.type === 'text' ? foldText(filter.value) : undefined
+  const values = filter.type === 'set' ? new Set(filter.values) : undefined
+  return (value: unknown) => matchValue(value, filter, timeZone, query, values)
+}
+
+function matchValue(
+  value: unknown,
+  filter: ColumnFilter,
+  timeZone?: string,
+  query?: string,
+  values?: Set<string>,
+): boolean {
   if (!isFilterActive(filter)) return true
   switch (filter.type) {
     case 'text': {
       if (filter.op === 'empty') return isBlank(value)
       if (filter.op === 'notEmpty') return !isBlank(value)
       const text = foldText(value)
-      const q = foldedQuery(filter)
+      const q = query ?? foldText(filter.value)
       switch (filter.op) {
         case 'contains':
           return text.includes(q)
@@ -229,7 +231,7 @@ export function matchesFilter(
       return true
     }
     case 'date': {
-      const day = dayKey(value, opts.timeZone)
+      const day = dayKey(value, timeZone)
       if (filter.op === 'empty') return day === null
       if (filter.op === 'notEmpty') return day !== null
       if (day === null) return false
@@ -249,7 +251,7 @@ export function matchesFilter(
     case 'boolean':
       return filter.value === null ? isBlank(value) : !isBlank(value) && !!value === filter.value
     case 'set':
-      return valueSet(filter.values).has(setKey(value))
+      return values ? values.has(setKey(value)) : filter.values.includes(setKey(value))
     case 'custom':
       return true
   }

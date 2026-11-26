@@ -306,3 +306,27 @@ describe('grid edge cases', () => {
     expect(w.text()).toContain('child v3')
   })
 })
+
+it('ignores the old lazy request after reloading the same expanded parent', async () => {
+  type Row = { id: number; name: string }
+  const requests: ((rows: Row[]) => void)[] = []
+  const w = mount(VGrid, {
+    props: {
+      rows: [{ id: 1, name: 'Parent' }],
+      columns: [{ key: 'name' }],
+      rowKey: 'id',
+      expanded: [1],
+      loadSubRows: () => new Promise<Row[]>((resolve) => requests.push(resolve)),
+    },
+  })
+  await flushPromises()
+  ;(w.vm as unknown as VGridExposed).reloadSubRows(1)
+  await flushPromises()
+  expect(requests).toHaveLength(2)
+  requests[1]!([{ id: 2, name: 'Fresh' }])
+  await flushPromises()
+  requests[0]!([{ id: 3, name: 'Stale' }])
+  await flushPromises()
+  expect(w.text()).toContain('Fresh')
+  w.unmount()
+})

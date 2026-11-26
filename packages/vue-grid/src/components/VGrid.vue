@@ -641,10 +641,17 @@ const sizedColumns = computed(() =>
 )
 
 // ── Column virtualization ───────────────────────────────────────────────────────────────────
+const statePinnedKeys = computed(() => {
+  const state = effectiveState.value
+  return visibleColumns(layoutColumns.value, state)
+    .filter((column) => effectivePin(column, state))
+    .map((column) => column.key)
+})
 const cols = features.columnVirtualization?.useVirtualColumns({
   root,
   options: () => props.virtualColumns,
-  columns: () => resolvedColumns.value,
+  columns: () => sizedColumns.value,
+  keepSized: (key) => statePinnedKeys.value.includes(key),
 })
 
 const template = computed(() =>
@@ -773,7 +780,8 @@ const filt = features.filtering?.useFilters<T>({
   messages: () => messages.value,
   format: () => formatContext.value,
 })
-const filterIdFor = (key: string) => `vg-filter-${gridId}-${key.replace(/[^\w-]/g, '_')}`
+const filterIdFor = (key: string) =>
+  `vg-filter-${gridId}-${Array.from(key, (char) => char.codePointAt(0)!.toString(16)).join('-')}`
 function openFilter(key: string) {
   const el = document.getElementById(filterIdFor(key))
   if (el && !el.matches(':popover-open')) el.showPopover?.()
@@ -918,6 +926,7 @@ const grouping = features.rowGrouping?.useRowGrouping<T>({
   walk,
   server: features.serverGrouping?.useServerGroups<T>({
     top: () => (serverGroupBy.value ? ds?.groups.value : undefined),
+    revision: () => ds?.revision.value,
     load: (path, signal) =>
       props.dataSource!({ ...query.value, groupPath: path, page: 1, pageSize: null }, { signal }),
     selectedGroups,
@@ -928,7 +937,8 @@ const grouping = features.rowGrouping?.useRowGrouping<T>({
 })
 /** Selected rows, plus (server groups) the rows of the selected groups. */
 const selectedTotal = computed(
-  () => (sel?.count.value ?? 0) + (grouping?.server.value ? grouping.selectedGroupCount.value : 0),
+  () =>
+    (sel?.count.value ?? 0) + (serverGroupBy.value ? (grouping?.selectedGroupCount.value ?? 0) : 0),
 )
 // Groups are selected by query: a new filter or grouping makes them mean something else.
 watch(
@@ -966,10 +976,7 @@ const pinning = features.columnPinning
 const pinFit = pinning?.usePinFit(root, {
   share: () => props.pinnedMaxShare,
   pinnedKeys: () => {
-    const state = effectiveState.value
-    const keys = visibleColumns(layoutColumns.value, state)
-      .filter((c) => effectivePin(c, state))
-      .map((c) => c.key)
+    const keys = statePinnedKeys.value
     const own = resolvedColumns.value.filter((c) => c.kind !== 'data').map((c) => c.key)
     return keys.length ? [...own, ...keys] : keys
   },
@@ -1042,7 +1049,10 @@ const keyboard = features.keyboardNavigation?.useGridKeyboard(root, {
       }
     : undefined,
 })
+const ownsEvent = (event: Event) =>
+  (event.target as Element | null)?.closest?.('.vg') === root.value
 const onKeyDown = (event: KeyboardEvent) => {
+  if (!ownsEvent(event)) return
   if (editing?.onHistoryKey(event)) return // Ctrl/⌘+Z, Ctrl+Y
   // the range's keys first: Shift+arrows extend it, Ctrl/⌘+C copies it rather than rows
   if (cellRange?.onKeyDown(event)) return
@@ -1050,10 +1060,13 @@ const onKeyDown = (event: KeyboardEvent) => {
   if (part('copyShortcut')) exporter?.onKeyDown(event)
 }
 const onFocusIn = (event: FocusEvent) => {
+  if (!ownsEvent(event)) return
   keyboard?.onFocusIn(event)
   cellRange?.onFocusIn(event)
 }
-const onPointerDown = (event: PointerEvent) => cellRange?.onPointerDown(event)
+const onPointerDown = (event: PointerEvent) => {
+  if (ownsEvent(event)) cellRange?.onPointerDown(event)
+}
 /** ARIA grid with keyboard navigation; a plain table (and tabbable controls) without it. */
 const gridRole = computed(() =>
   !keyboardNav ? 'table' : context.treeMode.value ? 'treegrid' : 'grid',
@@ -1114,6 +1127,7 @@ const pins = features.rowPinning?.usePinnedRows<T>({
   model: pinnedRows,
   rows: () => sourceRows.value,
   keyOf: keyReader,
+  retainMissing: () => serverMode.value,
   extraTop: () => props.pinnedTopRows,
   extraBottom: () => props.pinnedBottomRows,
 })
@@ -1241,6 +1255,14 @@ const exporter = features.export?.useExport<T>({
   prepare: (rows, filtered) => (filtered ? prepareRows : sortRowsFn)(rows),
   selected,
   extraRows: () => [...(props.pinnedTopRows ?? []), ...(props.pinnedBottomRows ?? [])],
+  pinnedRows: () => {
+    const items = pins?.items.value
+    return items
+      ? [...items.top, ...items.bottom].flatMap((item) =>
+          item.kind === 'row' && item.selectable ? [item.row as T] : [],
+        )
+      : []
+  },
   totals: () => !!totals?.at.value && { values: totals.values.value, label: totalsLabel.value },
   onCopy: (event) => emit('copy', event),
 })
@@ -1326,7 +1348,10 @@ const statusBar = features.statusBar?.useStatusBar<T>({
         ? (ds?.total.value ?? sourceRows.value.length)
         : filteredTopRows.value.length,
   totalRowCount: () => (serverMode.value ? undefined : sourceRows.value.length),
-  rows: () => sourceRows.value,
+  rows: () =>
+    grouping?.server.value
+      ? grouping.groups.value.flatMap((group) => grouping.rowsIn(group))
+      : sourceRows.value,
   selection: sel && { count: selectedTotal },
   selected,
   allMatching: selectAllMatching,

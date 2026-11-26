@@ -63,6 +63,7 @@ export function useRowGrouping<T>(opts: RowGroupingOptions<T>) {
     )
   })
   const server = computed(() => !!groups.value[0]?.server)
+  const selectedGroupCount = srv?.selectedCount(eachGroup) ?? computed(() => 0)
 
   /** A group's sub-groups or rows: the built ones, or (server) the loaded ones. */
   const childrenOf = (group: RowGroup<T>): T[] | undefined =>
@@ -246,7 +247,7 @@ export function useRowGrouping<T>(opts: RowGroupingOptions<T>) {
     rowsIn: (group: RowGroup<T>): T[] =>
       group.server ? (srv?.rowsIn(group) ?? []) : (group.rows as T[]),
     /** Rows of the selected server groups. */
-    selectedGroupCount: computed(() => (server.value && srv ? srv.selectedCount(eachGroup) : 0)),
+    selectedGroupCount,
     allServerState: computed(() => (srv ? srv.allState(groups.value) : 'none')),
     toggleAllServer: () => srv?.toggleAll(groups.value),
   }

@@ -9,6 +9,8 @@ export interface PinnedRowsOptions<T> {
   rows: () => readonly T[]
   /** Reads `row-key` once, for passes over many rows. */
   keyOf: () => (row: T) => RowKey
+  /** A server page can omit a row that still exists. */
+  retainMissing?: () => boolean
   /** Extra rows above / below the body that aren't in the data. */
   extraTop: () => readonly T[] | undefined
   extraBottom: () => readonly T[] | undefined
@@ -38,6 +40,10 @@ export function usePinnedRows<T>(opts: PinnedRowsOptions<T>) {
     for (const row of opts.rows()) {
       const k = key(row)
       if (wanted.has(k)) found.set(k, row)
+    }
+    if (opts.retainMissing?.() === false) {
+      cache.clear()
+      return found
     }
     for (const k of [...cache.keys()]) if (!wanted.has(k)) cache.delete(k)
     for (const k of wanted) {

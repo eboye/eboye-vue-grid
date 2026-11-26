@@ -65,8 +65,8 @@ export function createTooltip(tip: ShallowRef<HTMLElement | undefined>, anchor: 
 
   function schedule(el: HTMLElement, delay: number) {
     clearTimeout(hideTimer)
-    if (el === target) return
     clearTimeout(showTimer)
+    if (el === target) return
     showTimer = window.setTimeout(() => show(el), Date.now() < warmUntil ? 0 : delay)
   }
 

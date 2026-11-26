@@ -51,21 +51,19 @@ for (let shard = 0; shard < SHARDS; shard++) {
       await page.goto(
         `${base}/iframe.html?id=${entry.id}&viewMode=${entry.type === 'docs' ? 'docs' : 'story'}`,
       )
-      const root = entry.type === 'docs' ? '#storybook-docs' : '#storybook-root'
+      const isDocs = entry.type === 'docs'
+      const isGridStory = !isDocs && entry.title.startsWith('Grid/')
+      const root = isDocs ? '#storybook-docs' : '#storybook-root'
+      // Grid stories can mount slowly under CI load. Wait for the grid itself, allowing the
+      // same time as docs pages, which can render several grids. Non-interactive grids use table.
+      const content = isGridStory
+        ? `${root} :is([role="grid"], [role="treegrid"], [role="table"])`
+        : `${root} > *`
       await page
-        .locator(`${root} > *`)
+        .locator(content)
         .first()
-        // a docs page renders every story of its file at once (some with thousands of rows)
-        .waitFor({ timeout: entry.type === 'docs' ? 30_000 : 15_000 })
-        .catch(() => errors.push('nothing rendered'))
-      if (entry.type === 'story' && entry.title.startsWith('Grid/')) {
-        await expect(
-          // `table` for grids without keyboard navigation (Grid/Features)
-          page
-            .locator('#storybook-root :is([role="grid"], [role="treegrid"], [role="table"])')
-            .first(),
-        ).toBeVisible()
-      }
+        .waitFor({ timeout: isDocs || isGridStory ? 30_000 : 15_000 })
+        .catch(() => errors.push(isGridStory ? 'no visible grid rendered' : 'nothing rendered'))
       // Storybook's own error overlay
       if (await page.locator('.sb-show-errordisplay').count())
         errors.push(await page.locator('#error-message').innerText())

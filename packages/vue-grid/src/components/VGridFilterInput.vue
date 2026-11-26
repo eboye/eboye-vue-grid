@@ -87,10 +87,10 @@ const stop = (e: Event) => e.stopPropagation()
       v-if="advanced"
       type="button"
       class="vg-input vg-filter-summary"
-      :aria-label="`${title}: edit filter`"
+      :aria-label="filterLabel"
       @click="emit('open')"
     >
-      Custom filter
+      {{ summary }}
     </button>
     <input
       v-else-if="type === 'text' || type === 'number' || type === 'date'"

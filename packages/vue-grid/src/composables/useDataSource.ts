@@ -73,6 +73,7 @@ export function useDataSource<T>(opts: DataSourceOptions<T>) {
   /** Grouped server data: the top-level groups of the last response (undefined: it sent rows). */
   const groups = shallowRef<ServerGroup[] | undefined>(undefined)
   const rowTotal = ref<number | undefined>(undefined)
+  const revision = ref(0)
   const loading = ref(false)
   const error = shallowRef<unknown>(null)
   let controller: AbortController | undefined
@@ -92,11 +93,12 @@ export function useDataSource<T>(opts: DataSourceOptions<T>) {
     error.value = null
     try {
       const result = await source(opts.query(), { signal })
-      if (id !== seq) return // superseded
+      if (id !== seq || signal.aborted) return // superseded
       rows.value = result?.rows ?? []
       groups.value = result?.groups
       total.value = result?.total ?? (result?.groups ?? rows.value).length
       rowTotal.value = result?.rowTotal
+      revision.value++
     } catch (e) {
       if (id !== seq || signal.aborted) return
       error.value = e
@@ -107,11 +109,10 @@ export function useDataSource<T>(opts: DataSourceOptions<T>) {
   }
 
   // Serialised so equal queries (e.g. a re-set identical filter) don't refetch.
-  watch(
-    () => [opts.source(), JSON.stringify(opts.query())] as const,
-    () => void load(),
-    { immediate: true, flush: 'post' },
-  )
+  watch([opts.source, () => JSON.stringify(opts.query())], () => void load(), {
+    immediate: true,
+    flush: 'post',
+  })
   onBeforeUnmount(() => controller?.abort())
 
   /** Field patches for the loaded rows (same semantics as `patchRows`). Returns rows changed. */
@@ -123,5 +124,5 @@ export function useDataSource<T>(opts: DataSourceOptions<T>) {
     return count
   }
 
-  return { rows, groups, total, rowTotal, loading, error, reload: load, patch }
+  return { rows, groups, total, rowTotal, revision, loading, error, reload: load, patch }
 }

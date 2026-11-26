@@ -1,6 +1,7 @@
-import { execFileSync } from 'node:child_process'
+import { execFile } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
+import { promisify } from 'node:util'
 import { describe, expect, it } from 'vitest'
 import { api, validateGridConfig, type Diagnostic } from '../src/agent'
 import { allFeatures } from '../src/features'
@@ -15,16 +16,12 @@ const columns = [
 ]
 
 describe('agent API reference (generated)', () => {
-  // 30 s: the generator builds a TypeScript program of the whole package (several seconds, more
-  // on a busy machine), which overran the default 5 s
-  it('is up to date with the sources', { timeout: 30_000 }, () => {
-    // fails when a prop, column option, renderer or doc comment changed without `npm run gen:agent`
-    expect(() =>
-      execFileSync(process.execPath, ['scripts/gen-agent.mjs', '--check'], {
-        cwd: root,
-        stdio: 'pipe',
-      }),
-    ).not.toThrow()
+  it('is up to date with the sources', { timeout: 30_000 }, async () => {
+    // The generator runs in a separate Node process and can take over 5 seconds on CI.
+    await promisify(execFile)(process.execPath, ['scripts/gen-agent.mjs', '--check'], {
+      cwd: root,
+      timeout: 25_000,
+    })
   })
 
   it('covers every feature and renderer the package exports', () => {
@@ -85,6 +82,16 @@ describe('validateGridConfig', () => {
     const r = validateGridConfig(base)
     expect(r.diagnostics).toEqual([])
     expect(r.ok).toBe(true)
+  })
+
+  it('accepts the function string used in JSON server-data configurations', () => {
+    const result = validateGridConfig({
+      ...base,
+      features: ['serverDataFeature'],
+      dataSource: 'async () => ({ rows: [] })',
+    })
+    expect(result.ok).toBe(true)
+    expect(find(result.diagnostics, 'props.dataSource')).toEqual([])
   })
 
   it('requires rowKey and columns; flags duplicate keys', () => {

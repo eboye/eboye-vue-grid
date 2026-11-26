@@ -23,8 +23,8 @@ export interface SubRowsOptions<T> {
  */
 export function useSubRows<T>(opts: SubRowsOptions<T>) {
   const cache = shallowReactive(new Map<RowKey, SubRowEntry>())
-  // Guards against a stale response landing after a retry started a newer request.
-  const requestIds = new Map<RowKey, number>()
+  // Each request has a distinct token, including after clearing the cache.
+  const pending = new Map<RowKey, symbol>()
 
   function syncChildren(row: T): T[] | undefined {
     const result = opts.subRows()?.(row)
@@ -52,19 +52,21 @@ export function useSubRows<T>(opts: SubRowsOptions<T>) {
     const loader = opts.loadSubRows()
     if (!loader) return
     const key = opts.getKey(row)
-    const id = (requestIds.get(key) ?? 0) + 1
-    requestIds.set(key, id)
+    const token = Symbol()
+    pending.set(key, token)
     cache.set(key, { status: 'loading' })
     Promise.resolve()
       .then(() => loader(row))
       .then(
         (rows) => {
-          if (requestIds.get(key) !== id) return
+          if (pending.get(key) !== token) return
+          pending.delete(key)
           cache.set(key, { status: 'loaded', rows: rows ?? [] })
           opts.onLoaded?.(row, rows ?? [])
         },
         (error: unknown) => {
-          if (requestIds.get(key) !== id) return
+          if (pending.get(key) !== token) return
+          pending.delete(key)
           cache.set(key, { status: 'error', error })
           opts.onError(row, error)
         },
@@ -106,10 +108,10 @@ export function useSubRows<T>(opts: SubRowsOptions<T>) {
   function clear(key?: RowKey) {
     if (key === undefined) {
       cache.clear()
-      requestIds.clear()
+      pending.clear()
     } else {
       cache.delete(key)
-      requestIds.delete(key)
+      pending.delete(key)
     }
   }
 

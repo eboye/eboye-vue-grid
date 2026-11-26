@@ -45,7 +45,7 @@ export function usePinFit(root: Ref<HTMLElement | undefined>, opts: PinFitOption
   }
 
   watch(
-    () => [root.value, opts.share(), opts.pinnedKeys().join('|')] as const,
+    [root, opts.share, () => JSON.stringify(opts.pinnedKeys())],
     ([el, share]) => {
       observer?.disconnect()
       if (!el || share === false || typeof ResizeObserver === 'undefined') return measure()

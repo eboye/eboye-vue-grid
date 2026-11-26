@@ -2,6 +2,7 @@
  * Pasting into the grid (range selection + editing): clipboard text as a block of cells, and a
  * cell's text as the value its column holds. Pure functions, no DOM.
  */
+import { parseIsoDay } from './date'
 
 /**
  * Tab-separated text as rows of cells, the way spreadsheets put cells on the clipboard: tabs
@@ -37,6 +38,11 @@ export function parseClipboard(text: string): string[][] {
       }
       // only a real quoted cell if the cell ends right after it; else the quote is text
       if (closed && (j === s.length || s[j] === '\t' || s[j] === '\n')) {
+        if (j === s.length) {
+          row.push(quoted)
+          rows.push(row)
+          return rows
+        }
         cell = quoted
         i = j
         continue
@@ -164,8 +170,12 @@ export function parseNumber(text: string, locale: string): number | null {
  */
 export function parseDate(text: string, locale: string): Date | null {
   const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text)
-  if (iso) return new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]))
+  if (iso) {
+    if (!parseIsoDay(text)) return null
+    return new Date(`${text}T00:00:00`)
+  }
   if (/^\d{4}-\d{2}-\d{2}[T ]\d/.test(text)) {
+    if (!parseIsoDay(text.slice(0, 10))) return null
     const d = new Date(text.replace(' ', 'T'))
     return Number.isNaN(d.getTime()) ? null : d
   }
@@ -181,7 +191,9 @@ export function parseDate(text: string, locale: string): Date | null {
       ;[y, mo, d] = [at('year'), at('month'), at('day')]
       if (y < 100) y += 2000
     }
-    const date = new Date(y, mo - 1, d, Number(m[4] ?? 0), Number(m[5] ?? 0), Number(m[6] ?? 0))
+    const date = new Date(0)
+    date.setFullYear(y, mo - 1, d)
+    date.setHours(Number(m[4] ?? 0), Number(m[5] ?? 0), Number(m[6] ?? 0), 0)
     // 31.02. rolls over into March: not a date
     return date.getMonth() === mo - 1 && date.getDate() === d ? date : null
   }
@@ -213,7 +225,7 @@ function asOld(d: Date, old: unknown, kind: 'date' | 'datetime'): unknown {
   if (typeof old === 'number') return d.getTime()
   if (kind === 'datetime' || (typeof old === 'string' && old.length > 10)) return d.toISOString()
   const pad = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+  return `${String(d.getFullYear()).padStart(4, '0')}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }
 
 /**

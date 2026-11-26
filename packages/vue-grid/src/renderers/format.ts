@@ -175,9 +175,9 @@ export function tokenizeJson(text: string): { type: JsonTokenType; text: string 
   return out
 }
 
-export function stringifyJson(value: unknown): string {
+export function stringifyJson(value: unknown, space: number = 2): string {
   try {
-    return JSON.stringify(parseJsonish(value), null, 2) ?? String(value)
+    return JSON.stringify(parseJsonish(value), null, space) ?? String(value)
   } catch {
     return String(value)
   }

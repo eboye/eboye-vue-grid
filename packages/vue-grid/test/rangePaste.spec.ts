@@ -156,6 +156,19 @@ describe('pasting into a range', () => {
     w.unmount()
   })
 
+  it('reports synchronous save failures and continues the batch', async () => {
+    const saveCell = vi.fn((edit: CellEditEvent<Row>) => {
+      if (edit.rowKey === 2) throw new Error('locked')
+    })
+    const { w } = make({ saveCell })
+    api(w).selectRange(range([1, 'stake'], [3, 'stake']))
+    await flushPromises()
+    const result = await api(w).pasteText('5')
+    expect(saveCell).toHaveBeenCalledTimes(3)
+    expect(result!.failed.map((failure) => failure.edit.rowKey)).toEqual([2])
+    w.unmount()
+  })
+
   it('Ctrl+V: the browser’s paste is caught and focus comes back to the cell', async () => {
     const { w, rows } = make()
     await flushPromises()

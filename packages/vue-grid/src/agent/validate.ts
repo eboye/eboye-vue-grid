@@ -285,7 +285,11 @@ export function validateGridConfig(config: GridConfigInput): ValidationResult {
       '`rows` is ignored with a `data-source` (the grid shows what the data source returns).',
       'Remove `rows`.',
     )
-  if (props.dataSource !== undefined && typeof props.dataSource !== 'function')
+  if (
+    props.dataSource !== undefined &&
+    typeof props.dataSource !== 'function' &&
+    typeof props.dataSource !== 'string'
+  )
     report(
       'error',
       'props.dataSource',
