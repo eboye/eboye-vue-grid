@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.25.0 — 2026-11-26
+
+- New: column `sortField`, the name the backend sorts a column by when it isn't the column key
+  (`'player.lastName'`, `'PLACED_AT'`). Server queries carry it: every key in `query.sort` /
+  `query.sorts` (and `query-change`) now has `field` (the `sortField`, else the key), so a data
+  source reads `query.sort.field` instead of keeping its own lookup. `v-model:sort` keeps the column
+  key.
+- New: the text renderer's `copyable` takes `(value, row) => boolean` too, for a copy button on
+  some rows only.
+- Smaller: a plain grid is 16.7 kB gzipped. The failed-request notice comes with
+  `serverDataFeature` and "No rows match the current filters" with `filteringFeature`, instead of
+  with every grid (the `#load-error` and `#no-match` slots work as before).
+- Docs: [Migrating from RevoGrid](../../docs/migrating-from-revogrid.md): grid and column
+  properties, events, methods and cell templates mapped one by one; a tested `objectCell` helper for
+  data whose cells are objects (`{ value, tone, tooltip, copy }`); the workarounds that go away.
+  Storybook: **Recipes → Cell objects**.
+
 ## 0.24.0 — 2026-11-26
 
 - New: **submenus**. A menu item with `items` opens them beside it instead of being chosen: in

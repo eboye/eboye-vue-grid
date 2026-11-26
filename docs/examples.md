@@ -2,7 +2,7 @@
 
 A task-oriented cookbook. Every snippet is a complete `<script setup>` component you can paste into an
 app that has the plugin and stylesheet installed (step 1). For the full prop/event tables see the
-[package README](../packages/vue-grid/README.md). To see every feature running, each with its source,
+[package README](../packages/vue-grid/README.md); moving a screen from RevoGrid: [migrating-from-revogrid.md](migrating-from-revogrid.md). To see every feature running, each with its source,
 open the [live examples](https://eboye.github.io/eboye-vue-grid/); to change props live, run Storybook
 (`npm run storybook` → http://localhost:6006).
 
@@ -1453,7 +1453,8 @@ matching parent keeps all its children. Select-all only selects the rows you can
 import { VGrid, type DataSource } from '@nocopypaste/vue-grid'
 
 const fetchBets: DataSource<Bet> = async (query, { signal }) => {
-  // query = { sort: { key, dir } | null, filters: { columns, search }, page, pageSize }
+  // query = { sort: { key, dir, field } | null, filters: { columns, search }, page, pageSize }
+  // field: what to sort by on the server (column `sortField`, else its key)
   const res = await fetch('/api/bets/search', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

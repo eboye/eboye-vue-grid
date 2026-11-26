@@ -55,7 +55,7 @@ runs in the [live examples](https://eboye.github.io/eboye-vue-grid/), each with 
 | Sort by several columns ("city, then stake")       | `sortingFeature`                                                            | `multi-sort`, `v-model:sorts="[{ key, dir }, …]"`; Shift-click adds a column; server: `query.sorts`                                                                                                                                                                                                                                                                                                                                                               |
 | Filters per column, a filter row, quick search     | `filteringFeature`                                                          | column `filterable: true` (`filter: 'text' \| 'number' \| 'date' \| 'boolean' \| 'set'`); `filter-row`; `<VGridSearch />` in `#toolbar`                                                                                                                                                                                                                                                                                                                           |
 | Pages                                              | `paginationFeature`                                                         | `pagination` (or `{ pageSizes: [10, 25, 50] }`), `v-model:page`, `v-model:page-size`                                                                                                                                                                                                                                                                                                                                                                              |
-| Backend sorting / filtering / paging               | `serverDataFeature` (+ the above)                                           | `:data-source="(query, { signal }) => Promise<{ rows, total }>"`                                                                                                                                                                                                                                                                                                                                                                                                  |
+| Backend sorting / filtering / paging               | `serverDataFeature` (+ the above)                                           | `:data-source="(query, { signal }) => Promise<{ rows, total }>"`; a backend sort key: column `sortField` (`query.sort.field`)                                                                                                                                                                                                                                                                                                                                     |
 | Checkboxes / row selection, batch actions          | `selectionFeature`                                                          | `selectable` (or `'single'`), `v-model:selected`, `is-row-selectable`, `prune-selection`; `#toolbar="{ selected, selectedCount, clearSelection }"`; server data: `v-model:select-all-matching`                                                                                                                                                                                                                                                                    |
 | Nested child rows aligned to the parent's columns  | `subGridsFeature`                                                           | `:sub-rows="(row) => row.children"` or `:load-sub-rows` + `:has-sub-rows`                                                                                                                                                                                                                                                                                                                                                                                         |
 | An expandable panel under a row                    | —                                                                           | `#detail="{ row }"` slot (`row-expandable` to limit it)                                                                                                                                                                                                                                                                                                                                                                                                           |
@@ -226,7 +226,8 @@ import {
 } from '@nocopypaste/vue-grid'
 
 const fetchOrders: DataSource<Order> = async (query, { signal }) => {
-  // query: { sort: { key, dir } | null, filters: { columns, search }, page, pageSize }
+  // query: { sort: { key, dir, field } | null, filters: { columns, search }, page, pageSize }
+  // field: what to sort by on the server (column `sortField`, else its key)
   const res = await fetch('/api/orders/search', {
     method: 'POST',
     body: JSON.stringify(query),
@@ -635,6 +636,27 @@ Tokens: `--vg-*` (see README → Theming). Dark mode follows `color-scheme`, set
 (`html.dark { color-scheme: dark }`), not inline from JS: a build that rewrites `light-dark()` (Vite 8)
 only sees stylesheet rules. Density:
 `density="compact" | "cozy" | "comfortable"`. Utility classes per part: `:ui="{ cell: 'px-2' }"`.
+
+## Moving a screen from RevoGrid
+
+The full mapping is in
+[`docs/migrating-from-revogrid.md`](https://github.com/eboye/eboye-vue-grid/blob/main/docs/migrating-from-revogrid.md).
+The parts that change how you write it:
+
+- `source` → `rows` + `row-key`; `prop` → `key` (`field` for a nested path); `name` → `header`;
+  `size` / `minSize` → `width` (a CSS track string) / `minWidth`; `pin: 'colPinStart'` /
+  `'colPinEnd'` → `pinned: 'left'` / `'right'`; `children` → `group` on each column.
+- Stretch / `flexGrow` / `autoSize` → widths `'1fr'`, `'minmax(…)'`, `'auto'`; no plugin.
+- `cellTemplate` → a renderer with `rendererOptions` (functions of `(value, row)`), a `#cell-<key>`
+  slot, or `defineCellRenderer`; `cellProperties` → `cellClass`; `columnProperties` → `headerClass`.
+- `beforesortingapply` → `v-model:sort` (controlled by default; the backend key: column
+  `sortField`, sent as `query.sort.field`); `beforecolumndragend` → `storage` /
+  `v-model:column-state`; hidden columns → `hidden` + `columnVisibilityFeature`, not `size: -1`.
+- `setDataAt` + `refresh()` → assign on a reactive row or `patchRows`; no re-mount with `:key`.
+- Pro detail rows → the `#detail` slot; grouping → `v-model:group-by` + `rowGroupingFeature`.
+- Cells sent as objects (`{ value, color, tooltip, copy }`): map them with per-row options
+  (`value`, `tone` + `toneMode: 'fill'`, `tooltip`, `copyable`, `copyValue`), as in the guide's
+  `objectCell` helper; don't reshape the rows.
 
 ## Check your work
 

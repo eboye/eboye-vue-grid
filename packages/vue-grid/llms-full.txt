@@ -55,7 +55,7 @@ runs in the [live examples](https://eboye.github.io/eboye-vue-grid/), each with 
 | Sort by several columns ("city, then stake")       | `sortingFeature`                                                            | `multi-sort`, `v-model:sorts="[{ key, dir }, …]"`; Shift-click adds a column; server: `query.sorts`                                                                                                                                                                                                                                                                                                                                                               |
 | Filters per column, a filter row, quick search     | `filteringFeature`                                                          | column `filterable: true` (`filter: 'text' \| 'number' \| 'date' \| 'boolean' \| 'set'`); `filter-row`; `<VGridSearch />` in `#toolbar`                                                                                                                                                                                                                                                                                                                           |
 | Pages                                              | `paginationFeature`                                                         | `pagination` (or `{ pageSizes: [10, 25, 50] }`), `v-model:page`, `v-model:page-size`                                                                                                                                                                                                                                                                                                                                                                              |
-| Backend sorting / filtering / paging               | `serverDataFeature` (+ the above)                                           | `:data-source="(query, { signal }) => Promise<{ rows, total }>"`                                                                                                                                                                                                                                                                                                                                                                                                  |
+| Backend sorting / filtering / paging               | `serverDataFeature` (+ the above)                                           | `:data-source="(query, { signal }) => Promise<{ rows, total }>"`; a backend sort key: column `sortField` (`query.sort.field`)                                                                                                                                                                                                                                                                                                                                     |
 | Checkboxes / row selection, batch actions          | `selectionFeature`                                                          | `selectable` (or `'single'`), `v-model:selected`, `is-row-selectable`, `prune-selection`; `#toolbar="{ selected, selectedCount, clearSelection }"`; server data: `v-model:select-all-matching`                                                                                                                                                                                                                                                                    |
 | Nested child rows aligned to the parent's columns  | `subGridsFeature`                                                           | `:sub-rows="(row) => row.children"` or `:load-sub-rows` + `:has-sub-rows`                                                                                                                                                                                                                                                                                                                                                                                         |
 | An expandable panel under a row                    | —                                                                           | `#detail="{ row }"` slot (`row-expandable` to limit it)                                                                                                                                                                                                                                                                                                                                                                                                           |
@@ -226,7 +226,8 @@ import {
 } from '@nocopypaste/vue-grid'
 
 const fetchOrders: DataSource<Order> = async (query, { signal }) => {
-  // query: { sort: { key, dir } | null, filters: { columns, search }, page, pageSize }
+  // query: { sort: { key, dir, field } | null, filters: { columns, search }, page, pageSize }
+  // field: what to sort by on the server (column `sortField`, else its key)
   const res = await fetch('/api/orders/search', {
     method: 'POST',
     body: JSON.stringify(query),
@@ -636,6 +637,27 @@ Tokens: `--vg-*` (see README → Theming). Dark mode follows `color-scheme`, set
 only sees stylesheet rules. Density:
 `density="compact" | "cozy" | "comfortable"`. Utility classes per part: `:ui="{ cell: 'px-2' }"`.
 
+## Moving a screen from RevoGrid
+
+The full mapping is in
+[`docs/migrating-from-revogrid.md`](https://github.com/eboye/eboye-vue-grid/blob/main/docs/migrating-from-revogrid.md).
+The parts that change how you write it:
+
+- `source` → `rows` + `row-key`; `prop` → `key` (`field` for a nested path); `name` → `header`;
+  `size` / `minSize` → `width` (a CSS track string) / `minWidth`; `pin: 'colPinStart'` /
+  `'colPinEnd'` → `pinned: 'left'` / `'right'`; `children` → `group` on each column.
+- Stretch / `flexGrow` / `autoSize` → widths `'1fr'`, `'minmax(…)'`, `'auto'`; no plugin.
+- `cellTemplate` → a renderer with `rendererOptions` (functions of `(value, row)`), a `#cell-<key>`
+  slot, or `defineCellRenderer`; `cellProperties` → `cellClass`; `columnProperties` → `headerClass`.
+- `beforesortingapply` → `v-model:sort` (controlled by default; the backend key: column
+  `sortField`, sent as `query.sort.field`); `beforecolumndragend` → `storage` /
+  `v-model:column-state`; hidden columns → `hidden` + `columnVisibilityFeature`, not `size: -1`.
+- `setDataAt` + `refresh()` → assign on a reactive row or `patchRows`; no re-mount with `:key`.
+- Pro detail rows → the `#detail` slot; grouping → `v-model:group-by` + `rowGroupingFeature`.
+- Cells sent as objects (`{ value, color, tooltip, copy }`): map them with per-row options
+  (`value`, `tone` + `toneMode: 'fill'`, `tooltip`, `copyable`, `copyValue`), as in the guide's
+  `objectCell` helper; don't reshape the rows.
+
 ## Check your work
 
 1. Validate the config: `validateGridConfig({ columns, rowKey: 'id', features: ['sortingFeature'], sortMode: 'client' })`
@@ -708,7 +730,7 @@ only sees stylesheet rules. Density:
 
 ---
 
-# @nocopypaste/vue-grid 0.24.0 — API reference
+# @nocopypaste/vue-grid 0.25.0 — API reference
 
 > Generated from the TypeScript sources (`scripts/gen-agent.mjs`). Machine-readable: `agent/api.json`, `agent/grid-config.schema.json`.
 
@@ -919,6 +941,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `group` | `string` | `columnGroupsFeature` | Header group label (column groups feature): adjacent visible columns with the same `group` share one header cell above their own headers. |
 | `align` | `Align` |  | Cell and header alignment (default: the renderer's, e.g. `end` for numbers, else `start`). |
 | `sortable` | `boolean` | `sortingFeature` | A sort button in the header (sorting feature). Client sorting needs `sort-mode="client"`. |
+| `sortField` | `string` |  | Server sorting: the name the backend sorts this column by, when it isn't the column key (e.g. `'player.lastName'` or `'PLACED_AT'`). It arrives as `field` in `query.sort` / `query.sorts`; `v-model:sort` keeps the column key. |
 | `sortValue` | `(row: T) => unknown` | `sortingFeature` | The value client sorting compares (default: the renderer's sort value, else the cell value). |
 | `sortFn` | `(a: T, b: T) => number` | `sortingFeature` | A full comparator for client sorting; wins over `sortValue`. |
 | `pinned` | `PinSide` | `columnPinningFeature` | Initial pin side (the header menu can change it at runtime unless `pinnable: false`). |
@@ -970,7 +993,7 @@ Text, the default renderer (the only one `<VGrid>` bundles): ellipsis, line clam
 | `badge` | `RowFn<BadgeSpec \| string \| null \| undefined>` | Badge before (default) or after the value. |
 | `badgePosition` | `'start' \| 'end'` | Where `badge` goes: `start` (default, before the value) or `end`. |
 | `icon` | `RowFn<IconSpec \| null \| undefined>` | Icon before the value, e.g. `{ icon: BellIcon, tone: 'warning', label: 'Notify' }`. |
-| `copyable` | `boolean` | Adds a copy-to-clipboard button; emits `copy` with the copied text. |
+| `copyable` | `RowOption<boolean>` | Adds a copy-to-clipboard button, for every row or `(value, row) => boolean`; emits `copy` with the copied text. |
 | `copyValue` | `RowFn<string>` | What gets copied (default: the displayed text). |
 
 ### `toggle-text` — `toggleTextRenderer`
@@ -1327,6 +1350,7 @@ The first items of a list, with a “+N more” toggle. Emits `expand`. Align: `
 |---|---|---|
 | `key` | `string` | The sorted column’s `key`. |
 | `dir` | `SortDir` | `asc` or `desc`. |
+| `field`? | `string` | In a server query (`query.sort`, `query.sorts`, `query-change`): what the backend sorts by, the column's `sortField`, else its key. The grid adds it; you don't pass it. |
 
 ### `ColumnFilterOptions`
 
@@ -1638,39 +1662,39 @@ what you import.
 
 | Import (minified / gzip, Vue excluded)                                       | Initial chunk      |
 | ---------------------------------------------------------------------------- | ------------------ |
-| `VGrid` (no features)                                                        | 49.4 kB / 16.8 kB  |
-| `VGrid` + `sortingFeature`                                                   | 52.2 kB / 17.9 kB  |
-| `VGrid` + `filteringFeature`                                                 | 61.1 kB / 21.1 kB  |
+| `VGrid` (no features)                                                        | 49.0 kB / 16.7 kB  |
+| `VGrid` + `sortingFeature`                                                   | 51.7 kB / 17.7 kB  |
+| `VGrid` + `filteringFeature`                                                 | 61.3 kB / 21.2 kB  |
 | `VGrid` + `serverDataFeature`                                                | 50.4 kB / 17.4 kB  |
 | `VGrid` + `paginationFeature`                                                | 49.1 kB / 16.8 kB  |
-| `VGrid` + `selectionFeature`                                                 | 53.5 kB / 18.3 kB  |
-| `VGrid` + `subGridsFeature`                                                  | 51.8 kB / 17.6 kB  |
-| `VGrid` + `menusFeature`                                                     | 63.0 kB / 21.4 kB  |
-| `VGrid` + `columnReorderFeature`                                             | 53.1 kB / 18.1 kB  |
-| `VGrid` + `columnPinningFeature`                                             | 52.4 kB / 17.9 kB  |
-| `VGrid` + `virtualScrollingFeature`                                          | 55.3 kB / 19.1 kB  |
-| `VGrid` + `columnVisibilityFeature`                                          | 49.6 kB / 16.9 kB  |
-| `VGrid` + `keyboardNavigationFeature`                                        | 52.8 kB / 18.1 kB  |
-| `VGrid` + `columnResizingFeature`                                            | 52.7 kB / 18.0 kB  |
-| `VGrid` + `columnGroupsFeature`                                              | 51.1 kB / 17.5 kB  |
-| `VGrid` + `rowPinningFeature`                                                | 54.3 kB / 18.4 kB  |
-| `VGrid` + `aggregationFeature`                                               | 54.6 kB / 18.5 kB  |
-| `VGrid` + `rowGroupingFeature`                                               | 60.5 kB / 20.6 kB  |
-| `VGrid` + `exportFeature`                                                    | 54.7 kB / 18.9 kB  |
-| `VGrid` + `statusBarFeature`                                                 | 52.3 kB / 17.9 kB  |
+| `VGrid` + `selectionFeature`                                                 | 53.1 kB / 18.2 kB  |
+| `VGrid` + `subGridsFeature`                                                  | 51.3 kB / 17.5 kB  |
+| `VGrid` + `menusFeature`                                                     | 62.5 kB / 21.3 kB  |
+| `VGrid` + `columnReorderFeature`                                             | 52.7 kB / 18.0 kB  |
+| `VGrid` + `columnPinningFeature`                                             | 51.9 kB / 17.7 kB  |
+| `VGrid` + `virtualScrollingFeature`                                          | 54.8 kB / 18.9 kB  |
+| `VGrid` + `columnVisibilityFeature`                                          | 49.1 kB / 16.8 kB  |
+| `VGrid` + `keyboardNavigationFeature`                                        | 52.3 kB / 18.0 kB  |
+| `VGrid` + `columnResizingFeature`                                            | 52.2 kB / 17.9 kB  |
+| `VGrid` + `columnGroupsFeature`                                              | 50.6 kB / 17.3 kB  |
+| `VGrid` + `rowPinningFeature`                                                | 53.8 kB / 18.2 kB  |
+| `VGrid` + `aggregationFeature`                                               | 54.1 kB / 18.4 kB  |
+| `VGrid` + `rowGroupingFeature`                                               | 60.1 kB / 20.5 kB  |
+| `VGrid` + `exportFeature`                                                    | 54.2 kB / 18.8 kB  |
+| `VGrid` + `statusBarFeature`                                                 | 51.8 kB / 17.8 kB  |
 | `VGrid` + `serverGroupingFeature`                                            | 52.1 kB / 17.9 kB  |
 | `VGrid` + `editingFeature`                                                   | 56.5 kB / 19.6 kB  |
 | `VGrid` + `rangeSelectionFeature`                                            | 63.0 kB / 21.7 kB  |
 | `VGrid` + `attributesFeature`                                                | 50.0 kB / 17.1 kB  |
 | `VGrid` + `columnVirtualizationFeature`                                      | 52.0 kB / 18.1 kB  |
 | `VGrid` + `rowReorderFeature`                                                | 53.7 kB / 18.4 kB  |
-| `VGrid` + `allFeatures` + `VGridSearch`                                      | 158.5 kB / 53.1 kB |
-| `VGrid` + `currencyRenderer`                                                 | 50.8 kB / 17.3 kB  |
+| `VGrid` + `allFeatures` + `VGridSearch`                                      | 159.6 kB / 53.5 kB |
+| `VGrid` + `currencyRenderer`                                                 | 50.3 kB / 17.2 kB  |
 | `VGrid` + `VGridPagination` + `VGridColumnMenu`                              | 56.2 kB / 19.2 kB  |
 | `sortRows` only                                                              | 0.7 kB / 0.4 kB    |
 | `toCsv` only                                                                 | 1.1 kB / 0.6 kB    |
-| everything                                                                   | 215.3 kB / 69.7 kB |
-| `validateGridConfig` (`@nocopypaste/vue-grid/agent`, never in an app bundle) | 86.6 kB / 23.7 kB  |
+| everything                                                                   | 216.3 kB / 70.1 kB |
+| `validateGridConfig` (`@nocopypaste/vue-grid/agent`, never in an app bundle) | 87.2 kB / 23.9 kB  |
 
 With `filteringFeature`, the filter popover body and the filter-row editors are **on-demand
 chunks**: they load the first time a popover opens or `filter-row` is on. With
@@ -2061,6 +2085,11 @@ otherwise it only updates `sort` (or asks the `dataSource`). Values sort by type
 text with `localeCompare`), a renderer can define its sort value, and a column can override it with
 `sortValue: (row) => …` or `sortFn: (a, b) => …`. Empty values sort last in both directions.
 
+**What the server sorts by.** A server query (`data-source`, `query-change`) gives each sort key a
+`field`: the column's `sortField` when the backend calls it something else
+(`col({ key: 'player', sortField: 'player.lastName', sortable: true })`), else its key. Read
+`query.sort.field`; `v-model:sort` keeps the column key.
+
 **Several columns.** With `multi-sort`, Shift-click a header (Shift+Enter on a focused one) to sort
 by it after the others: ascending, then descending, then removed. A plain click still sorts by that
 column alone. The headers show each column's number (1, 2, …); `aria-sort` stays on the first key, as
@@ -2239,7 +2268,7 @@ import {
 } from '@nocopypaste/vue-grid'
 
 const fetchBets: DataSource<Bet> = async (query, { signal }) => {
-  // query: { sort: { key, dir } | null, sorts?: SortState[] (multi-sort), filters: FilterState, page: number, pageSize: number | null }
+  // query: { sort: { key, dir, field } | null, sorts?: SortState[] (multi-sort), filters: FilterState, page: number, pageSize: number | null }
   const res = await fetch('/api/bets', { method: 'POST', body: JSON.stringify(query), signal })
   if (!res.ok) throw new Error(res.statusText)
   return res.json() // { rows: Bet[], total?: number }
@@ -3058,26 +3087,26 @@ Screenshots of every renderer are in the repository README's
 
 **Display**
 
-| Name                      | Options                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `text` (default)          | `ellipsis`, `lines` (both: the full text as a tooltip while it is cut off), `maxWidth`, `preserveNewlines`, `tooltip` (`'always'` / `true`: on every cell; `'overflow'`: only when cut off; `false`: never; a function: its own text or lines), `hoverCard` (lines and copy buttons in a popup; see below), `placeholder`, `tone`, `toneMode` (`text`/`fill`), `bold`, `secondary` (muted suffix), `badge` + `badgePosition`, `icon`, `copyable` + `copyValue` → emits `copy` |
-| `toggle-text`             | `clickable`, `highlighted` → emits `toggle`                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| `number`, `signed-number` | `format` (`Intl.NumberFormatOptions`), `placeholder`, `clickable` → emits `click`                                                                                                                                                                                                                                                                                                                                                                                             |
-| `currency`                | `currency` (code or `(value, row) => code`), `format`, `placeholder`, `clickable` → emits `click`                                                                                                                                                                                                                                                                                                                                                                             |
-| `change`                  | `direction`, `currency`, `format`, `iconOnly` (arrow + colour; booleans / `'true'` = trend)                                                                                                                                                                                                                                                                                                                                                                                   |
-| `date`, `datetime`        | `format`, `placeholder`; `datetime`: `milliseconds`, `twoLines`                                                                                                                                                                                                                                                                                                                                                                                                               |
-| `boolean`                 | `trueLabel`, `falseLabel`, `nullLabel`, `display` (`text`/`icon`), `falseIcon`                                                                                                                                                                                                                                                                                                                                                                                                |
-| `status`                  | `tone` (map / fn / constant), `label` (fn or value → label map), `dot`, `variant` (`soft`/`solid`/`outline`), `placeholder`, `clickable` → emits `click`                                                                                                                                                                                                                                                                                                                      |
-| `chip`                    | `color` (any CSS colour, contrast text picked), `tone`, `label`, `tooltip`, `shape` (`square`/`circle`/`pill`), `size`; accepts `{ label \| name, color, description }`                                                                                                                                                                                                                                                                                                       |
-| `multi-line`              | `lines` (builder; default: the value array), `boldLines`, `ellipsis`, `target`, `placeholder`; each line: `{ text, href, to, tone, fill, bold, muted, tooltip, trend, action, badge }`                                                                                                                                                                                                                                                                                        |
-| `list`                    | `items`, `itemLabel`, `max` (default 1), `placeholder` → “+N more” toggle, emits `expand`                                                                                                                                                                                                                                                                                                                                                                                     |
-| `link`                    | `href`, `to` (router location → `<RouterLink>` when vue-router is installed), `label`, `target`, `tooltip` → emits `click`                                                                                                                                                                                                                                                                                                                                                    |
-| `icon`                    | `icon` / `iconFor`, `show`, `label`, `tone`                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| `image`                   | `src`, `baseUrl`, `alt`, `size`, `fit`, `shape`; placeholder when empty or broken                                                                                                                                                                                                                                                                                                                                                                                             |
-| `code`                    | `language` (`auto`/`json`/`text`), `lines`, `indent`, `highlight` (JSON token colours)                                                                                                                                                                                                                                                                                                                                                                                        |
-| `json`                    | `label`, `dialogTitle` (escaped JSON in a `<dialog>`)                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| `json-tree`               | `collapseAt`, `maxDepth`, `parseNested`, `collapsed` + `toggleLabel`, `emptyText`                                                                                                                                                                                                                                                                                                                                                                                             |
-| `details`                 | `tone`, `label`, `items` (`{ label, value, tone, detail, tooltip }[]`), `title`, `triggerLabel` → badge + info popover                                                                                                                                                                                                                                                                                                                                                        |
+| Name                      | Options                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `text` (default)          | `ellipsis`, `lines` (both: the full text as a tooltip while it is cut off), `maxWidth`, `preserveNewlines`, `tooltip` (`'always'` / `true`: on every cell; `'overflow'`: only when cut off; `false`: never; a function: its own text or lines), `hoverCard` (lines and copy buttons in a popup; see below), `placeholder`, `tone`, `toneMode` (`text`/`fill`), `bold`, `secondary` (muted suffix), `badge` + `badgePosition`, `icon`, `copyable` (or `(value, row) => boolean`) + `copyValue` → emits `copy` |
+| `toggle-text`             | `clickable`, `highlighted` → emits `toggle`                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `number`, `signed-number` | `format` (`Intl.NumberFormatOptions`), `placeholder`, `clickable` → emits `click`                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `currency`                | `currency` (code or `(value, row) => code`), `format`, `placeholder`, `clickable` → emits `click`                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `change`                  | `direction`, `currency`, `format`, `iconOnly` (arrow + colour; booleans / `'true'` = trend)                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `date`, `datetime`        | `format`, `placeholder`; `datetime`: `milliseconds`, `twoLines`                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `boolean`                 | `trueLabel`, `falseLabel`, `nullLabel`, `display` (`text`/`icon`), `falseIcon`                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `status`                  | `tone` (map / fn / constant), `label` (fn or value → label map), `dot`, `variant` (`soft`/`solid`/`outline`), `placeholder`, `clickable` → emits `click`                                                                                                                                                                                                                                                                                                                                                     |
+| `chip`                    | `color` (any CSS colour, contrast text picked), `tone`, `label`, `tooltip`, `shape` (`square`/`circle`/`pill`), `size`; accepts `{ label \| name, color, description }`                                                                                                                                                                                                                                                                                                                                      |
+| `multi-line`              | `lines` (builder; default: the value array), `boldLines`, `ellipsis`, `target`, `placeholder`; each line: `{ text, href, to, tone, fill, bold, muted, tooltip, trend, action, badge }`                                                                                                                                                                                                                                                                                                                       |
+| `list`                    | `items`, `itemLabel`, `max` (default 1), `placeholder` → “+N more” toggle, emits `expand`                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `link`                    | `href`, `to` (router location → `<RouterLink>` when vue-router is installed), `label`, `target`, `tooltip` → emits `click`                                                                                                                                                                                                                                                                                                                                                                                   |
+| `icon`                    | `icon` / `iconFor`, `show`, `label`, `tone`                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `image`                   | `src`, `baseUrl`, `alt`, `size`, `fit`, `shape`; placeholder when empty or broken                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `code`                    | `language` (`auto`/`json`/`text`), `lines`, `indent`, `highlight` (JSON token colours)                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `json`                    | `label`, `dialogTitle` (escaped JSON in a `<dialog>`)                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `json-tree`               | `collapseAt`, `maxDepth`, `parseNested`, `collapsed` + `toggleLabel`, `emptyText`                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `details`                 | `tone`, `label`, `items` (`{ label, value, tone, detail, tooltip }[]`), `title`, `triggerLabel` → badge + info popover                                                                                                                                                                                                                                                                                                                                                                                       |
 
 **Actions and editing** — editable renderers are _controlled_: they show the data and emit the requested
 change; your `@cell-action` handler updates the row.

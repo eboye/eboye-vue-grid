@@ -1,5 +1,6 @@
 import { defineAsyncComponent } from 'vue'
 import VGridFilterPopover from '../components/VGridFilterPopover.vue'
+import VGridNoMatch from '../components/VGridNoMatch.vue'
 import { useGridFilters } from '../composables/useGridFilters'
 import type { FilteringFeature } from '../types'
 
@@ -12,6 +13,7 @@ export const filteringFeature: FilteringFeature = {
   feature: 'filtering',
   useFilters: useGridFilters,
   FilterButton: VGridFilterPopover,
+  NoMatch: VGridNoMatch,
   FilterInput: /*#__PURE__*/ defineAsyncComponent(
     () => import('../components/VGridFilterInput.vue'),
   ),
