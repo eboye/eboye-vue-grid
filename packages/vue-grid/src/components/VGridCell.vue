@@ -2,6 +2,7 @@
 import { computed, shallowRef, watch } from 'vue'
 import { getCellValue } from '../core/value'
 import { toNumber } from '../renderers/format'
+import { textRenderer } from '../renderers/text'
 import { useInternalGrid, type ResolvedColumn } from '../internal/context'
 import type { FlashMode, RowKey } from '../types'
 import { RenderSlot } from '../internal/RenderSlot'
@@ -31,6 +32,19 @@ const vExtraAttrs = grid.attrs?.directive
 const value = computed(() =>
   props.column.kind === 'data' ? getCellValue(props.row, props.column.def) : undefined,
 )
+const rendererOptions = computed(() => {
+  const { component, options } = props.column
+  // Wrapped text can be clipped on both edges of a fixed-height row. Reuse the text
+  // renderer's ellipsis and overflow tooltip unless the column sets its own wrapping.
+  return grid.virtual.value &&
+    !props.pinned &&
+    component === textRenderer.component &&
+    options.ellipsis === undefined &&
+    !options.lines &&
+    !options.preserveNewlines
+    ? { ...options, ellipsis: true }
+    : options
+})
 
 // ── Change highlight ──────────────────────────────────────────────────────────────────────
 // The animation is pure CSS; this only notices a changed value and flips `data-vg-flash`
@@ -211,7 +225,7 @@ function onClick(event: MouseEvent) {
           :row-index="rowIndex"
           :depth="depth"
           :column="column.def"
-          :options="column.options"
+          :options="rendererOptions"
           @action="onAction"
         />
         <template v-else>{{ value ?? '' }}</template>

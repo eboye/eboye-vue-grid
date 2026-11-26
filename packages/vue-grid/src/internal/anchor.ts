@@ -19,6 +19,31 @@ export function anchorNameFor(id: string): string {
   return `--vg-anchor-${id.replace(/[^\w-]/g, '_')}`
 }
 
+/** Adds a popover's name alongside the element's other inline anchor names. */
+export function addAnchorName(element: HTMLElement, name: string): () => void {
+  const property = 'anchor-name'
+  const { style } = element
+  const previous = style.getPropertyValue(property)
+  const priority = style.getPropertyPriority(property)
+  const combined = previous && previous !== 'none' ? `${previous}, ${name}` : name
+  style.setProperty(property, combined, priority)
+  const installed = style.getPropertyValue(property)
+
+  return () => {
+    const latest = style.getPropertyValue(property)
+    const latestPriority = style.getPropertyPriority(property)
+    if (latest === installed && latestPriority === priority) {
+      style.setProperty(property, previous, priority)
+      return
+    }
+    // Other popovers may have added or removed their names while this one was open.
+    const names = latest.split(',').map((part) => part.trim())
+    if (names.includes(name)) {
+      style.setProperty(property, names.filter((part) => part !== name).join(', '), latestPriority)
+    }
+  }
+}
+
 export type AnchorTarget = HTMLElement | { x: number; y: number }
 
 export type Placement = 'bottom-start' | 'bottom-end' | 'point' | 'top' | 'right-start'
