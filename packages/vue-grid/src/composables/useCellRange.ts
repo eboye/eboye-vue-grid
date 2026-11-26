@@ -553,17 +553,22 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
   /** The range as tab-separated text, as the cells show it (`exportValue` wins). */
   function text(b: Box | null = bounds.value): string {
     const c = b && cellsOf(b)
-    if (!c) return ''
+    return c ? textOf(c) : ''
+  }
+
+  function textOf(c: ReturnType<typeof cellsOf>): string {
     const ctx = opts.format()
     const lines = c.rows.map((row) => c.columns.map((col) => guardFormula(cellText(row, col, ctx))))
     return toDelimited(lines, '\t', '\n')
   }
 
   /** Copies the range (Ctrl/⌘+C). Resolves `false` when there's none or the copy failed. */
-  async function copyRange(b: Box | null = bounds.value): Promise<boolean> {
-    if (!b) return false
-    const c = cellsOf(b)
-    const copied = text(b)
+  async function copyRange(): Promise<boolean> {
+    return bounds.value ? copyCells(cellsOf(bounds.value)) : false
+  }
+
+  async function copyCells(c: ReturnType<typeof cellsOf>): Promise<boolean> {
+    const copied = textOf(c)
     // Where the Clipboard API is refused (plain http, no permission) the copy goes through a
     // hidden text area that takes focus for a moment: focus coming back to the cell isn't a
     // click on it, so the range stays.
@@ -585,12 +590,13 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
    * through the same checks as a paste (read-only cells and a `validate` that wants a value
    * leave a cell as it is). Null with nothing selected.
    */
-  function clearRange(
-    source: 'clear' | 'cut' = 'clear',
-    b: Box | null = selection.value,
-  ): Promise<CellsPasteEvent<T> | null> {
+  function clearRange(): Promise<CellsPasteEvent<T> | null> {
+    const b = selection.value
     if (!b || !opts.clear) return Promise.resolve(null)
-    const c = cellsOf(b)
+    return opts.clear(clearedCells(cellsOf(b)), 'clear')
+  }
+
+  function clearedCells(c: ReturnType<typeof cellsOf>): PasteCell<T>[] {
     const cells: PasteCell<T>[] = []
     for (const row of c.rows)
       for (const col of c.columns)
@@ -601,14 +607,16 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
           definition: col.definition as CellRendererDefinition | undefined,
           value: '', // read per column: '' text, no number / date / choice, false
         })
-    return opts.clear(cells, source)
+    return cells
   }
 
   /** Copies the selected cells (as Ctrl/⌘+C would), then clears them. Null when nothing was copied. */
   async function cutRange(): Promise<CellsPasteEvent<T> | null> {
     const b = selection.value
-    if (!b || !opts.clear || !(await copyRange(b))) return null
-    return clearRange('cut', b) // the block it copied
+    if (!b || !opts.clear) return null
+    const block = cellsOf(b)
+    const cleared = clearedCells(block)
+    return (await copyCells(block)) ? opts.clear(cleared, 'cut') : null
   }
 
   // ── Pasting ──────────────────────────────────────────────────────────────────────────────

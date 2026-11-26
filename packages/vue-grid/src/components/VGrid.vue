@@ -1037,7 +1037,10 @@ const keyboard = features.keyboardNavigation?.useGridKeyboard(root, {
       }
     : undefined,
 })
+const ownsEvent = (event: Event) =>
+  (event.target as Element | null)?.closest?.('.vg') === root.value
 const onKeyDown = (event: KeyboardEvent) => {
+  if (!ownsEvent(event)) return
   if (editing?.onHistoryKey(event)) return // Ctrl/⌘+Z, Ctrl+Y
   // the range's keys first: Shift+arrows extend it, Ctrl/⌘+C copies it rather than rows
   if (cellRange?.onKeyDown(event)) return
@@ -1045,10 +1048,13 @@ const onKeyDown = (event: KeyboardEvent) => {
   if (part('copyShortcut')) exporter?.onKeyDown(event)
 }
 const onFocusIn = (event: FocusEvent) => {
+  if (!ownsEvent(event)) return
   keyboard?.onFocusIn(event)
   cellRange?.onFocusIn(event)
 }
-const onPointerDown = (event: PointerEvent) => cellRange?.onPointerDown(event)
+const onPointerDown = (event: PointerEvent) => {
+  if (ownsEvent(event)) cellRange?.onPointerDown(event)
+}
 /** ARIA grid with keyboard navigation; a plain table (and tabbable controls) without it. */
 const gridRole = computed(() =>
   !keyboardNav ? 'table' : context.treeMode.value ? 'treegrid' : 'grid',
