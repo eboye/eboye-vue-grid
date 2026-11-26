@@ -630,7 +630,7 @@ const canResize = (col: ColumnDef) => !!resize && col.resizable !== false
 const sizedColumns = computed(() =>
   resolvedColumns.value.map((c) => {
     const width = c.kind === 'data' ? resizedWidth(c.key) : undefined
-    return width ? { ...c, def: { ...c.def, width, minWidth: undefined } } : c
+    return width ? { ...c, def: { ...c.def, width, minWidth: undefined }, sized: true } : c
   }),
 )
 

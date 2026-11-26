@@ -6,6 +6,11 @@ import { de } from '../src/locales/de'
 import { en } from '../src/locales/en'
 import { es } from '../src/locales/es'
 import { fr } from '../src/locales/fr'
+import { it as itPack } from '../src/locales/it'
+import { ja } from '../src/locales/ja'
+import { nl } from '../src/locales/nl'
+import { pl } from '../src/locales/pl'
+import { ptBR } from '../src/locales/pt-BR'
 import { sr } from '../src/locales/sr'
 import { srLatn } from '../src/locales/sr-Latn'
 import { createVueGrid } from '../src/registry/plugin'
@@ -14,7 +19,19 @@ import type { GridMessages } from '../src/types'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const VGrid = VGridComponent as any
-const packs: Record<string, GridMessages> = { en, de, fr, es, sr, srLatn }
+const packs: Record<string, GridMessages> = {
+  en,
+  de,
+  fr,
+  es,
+  it: itPack,
+  ptBR,
+  nl,
+  pl,
+  ja,
+  sr,
+  srLatn,
+}
 
 /** Texts that take a column's name. */
 const columnTexts = new Set([
@@ -99,6 +116,21 @@ describe('language packs', () => {
     expect(srLatn.rowCount!('3', '22', 3, 22)).toBe('3 od 22 reda')
     expect(en.rowCount!('1', '1', 1, 1)).toBe('1 of 1 row')
     expect(de.groupRowCount!(1234)).toBe('1.234 Zeilen')
+    // Polish: one / few / many (12–14 are "many", 22–24 "few" again)
+    expect([1, 2, 5, 12, 22, 25].map((n) => rowsIn(pl, n))).toEqual([
+      '1 wiersz',
+      '2 wiersze',
+      '5 wierszy',
+      '12 wierszy',
+      '22 wiersze',
+      '25 wierszy',
+    ])
+    expect(pl.cellCount!(3)).toBe('3 komórki')
+    // Japanese: no plural forms, a counter
+    expect([1, 5].map((n) => rowsIn(ja, n))).toEqual(['1 行', '5 行'])
+    expect([1, 2].map((n) => rowsIn(ptBR, n))).toEqual(['1 linha', '2 linhas'])
+    expect([1, 2].map((n) => rowsIn(itPack, n))).toEqual(['1 riga', '2 righe'])
+    expect([1, 2].map((n) => rowsIn(nl, n))).toEqual(['1 rij', '2 rijen'])
   })
 
   it('en is the built-in text: a grid looks the same with it as without', async () => {

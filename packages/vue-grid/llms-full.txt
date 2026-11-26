@@ -77,7 +77,7 @@ runs in the [live examples](https://eboye.github.io/eboye-vue-grid/), each with 
 | Edit cells in place (spreadsheet-like)             | `editingFeature` (+ `keyboardNavigationFeature` for typing / Enter)         | column `editable: true \| (row) => boolean`, `editor`, `editorOptions`, `validate`; `@cell-edit` (store `value`: `setCellValue(e.row, e.column, e.value)`), `:save-cell` (async, rejection = error)                                                                                                                                                                                                                                                               |
 | Select cells, copy / paste / fill / find, sum      | `rangeSelectionFeature` (+ `keyboardNavigationFeature`, `statusBarFeature`) | `range-selection`, `v-model:range="{ start: { rowKey, columnKey }, end }"`; `@copy` (`kind: 'range'`), `copyRange()`, `getRangeValues()`, `selectRange()`; + `editingFeature`: Ctrl/⌘+V pastes into `editable` cells (`@cell-edit` each, `@cells-paste`, `pasteText()`), the fill handle / Ctrl/⌘+D fill them (`@cells-fill`, `fillDown()`); Ctrl/⌘+F / Ctrl/⌘+H find and replace (`openFind()`, `@cells-replace`); Delete clears, Ctrl/⌘+X cuts (`@cells-clear`) |
 | Test hooks (`data-test`) on rows and cells         | `attributesFeature`                                                         | `:row-attrs="({ row, rowKey, rowIndex }) => ({ 'data-test': `row-${rowIndex}` })"`, `:cell-attrs="({ columnKey, rowIndex }) => …"`                                                                                                                                                                                                                                                                                                                                |
-| Translate / reword the grid, drop built-in pieces  | —                                                                           | a language pack (`import { de } from '@nocopypaste/vue-grid/locales/de'`; also `fr`, `es`, `sr`, `sr-Latn`) or your own `messages` (`GridMessages`), `parts` (`GridParts`): app-wide in `createVueGrid` or per grid; slots `#load-error`, `#no-match`, `#select-all-banner`                                                                                                                                                                                       |
+| Translate / reword the grid, drop built-in pieces  | —                                                                           | a language pack (`import { de } from '@nocopypaste/vue-grid/locales/de'`; also `fr`, `es`, `it`, `pt-BR`, `nl`, `pl`, `ja`, `sr`, `sr-Latn`) or your own `messages` (`GridMessages`), `parts` (`GridParts`): app-wide in `createVueGrid` or per grid; slots `#load-error`, `#no-match`, `#select-all-banner`                                                                                                                                                      |
 | Arrow-key navigation (ARIA grid)                   | `keyboardNavigationFeature`                                                 | —                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | Remember column layout                             | —                                                                           | `storage="orders-grid"` (localStorage key)                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | Cell type (money, date, badge, link, …)            | —                                                                           | `renderer: currencyRenderer` etc. (list below)                                                                                                                                                                                                                                                                                                                                                                                                                    |
@@ -643,7 +643,7 @@ only sees stylesheet rules. Density:
 - An exported column of `⋯` / buttons / `[object Object]` → `exportable: false`, or `exportValue: (row) => …`.
 - Printing the page (Ctrl+P) shows only the rows on screen, clipped to the grid → use `grid.print()`.
 - Translating by replacing components or CSS `content` → set `messages` (every built-in text has a
-  key); for German, French, Spanish or Serbian import the ready-made pack
+  key); for German, French, Spanish, Italian, Portuguese, Dutch, Polish, Japanese or Serbian import the ready-made pack
   (`@nocopypaste/vue-grid/locales/de` …) instead of writing it.
 - Text translated but money / dates still formatted in English → a pack only translates text; set
   `locale` too (`createVueGrid({ messages: de, locale: 'de' })`).
@@ -660,7 +660,7 @@ only sees stylesheet rules. Density:
 
 ---
 
-# @nocopypaste/vue-grid 0.20.0 — API reference
+# @nocopypaste/vue-grid 0.21.0 — API reference
 
 > Generated from the TypeScript sources (`scripts/gen-agent.mjs`). Machine-readable: `agent/api.json`, `agent/grid-config.schema.json`.
 
@@ -2831,7 +2831,8 @@ live example's 100,000 rows × 66 columns keep about a screenful of cells in the
   open editor or the keyboard position survives scrolling away).
 - **Widths:** a column whose own width follows its content (`auto`, the default; `min-content`; a
   bare `1fr`) can't be measured while its cells aren't there, so it gets `:virtual-columns="{ width:
-'8rem' }"` (default `10rem`; a bare `fr` stretches from it). Give columns widths for full control.
+'8rem' }"` (default `10rem`; a bare `fr` stretches from it). Give columns widths for full control;
+  widths the user resizes or auto-fits (double-click a grip) are kept as they are.
 - **Keys:** arrows, Home / End and Ctrl+Home / End go by column, scrolling one in when it isn't
   rendered; find and replace and cell ranges reach every column. `grid.scrollToColumn(key)` scrolls
   to one from code.
@@ -3055,6 +3056,11 @@ import are bundled, about 2 kB gzipped each):
 | `@nocopypaste/vue-grid/locales/de`      | `de`     | German                                               |
 | `@nocopypaste/vue-grid/locales/fr`      | `fr`     | French                                               |
 | `@nocopypaste/vue-grid/locales/es`      | `es`     | Spanish                                              |
+| `@nocopypaste/vue-grid/locales/it`      | `it`     | Italian                                              |
+| `@nocopypaste/vue-grid/locales/pt-BR`   | `ptBR`   | Portuguese (Brazil)                                  |
+| `@nocopypaste/vue-grid/locales/nl`      | `nl`     | Dutch                                                |
+| `@nocopypaste/vue-grid/locales/pl`      | `pl`     | Polish                                               |
+| `@nocopypaste/vue-grid/locales/ja`      | `ja`     | Japanese                                             |
 | `@nocopypaste/vue-grid/locales/sr`      | `sr`     | Serbian, Cyrillic                                    |
 | `@nocopypaste/vue-grid/locales/sr-Latn` | `srLatn` | Serbian, Latin                                       |
 | `@nocopypaste/vue-grid/locales/en`      | `en`     | English (the built-in text, a template for your own) |

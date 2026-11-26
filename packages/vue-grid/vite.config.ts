@@ -6,7 +6,7 @@ import type { Plugin } from 'vite'
 import { defineConfig } from 'vitest/config'
 
 /** The language packs in `src/locales` (each one an entry, so each one its own import path). */
-const locales = ['en', 'de', 'fr', 'es', 'sr', 'sr-Latn']
+const locales = ['en', 'de', 'fr', 'es', 'it', 'pt-BR', 'nl', 'pl', 'ja', 'sr', 'sr-Latn']
 
 const css = (name: string) =>
   readFileSync(fileURLToPath(new URL(`./src/styles/${name}`, import.meta.url)), 'utf8')

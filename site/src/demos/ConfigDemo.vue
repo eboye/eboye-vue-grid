@@ -5,6 +5,11 @@ import { createColumnHelper, VGrid, type GridParts, type RowKey } from '@nocopyp
 import { de } from '@nocopypaste/vue-grid/locales/de'
 import { es } from '@nocopypaste/vue-grid/locales/es'
 import { fr } from '@nocopypaste/vue-grid/locales/fr'
+import { it } from '@nocopypaste/vue-grid/locales/it'
+import { ja } from '@nocopypaste/vue-grid/locales/ja'
+import { nl } from '@nocopypaste/vue-grid/locales/nl'
+import { pl } from '@nocopypaste/vue-grid/locales/pl'
+import { ptBR } from '@nocopypaste/vue-grid/locales/pt-BR'
 import { sr } from '@nocopypaste/vue-grid/locales/sr'
 import { srLatn } from '@nocopypaste/vue-grid/locales/sr-Latn'
 import { makeBets, statusTones, type Bet } from '../data'
@@ -20,6 +25,11 @@ const languages = {
   de: { name: 'Deutsch', locale: 'de', messages: de },
   fr: { name: 'Français', locale: 'fr', messages: fr },
   es: { name: 'Español', locale: 'es', messages: es },
+  it: { name: 'Italiano', locale: 'it', messages: it },
+  ptBR: { name: 'Português (Brasil)', locale: 'pt-BR', messages: ptBR },
+  nl: { name: 'Nederlands', locale: 'nl', messages: nl },
+  pl: { name: 'Polski', locale: 'pl', messages: pl },
+  ja: { name: '日本語', locale: 'ja', messages: ja },
   sr: { name: 'Српски', locale: 'sr', messages: sr },
   srLatn: {
     name: 'Srpski (latinica)',

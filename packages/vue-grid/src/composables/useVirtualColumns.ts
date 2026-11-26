@@ -35,7 +35,7 @@ export interface VirtualColumnsState {
   /** Scrolls the grid sideways until the column is in view (rendering it). */
   reveal(key: string): Promise<void>
   /** The grid template with content-sized tracks of columns that may be left out made definite. */
-  template(columns: readonly ResolvedColumn[]): string
+  template(columns: readonly (ResolvedColumn & { sized?: boolean })[]): string
 }
 
 /** Columns rendered before the grid has been laid out (then measured): about a screenful. */
@@ -207,9 +207,10 @@ export function useVirtualColumns(o: UseVirtualColumnsOptions): VirtualColumnsSt
     reveal,
     template: (columns) => {
       const fallback = config.value.width ?? '10rem'
-      // always rendered: their content is there, so they size as without virtualization
+      // always rendered (their content is there) or resized (a width the user set, or auto-fit's
+      // `max-content` while it measures): as without virtualization
       return columns
-        .map((c) => (always(c) ? trackSize(c.def) : virtualTrack(c.def, fallback)))
+        .map((c) => (always(c) || c.sized ? trackSize(c.def) : virtualTrack(c.def, fallback)))
         .join(' ')
     },
   }

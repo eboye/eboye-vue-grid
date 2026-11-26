@@ -5,6 +5,11 @@ import { de } from '@nocopypaste/vue-grid/locales/de'
 import { en } from '@nocopypaste/vue-grid/locales/en'
 import { es } from '@nocopypaste/vue-grid/locales/es'
 import { fr } from '@nocopypaste/vue-grid/locales/fr'
+import { it } from '@nocopypaste/vue-grid/locales/it'
+import { ja } from '@nocopypaste/vue-grid/locales/ja'
+import { nl } from '@nocopypaste/vue-grid/locales/nl'
+import { pl } from '@nocopypaste/vue-grid/locales/pl'
+import { ptBR } from '@nocopypaste/vue-grid/locales/pt-BR'
 import { sr } from '@nocopypaste/vue-grid/locales/sr'
 import { srLatn } from '@nocopypaste/vue-grid/locales/sr-Latn'
 import { betColumns, makeBets } from '../data'
@@ -103,7 +108,7 @@ export const Translated: Story = {
   args: { messages: serbian, statusBar: { summary: ['stake'] } },
 }
 
-const packs = { en, de, fr, es, sr, srLatn }
+const packs = { en, de, fr, es, it, ptBR, nl, pl, ja, sr, srLatn }
 
 /**
  * Ready-made language packs: `import { de } from '@nocopypaste/vue-grid/locales/de'`, then

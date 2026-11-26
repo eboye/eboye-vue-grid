@@ -251,6 +251,8 @@
     container-type: inline-size;
     cursor: pointer;
   }
+  /* one line in every language (CJK text could otherwise break between any two characters) */
+  .vg-total-label,
   .vg-rowgroup-label {
     white-space: nowrap;
   }

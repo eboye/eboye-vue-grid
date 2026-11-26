@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.21.0 — 2026-11-26
+
+**Five more language packs**: Italian (`locales/it`), Brazilian Portuguese (`locales/pt-BR`,
+export `ptBR`), Dutch (`locales/nl`), Polish (`locales/pl`, with its one / few / many plural
+forms) and Japanese (`locales/ja`). Each is bundled only when imported.
+
+Fix: the totals row label stays on one line (in Japanese and Chinese it broke after every character
+in a narrow first column).
+
+Fix: with `virtual-columns`, auto-fitting a column (double-click its resize grip, or Enter on it) fitted
+it to the 10rem default instead of its content. Resized and fitted widths now stay as set.
+
 ## 0.20.0 — 2026-11-25
 
 **Row reordering** (`rowReorderFeature`, `row-reorder`): a handle column to drag rows by (mouse,

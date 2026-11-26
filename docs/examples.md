@@ -2355,10 +2355,11 @@ A custom bar with the same numbers:
 ## 27. Text and parts
 
 Translate or reword the built-in text, and leave out pieces a feature adds. A ready-made language
-pack translates everything (German, French, Spanish, Serbian in Cyrillic and Latin), app-wide:
+pack translates everything (German, French, Spanish, Italian, Brazilian Portuguese, Dutch, Polish,
+Japanese, Serbian in Cyrillic and Latin), app-wide:
 
 ```ts
-import { de } from '@nocopypaste/vue-grid/locales/de' // also fr, es, sr, sr-Latn (srLatn), en
+import { de } from '@nocopypaste/vue-grid/locales/de' // also fr, es, it, pt-BR (ptBR), nl, pl, ja, sr, sr-Latn (srLatn), en
 
 app.use(
   createVueGrid({

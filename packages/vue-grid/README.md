@@ -1459,7 +1459,8 @@ live example's 100,000 rows × 66 columns keep about a screenful of cells in the
   open editor or the keyboard position survives scrolling away).
 - **Widths:** a column whose own width follows its content (`auto`, the default; `min-content`; a
   bare `1fr`) can't be measured while its cells aren't there, so it gets `:virtual-columns="{ width:
-'8rem' }"` (default `10rem`; a bare `fr` stretches from it). Give columns widths for full control.
+'8rem' }"` (default `10rem`; a bare `fr` stretches from it). Give columns widths for full control;
+  widths the user resizes or auto-fits (double-click a grip) are kept as they are.
 - **Keys:** arrows, Home / End and Ctrl+Home / End go by column, scrolling one in when it isn't
   rendered; find and replace and cell ranges reach every column. `grid.scrollToColumn(key)` scrolls
   to one from code.
@@ -1683,6 +1684,11 @@ import are bundled, about 2 kB gzipped each):
 | `@nocopypaste/vue-grid/locales/de`      | `de`     | German                                               |
 | `@nocopypaste/vue-grid/locales/fr`      | `fr`     | French                                               |
 | `@nocopypaste/vue-grid/locales/es`      | `es`     | Spanish                                              |
+| `@nocopypaste/vue-grid/locales/it`      | `it`     | Italian                                              |
+| `@nocopypaste/vue-grid/locales/pt-BR`   | `ptBR`   | Portuguese (Brazil)                                  |
+| `@nocopypaste/vue-grid/locales/nl`      | `nl`     | Dutch                                                |
+| `@nocopypaste/vue-grid/locales/pl`      | `pl`     | Polish                                               |
+| `@nocopypaste/vue-grid/locales/ja`      | `ja`     | Japanese                                             |
 | `@nocopypaste/vue-grid/locales/sr`      | `sr`     | Serbian, Cyrillic                                    |
 | `@nocopypaste/vue-grid/locales/sr-Latn` | `srLatn` | Serbian, Latin                                       |
 | `@nocopypaste/vue-grid/locales/en`      | `en`     | English (the built-in text, a template for your own) |

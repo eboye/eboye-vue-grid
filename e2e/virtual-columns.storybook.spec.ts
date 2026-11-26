@@ -193,3 +193,24 @@ test('a column group wider than the view keeps its label in sight, clear of the 
     expect(labels).toEqual(labels.map(() => true))
   }
 })
+
+test('double-clicking a resize grip fits the column to its content (not the default width)', async ({
+  page,
+}) => {
+  await open(page)
+  const header = grid(page).locator(':scope > .vg-header > [data-col-key="m3"]')
+  const before = (await header.boundingBox())!.width
+  const grip = (await header.locator('.vg-resize-handle').boundingBox())!
+  await page.mouse.dblclick(grip.x + grip.width / 2, grip.y + grip.height / 2)
+  // 7rem wide with three-digit numbers: it shrinks (it used to grow to the 10rem default)
+  await expect.poll(async () => (await header.boundingBox())!.width).toBeLessThan(before - 10)
+  const clipped = await page.evaluate(
+    () =>
+      [
+        ...document.querySelectorAll(
+          '#storybook-root .vg-row [data-col-key="m3"] .vg-cell-content, #storybook-root .vg-header > [data-col-key="m3"] .vg-header-label',
+        ),
+      ].filter((el) => el.scrollWidth > el.clientWidth + 0.5).length,
+  )
+  expect(clipped).toBe(0)
+})

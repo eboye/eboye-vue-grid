@@ -99,6 +99,21 @@ describe('virtual-columns in the grid', () => {
     expect(template.split(' ').slice(0, 2)).toEqual(['auto', 'auto'])
   })
 
+  it('a resized width is kept as it is (auto-fit measures with max-content)', () => {
+    const w = mount(VGrid, {
+      props: {
+        rows,
+        columns,
+        rowKey: 'id',
+        virtualColumns: true,
+        columnState: { order: [], hidden: [], widths: { c1: 'max-content', c2: '90px' } },
+      },
+    })
+    mounted.push(w)
+    const template = (w.find('.vg').element as HTMLElement).style.getPropertyValue('--vg-columns')
+    expect(template.split(' ').slice(1, 4)).toEqual(['10rem', 'max-content', '90px'])
+  })
+
   it('options: the fallback width', () => {
     const w = mount(VGrid, {
       props: { rows, columns, rowKey: 'id', virtualColumns: { width: '6rem', overscan: 1 } },

@@ -59,7 +59,7 @@ A working example of each feature, complete component source included:
   replacements come through `@cell-edit` too (`source: 'replace'`), as do Delete (`'clear'`)
   and Ctrl/⌘+X (`'cut'`).
 - Another language: import a pack (`import { de } from '@nocopypaste/vue-grid/locales/de'`; also
-  `fr`, `es`, `sr`, `sr-Latn`) as `messages`, plus `locale` for number and date formats. Other
+  `fr`, `es`, `it`, `pt-BR`, `nl`, `pl`, `ja`, `sr`, `sr-Latn`) as `messages`, plus `locale` for number and date formats. Other
   languages: your own `messages` (`GridMessages`, `locales/en` is the template).
 
 ## 5. Validate the config
