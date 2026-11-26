@@ -1332,6 +1332,10 @@ filters.value = {
 }
 ```
 
+Screen readers hear the result: once typing pauses after a filter or search change, the grid
+announces how many rows match (“3 of 22 rows”, the `rowCount` text of `messages`). Don't add a live
+region of your own for it.
+
 ### Remember filters
 
 ```vue

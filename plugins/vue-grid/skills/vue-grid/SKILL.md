@@ -96,6 +96,11 @@ and check:
   inside itself), and touch works — swipe scrolls, hold a header to drag it, hold a cell or
   header (release) for its menu.
 
+Accessibility is built in: the ARIA grid / table roles, keyboard navigation (with
+`keyboardNavigationFeature`), the row count announced after filtering, Windows high contrast and
+reduced motion. Don't add your own live region for result counts or your own high-contrast styles
+for selection.
+
 ## 7. Report
 
 Say which features and renderers you used, what the validator reported, and what you checked in

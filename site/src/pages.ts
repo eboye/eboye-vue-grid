@@ -40,7 +40,7 @@ export const pages: Page[] = [
     try: [
       'Type > 300 in the Stake filter cell.',
       'Open the funnel on City and tick a few values.',
-      'Search “nis”: it matches Niš.',
+      'Search “nis”: it matches Niš (a screen reader then hears how many rows match).',
       'Click a header to sort by it alone; click again to reverse.',
       'Shift-click Placed: it becomes sort key 3. Shift-click again to reverse it, a third time to drop it.',
     ],
