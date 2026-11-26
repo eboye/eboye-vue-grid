@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.22.1 — 2026-11-26
+
+- Smaller: a plain grid is 16.0 kB gzipped (was 16.7 kB), and every feature combination is about
+  0.7 kB smaller. The text renderer's copy button (`copyable`) is loaded with the first cell that
+  shows one, instead of with every grid.
+
 ## 0.22.0 — 2026-11-26
 
 **Accessibility audit** (axe with WCAG 2.2 and best-practice rules on every story, popups and

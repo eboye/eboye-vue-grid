@@ -122,6 +122,7 @@ describe('text options', () => {
   it('copyable: copies the value (or copyValue) and emits copy', async () => {
     const writeText = mockClipboard()
     const w = cell(TextCell, 'SN-1', { copyable: true, copyValue: (v: string) => `serial ${v}` })
+    await vi.waitFor(() => expect(w.find('.vg-copy-button').exists()).toBe(true)) // loaded on first use
     await w.find('.vg-copy-button').trigger('click')
     await flushPromises()
     expect(writeText).toHaveBeenCalledWith('serial SN-1')

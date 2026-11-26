@@ -1,9 +1,12 @@
 <script setup lang="ts">
-import { computed, toRaw } from 'vue'
+import { computed, defineAsyncComponent, toRaw } from 'vue'
 import type { CellRendererEmits, CellRendererProps } from '../types'
 import { resolveOption, type TextOptions } from './options'
-import CopyButton from './parts/CopyButton.vue'
 import ValueBadge from './parts/ValueBadge.vue'
+
+// Loaded with the first `copyable` cell: every grid has text cells, few have a copy button, and it
+// is most of their code (the clipboard, its icons).
+const CopyButton = defineAsyncComponent(() => import('./parts/CopyButton.vue'))
 
 const props = defineProps<CellRendererProps<unknown, unknown, TextOptions>>()
 const emit = defineEmits<CellRendererEmits>()

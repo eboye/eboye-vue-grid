@@ -76,6 +76,31 @@ test('copy: writes the value to the clipboard and confirms', async ({
   }
 })
 
+test('text copyable: the copy button (loaded on first use) copies; an empty cell has none', async ({
+  page,
+  context,
+  browserName,
+}) => {
+  if (browserName === 'chromium')
+    await context.grantPermissions(['clipboard-read', 'clipboard-write'])
+  await story(page, 'renderers--text-copyable')
+  const button = valueCell(page, 1).getByRole('button', { name: 'Copy' })
+  await expect(button).toBeVisible()
+  // it sits after the text, inside the cell
+  const [cellBox, textBox, buttonBox] = await Promise.all([
+    valueCell(page, 1).boundingBox(),
+    valueCell(page, 1).locator('.vg-text').boundingBox(),
+    button.boundingBox(),
+  ])
+  expect(buttonBox!.x).toBeGreaterThanOrEqual(textBox!.x + textBox!.width - 1)
+  expect(buttonBox!.x + buttonBox!.width).toBeLessThanOrEqual(cellBox!.x + cellBox!.width + 1)
+  await button.click()
+  await expect(valueCell(page, 1).getByRole('button', { name: 'Copied' })).toBeVisible()
+  if (browserName === 'chromium')
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('TK-2026-000481')
+  await expect(valueCell(page, 2).getByRole('button')).toHaveCount(0)
+})
+
 test('details: popover anchored under its button, lists items, closes with Esc and the close button', async ({
   page,
 }) => {
