@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tipAttrs } from '../internal/tooltip'
 import { computed, toRaw } from 'vue'
 import type { CellRendererEmits, CellRendererProps } from '../types'
 import { resolveOption, type ActionButtonOptions } from './options'
@@ -32,7 +33,7 @@ const iconOnly = computed(() => !!props.options.iconOnly && !!icon.value)
     ]"
     :disabled="disabled"
     :aria-label="iconOnly ? label : undefined"
-    :title="iconOnly ? label : undefined"
+    v-bind="tipAttrs(iconOnly ? label : undefined)"
     @click="emit('action', options.action ?? 'click', value)"
   >
     <component :is="icon" v-if="icon" class="vg-action-icon" aria-hidden="true" />

@@ -99,7 +99,12 @@ and check:
 Accessibility is built in: the ARIA grid / table roles, keyboard navigation (with
 `keyboardNavigationFeature`), the row count announced after filtering, Windows high contrast and
 reduced motion. Don't add your own live region for result counts or your own high-contrast styles
-for selection.
+for selection. Loading placeholders: `skeleton`, not your own skeleton component. Why a menu item is
+disabled: `disabled: 'reason'`, not a tooltip wrapper. Tooltips in custom renderers:
+`v-bind="tooltipAttrs(text)"` (the grid's popover tooltip), not `title` or a tooltip library; text
+cells show theirs when cut off, or always with `tooltip: 'always'`; several lines: return an
+array. Extra info with copy buttons: text `hoverCard` (a dialog reachable by keyboard), never
+buttons inside a tooltip.
 
 ## 7. Report
 

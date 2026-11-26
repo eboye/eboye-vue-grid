@@ -15,15 +15,39 @@ export type ToneOption = Tone | Record<string, Tone> | RowFn<Tone | undefined>
 
 /** Small badge shown before or after a value (e.g. a class letter or an “A” flag). */
 export interface BadgeSpec {
+  /** What the badge shows, e.g. `A`. */
   text: string
+  /** Its colour (`success`, `danger`, …); default `neutral`. */
   tone?: Tone
   /** Accessible / hover text. */
   title?: string
 }
 
+/** One line of a hover card. */
+export interface HoverCardLine {
+  /** The line's text. */
+  text: string
+  /** Shown before the text, muted, e.g. `IBAN`. */
+  label?: string
+  /** What its copy button copies (default: `text`); `false`: no button on this line. */
+  copy?: string | false
+}
+
+/** A text cell's `hoverCard`. */
+export interface HoverCardSpec {
+  /** Heading, and the card's accessible name (default: the cell text). */
+  title?: string
+  /** The lines, in order: text, or `{ text, label, copy }`. */
+  lines: readonly (string | HoverCardLine)[]
+  /** Copy buttons: one per line (`'lines'`), one for every line (`'all'`), or none (default). */
+  copy?: 'lines' | 'all'
+}
+
 /** Icon shown before a value (e.g. an alert marker). */
 export interface IconSpec {
+  /** The icon component (any SVG component). */
   icon: Component
+  /** Its colour (`success`, `danger`, …). */
   tone?: Tone
   /** Accessible label; without one the icon is decorative. */
   label?: string
@@ -35,16 +59,26 @@ export type RouteTarget = string | Record<string, unknown>
 export type ButtonVariant = 'outline' | 'solid' | 'ghost'
 
 export interface TextOptions {
-  /** Single line with ellipsis (full text in a tooltip). */
+  /** Single line with ellipsis (the full text as a tooltip while it is cut off). */
   ellipsis?: boolean
-  /** Clamp to N lines. */
+  /** Clamp to N lines (the full text as a tooltip while it is cut off). */
   lines?: number
   /** CSS max width of the text, e.g. `'16rem'`: longer text wraps or, with `ellipsis`, is cut. */
   maxWidth?: string
   /** Keep line breaks in the value (`white-space: pre-line`). */
   preserveNewlines?: boolean
-  /** `true` = value as tooltip; a function computes it. */
-  tooltip?: boolean | RowFn<string | undefined>
+  /**
+   * The full text as a tooltip: `'always'` (or `true`), or `'overflow'` only while it is cut off
+   * (the default with `ellipsis` / `lines`); `false` = none. A function returns its own text, which
+   * is also read out as the cell text's description.
+   */
+  tooltip?: boolean | 'always' | 'overflow' | RowFn<string | readonly string[] | undefined>
+  /**
+   * A hover card instead of a tooltip: lines (and copy buttons) in a small popup that opens on
+   * hover, or on click / Enter, which also moves focus into it. `(value, row) => ({ title, lines,
+   * copy })`, or just the lines. Copy buttons emit `copy` with the copied text, like `copyable`.
+   */
+  hoverCard?: RowFn<HoverCardSpec | readonly (string | HoverCardLine)[] | null | undefined>
   /** Shown when the value is empty. */
   placeholder?: string
   /** Colour of the text (`success`, `danger`, `warning`, `info`, `neutral`, `accent`), or `(value, row) => tone`. */

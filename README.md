@@ -37,13 +37,13 @@ CSV / Excel export, printing and copying · status bar · text and parts · them
 
 - **Native layout, not a table emulation.** Rows are CSS Grid; nested rows use real `subgrid`, so
   children line up with their parent's columns at any depth — no width syncing in JavaScript.
-- **CSS first.** Sticky pinned columns, pin shadows, popover menus anchored with CSS anchor
+- **CSS first.** Sticky pinned columns, pin shadows, popover menus, tooltips and hover cards anchored with CSS anchor
   positioning, `light-dark()` theming, native `<details>` disclosures. JavaScript only fills in
   where a browser lacks a feature — see [Browser support](#browser-support).
 - **Small by default, everything optional.** ESM, one file per module, zero runtime dependencies.
   Sorting, filtering, server data, pagination, selection, sub-grids, menus, column reordering,
   resizing, pinning, visibility and grouping, pinned rows, totals, row grouping, inline editing, CSV and Excel export, printing, copying, a status bar, virtual scrolling and keyboard navigation are opt-in **features**, and
-  renderers are opt-in too. A plain grid with text cells is **16.0 kB gzipped**, and each feature or renderer you add costs
+  renderers are opt-in too. A plain grid with text cells is **16.8 kB gzipped**, and each feature or renderer you add costs
   only itself.
 - **Fast where it counts.** Virtual scrolling renders a screenful out of tens of thousands of rows,
   expanded sub-grids and detail rows included. Data changes re-render only the cells that changed,
@@ -61,8 +61,10 @@ CSV / Excel export, printing and copying · status bar · text and parts · them
 - **Accessible.** With `keyboardNavigationFeature`: `grid` / `treegrid` semantics and full keyboard
   navigation (cells, headers, menus, column reordering). Without it: an ARIA `table` whose controls
   sit in the normal Tab order. Either way: `aria-sort`, focus management, screen-reader labels.
-  Every Storybook story is checked with axe-core against WCAG 2.1 A / AA, in light and dark mode,
-  on every push.
+  Tooltips are top-layer popovers that also show on keyboard focus and close with Esc; disabled
+  menu items can say why; loading placeholders and filtering results are read out. Every Storybook
+  story is checked with axe-core against WCAG 2.2 A / AA and best practices, in light and dark
+  mode, on every push.
 - **Yours to style.** Everything sits in `@layer vue-grid` and reads `--vg-*` tokens, so your CSS and
   Tailwind utilities win without `!important`. Or skip the default theme: `base.css` is the grid's
   structure alone, ready for your own styles.
@@ -77,14 +79,14 @@ CSV / Excel export, printing and copying · status bar · text and parts · them
 | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Data**         | Plain row objects · partial updates that re-render only changed cells, with an optional change highlight · client or server (controlled) sorting, by one column or several (Shift-click) · selection (multi, single, cascading, shift-click ranges, a batch-action bar in the toolbar, "select all N matching" with server data) · built-in or standalone pagination · 10,000+ rows with virtual scrolling, sub-grids and detail rows included                                                                                                                                                                                                                              |
 | **Filtering**    | Typed column filters in header popovers (text, number, date, yes / no, value list with counts, your own component) · optional filter row with shorthand (`>10`, `5..20`, `-5..-1`, `100..`, `1,5`) · quick search · case- and accent-insensitive · date-only values are calendar days in every time zone · tree-aware · persisted to `localStorage`                                                                                                                                                                                                                                                                                                                         |
-| **Server data**  | A `dataSource(query, { signal })` function: the grid sends sort, filters and page, cancels superseded requests, and shows loading, error and retry states · server-side row grouping (groups with counts and aggregates, contents loaded on expand, selection by group) · or a single `query-change` event if you fetch yourself · backend-loaded value lists                                                                                                                                                                                                                                                                                                               |
+| **Server data**  | A `dataSource(query, { signal })` function: the grid sends sort, filters and page, cancels superseded requests, and shows loading (optionally as placeholder rows: `skeleton`), error and retry states · server-side row grouping (groups with counts and aggregates, contents loaded on expand, selection by group) · or a single `query-change` event if you fetch yourself · backend-loaded value lists                                                                                                                                                                                                                                                                  |
 | **Columns**      | Pin left / right (also at runtime; on a phone, pinned columns that would take most of the grid scroll with the rest) · drag or keyboard reordering · drag-to-resize with fit-to-content · grouped headers · show / hide picker · any CSS grid track as width · layout persisted to `localStorage` or your own storage                                                                                                                                                                                                                                                                                                                                                       |
 | **Rows**         | Nested sub-grids (sync or lazy-loaded, with retry; `reloadSubRows()`) · detail rows with any content, including another grid · cascading selection that follows lazily loaded children · pinned rows that stay above or below the body · a sticky totals row (sum, avg, min, max, count or your own aggregate) · row grouping by one or more columns, with counts and per-group aggregates, from `v-model:group-by` or the header menu · row highlighting and classes                                                                                                                                                                                                       |
 | **Export**       | CSV or Excel (.xlsx, typed cells with number formats, no dependency) download, CSV text, or printing (every row, header on each page) of the filtered, sorted rows (or all, the page, the selection), raw or as displayed, with totals · Ctrl/⌘+C copies the selected rows (pastes as cells into spreadsheets) or the focused cell · formula-injection guard · works over plain http                                                                                                                                                                                                                                                                                        |
 | **Editing**      | Inline cell editing (opt-in): double-click, Enter / F2 or just type; text, number, date, select and checkbox editors picked from the renderer, or your own · Enter saves, Tab moves on, Esc cancels · undo / redo (Ctrl+Z, Ctrl+Y) of edits and whole pastes · validation and async saves with the error in place · the grid emits, your data stays yours                                                                                                                                                                                                                                                                                                                   |
 | **Ranges**       | Spreadsheet-like cell-range selection (opt-in): drag (the grid scrolls at its edges), Shift+click, Shift+arrows, Ctrl/⌘+A · Ctrl/⌘+C copies the block as cells for Excel or Sheets, Ctrl/⌘+V pastes a block from them into the editable cells (typed, validated, one value fills a range) · a fill handle to drag values or series (1, 2 → 3, 4; dates day by day) down or across, and Ctrl/⌘+D · find and replace (Ctrl/⌘+F, Ctrl/⌘+H) over what the cells show, also in rows not drawn yet · Delete clears and Ctrl/⌘+X cuts selected cells · the status bar shows its count, sum and average · works next to row selection, across sorting, groups and virtual scrolling |
 | **Status bar**   | Rows that pass the filters (`84 of 200 rows`), selected rows, active filters with Clear · the sum and average of chosen columns over the selected rows, formatted like the cells · your own content in a slot                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| **Menus**        | Right-click menus for cells and headers (sort, then sort by, pin, move, hide, reset, your own items) · `⋯` actions menu · keyboard: ContextMenu / Shift+F10, arrows, typeahead                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| **Menus**        | Right-click menus for cells and headers (sort, then sort by, pin, move, hide, reset, your own items) · `⋯` actions menu · disabled items that say why (`disabled: 'reason'`) · keyboard: ContextMenu / Shift+F10, arrows, typeahead                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | **Cells**        | 29 renderers (below) · slots for any cell or header · your own renderers as typed add-ons                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | **Text & parts** | Every built-in text translatable (`messages`, app-wide or per grid) · ready-made language packs (German, French, Spanish, Italian, Portuguese, Dutch, Polish, Japanese, Serbian Cyrillic and Latin), each bundled only when imported · every piece a feature adds can be turned off (`parts`) or replaced with a slot                                                                                                                                                                                                                                                                                                                                                       |
 | **Theming**      | CSS variables for colours, spacing, radii, typography · dark mode · three densities · `ui` prop for utility classes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
@@ -111,7 +113,7 @@ col({
 <td width="50%" valign="top">
 <img src="docs/media/renderers/text.png" alt="text renderer: secondary text, leading badge, leading icon" width="400"><br>
 <b><code>text</code></b> (default): text with optional extras.<br>
-<sub><code>ellipsis</code> · <code>lines</code> · <code>tone</code> / <code>toneMode</code> · <code>bold</code> · <code>secondary</code> · <code>badge</code> · <code>icon</code> · <code>copyable</code> · <code>tooltip</code> · <code>placeholder</code></sub>
+<sub><code>ellipsis</code> · <code>lines</code> · <code>tone</code> / <code>toneMode</code> · <code>bold</code> · <code>secondary</code> · <code>badge</code> · <code>icon</code> · <code>copyable</code> · <code>tooltip</code> (when cut off, or <code>always</code>; lines) · <code>hoverCard</code> (lines with copy buttons) · <code>placeholder</code></sub>
 </td>
 <td width="50%" valign="top">
 <img src="docs/media/renderers/toggle-text.png" alt="toggle-text renderer" width="400"><br>
@@ -467,34 +469,34 @@ bundler in Vite (minified / gzip, Vue excluded; the entry plus every chunk it lo
 
 | You import                                                                   | Initial chunk      |
 | ---------------------------------------------------------------------------- | ------------------ |
-| `VGrid` (no features)                                                        | 47.1 kB / 16.0 kB  |
-| `VGrid` + `sortingFeature`                                                   | 49.8 kB / 17.0 kB  |
-| `VGrid` + `filteringFeature`                                                 | 58.5 kB / 20.2 kB  |
-| `VGrid` + `selectionFeature`                                                 | 51.2 kB / 17.4 kB  |
-| `VGrid` + `subGridsFeature`                                                  | 49.4 kB / 16.8 kB  |
-| `VGrid` + `menusFeature`                                                     | 58.4 kB / 19.8 kB  |
-| `VGrid` + `columnReorderFeature`                                             | 50.8 kB / 17.2 kB  |
-| `VGrid` + `columnPinningFeature`                                             | 50.0 kB / 17.0 kB  |
-| `VGrid` + `virtualScrollingFeature`                                          | 52.9 kB / 18.2 kB  |
-| `VGrid` + `columnVisibilityFeature`                                          | 47.2 kB / 16.0 kB  |
-| `VGrid` + `keyboardNavigationFeature`                                        | 50.4 kB / 17.2 kB  |
-| `VGrid` + `columnResizingFeature`                                            | 50.4 kB / 17.2 kB  |
-| `VGrid` + `columnGroupsFeature`                                              | 48.8 kB / 16.6 kB  |
-| `VGrid` + `rowPinningFeature`                                                | 51.9 kB / 17.5 kB  |
-| `VGrid` + `aggregationFeature`                                               | 52.2 kB / 17.7 kB  |
-| `VGrid` + `rowGroupingFeature`                                               | 58.2 kB / 19.7 kB  |
-| `VGrid` + `exportFeature`                                                    | 52.4 kB / 18.0 kB  |
-| `VGrid` + `statusBarFeature`                                                 | 50.0 kB / 17.0 kB  |
+| `VGrid` (no features)                                                        | 49.4 kB / 16.8 kB  |
+| `VGrid` + `sortingFeature`                                                   | 52.2 kB / 17.9 kB  |
+| `VGrid` + `filteringFeature`                                                 | 61.0 kB / 21.1 kB  |
+| `VGrid` + `selectionFeature`                                                 | 53.5 kB / 18.3 kB  |
+| `VGrid` + `subGridsFeature`                                                  | 51.8 kB / 17.6 kB  |
+| `VGrid` + `menusFeature`                                                     | 61.3 kB / 20.8 kB  |
+| `VGrid` + `columnReorderFeature`                                             | 53.1 kB / 18.1 kB  |
+| `VGrid` + `columnPinningFeature`                                             | 52.4 kB / 17.9 kB  |
+| `VGrid` + `virtualScrollingFeature`                                          | 55.3 kB / 19.1 kB  |
+| `VGrid` + `columnVisibilityFeature`                                          | 49.6 kB / 16.9 kB  |
+| `VGrid` + `keyboardNavigationFeature`                                        | 52.8 kB / 18.1 kB  |
+| `VGrid` + `columnResizingFeature`                                            | 52.7 kB / 18.0 kB  |
+| `VGrid` + `columnGroupsFeature`                                              | 51.1 kB / 17.5 kB  |
+| `VGrid` + `rowPinningFeature`                                                | 54.3 kB / 18.4 kB  |
+| `VGrid` + `aggregationFeature`                                               | 54.6 kB / 18.5 kB  |
+| `VGrid` + `rowGroupingFeature`                                               | 60.5 kB / 20.6 kB  |
+| `VGrid` + `exportFeature`                                                    | 54.7 kB / 18.9 kB  |
+| `VGrid` + `statusBarFeature`                                                 | 52.3 kB / 17.9 kB  |
 | `VGrid` + `serverGroupingFeature`                                            | 52.1 kB / 17.9 kB  |
 | `VGrid` + `editingFeature`                                                   | 56.5 kB / 19.6 kB  |
 | `VGrid` + `rangeSelectionFeature`                                            | 63.0 kB / 21.7 kB  |
 | `VGrid` + `attributesFeature`                                                | 50.0 kB / 17.1 kB  |
 | `VGrid` + `columnVirtualizationFeature`                                      | 52.0 kB / 18.1 kB  |
 | `VGrid` + `rowReorderFeature`                                                | 53.7 kB / 18.4 kB  |
-| `VGrid` + `allFeatures` + `VGridSearch`                                      | 153.9 kB / 51.6 kB |
-| `VGrid` + `currencyRenderer`                                                 | 48.5 kB / 16.4 kB  |
-| everything                                                                   | 210.0 kB / 68.0 kB |
-| `validateGridConfig` (`@nocopypaste/vue-grid/agent`, never in an app bundle) | 83.8 kB / 22.9 kB  |
+| `VGrid` + `allFeatures` + `VGridSearch`                                      | 156.8 kB / 52.6 kB |
+| `VGrid` + `currencyRenderer`                                                 | 50.8 kB / 17.3 kB  |
+| everything                                                                   | 213.2 kB / 69.1 kB |
+| `validateGridConfig` (`@nocopypaste/vue-grid/agent`, never in an app bundle) | 86.4 kB / 23.6 kB  |
 
 With `filteringFeature`, the filter popover body and the filter-row editors load on demand. With
 `paginationFeature`, the pager does too, and with `selectionFeature` the "select all N rows" banner.

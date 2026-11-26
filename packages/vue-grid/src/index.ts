@@ -4,6 +4,7 @@ export { default as VGridColumnMenu } from './components/VGridColumnMenu.vue'
 export { default as VGridMenu } from './components/VGridMenu.vue'
 export { default as VGridSearch } from './components/VGridSearch.vue'
 export { anchorNameFor, supportsAnchorPositioning } from './internal/anchor'
+export { tipAttrs as tooltipAttrs } from './internal/tooltip'
 
 export { createVueGrid, useGridContext, GRID_CONFIG_KEY } from './registry/plugin'
 export {

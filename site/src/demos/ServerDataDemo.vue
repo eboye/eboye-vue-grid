@@ -130,6 +130,7 @@ const columns = [
     filter-row
     :pagination="{ pageSizes: [10, 25, 50] }"
     :page-size="10"
+    :skeleton="10"
     aria-label="Bets from the server"
   >
     <template #toolbar>

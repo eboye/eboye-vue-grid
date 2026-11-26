@@ -183,39 +183,39 @@ what you import.
 
 | Import (minified / gzip, Vue excluded)                                       | Initial chunk      |
 | ---------------------------------------------------------------------------- | ------------------ |
-| `VGrid` (no features)                                                        | 47.1 kB / 16.0 kB  |
-| `VGrid` + `sortingFeature`                                                   | 49.8 kB / 17.0 kB  |
-| `VGrid` + `filteringFeature`                                                 | 58.5 kB / 20.2 kB  |
+| `VGrid` (no features)                                                        | 49.4 kB / 16.8 kB  |
+| `VGrid` + `sortingFeature`                                                   | 52.2 kB / 17.9 kB  |
+| `VGrid` + `filteringFeature`                                                 | 61.0 kB / 21.1 kB  |
 | `VGrid` + `serverDataFeature`                                                | 50.4 kB / 17.4 kB  |
 | `VGrid` + `paginationFeature`                                                | 49.1 kB / 16.8 kB  |
-| `VGrid` + `selectionFeature`                                                 | 51.2 kB / 17.4 kB  |
-| `VGrid` + `subGridsFeature`                                                  | 49.4 kB / 16.8 kB  |
-| `VGrid` + `menusFeature`                                                     | 58.4 kB / 19.8 kB  |
-| `VGrid` + `columnReorderFeature`                                             | 50.8 kB / 17.2 kB  |
-| `VGrid` + `columnPinningFeature`                                             | 50.0 kB / 17.0 kB  |
-| `VGrid` + `virtualScrollingFeature`                                          | 52.9 kB / 18.2 kB  |
-| `VGrid` + `columnVisibilityFeature`                                          | 47.2 kB / 16.0 kB  |
-| `VGrid` + `keyboardNavigationFeature`                                        | 50.4 kB / 17.2 kB  |
-| `VGrid` + `columnResizingFeature`                                            | 50.4 kB / 17.2 kB  |
-| `VGrid` + `columnGroupsFeature`                                              | 48.8 kB / 16.6 kB  |
-| `VGrid` + `rowPinningFeature`                                                | 51.9 kB / 17.5 kB  |
-| `VGrid` + `aggregationFeature`                                               | 52.2 kB / 17.7 kB  |
-| `VGrid` + `rowGroupingFeature`                                               | 58.2 kB / 19.7 kB  |
-| `VGrid` + `exportFeature`                                                    | 52.4 kB / 18.0 kB  |
-| `VGrid` + `statusBarFeature`                                                 | 50.0 kB / 17.0 kB  |
+| `VGrid` + `selectionFeature`                                                 | 53.5 kB / 18.3 kB  |
+| `VGrid` + `subGridsFeature`                                                  | 51.8 kB / 17.6 kB  |
+| `VGrid` + `menusFeature`                                                     | 61.3 kB / 20.8 kB  |
+| `VGrid` + `columnReorderFeature`                                             | 53.1 kB / 18.1 kB  |
+| `VGrid` + `columnPinningFeature`                                             | 52.4 kB / 17.9 kB  |
+| `VGrid` + `virtualScrollingFeature`                                          | 55.3 kB / 19.1 kB  |
+| `VGrid` + `columnVisibilityFeature`                                          | 49.6 kB / 16.9 kB  |
+| `VGrid` + `keyboardNavigationFeature`                                        | 52.8 kB / 18.1 kB  |
+| `VGrid` + `columnResizingFeature`                                            | 52.7 kB / 18.0 kB  |
+| `VGrid` + `columnGroupsFeature`                                              | 51.1 kB / 17.5 kB  |
+| `VGrid` + `rowPinningFeature`                                                | 54.3 kB / 18.4 kB  |
+| `VGrid` + `aggregationFeature`                                               | 54.6 kB / 18.5 kB  |
+| `VGrid` + `rowGroupingFeature`                                               | 60.5 kB / 20.6 kB  |
+| `VGrid` + `exportFeature`                                                    | 54.7 kB / 18.9 kB  |
+| `VGrid` + `statusBarFeature`                                                 | 52.3 kB / 17.9 kB  |
 | `VGrid` + `serverGroupingFeature`                                            | 52.1 kB / 17.9 kB  |
 | `VGrid` + `editingFeature`                                                   | 56.5 kB / 19.6 kB  |
 | `VGrid` + `rangeSelectionFeature`                                            | 63.0 kB / 21.7 kB  |
 | `VGrid` + `attributesFeature`                                                | 50.0 kB / 17.1 kB  |
 | `VGrid` + `columnVirtualizationFeature`                                      | 52.0 kB / 18.1 kB  |
 | `VGrid` + `rowReorderFeature`                                                | 53.7 kB / 18.4 kB  |
-| `VGrid` + `allFeatures` + `VGridSearch`                                      | 153.9 kB / 51.6 kB |
-| `VGrid` + `currencyRenderer`                                                 | 48.5 kB / 16.4 kB  |
+| `VGrid` + `allFeatures` + `VGridSearch`                                      | 156.8 kB / 52.6 kB |
+| `VGrid` + `currencyRenderer`                                                 | 50.8 kB / 17.3 kB  |
 | `VGrid` + `VGridPagination` + `VGridColumnMenu`                              | 56.2 kB / 19.2 kB  |
 | `sortRows` only                                                              | 0.7 kB / 0.4 kB    |
 | `toCsv` only                                                                 | 1.1 kB / 0.6 kB    |
-| everything                                                                   | 210.0 kB / 68.0 kB |
-| `validateGridConfig` (`@nocopypaste/vue-grid/agent`, never in an app bundle) | 83.8 kB / 22.9 kB  |
+| everything                                                                   | 213.2 kB / 69.1 kB |
+| `validateGridConfig` (`@nocopypaste/vue-grid/agent`, never in an app bundle) | 86.4 kB / 23.6 kB  |
 
 With `filteringFeature`, the filter popover body and the filter-row editors are **on-demand
 chunks**: they load the first time a popover opens or `filter-row` is on. With
@@ -286,6 +286,7 @@ chunks that on-demand imports share with the entry, even when nothing uses them.
 | `locale` / `currency` / `timeZone`   | `string`                                                                                                                     | plugin → browser   | Formatting context for renderers.                                                                                                                                                                                           |
 | `density`                            | `'compact' \| 'cozy' \| 'comfortable'`                                                                                       | `'cozy'`           | Scales cell padding.                                                                                                                                                                                                        |
 | `loading`                            | `boolean`                                                                                                                    | `false`            | Progress bar + `aria-busy`.                                                                                                                                                                                                 |
+| `skeleton`                           | `boolean \| number`                                                                                                          | `false`            | Loading with no rows yet: placeholder rows in the grid's columns instead of the `Loading…` line (still read out). `true` = 8 rows.                                                                                          |
 | `emptyText`                          | `string`                                                                                                                     | `messages.empty`   | Shown when there are no rows (`No data to show.`).                                                                                                                                                                          |
 | `ariaLabel`                          | `string`                                                                                                                     | —                  |                                                                                                                                                                                                                             |
 | `statusBar`                          | `boolean \| StatusBarOptions`                                                                                                | `false`            | A status bar under the grid (status bar feature): counts, and `{ summary: [keys] }` sums of the selected rows. See [Status bar](#status-bar).                                                                               |
@@ -543,7 +544,10 @@ scrolls. No JS positioning, except a small fallback for browsers without anchor 
 Right-click opens the menu at the pointer; the **ContextMenu** key or **Shift+F10** opens it under the
 focused cell. Return `[]`/`null` to keep the browser's native menu for that cell. Items:
 `{ name, label, disabled?, tone?, icon?, hint? }` or `{ separator: true }`. Arrow keys, Home/End and
-typeahead move through items; focus returns to the cell on close.
+typeahead move through items; focus returns to the cell on close. `disabled` may also say why
+(`disabled: 'Settled bets can’t be voided'`): the reason shows under the label and is read out as the
+item's description, and the item stays reachable by keyboard (`aria-disabled`) but does nothing. The
+same works in `actions-menu` items.
 
 ### Column headers
 
@@ -1530,6 +1534,13 @@ a focusable `separator` whose value is the column's width.
 - **Windows high contrast** (forced colours): selected rows, a cell range, find matches and drop
   markers are drawn in the system highlight colours, which the browser would otherwise remove.
 - **Reduced motion**: with `prefers-reduced-motion`, transitions and animations are off.
+- **Tooltips** are one popover per grid (`popover="hint"`, in the top layer, placed with CSS anchor
+  positioning), not the browser's `title`: they show on hover after a short delay and at once on
+  keyboard focus, stay while the pointer moves onto them, and close with Esc (WCAG 1.4.13). Where a
+  tooltip says something the element doesn't (a disabled control's reason, a badge's meaning, a
+  header's `headerTooltip`), it is also the element's accessible description. A text cell's
+  `hoverCard` is a dialog instead, reachable by keyboard (Enter opens it with focus inside, Esc
+  returns focus).
 
 Without `keyboardNavigationFeature` the grid is an ARIA `table`. The scroll area is one Tab stop,
 and the grid's own controls (sort buttons, expanders, checkboxes, filter buttons) follow in the
@@ -1571,26 +1582,26 @@ Screenshots of every renderer are in the repository README's
 
 **Display**
 
-| Name                      | Options                                                                                                                                                                                                                           |
-| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `text` (default)          | `ellipsis`, `lines`, `maxWidth`, `preserveNewlines`, `tooltip`, `placeholder`, `tone`, `toneMode` (`text`/`fill`), `bold`, `secondary` (muted suffix), `badge` + `badgePosition`, `icon`, `copyable` + `copyValue` → emits `copy` |
-| `toggle-text`             | `clickable`, `highlighted` → emits `toggle`                                                                                                                                                                                       |
-| `number`, `signed-number` | `format` (`Intl.NumberFormatOptions`), `placeholder`, `clickable` → emits `click`                                                                                                                                                 |
-| `currency`                | `currency` (code or `(value, row) => code`), `format`, `placeholder`, `clickable` → emits `click`                                                                                                                                 |
-| `change`                  | `direction`, `currency`, `format`, `iconOnly` (arrow + colour; booleans / `'true'` = trend)                                                                                                                                       |
-| `date`, `datetime`        | `format`, `placeholder`; `datetime`: `milliseconds`, `twoLines`                                                                                                                                                                   |
-| `boolean`                 | `trueLabel`, `falseLabel`, `nullLabel`, `display` (`text`/`icon`), `falseIcon`                                                                                                                                                    |
-| `status`                  | `tone` (map / fn / constant), `label` (fn or value → label map), `dot`, `variant` (`soft`/`solid`/`outline`), `placeholder`, `clickable` → emits `click`                                                                          |
-| `chip`                    | `color` (any CSS colour, contrast text picked), `tone`, `label`, `tooltip`, `shape` (`square`/`circle`/`pill`), `size`; accepts `{ label \| name, color, description }`                                                           |
-| `multi-line`              | `lines` (builder; default: the value array), `boldLines`, `ellipsis`, `target`, `placeholder`; each line: `{ text, href, to, tone, fill, bold, muted, tooltip, trend, action, badge }`                                            |
-| `list`                    | `items`, `itemLabel`, `max` (default 1), `placeholder` → “+N more” toggle, emits `expand`                                                                                                                                         |
-| `link`                    | `href`, `to` (router location → `<RouterLink>` when vue-router is installed), `label`, `target`, `tooltip` → emits `click`                                                                                                        |
-| `icon`                    | `icon` / `iconFor`, `show`, `label`, `tone`                                                                                                                                                                                       |
-| `image`                   | `src`, `baseUrl`, `alt`, `size`, `fit`, `shape`; placeholder when empty or broken                                                                                                                                                 |
-| `code`                    | `language` (`auto`/`json`/`text`), `lines`, `indent`, `highlight` (JSON token colours)                                                                                                                                            |
-| `json`                    | `label`, `dialogTitle` (escaped JSON in a `<dialog>`)                                                                                                                                                                             |
-| `json-tree`               | `collapseAt`, `maxDepth`, `parseNested`, `collapsed` + `toggleLabel`, `emptyText`                                                                                                                                                 |
-| `details`                 | `tone`, `label`, `items` (`{ label, value, tone, detail, tooltip }[]`), `title`, `triggerLabel` → badge + info popover                                                                                                            |
+| Name                      | Options                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `text` (default)          | `ellipsis`, `lines` (both: the full text as a tooltip while it is cut off), `maxWidth`, `preserveNewlines`, `tooltip` (`'always'` / `true`: on every cell; `'overflow'`: only when cut off; `false`: never; a function: its own text or lines), `hoverCard` (lines and copy buttons in a popup; see below), `placeholder`, `tone`, `toneMode` (`text`/`fill`), `bold`, `secondary` (muted suffix), `badge` + `badgePosition`, `icon`, `copyable` + `copyValue` → emits `copy` |
+| `toggle-text`             | `clickable`, `highlighted` → emits `toggle`                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `number`, `signed-number` | `format` (`Intl.NumberFormatOptions`), `placeholder`, `clickable` → emits `click`                                                                                                                                                                                                                                                                                                                                                                                             |
+| `currency`                | `currency` (code or `(value, row) => code`), `format`, `placeholder`, `clickable` → emits `click`                                                                                                                                                                                                                                                                                                                                                                             |
+| `change`                  | `direction`, `currency`, `format`, `iconOnly` (arrow + colour; booleans / `'true'` = trend)                                                                                                                                                                                                                                                                                                                                                                                   |
+| `date`, `datetime`        | `format`, `placeholder`; `datetime`: `milliseconds`, `twoLines`                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `boolean`                 | `trueLabel`, `falseLabel`, `nullLabel`, `display` (`text`/`icon`), `falseIcon`                                                                                                                                                                                                                                                                                                                                                                                                |
+| `status`                  | `tone` (map / fn / constant), `label` (fn or value → label map), `dot`, `variant` (`soft`/`solid`/`outline`), `placeholder`, `clickable` → emits `click`                                                                                                                                                                                                                                                                                                                      |
+| `chip`                    | `color` (any CSS colour, contrast text picked), `tone`, `label`, `tooltip`, `shape` (`square`/`circle`/`pill`), `size`; accepts `{ label \| name, color, description }`                                                                                                                                                                                                                                                                                                       |
+| `multi-line`              | `lines` (builder; default: the value array), `boldLines`, `ellipsis`, `target`, `placeholder`; each line: `{ text, href, to, tone, fill, bold, muted, tooltip, trend, action, badge }`                                                                                                                                                                                                                                                                                        |
+| `list`                    | `items`, `itemLabel`, `max` (default 1), `placeholder` → “+N more” toggle, emits `expand`                                                                                                                                                                                                                                                                                                                                                                                     |
+| `link`                    | `href`, `to` (router location → `<RouterLink>` when vue-router is installed), `label`, `target`, `tooltip` → emits `click`                                                                                                                                                                                                                                                                                                                                                    |
+| `icon`                    | `icon` / `iconFor`, `show`, `label`, `tone`                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `image`                   | `src`, `baseUrl`, `alt`, `size`, `fit`, `shape`; placeholder when empty or broken                                                                                                                                                                                                                                                                                                                                                                                             |
+| `code`                    | `language` (`auto`/`json`/`text`), `lines`, `indent`, `highlight` (JSON token colours)                                                                                                                                                                                                                                                                                                                                                                                        |
+| `json`                    | `label`, `dialogTitle` (escaped JSON in a `<dialog>`)                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `json-tree`               | `collapseAt`, `maxDepth`, `parseNested`, `collapsed` + `toggleLabel`, `emptyText`                                                                                                                                                                                                                                                                                                                                                                                             |
+| `details`                 | `tone`, `label`, `items` (`{ label, value, tone, detail, tooltip }[]`), `title`, `triggerLabel` → badge + info popover                                                                                                                                                                                                                                                                                                                                                        |
 
 **Actions and editing** — editable renderers are _controlled_: they show the data and emit the requested
 change; your `@cell-action` handler updates the row.
@@ -1617,6 +1628,52 @@ change; your `@cell-action` handler updates the row.
 
 Values option callbacks receive `(value, row)`. The component of every renderer is exported too
 (`TextCell`, `CurrencyCell`, …) for composition.
+
+### Tooltips and hover cards
+
+Every tooltip in the grid is one popover (`popover="hint"`, top layer, CSS anchor positioning),
+never the browser's `title`: it shows on hover after a short delay and at once on keyboard focus,
+stays while the pointer is on it, closes with Esc, keeps line breaks, and is themed with
+`--vg-tooltip-bg` / `--vg-tooltip-text`. Its code loads with the first tooltip.
+
+```ts
+col({ key: 'note', rendererOptions: { ellipsis: true } }) // full text, only while cut off
+col({ key: 'note', rendererOptions: { ellipsis: true, tooltip: 'always' } }) // on every cell
+col({ key: 'session', rendererOptions: { tooltip: (v, row) => [row.opened, row.closed] } }) // lines
+```
+
+When the extra information needs actions, use a **hover card**: a small dialog with lines and copy
+buttons. It opens on hover (after the same delay) or on click / Enter, which also moves focus into
+it; Tab moves through its buttons and Esc closes it and returns focus to the text. The text shows a
+dotted underline and is a button (`aria-haspopup="dialog"`, `aria-expanded`). Its code loads with
+the first cell that has a card; a press outside, Tab past its last button or Esc closes it, and keys
+inside it stay out of the grid's navigation.
+
+```ts
+col({
+  key: 'holder',
+  rendererOptions: {
+    hoverCard: (v, row) => ({
+      title: 'Payout account', // also its accessible name (default: the cell text)
+      copy: 'lines', // a copy button per line; 'all': one for every line
+      lines: [
+        { label: 'IBAN', text: row.iban },
+        { label: 'SWIFT', text: row.swift },
+        { label: 'Holder', text: row.holder, copy: false }, // no button on this line
+      ],
+    }),
+  },
+})
+// or just the lines: hoverCard: (v, row) => row.tickets
+// a copy emits `copy` (with the text) through @cell-action, like `copyable`
+```
+
+A tooltip can't hold buttons: ARIA tooltips aren't interactive, and keyboard users could never
+reach them. A hover card can, because it is a dialog they can step into.
+
+In your own renderers, `v-bind="tooltipAttrs(text)"` gives an element the same tooltip (text or an
+array of lines; `{ overflow: true }` only while it is cut off; `{ describe: true }` when it says
+something the element doesn't, so it is read out too).
 
 ## Writing a cell renderer (addons)
 
@@ -1659,6 +1716,11 @@ Renderer props: `value`, `row`, `rowKey`, `rowIndex`, `depth`, `column`, `option
 with `rendererOptions`). Emit `action(name, payload)`; the grid re-emits it as `cell-action` with the
 row and column. `useGridContext()` gives `{ locale, currency, timeZone }`. Lookup order:
 a definition or component on the column → `:renderers` → plugin → `text` (the only renderer built in).
+
+For a tooltip, use the grid's instead of `title` (see [Tooltips and hover cards](#tooltips-and-hover-cards)): `<span v-bind="tooltipAttrs(text)">`, with
+`{ overflow: true }` to show it only while the element's text is cut off, and `{ describe: true }`
+when the text says something the element doesn't (it is then its accessible description too). It
+works in cell renderers and slot content inside a `<VGrid>`.
 
 ## Text and parts
 
@@ -1764,7 +1826,7 @@ Override any token on `:root`, a wrapper, or the grid itself:
 | Colour           | `--vg-color-text` `-text-muted` `-surface` `-surface-raised` `-header-bg` `-header-text` `-border` `-border-strong` `-row-hover` `-row-selected` `-row-highlight` `-accent` `-accent-contrast` `-focus-ring` `-success` `-danger` `-warning` `-info` `-neutral` |
 | Space & shape    | `--vg-cell-padding-x/y` `--vg-header-padding-x/y` `--vg-gap` `--vg-radius` `--vg-radius-sm` `--vg-radius-pill` `--vg-border-width` `--vg-row-border` `--vg-header-border` `--vg-outer-border` `--vg-select-column-width` `--vg-expander-size`                   |
 | Sub-grid         | `--vg-subgrid-bg` `--vg-subgrid-indent` `--vg-subgrid-border` `--vg-subgrid-radius`                                                                                                                                                                             |
-| Elevation        | `--vg-shadow-pinned` `--vg-shadow-popover` `--vg-z-header` `--vg-z-pinned` `--vg-z-pinned-header` `--vg-transition` `--vg-menu-gap`                                                                                                                             |
+| Elevation        | `--vg-shadow-pinned` `--vg-shadow-popover` `--vg-tooltip-bg` `--vg-tooltip-text` `--vg-z-header` `--vg-z-pinned` `--vg-z-pinned-header` `--vg-transition` `--vg-menu-gap`                                                                                       |
 | Change highlight | `--vg-flash-color` `--vg-flash-up` `--vg-flash-down` `--vg-flash-duration`                                                                                                                                                                                      |
 
 Motion stays on the compositor (`transform`, `opacity`) wherever layout would otherwise animate.
@@ -1858,16 +1920,18 @@ Evergreen browsers: CSS `subgrid`, `light-dark()`, `@layer`, the Popover API and
 **CSS first, JS only as a fallback.** Everything the browser can do in CSS / HTML is done there; a
 small JS fallback runs only when a feature check (`CSS.supports`) says the browser can't:
 
-| Behaviour                                                          | Done with                                | JS fallback when unsupported                                                                                                                                            |
-| ------------------------------------------------------------------ | ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Menu / popover placement, flipping, following the anchor on scroll | Popover API + CSS anchor positioning     | measured placement, re-run on scroll / resize                                                                                                                           |
-| Hiding a popover once its anchor scrolls out of view               | `position-visibility: anchor-visible`    | IntersectionObserver, always on as well (Firefox 159 parses only an older value; WebKit / Safari 27 accepts it but keeps a popover whose anchor is clipped by the grid) |
-| Sticky offsets of pinned columns                                   | `calc()` sums of the declared widths     | ResizeObserver, only for content-sized pinned columns                                                                                                                   |
-| Which pinned column gets the edge shadow                           | `:has()` / sibling selectors             | a class                                                                                                                                                                 |
-| Shadow only while content is scrolled under pinned columns         | `@container scroll-state(scrollable: …)` | scroll listener sets `data-vg-scrollable`                                                                                                                               |
-| Readable text on data-coloured chips                               | `contrast-color()` / relative colours    | computed black / white                                                                                                                                                  |
-| Expand / collapse (JSON tree, “More info”, list “+N more”)         | native `<details>` / `<summary>`         | —                                                                                                                                                                       |
-| Closing the JSON dialog on a backdrop click                        | `<dialog closedby="any">`                | backdrop click handler                                                                                                                                                  |
+| Behaviour                                                          | Done with                                                 | JS fallback when unsupported                                                                                                                                            |
+| ------------------------------------------------------------------ | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Menu / popover placement, flipping, following the anchor on scroll | Popover API + CSS anchor positioning                      | measured placement, re-run on scroll / resize                                                                                                                           |
+| Tooltips above everything, never clipped by the grid               | `popover="hint"` + CSS anchor positioning                 | a `manual` popover where `hint` isn't supported; measured placement as above                                                                                            |
+| Tooltip fade-in                                                    | `@starting-style` + `transition-behavior: allow-discrete` | shown without fading                                                                                                                                                    |
+| Hiding a popover once its anchor scrolls out of view               | `position-visibility: anchor-visible`                     | IntersectionObserver, always on as well (Firefox 159 parses only an older value; WebKit / Safari 27 accepts it but keeps a popover whose anchor is clipped by the grid) |
+| Sticky offsets of pinned columns                                   | `calc()` sums of the declared widths                      | ResizeObserver, only for content-sized pinned columns                                                                                                                   |
+| Which pinned column gets the edge shadow                           | `:has()` / sibling selectors                              | a class                                                                                                                                                                 |
+| Shadow only while content is scrolled under pinned columns         | `@container scroll-state(scrollable: …)`                  | scroll listener sets `data-vg-scrollable`                                                                                                                               |
+| Readable text on data-coloured chips                               | `contrast-color()` / relative colours                     | computed black / white                                                                                                                                                  |
+| Expand / collapse (JSON tree, “More info”, list “+N more”)         | native `<details>` / `<summary>`                          | —                                                                                                                                                                       |
+| Closing the JSON dialog on a backdrop click                        | `<dialog closedby="any">`                                 | backdrop click handler                                                                                                                                                  |
 
 What stays in JS is what CSS can't express: data (sorting, selection, expansion state), keyboard
 navigation, column drag, virtual scrolling and lazy loading.

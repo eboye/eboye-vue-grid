@@ -1,5 +1,37 @@
 # Changelog
 
+## 0.23.0 — 2026-11-26
+
+- New: `skeleton` (`true` = 8 rows, or a number). While the grid loads with no rows to show yet,
+  it draws placeholder rows in its own columns (widths, pins, alignment) instead of the "Loading…"
+  line, which screen readers still hear. The shimmer stops with reduced motion; Windows high
+  contrast draws the bars in `GrayText`.
+- New: a menu item's `disabled` can say why (`disabled: 'Settled bets can’t be voided'`), in
+  context menus, header menus and `actions-menu`. The reason shows under the label and is the
+  item's accessible description; the item stays reachable by keyboard (`aria-disabled`) and does
+  nothing when chosen.
+- New: **popover tooltips** in place of the browser's `title` everywhere in the grid (cells,
+  headers' `headerTooltip`, renderers, the find bar, row handles). One `popover="hint"` per grid in
+  the top layer, placed with CSS anchor positioning and faded in with `@starting-style`, so it is
+  never clipped by the grid and can be styled (`--vg-tooltip-bg`, `--vg-tooltip-text`). It shows on
+  hover after a short delay and at once on keyboard focus, stays while the pointer is on it, and
+  closes with Esc (WCAG 1.4.13). Where its text says something the element doesn't (a disabled
+  control's reason, a badge's or chip's meaning, a header tooltip), it is also the element's
+  accessible description. `tooltipAttrs(text)` gives your own renderers the same tooltip. Most of
+  it loads with the first tooltip; every grid carries 0.4 kB of it.
+- New: the text renderer's `hoverCard: (value, row) => ({ title, lines, copy })` (or just the
+  lines). A small dialog with lines and copy buttons (`copy: 'lines'` one per line, `'all'` one for
+  every line; a line's `copy: false` skips it). It opens on hover, or on click / Enter, which also
+  moves focus into it; Tab moves through its buttons and Esc closes it and returns focus. The text
+  is its trigger: a button with a dotted underline, `aria-haspopup="dialog"` and `aria-expanded`.
+  Copies emit `copy` through `cell-action`, like `copyable`. Its code loads with the first cell that has a card (that cell shows plain text until then).
+- New: multi-line tooltips. A text cell's `tooltip` function, and `tooltipAttrs`, take an array of
+  lines; tooltips keep line breaks.
+- Changed: the text renderer's `ellipsis` and `lines` show the full text as a tooltip only while it
+  is actually cut off (it used to be on every `ellipsis` cell, and never on `lines`).
+  `tooltip: 'always'` (or `true`) shows it on every cell, `'overflow'` only when cut off, and
+  `false` now really turns it off.
+
 ## 0.22.1 — 2026-11-26
 
 - Smaller: a plain grid is 16.0 kB gzipped (was 16.7 kB), and every feature combination is about

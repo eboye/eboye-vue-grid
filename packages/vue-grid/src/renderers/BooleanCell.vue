@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tipAttrs } from '../internal/tooltip'
 import { computed } from 'vue'
 import type { CellRendererProps } from '../types'
 import type { BooleanOptions } from './options'
@@ -31,7 +32,7 @@ const icon = computed(() =>
     v-if="options.display === 'icon'"
     :class="['vg-boolean', 'vg-boolean-icon', `vg-boolean-${state}`]"
   >
-    <span v-if="icon" class="vg-boolean-glyph" role="img" :aria-label="text" :title="text"
+    <span v-if="icon" class="vg-boolean-glyph" role="img" :aria-label="text" v-bind="tipAttrs(text)"
       ><component :is="icon"
     /></span>
     <span v-else-if="state === 'null'">{{ text }}</span>

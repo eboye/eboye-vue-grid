@@ -1,4 +1,4 @@
-# @nocopypaste/vue-grid 0.22.1 — API reference
+# @nocopypaste/vue-grid 0.23.0 — API reference
 
 > Generated from the TypeScript sources (`scripts/gen-agent.mjs`). Machine-readable: `agent/api.json`, `agent/grid-config.schema.json`.
 
@@ -80,6 +80,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `timeZone` | `string` |  |  | IANA time zone for date renderers and date filters. |
 | `density` | `Density` |  |  | Cell padding scale. |
 | `loading` | `boolean` | `false` |  | Shows a progress bar and sets `aria-busy` (server data sets it by itself). |
+| `skeleton` | `boolean \| number` |  |  | While loading with no rows to show yet: placeholder rows in the grid's own columns instead of the `Loading…` line (still read out to screen readers). `true` = 8 rows, or a number. |
 | `emptyText` | `string` |  |  | Shown when there are no rows. Default: `messages.empty`, else `No data to show.` |
 | `ariaLabel` | `string` |  |  | Accessible name of the grid. |
 | `ui` | `Partial<Record<GridPart, ClassValue>>` |  |  | Extra classes per part (`root`, `header`, `headerCell`, `row`, `cell`, `subgrid`, `detail`, `empty`), e.g. Tailwind utilities. |
@@ -245,11 +246,12 @@ Text, the default renderer (the only one `<VGrid>` bundles): ellipsis, line clam
 
 | Option | Type | Description |
 |---|---|---|
-| `ellipsis` | `boolean` | Single line with ellipsis (full text in a tooltip). |
-| `lines` | `number` | Clamp to N lines. |
+| `ellipsis` | `boolean` | Single line with ellipsis (the full text as a tooltip while it is cut off). |
+| `lines` | `number` | Clamp to N lines (the full text as a tooltip while it is cut off). |
 | `maxWidth` | `string` | CSS max width of the text, e.g. `'16rem'`: longer text wraps or, with `ellipsis`, is cut. |
 | `preserveNewlines` | `boolean` | Keep line breaks in the value (`white-space: pre-line`). |
-| `tooltip` | `boolean \| RowFn<string \| undefined>` | `true` = value as tooltip; a function computes it. |
+| `tooltip` | `boolean \| 'always' \| 'overflow' \| RowFn<string \| readonly string[] \| undefined>` | The full text as a tooltip: `'always'` (or `true`), or `'overflow'` only while it is cut off (the default with `ellipsis` / `lines`); `false` = none. A function returns its own text, which is also read out as the cell text's description. |
+| `hoverCard` | `RowFn<HoverCardSpec \| readonly (string \| HoverCardLine)[] \| null \| undefined>` | A hover card instead of a tooltip: lines (and copy buttons) in a small popup that opens on hover, or on click / Enter, which also moves focus into it. `(value, row) => ({ title, lines, copy })`, or just the lines. Copy buttons emit `copy` with the copied text, like `copyable`. |
 | `placeholder` | `string` | Shown when the value is empty. |
 | `tone` | `RowOption<Tone \| undefined>` | Colour of the text (`success`, `danger`, `warning`, `info`, `neutral`, `accent`), or `(value, row) => tone`. |
 | `toneMode` | `'text' \| 'fill'` | `text` (default) colours the text; `fill` colours the badge-like background. |
@@ -638,7 +640,7 @@ The first items of a list, with a “+N more” toggle. Emits `expand`. Align: `
 |---|---|---|
 | `name` | `string` | Emitted as the action name. |
 | `label` | `string` | Text of the item. |
-| `disabled`? | `boolean` | Shown but can’t be chosen. |
+| `disabled`? | `boolean \| string` | Shown but can’t be chosen. A string also says why (“Settled bets can’t be voided”): shown under the label and read out as the item’s description. Such an item stays focusable, so keyboard and screen reader users reach the reason too. |
 | `tone`? | `MenuTone` | Colour, e.g. `danger` for a delete item. |
 | `icon`? | `Component` | An icon component before the label. |
 | `hint`? | `string` | Shown right-aligned, e.g. a shortcut hint. |
@@ -703,4 +705,36 @@ The first items of a list, with a “+N more” toggle. Emits `expand`. Align: `
 | `density`? | `Density` | Default density: `compact`, `cozy` (default) or `comfortable`. |
 | `messages`? | `GridMessages` | Built-in text for every grid (translations, wording); a grid's own `messages` win. |
 | `parts`? | `GridParts` | Built-in parts to turn off in every grid; a grid's own `parts` win. |
+
+### `HoverCardSpec`
+
+| Field | Type | Description |
+|---|---|---|
+| `title`? | `string` | Heading, and the card's accessible name (default: the cell text). |
+| `lines` | `readonly (string \| HoverCardLine)[]` | The lines, in order: text, or `{ text, label, copy }`. |
+| `copy`? | `'lines' \| 'all'` | Copy buttons: one per line (`'lines'`), one for every line (`'all'`), or none (default). |
+
+### `HoverCardLine`
+
+| Field | Type | Description |
+|---|---|---|
+| `text` | `string` | The line's text. |
+| `label`? | `string` | Shown before the text, muted, e.g. `IBAN`. |
+| `copy`? | `string \| false` | What its copy button copies (default: `text`); `false`: no button on this line. |
+
+### `BadgeSpec`
+
+| Field | Type | Description |
+|---|---|---|
+| `text` | `string` | What the badge shows, e.g. `A`. |
+| `tone`? | `Tone` | Its colour (`success`, `danger`, …); default `neutral`. |
+| `title`? | `string` | Accessible / hover text. |
+
+### `IconSpec`
+
+| Field | Type | Description |
+|---|---|---|
+| `icon` | `Component` | The icon component (any SVG component). |
+| `tone`? | `Tone` | Its colour (`success`, `danger`, …). |
+| `label`? | `string` | Accessible label; without one the icon is decorative. |
 

@@ -85,6 +85,8 @@
     --vg-subgrid-radius: 0;
     --vg-shadow-pinned: light-dark(rgb(15 23 42 / 10%), rgb(0 0 0 / 45%));
     --vg-shadow-popover: 0 10px 30px light-dark(rgb(15 23 42 / 16%), rgb(0 0 0 / 55%));
+    --vg-tooltip-bg: light-dark(#1f2937, #e5e7eb);
+    --vg-tooltip-text: light-dark(#f9fafb, #111827);
     --vg-transition: 120ms ease;
     --vg-flash-color: color-mix(in srgb, var(--vg-color-accent) 20%, transparent);
     --vg-flash-up: color-mix(in srgb, var(--vg-color-success) 24%, transparent);
@@ -588,6 +590,31 @@
     font-family: var(--vg-font-family);
     font-size: var(--vg-font-size);
   }
+  .vg-tooltip {
+    padding: 0.25rem 0.5rem;
+    /* transparent: forced colours draw it, so the tooltip keeps an edge in high contrast */
+    border: 1px solid transparent;
+    border-radius: var(--vg-radius-sm);
+    background: var(--vg-tooltip-bg);
+    color: var(--vg-tooltip-text);
+    box-shadow: var(--vg-shadow-popover);
+    font-family: var(--vg-font-family);
+    font-size: calc(var(--vg-font-size) * 0.9);
+    line-height: 1.4;
+    opacity: 0;
+    transition:
+      opacity var(--vg-transition),
+      display var(--vg-transition) allow-discrete,
+      overlay var(--vg-transition) allow-discrete;
+  }
+  .vg-tooltip:popover-open {
+    opacity: 1;
+  }
+  @starting-style {
+    .vg-tooltip:popover-open {
+      opacity: 0;
+    }
+  }
   .vg-menu-separator {
     height: var(--vg-border-width);
     margin: 0.25rem 0.375rem;
@@ -606,8 +633,16 @@
   .vg-menu-item:focus-visible {
     background: var(--vg-color-row-hover);
   }
-  .vg-menu-item:disabled {
+  .vg-menu-item:disabled,
+  .vg-menu-item-unavailable > :not(.vg-menu-reason) {
     opacity: 0.45;
+  }
+  .vg-menu-item-unavailable {
+    row-gap: 0.125rem;
+  }
+  .vg-menu-reason {
+    color: var(--vg-color-text-muted);
+    font-size: 0.85em;
   }
   .vg-menu-item.vg-tone-danger {
     color: var(--vg-color-danger);
@@ -822,6 +857,28 @@
   .vg-copy-button {
     color: var(--vg-color-accent);
   }
+
+  .vg-skeleton {
+    border-radius: var(--vg-radius-sm);
+    background:
+      linear-gradient(
+          90deg,
+          transparent 30%,
+          color-mix(in srgb, var(--vg-color-surface, Canvas) 60%, transparent),
+          transparent 70%
+        )
+        0 0 / 300% 100%,
+      color-mix(in srgb, var(--vg-color-neutral) 16%, transparent);
+    animation: vg-skeleton 1.4s ease-in-out infinite;
+  }
+  @keyframes vg-skeleton {
+    from {
+      background-position-x: 100%;
+    }
+    to {
+      background-position-x: 0;
+    }
+  }
   .vg-copy-done {
     color: var(--vg-color-success);
   }
@@ -959,6 +1016,12 @@
    * and draw them with the user's system colours instead.
    */
   @media (forced-colors: active) {
+    /* skeleton bars are backgrounds, which forced colours drop */
+    .vg-skeleton {
+      forced-color-adjust: none;
+      background: GrayText;
+      animation: none;
+    }
     /* `!important`: these states must win over every hover, range and find rule above */
     .vg-row-selected > .vg-cell,
     .vg-row > .vg-cell:is(.vg-in-range, .vg-find-match, .vg-find-current) {

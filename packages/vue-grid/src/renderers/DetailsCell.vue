@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tipAttrs } from '../internal/tooltip'
 import { computed, onBeforeUnmount, shallowRef, useId } from 'vue'
 import { anchorNameFor, trackAnchor } from '../internal/anchor'
 import type { CellRendererProps } from '../types'
@@ -57,7 +58,7 @@ function onToggle(event: Event) {
         type="button"
         class="vg-icon-button"
         :aria-label="triggerLabel"
-        :title="triggerLabel"
+        v-bind="tipAttrs(triggerLabel)"
         aria-haspopup="dialog"
         :aria-controls="panelId"
         :popovertarget="panelId"
@@ -92,7 +93,12 @@ function onToggle(event: Event) {
           </button>
         </header>
         <ul class="vg-details-list">
-          <li v-for="(item, i) in items" :key="i" class="vg-details-item" :title="item.tooltip">
+          <li
+            v-for="(item, i) in items"
+            :key="i"
+            class="vg-details-item"
+            v-bind="tipAttrs(item.tooltip, { describe: true })"
+          >
             <span class="vg-details-label">
               {{ item.label }}
               <span v-if="item.detail" class="vg-details-detail">{{ item.detail }}</span>

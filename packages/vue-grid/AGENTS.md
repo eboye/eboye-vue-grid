@@ -79,30 +79,33 @@ runs in the [live examples](https://eboye.github.io/eboye-vue-grid/), each with 
 | Test hooks (`data-test`) on rows and cells         | `attributesFeature`                                                         | `:row-attrs="({ row, rowKey, rowIndex }) => ({ 'data-test': `row-${rowIndex}` })"`, `:cell-attrs="({ columnKey, rowIndex }) => …"`                                                                                                                                                                                                                                                                                                                                |
 | Translate / reword the grid, drop built-in pieces  | —                                                                           | a language pack (`import { de } from '@nocopypaste/vue-grid/locales/de'`; also `fr`, `es`, `it`, `pt-BR`, `nl`, `pl`, `ja`, `sr`, `sr-Latn`) or your own `messages` (`GridMessages`), `parts` (`GridParts`): app-wide in `createVueGrid` or per grid; slots `#load-error`, `#no-match`, `#select-all-banner`                                                                                                                                                      |
 | Arrow-key navigation (ARIA grid)                   | `keyboardNavigationFeature`                                                 | —                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| Placeholder rows while loading                     | —                                                                           | `skeleton` (or a row count)                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| Tooltips, a popup with lines and copy buttons      | —                                                                           | text `tooltip` (`'always'`, `'overflow'`, lines), `hoverCard: (v, row) => ({ title, lines, copy })`; own renderers: `tooltipAttrs(text)`                                                                                                                                                                                                                                                                                                                          |
+| Say why a menu item is off                         | `menusFeature` / `actionsMenuRenderer`                                      | item `disabled: 'reason'`                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | Remember column layout                             | —                                                                           | `storage="orders-grid"` (localStorage key)                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | Cell type (money, date, badge, link, …)            | —                                                                           | `renderer: currencyRenderer` etc. (list below)                                                                                                                                                                                                                                                                                                                                                                                                                    |
 
 ## Renderers (pick by data)
 
-| Data                          | Renderer export                                                                             | Useful options                                                |
-| ----------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| Plain / long text             | default (`text`)                                                                            | `ellipsis`, `lines`, `tone`, `badge`, `copyable`, `tooltip`   |
-| Numbers                       | `numberRenderer`                                                                            | `format` (Intl), `clickable`                                  |
-| Money                         | `currencyRenderer`                                                                          | `currency` (code or `(v, row) => code`)                       |
-| Up / down change              | `changeRenderer`                                                                            | `direction`, `currency`, `iconOnly`                           |
-| Dates / date-times            | `dateRenderer` / `dateTimeRenderer`                                                         | `format`, `twoLines`                                          |
-| Yes / no                      | `booleanRenderer`                                                                           | `display: 'icon'`, labels                                     |
-| Status badge                  | `statusRenderer`                                                                            | `tone: { Paid: 'success', Open: 'info' }`, `label`, `variant` |
-| Colour chip / tag             | `chipRenderer`                                                                              | `color`, `tone`, `shape`                                      |
-| Links                         | `linkRenderer`                                                                              | `href` / `to` (vue-router), `label`, `target`                 |
-| Several lines in one cell     | `multiLineRenderer`                                                                         | `lines: (v, row) => [...]`                                    |
-| Arrays                        | `listRenderer`                                                                              | `max`, `itemLabel`                                            |
-| Images                        | `imageRenderer`                                                                             | `src`, `size`, `shape`                                        |
-| JSON / code                   | `jsonTreeRenderer`, `jsonRenderer`, `codeRenderer`                                          | `collapseAt`, `language`                                      |
-| Badge + info popover          | `detailsRenderer`                                                                           | `items: (v, row) => [{ label, value }]`                       |
-| Buttons / menus               | `actionButtonRenderer`, `buttonGroupRenderer`, `actionsMenuRenderer`                        | `action`, `buttons`, `actions`                                |
-| Toggles / inputs (controlled) | `checkboxRenderer`, `switchRenderer`, `radioRenderer`, `iconToggleRenderer`, `editRenderer` | handle `@cell-action`                                         |
-| Copy to clipboard             | `copyRenderer`                                                                              | `copyValue`, `iconOnly`                                       |
+| Data                          | Renderer export                                                                             | Useful options                                                                               |
+| ----------------------------- | ------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Plain / long text             | default (`text`)                                                                            | `ellipsis`, `lines`, `tone`, `badge`, `copyable`, `tooltip` (`'always'`, lines), `hoverCard` |
+| Numbers                       | `numberRenderer`                                                                            | `format` (Intl), `clickable`                                                                 |
+| Money                         | `currencyRenderer`                                                                          | `currency` (code or `(v, row) => code`)                                                      |
+| Up / down change              | `changeRenderer`                                                                            | `direction`, `currency`, `iconOnly`                                                          |
+| Dates / date-times            | `dateRenderer` / `dateTimeRenderer`                                                         | `format`, `twoLines`                                                                         |
+| Yes / no                      | `booleanRenderer`                                                                           | `display: 'icon'`, labels                                                                    |
+| Status badge                  | `statusRenderer`                                                                            | `tone: { Paid: 'success', Open: 'info' }`, `label`, `variant`                                |
+| Colour chip / tag             | `chipRenderer`                                                                              | `color`, `tone`, `shape`                                                                     |
+| Links                         | `linkRenderer`                                                                              | `href` / `to` (vue-router), `label`, `target`                                                |
+| Several lines in one cell     | `multiLineRenderer`                                                                         | `lines: (v, row) => [...]`                                                                   |
+| Arrays                        | `listRenderer`                                                                              | `max`, `itemLabel`                                                                           |
+| Images                        | `imageRenderer`                                                                             | `src`, `size`, `shape`                                                                       |
+| JSON / code                   | `jsonTreeRenderer`, `jsonRenderer`, `codeRenderer`                                          | `collapseAt`, `language`                                                                     |
+| Badge + info popover          | `detailsRenderer`                                                                           | `items: (v, row) => [{ label, value }]`                                                      |
+| Buttons / menus               | `actionButtonRenderer`, `buttonGroupRenderer`, `actionsMenuRenderer`                        | `action`, `buttons`, `actions`                                                               |
+| Toggles / inputs (controlled) | `checkboxRenderer`, `switchRenderer`, `radioRenderer`, `iconToggleRenderer`, `editRenderer` | handle `@cell-action`                                                                        |
+| Copy to clipboard             | `copyRenderer`                                                                              | `copyValue`, `iconOnly`                                                                      |
 
 Every option is in `agent/api.md` → Renderers. Options typed `RowFn` / `RowOption` also take
 `(value, row) => …`. Status / chip / details `tone`s: `success`, `danger`, `warning`, `info`,
@@ -582,6 +585,40 @@ export const ratingRenderer = defineCellRenderer<{ max?: number }>({
 // column: { key: 'rating', renderer: ratingRenderer, rendererOptions: { max: 10 } }
 ```
 
+In your renderer, give an element the grid's tooltip with `v-bind="tooltipAttrs(text)"` (text or
+an array of lines; `{ overflow: true }` only while cut off, `{ describe: true }` to read it out),
+not `title` or a tooltip library.
+
+### Tooltips, hover cards and loading placeholders
+
+```ts
+col({ key: 'note', rendererOptions: { ellipsis: true } }) // full text as a tooltip when cut off
+col({ key: 'note', rendererOptions: { ellipsis: true, tooltip: 'always' } }) // …on every cell
+col({ key: 'session', rendererOptions: { tooltip: (v, row) => [row.opened, row.closed] } }) // lines
+col({
+  key: 'holder',
+  rendererOptions: {
+    // a popup with lines and copy buttons: hover, or click / Enter (focus moves in); Esc closes
+    hoverCard: (v, row) => ({
+      title: 'Payout account',
+      copy: 'lines', // or 'all'
+      lines: [
+        { label: 'IBAN', text: row.iban },
+        { label: 'Holder', text: row.holder, copy: false },
+      ],
+    }),
+  },
+})
+// copy buttons emit `copy` through @cell-action, like `copyable`
+```
+
+```vue
+<VGrid :data-source="fetchOrders" :columns row-key="id" skeleton />
+<!-- placeholder rows in the grid's columns until the first rows arrive -->
+```
+
+Menu items say why they are off: `{ name: 'void', label: 'Void', disabled: 'Settled bets can’t be voided' }`.
+
 ### Theming
 
 ```css
@@ -648,6 +685,13 @@ only sees stylesheet rules. Density:
 - Text translated but money / dates still formatted in English → a pack only translates text; set
   `locale` too (`createVueGrid({ messages: de, locale: 'de' })`).
 - Hiding a built-in piece with CSS → `parts: { filterButtons: false, … }` leaves it out of the DOM (and the tab order).
+- A skeleton component of your own shown instead of the grid while loading → add `skeleton`: the
+  grid draws placeholder rows in its own columns (and keeps the "Loading…" text for screen readers).
+- A tooltip component around disabled menu items to say why → `disabled: 'reason'` on the item
+  (shown under the label, read out, still reachable by keyboard).
+- `title="…"` or a tooltip library in a custom renderer → `v-bind="tooltipAttrs(text)"` (the grid's
+  popover tooltip; `{ overflow: true }` only when cut off, `{ describe: true }` to read it out).
+- Text tooltips only when cut off, but they should show always → text `tooltip: 'always'`.
 - An `aria-live` region of your own for "N results" after filtering → the grid already announces
   the row count (filtering feature); Windows high-contrast styles for selection → built in too.
 - Grouped server data shows groups of one page only → add `serverGroupingFeature` and answer `query.groupBy` with `{ groups }` (`count` per group, `total` = number of groups).

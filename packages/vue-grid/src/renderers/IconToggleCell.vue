@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tipAttrs } from '../internal/tooltip'
 import { computed, toRaw } from 'vue'
 import type { CellRendererEmits, CellRendererProps } from '../types'
 import { resolveOption, type IconToggleOptions } from './options'
@@ -33,7 +34,7 @@ const disabled = computed(() => !!resolveOption(props.options.disabled, props.va
     ]"
     :aria-pressed="active"
     :aria-label="label"
-    :title="label"
+    v-bind="tipAttrs(label)"
     :disabled="disabled"
     @click="emit('action', 'toggle', !active)"
   >

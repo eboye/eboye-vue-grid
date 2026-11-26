@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tipAttrs } from '../internal/tooltip'
 import { computed } from 'vue'
 import type { CellRendererEmits, CellRendererProps } from '../types'
 import type { ListOptions } from './options'
@@ -29,7 +30,12 @@ function onToggle(event: Event) {
 <template>
   <span v-if="all.length" class="vg-list">
     <ul class="vg-list-items">
-      <li v-for="(item, i) in first" :key="i" class="vg-text vg-text-ellipsis" :title="item">
+      <li
+        v-for="(item, i) in first"
+        :key="i"
+        class="vg-text vg-text-ellipsis"
+        v-bind="tipAttrs(String(item), { overflow: true })"
+      >
         {{ item }}
       </li>
     </ul>
@@ -40,7 +46,12 @@ function onToggle(event: Event) {
         }}</span><span class="vg-list-more-open">{{ m.showLess ?? 'Show less' }}</span>
       </summary>
       <ul class="vg-list-items">
-        <li v-for="(item, i) in rest" :key="i" class="vg-text vg-text-ellipsis" :title="item">
+        <li
+          v-for="(item, i) in rest"
+          :key="i"
+          class="vg-text vg-text-ellipsis"
+          v-bind="tipAttrs(String(item), { overflow: true })"
+        >
           {{ item }}
         </li>
       </ul>

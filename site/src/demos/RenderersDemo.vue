@@ -30,7 +30,19 @@ const columns = [
     header: 'Player',
     field: 'player.name',
     width: 'minmax(13rem, 1.5fr)',
-    rendererOptions: { secondary: (_v, row) => row.player.city },
+    rendererOptions: {
+      secondary: (_v, row) => row.player.city,
+      // hover the name (or click it / press Enter): lines with copy buttons
+      hoverCard: (_v, row) => ({
+        title: row.player.name,
+        copy: 'lines',
+        lines: [
+          { label: 'Player ID', text: `P-${String(row.id * 37).padStart(6, '0')}` },
+          { label: 'City', text: row.player.city, copy: false },
+          { label: 'Ticket', text: `TK-${String(row.id).padStart(5, '0')}` },
+        ],
+      }),
+    },
   }),
   col({
     key: 'status',

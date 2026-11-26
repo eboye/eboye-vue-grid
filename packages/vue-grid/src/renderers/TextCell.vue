@@ -1,7 +1,21 @@
+<script lang="ts">
+import { markRaw, type Component } from 'vue'
+
+// A `hoverCard` cell's trigger and card: loaded once, with the first cell that has one.
+let loadedCardText: Component | undefined
+let loadingCardText: Promise<Component> | undefined
+function loadCardText() {
+  return (loadingCardText ??= import('./parts/HoverCardText.vue').then(
+    (m) => (loadedCardText = markRaw(m.default)),
+  ))
+}
+</script>
+
 <script setup lang="ts">
-import { computed, defineAsyncComponent, toRaw } from 'vue'
+import { computed, defineAsyncComponent, shallowRef, toRaw, watch } from 'vue'
+import { tipAttrs } from '../internal/tooltip'
 import type { CellRendererEmits, CellRendererProps } from '../types'
-import { resolveOption, type TextOptions } from './options'
+import { resolveOption, type HoverCardLine, type HoverCardSpec, type TextOptions } from './options'
 import ValueBadge from './parts/ValueBadge.vue'
 
 // Loaded with the first `copyable` cell: every grid has text cells, few have a copy button, and it
@@ -25,10 +39,15 @@ const secondary = computed(() =>
 )
 const fullText = computed(() => (secondary.value ? `${text.value} ${secondary.value}` : text.value))
 
-const tooltip = computed(() => {
+// The grid's tooltip: `'always'` (`true`) the full text; `'overflow'` (the default with `ellipsis`
+// / `lines`) the full text only while it is cut off; a function its own text (also read out).
+const tip = computed(() => {
   const t = props.options.tooltip
-  if (typeof t === 'function') return t(props.value, props.row)
-  return t || props.options.ellipsis ? fullText.value : undefined
+  if (typeof t === 'function') return tipAttrs(t(props.value, props.row), { describe: true })
+  if (t === true || t === 'always') return tipAttrs(fullText.value)
+  if (t === 'overflow' || (t === undefined && (props.options.ellipsis || props.options.lines)))
+    return tipAttrs(fullText.value, { overflow: true })
+  return {}
 })
 
 const tone = computed(() => resolveOption(props.options.tone, props.value, props.row))
@@ -59,8 +78,30 @@ const copyText = computed(() =>
     ? (props.options.copyValue?.(props.value, props.row) ?? fullText.value)
     : '',
 )
-// Plain text keeps a single span; adornments (icon, badge, secondary text, copy) wrap it.
-const adorned = computed(() => !!(badge.value || icon.value || secondary.value || copyText.value))
+// ── Hover card (`hoverCard`): the text becomes its trigger ──────────────────────────────────
+const card = computed<HoverCardSpec | null>(() => {
+  const spec = isEmpty.value ? null : props.options.hoverCard?.(props.value, props.row)
+  if (!spec) return null
+  const full = isLineList(spec) ? { lines: spec } : spec
+  return full.lines.length ? full : null
+})
+const isLineList = (spec: object): spec is readonly (string | HoverCardLine)[] =>
+  Array.isArray(spec)
+// The trigger (and the card) load with the first cell that has one: until then, plain text.
+const CardText = shallowRef<Component | undefined>()
+CardText.value = loadedCardText
+watch(
+  () => !!card.value,
+  (has) => {
+    if (has && !CardText.value) void loadCardText().then((c) => (CardText.value = c))
+  },
+  { immediate: true },
+)
+
+// Plain text keeps a single span; adornments (icon, badge, secondary text, copy, card) wrap it.
+const adorned = computed(
+  () => !!(badge.value || icon.value || secondary.value || copyText.value || card.value),
+)
 </script>
 
 <template>
@@ -71,11 +112,23 @@ const adorned = computed(() => !!(badge.value || icon.value || secondary.value |
       :role="icon.label ? 'img' : undefined"
       :aria-label="icon.label"
       :aria-hidden="icon.label ? undefined : 'true'"
-      :title="icon.label"
+      v-bind="tipAttrs(icon.label)"
       ><component :is="icon.icon"
     /></span>
     <ValueBadge v-if="badge && options.badgePosition !== 'end'" :badge="badge" />
-    <span :class="textClass" :style="textStyle" :title="tooltip"
+    <component
+      :is="CardText"
+      v-if="card && CardText"
+      :spec="card"
+      :text="text"
+      :secondary="secondary"
+      :label="fullText"
+      :text-class="textClass"
+      :text-style="textStyle"
+      @copied="emit('action', 'copy', $event)"
+      @failed="emit('action', 'copy-error', $event)"
+    />
+    <span v-else :class="textClass" :style="textStyle" v-bind="tip"
       >{{ text }}<span v-if="secondary" class="vg-text-secondary">{{ ' ' + secondary }}</span></span
     >
     <ValueBadge v-if="badge && options.badgePosition === 'end'" :badge="badge" />
@@ -86,5 +139,5 @@ const adorned = computed(() => !!(badge.value || icon.value || secondary.value |
       @failed="emit('action', 'copy-error', $event)"
     />
   </span>
-  <span v-else :class="textClass" :style="textStyle" :title="tooltip">{{ text }}</span>
+  <span v-else :class="textClass" :style="textStyle" v-bind="tip">{{ text }}</span>
 </template>

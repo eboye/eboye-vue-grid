@@ -257,6 +257,17 @@
       "type": "boolean",
       "description": "Shows a progress bar and sets `aria-busy` (server data sets it by itself)."
     },
+    "skeleton": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "number"
+        }
+      ],
+      "description": "While loading with no rows to show yet: placeholder rows in the grid's own columns instead of the `Loading…` line (still read out to screen readers). `true` = 8 rows, or a number."
+    },
     "emptyText": {
       "type": "string",
       "description": "Shown when there are no rows. Default: `messages.empty`, else `No data to show.`"

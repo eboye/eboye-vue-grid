@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tipAttrs } from '../../internal/tooltip'
 import { onBeforeUnmount, ref } from 'vue'
 import { copyText } from '../../internal/clipboard'
 import { useMessages } from '../../internal/messages'
@@ -28,7 +29,7 @@ onBeforeUnmount(() => window.clearTimeout(timer))
     type="button"
     :class="['vg-icon-button', 'vg-copy-button', { 'vg-copy-done': done }]"
     :aria-label="done ? (m.copied ?? 'Copied') : (label ?? m.copy ?? 'Copy')"
-    :title="title ?? text"
+    v-bind="tipAttrs(title ?? text)"
     @click.stop="copy"
   >
     <component :is="done ? CheckIcon : CopyIcon" />

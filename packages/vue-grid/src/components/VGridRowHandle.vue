@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tipAttrs } from '../internal/tooltip'
 import { useInternalGrid } from '../internal/context'
 
 /**
@@ -16,7 +17,9 @@ const reorder = grid.reorder!
     :tabindex="grid.rovingTabindex"
     :disabled="!reorder.enabled()"
     :aria-label="grid.messages.value.moveRow ?? 'Move row'"
-    :title="grid.messages.value.moveRowHint ?? 'Drag, or Alt+↑ / Alt+↓'"
+    v-bind="
+      tipAttrs(grid.messages.value.moveRowHint ?? 'Drag, or Alt+↑ / Alt+↓', { describe: true })
+    "
     @pointerdown="reorder.start($event)"
   >
     <svg viewBox="0 0 16 16" aria-hidden="true">

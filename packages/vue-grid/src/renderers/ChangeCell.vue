@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tipAttrs } from '../internal/tooltip'
 import { computed } from 'vue'
 import { useGridContext } from '../registry/plugin'
 import type { CellRendererProps } from '../types'
@@ -52,7 +53,7 @@ const iconOnly = computed(() => props.options.iconOnly || !text.value)
 <template>
   <span
     :class="['vg-change', `vg-change-${direction}`]"
-    :title="iconOnly ? srLabel || undefined : text"
+    v-bind="tipAttrs(iconOnly ? srLabel || undefined : text)"
     :role="iconOnly && srLabel ? 'img' : undefined"
     :aria-label="iconOnly && srLabel ? [srLabel, text].filter(Boolean).join(' ') : undefined"
   >

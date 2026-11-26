@@ -54,6 +54,13 @@ export const Comfortable: Story = { args: { density: 'comfortable' } }
 /** `loading` with no rows shows the `#loading` slot (default “Loading…”). */
 export const LoadingEmpty: Story = { args: { rows: [], loading: true } }
 
+/**
+ * `skeleton`: while loading with no rows yet, placeholder rows in the grid's own columns (widths,
+ * pins, alignment), so nothing jumps when the data arrives. Screen readers still hear “Loading…”.
+ * `true` = 8 rows, or a number.
+ */
+export const LoadingSkeleton: Story = { args: { rows: [], loading: true, skeleton: true } }
+
 /** With rows, `loading` only shows the progress bar; the rows stay visible while you refetch. */
 export const LoadingWithRows: Story = { args: { loading: true } }
 

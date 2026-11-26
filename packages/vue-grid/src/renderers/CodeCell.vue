@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tipAttrs } from '../internal/tooltip'
 import { computed } from 'vue'
 import type { CellRendererProps } from '../types'
 import { parseJsonish, tokenizeJson } from './format'
@@ -34,6 +35,6 @@ const tokens = computed(() =>
     v-if="source"
     :class="['vg-code', { 'vg-text-clamp': options.lines }]"
     :style="{ '--vg-text-lines': options.lines }"
-    :title="options.lines ? source.text : undefined"
+    v-bind="tipAttrs(options.lines ? source.text : undefined, { overflow: true })"
   ><template v-if="tokens"><span v-for="(t, i) in tokens" :key="i" :class="t.type === 'punct' ? undefined : `vg-code-${t.type}`">{{ t.text }}</span></template><template v-else>{{ source.text }}</template></pre>
 </template>

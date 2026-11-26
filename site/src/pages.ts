@@ -25,6 +25,7 @@ export const pages: Page[] = [
       '29 built-in renderers with typed options: numbers, money, changes, dates, badges, chips, links, JSON, copy buttons, switches, menus. Plus add-ons like the star rating.',
     try: [
       'Hover the copy column and press its button.',
+      'Hover a player’s name, or click it: a card with copy buttons (Tab through them, Esc closes).',
       'Flip a Notify switch, rate a row, or open the ⋯ menu: the log shows the action.',
       'Press View in the Meta column.',
     ],
@@ -54,6 +55,7 @@ export const pages: Page[] = [
     summary:
       'Give the grid an async dataSource: it asks for every sort, filter, search and page change, cancels superseded requests, and shows loading and errors with a Retry.',
     try: [
+      'Reload the page: placeholder rows in the grid’s own columns (`skeleton`) show until the first page arrives.',
       'Click a header twice quickly: the first request is aborted.',
       'Press “Fail next request”, then sort: the rows stay, a notice says they’re out of date, Retry loads them.',
     ],
@@ -246,6 +248,7 @@ export const pages: Page[] = [
     try: [
       'Scroll sideways: # and Player stay left, Open stays right.',
       'Drag a header to move it; drag its right edge to resize.',
+      'Narrow the URL column, then hover a URL: the cut-off ones show the whole address in a tooltip.',
       'Reload the page: the layout is kept.',
       'On a phone, the pinned columns scroll with the rest.',
     ],

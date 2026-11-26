@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tipAttrs } from '../internal/tooltip'
 import { computed } from 'vue'
 import type { CellRendererEmits, CellRendererProps } from '../types'
 import type { CopyOptions } from './options'
@@ -29,7 +30,7 @@ const tooltip = computed(() =>
 
 <template>
   <span v-if="!isEmpty" :class="['vg-copy', { 'vg-copy-icon-only': options.iconOnly }]">
-    <span v-if="!options.iconOnly" class="vg-text vg-text-ellipsis" :title="tooltip">{{
+    <span v-if="!options.iconOnly" class="vg-text vg-text-ellipsis" v-bind="tipAttrs(tooltip)">{{
       text
     }}</span>
     <CopyButton
@@ -38,7 +39,7 @@ const tooltip = computed(() =>
         options.label ??
         (options.title ? `${m.copy ?? 'Copy'} ${options.title}` : (m.copy ?? 'Copy'))
       "
-      :title="tooltip"
+      v-bind="tipAttrs(tooltip)"
       @copied="emit('action', 'copy', $event)"
       @failed="emit('action', 'copy-error', $event)"
     />

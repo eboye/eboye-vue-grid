@@ -154,7 +154,12 @@ function onKeydown(event: KeyboardEvent) {
   event.stopPropagation()
 }
 
+/** Why an item can't be chosen (`disabled: 'reason'`): it stays focusable, with the reason shown. */
+const reasonOf = (item: MenuAction) =>
+  typeof item.disabled === 'string' && item.disabled ? item.disabled : undefined
+
 function choose(item: MenuAction) {
+  if (reasonOf(item)) return
   close()
   emit('select', item)
 }
@@ -190,8 +195,15 @@ defineExpose({ id: menuId, openAt, close, isOpen })
         type="button"
         role="menuitem"
         tabindex="-1"
-        :disabled="item.disabled"
-        :class="['vg-menu-item', item.tone && `vg-tone-${item.tone}`]"
+        :disabled="item.disabled === true"
+        :aria-disabled="reasonOf(item) ? 'true' : undefined"
+        :aria-labelledby="reasonOf(item) ? `${menuId}-l${i}` : undefined"
+        :aria-describedby="reasonOf(item) ? `${menuId}-r${i}` : undefined"
+        :class="[
+          'vg-menu-item',
+          item.tone && `vg-tone-${item.tone}`,
+          { 'vg-menu-item-unavailable': reasonOf(item) },
+        ]"
         @click="choose(item)"
       >
         <component
@@ -200,8 +212,11 @@ defineExpose({ id: menuId, openAt, close, isOpen })
           class="vg-menu-icon"
           aria-hidden="true"
         />
-        <span class="vg-menu-label">{{ item.label }}</span>
+        <span :id="`${menuId}-l${i}`" class="vg-menu-label">{{ item.label }}</span>
         <span v-if="item.hint" class="vg-menu-hint">{{ item.hint }}</span>
+        <span v-if="reasonOf(item)" :id="`${menuId}-r${i}`" class="vg-menu-reason">{{
+          reasonOf(item)
+        }}</span>
       </button>
     </template>
   </div>

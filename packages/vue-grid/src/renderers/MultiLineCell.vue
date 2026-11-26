@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tipAttrs } from '../internal/tooltip'
 import { computed } from 'vue'
 import type { CellRendererEmits, CellRendererProps } from '../types'
 import { safeHref } from './format'
@@ -64,7 +65,13 @@ const external = computed(() => props.options.target === '_blank')
           [`vg-tone-${line.tone}`]: line.tone,
         },
       ]"
-      :title="line.tooltip ?? (options.ellipsis === false ? undefined : line.text)"
+      v-bind="
+        line.tooltip
+          ? tipAttrs(line.tooltip, { describe: true })
+          : tipAttrs(options.ellipsis === false ? undefined : String(line.text ?? ''), {
+              overflow: true,
+            })
+      "
     >
       <ValueBadge v-if="line.badge" :badge="line.badge" />
       <svg

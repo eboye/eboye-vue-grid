@@ -244,7 +244,7 @@ describe('new renderers', () => {
   it('copy: copies, emits copy, reports failures', async () => {
     const writeText = mockClipboard()
     const w = cell(CopyCell, 'SN-42', { title: 'Serial number' })
-    expect(w.find('.vg-text').attributes('title')).toBe('Serial number: SN-42')
+    expect(w.find('.vg-text').attributes('data-vg-tip')).toBe('Serial number: SN-42')
     await w.find('button').trigger('click')
     await flushPromises()
     expect(writeText).toHaveBeenCalledWith('SN-42')
@@ -268,7 +268,7 @@ describe('new renderers', () => {
     // colour handed to CSS, which paints it and picks readable text (checked in the browser tests)
     expect(raw.classes()).toContain('vg-chip-raw')
     expect((raw.element as HTMLElement).style.getPropertyValue('--vg-chip-bg')).toBe('#facc15')
-    expect(raw.attributes('title')).toBe('Low risk')
+    expect(raw.attributes('data-vg-tip')).toBe('Low risk')
     const toned = cell(ChipCell, 'C', { tone: { A: 'success', C: 'danger' }, shape: 'circle' })
     expect(toned.classes()).toEqual(
       expect.arrayContaining(['vg-chip-circle', 'vg-tone-danger', 'vg-chip-toned']),
@@ -288,7 +288,7 @@ describe('new renderers', () => {
     expect((input.element as HTMLInputElement).checked).toBe(true) // until the data changes
     const off = cell(CheckboxCell, false, { disabled: true, disabledReason: () => 'Locked market' })
     expect(off.find('input').attributes('disabled')).toBeDefined()
-    expect(off.find('.vg-control').attributes('title')).toBe('Locked market')
+    expect(off.find('.vg-control').attributes('data-vg-tip')).toBe('Locked market')
   })
 
   it('switch: aria-checked and change', async () => {

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tipAttrs } from '../internal/tooltip'
 import { computed, inject } from 'vue'
 import type { RowGroup } from '../core/grouping'
 import { FORMAT_CONTEXT_KEY } from '../registry/plugin'
@@ -108,7 +109,7 @@ function onLabelClick(event: MouseEvent) {
     :tabindex="grid.rovingTabindex"
     :data-col-key="part.column.key"
     :aria-colspan="part.span > 1 ? part.span : undefined"
-    :title="part.kind === 'label' ? labelText : undefined"
+    v-bind="tipAttrs(part.kind === 'label' ? labelText : undefined)"
     :class="[
       'vg-cell',
       `vg-align-${part.kind === 'label' ? 'start' : part.column.align}`,

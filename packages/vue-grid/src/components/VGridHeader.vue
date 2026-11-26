@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tipAttrs } from '../internal/tooltip'
 import { onBeforeUnmount, shallowRef, watch } from 'vue'
 import type { SelectionSummary } from '../core/selection'
 import { useInternalGrid, type ResolvedColumn } from '../internal/context'
@@ -78,7 +79,7 @@ function ariaSort(col: ResolvedColumn) {
       :data-col-key="col.key"
       :aria-sort="ariaSort(col)"
       :data-sort-dir="grid.sortable(col.def) ? sortOf(col)?.dir : undefined"
-      :title="col.def.headerTooltip"
+      v-bind="tipAttrs(col.def.headerTooltip, { describe: true })"
       :class="[
         'vg-header-cell',
         `vg-align-${col.align}`,

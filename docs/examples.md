@@ -262,7 +262,8 @@ nothing).
 ```ts
 col({ key: 'note', renderer: 'text' }) // the default; may be omitted
 
-col({ key: 'url', rendererOptions: { ellipsis: true } }) // one line + "…", full text in a tooltip
+col({ key: 'url', rendererOptions: { ellipsis: true } }) // one line + "…", full text as a tooltip when cut off
+col({ key: 'note', rendererOptions: { ellipsis: true, tooltip: 'always' } }) // …or on every cell
 col({ key: 'bio', rendererOptions: { lines: 2 } }) // clamp to 2 lines
 col({ key: 'sku', rendererOptions: { maxWidth: '12ch', tooltip: true } })
 col({ key: 'note', rendererOptions: { tooltip: (v, row) => `Order ${row.id}: ${v}` } })
@@ -414,7 +415,8 @@ col({
     label: 'Order actions',
     actions: (row: Order) => [
       { name: 'edit', label: 'Edit' },
-      { name: 'refund', label: 'Refund', disabled: row.status !== 'Paid' },
+      // a string says why: shown under the label, read out, still reachable by keyboard
+      { name: 'refund', label: 'Refund', disabled: row.status !== 'Paid' && 'Only paid orders' },
       { separator: true },
       { name: 'delete', label: 'Delete', tone: 'danger' as const, hint: 'Del' },
     ],
@@ -509,7 +511,32 @@ col({
 // filled tone background, kept line breaks, copy button
 col({ key: 'note', rendererOptions: { tone: 'danger', toneMode: 'fill', preserveNewlines: true } })
 col({ key: 'ticket', rendererOptions: { copyable: true, ellipsis: true } }) // emits `copy`
+
+// a tooltip of several lines (also read out as the text's description)
+col({ key: 'session', rendererOptions: { tooltip: (_v, row) => [row.opened, row.closed] } })
+
+// a hover card: lines with copy buttons in a small dialog. Hover opens it; click / Enter opens it
+// with focus inside (Tab through the buttons, Esc closes and returns focus). Copies emit `copy`.
+col({
+  key: 'holder',
+  rendererOptions: {
+    hoverCard: (_v, row) => ({
+      title: 'Payout account',
+      copy: 'lines', // or 'all': one button copying every line
+      lines: [
+        { label: 'IBAN', text: row.iban },
+        { label: 'SWIFT', text: row.swift },
+        { label: 'Holder', text: row.holder, copy: false },
+      ],
+    }),
+  },
+})
 ```
+
+Tooltips in the grid are popovers, not `title`: they show on hover and keyboard focus, keep line
+breaks and close with Esc. A tooltip can't hold buttons (keyboard users could never reach them);
+that is what `hoverCard` is for. In your own renderers, `v-bind="tooltipAttrs(text)"` gives an
+element the same tooltip.
 
 ### Status, boolean, numbers: more options
 
@@ -1661,6 +1688,14 @@ view render their cells, while every column keeps its CSS grid track.
 you refetch; the `#loading` slot (default "Loading…") only appears when there are no rows yet, in
 place of the empty message.
 
+For a first load that looks like the table it will become, add `skeleton` (`true` = 8 rows, or a
+number): placeholder rows in the grid's own columns, with their widths, pins and alignment, in place
+of the "Loading…" line. Screen readers still hear "Loading…"; reduced motion stops the shimmer.
+
+```vue
+<VGrid :data-source="fetchOrders" :columns="columns" row-key="id" skeleton />
+```
+
 ---
 
 ## 18. Programmatic control (template ref)
@@ -1925,6 +1960,8 @@ const stars = computed(() => Array.from({ length: props.options.max ?? 5 }, (_, 
 Props every renderer gets: `value`, `row`, `rowKey`, `rowIndex`, `depth`, `column`, `options`
 (defaults merged with the column's `rendererOptions`). Emitting `action(name, payload)` reaches the
 app as `@cell-action`. `useGridContext()` returns `{ locale, currency, timeZone }` for formatting.
+For a tooltip, bind `tooltipAttrs(text)` (`{ overflow: true }`, `{ describe: true }`) instead of
+`title`: it is the grid's popover tooltip, shown on hover and keyboard focus.
 
 Renderers must not use `v-html`; render text through interpolation so values are escaped.
 

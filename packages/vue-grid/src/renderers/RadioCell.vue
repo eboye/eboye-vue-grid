@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tipAttrs } from '../internal/tooltip'
 import { useId } from 'vue'
 import type { CellRendererEmits, CellRendererProps } from '../types'
 import type { RadioOptions } from './options'
@@ -18,7 +19,7 @@ function onChange(event: Event) {
 </script>
 
 <template>
-  <span class="vg-control" :title="reason">
+  <span class="vg-control" v-bind="tipAttrs(reason)">
     <input
       type="radio"
       class="vg-control-radio"
@@ -26,6 +27,7 @@ function onChange(event: Event) {
       :checked="checked"
       :disabled="disabled"
       :aria-label="label"
+      :aria-description="reason || undefined"
       @change="onChange"
       @click.stop
     />

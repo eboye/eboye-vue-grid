@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tipAttrs } from '../../internal/tooltip'
 import { computed } from 'vue'
 import { safeTone, type BadgeSpec } from '../options'
 
@@ -9,7 +10,9 @@ const spec = computed<BadgeSpec>(() =>
 </script>
 
 <template>
-  <span :class="['vg-badge', `vg-tone-${safeTone(spec.tone) ?? 'neutral'}`]" :title="spec.title">{{
-    spec.text
-  }}</span>
+  <span
+    :class="['vg-badge', `vg-tone-${safeTone(spec.tone) ?? 'neutral'}`]"
+    v-bind="tipAttrs(spec.title, { describe: true })"
+    >{{ spec.text }}</span
+  >
 </template>

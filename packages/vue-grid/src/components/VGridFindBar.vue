@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tipAttrs } from '../internal/tooltip'
 import { computed, inject, nextTick, onMounted, onUnmounted, ref, shallowRef, watch } from 'vue'
 import type { CellRangeState, RangeColumn } from '../composables/useCellRange'
 import { useMessages } from '../internal/messages'
@@ -205,7 +206,7 @@ watch(
         type="button"
         class="vg-icon-button"
         :aria-label="m.findPrevious ?? 'Previous match'"
-        :title="m.findPrevious ?? 'Previous match'"
+        v-bind="tipAttrs(m.findPrevious ?? 'Previous match')"
         :disabled="!matches.length"
         @click="go(-1)"
       >
@@ -217,7 +218,7 @@ watch(
         type="button"
         class="vg-icon-button"
         :aria-label="m.findNext ?? 'Next match'"
-        :title="m.findNext ?? 'Next match'"
+        v-bind="tipAttrs(m.findNext ?? 'Next match')"
         :disabled="!matches.length"
         @click="go(1)"
       >
@@ -229,7 +230,7 @@ watch(
         type="button"
         class="vg-icon-button"
         :aria-label="m.close ?? 'Close'"
-        :title="m.close ?? 'Close'"
+        v-bind="tipAttrs(m.close ?? 'Close')"
         @click="find.close()"
       >
         <svg viewBox="0 0 16 16" aria-hidden="true">

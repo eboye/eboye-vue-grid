@@ -28,6 +28,7 @@ import { resolveFeatures } from '../internal/features'
 import { MESSAGES_KEY, PARTS_KEY, partOn } from '../internal/messages'
 import { warnOnce } from '../internal/dev'
 import { supportsHas } from '../internal/supports'
+import { useGridTooltip } from '../internal/tooltip'
 import {
   GRID_CONTEXT_KEY,
   SELECT_COLUMN_KEY,
@@ -214,6 +215,11 @@ const props = withDefaults(
     density?: Density
     /** Shows a progress bar and sets `aria-busy` (server data sets it by itself). */
     loading?: boolean
+    /**
+     * While loading with no rows to show yet: placeholder rows in the grid's own columns instead
+     * of the `Loading…` line (still read out to screen readers). `true` = 8 rows, or a number.
+     */
+    skeleton?: boolean | number
     /** Shown when there are no rows. Default: `messages.empty`, else `No data to show.` */
     emptyText?: string
     /** Accessible name of the grid. */
@@ -735,6 +741,9 @@ function toggleExpanded(row: T) {
 
 // ── Filtering ───────────────────────────────────────────────────────────────────────────────
 const gridId = useId()
+// One popover tooltip for everything in the grid (`tipAttrs` marks what has one).
+const tooltip = useGridTooltip(gridId)
+const tipEl = tooltip.tip
 // The quick search covers the visible columns. Kept stable while only widths, pins or order change,
 // so resizing a column doesn't re-run the search over every row.
 const searchColumns = computed<ColumnDef<T>[]>((prev) => {
@@ -823,6 +832,12 @@ const sourceRows = computed<readonly T[]>(() =>
   serverMode.value && ds ? ds.rows.value : props.rows,
 )
 const isLoading = computed(() => props.loading || !!ds?.loading.value)
+/** Placeholder rows while loading with nothing to show yet (`skeleton`). */
+const skeletonRows = computed(() =>
+  isLoading.value && props.skeleton
+    ? Math.max(1, Math.floor(props.skeleton === true ? 8 : props.skeleton) || 1)
+    : 0,
+)
 const loadError = computed(() => (serverMode.value ? ds?.error.value : undefined))
 const reload = async () => {
   sub?.clear()
@@ -1667,7 +1682,12 @@ defineExpose<VGridExposed>({
 </script>
 
 <template>
-  <div :class="['vg-root', ui?.root]" :data-density="density ?? config?.density">
+  <div
+    :class="['vg-root', ui?.root]"
+    :data-density="density ?? config?.density"
+    v-on="tooltip.on"
+    @scroll.capture="tooltip.hide"
+  >
     <div v-if="slots.toolbar" class="vg-toolbar">
       <slot
         name="toolbar"
@@ -1796,7 +1816,7 @@ defineExpose<VGridExposed>({
           <div
             :role="context.cellRole"
             :tabindex="context.rovingTabindex"
-            :class="['vg-empty', ui?.empty]"
+            :class="['vg-empty', ui?.empty, { 'vg-sr-only': skeletonRows }]"
           >
             <slot v-if="isLoading" name="loading">{{ messages.loading ?? 'Loading…' }}</slot>
             <slot
@@ -1834,6 +1854,18 @@ defineExpose<VGridExposed>({
             <slot v-else name="empty">{{ emptyText ?? messages.empty ?? 'No data to show.' }}</slot>
           </div>
         </div>
+        <template v-if="skeletonRows && !windowRows.length">
+          <div v-for="n in skeletonRows" :key="n" class="vg-row vg-skeleton-row" aria-hidden="true">
+            <div
+              v-for="col in context.shownColumns.value"
+              :key="col.key"
+              :class="['vg-cell', `vg-align-${col.align}`, col.pinned && `vg-pin-${col.pinned}`]"
+              :style="context.pinStyle(col.key)"
+            >
+              <span v-if="col.kind === 'data'" class="vg-skeleton" />
+            </div>
+          </div>
+        </template>
         <component
           :is="PinnedRows"
           v-if="PinnedRows && pinnedItems.bottom.length"
@@ -1870,6 +1902,13 @@ defineExpose<VGridExposed>({
       :label="menus.label.value"
       placement="point"
       @select="menus.onSelect"
+    />
+    <div
+      ref="tipEl"
+      popover="hint"
+      role="tooltip"
+      class="vg-tooltip"
+      :style="{ 'position-anchor': tooltip.anchor }"
     />
   </div>
 </template>

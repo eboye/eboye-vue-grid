@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tipAttrs } from '../internal/tooltip'
 import { computed } from 'vue'
 import type { CellRendererEmits, CellRendererProps } from '../types'
 import { safeHref } from './format'
@@ -38,7 +39,7 @@ const tooltip = computed(() => props.options.tooltip?.(props.value, props.row))
     :to="to"
     :target="options.target"
     :rel="external ? 'noopener noreferrer' : undefined"
-    :title="tooltip"
+    v-bind="tipAttrs(tooltip, { describe: true })"
     @click="emit('action', 'click', value)"
     >{{ label }}</component
   >
@@ -48,16 +49,21 @@ const tooltip = computed(() => props.options.tooltip?.(props.value, props.row))
     :href="href"
     :target="options.target"
     :rel="external ? 'noopener noreferrer' : undefined"
-    :title="tooltip"
+    v-bind="tipAttrs(tooltip, { describe: true })"
     @click="emit('action', 'click', value)"
     >{{ label }}</a
   >
-  <span v-else-if="label && options.to" class="vg-text" :title="tooltip">{{ label }}</span>
+  <span
+    v-else-if="label && options.to"
+    class="vg-text"
+    v-bind="tipAttrs(tooltip, { describe: true })"
+    >{{ label }}</span
+  >
   <button
     v-else-if="label"
     type="button"
     class="vg-link vg-link-button"
-    :title="tooltip"
+    v-bind="tipAttrs(tooltip, { describe: true })"
     @click="emit('action', 'click', value)"
   >
     {{ label }}

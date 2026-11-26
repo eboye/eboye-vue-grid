@@ -194,7 +194,8 @@ test('a narrow first column: the value stays visible, the count inside the cell,
     .locator(':scope > .vg-rowgroup .vg-rowgroup-name')
     .evaluateAll((els) => els.map((e) => e.getBoundingClientRect().width))
   expect(names.every((w) => w === 0)).toBe(true)
-  await expect(cell).toHaveAttribute('title', /^City: .+ \(\d+\)$/)
+  await cell.hover()
+  await expect(page.locator('.vg-tooltip')).toHaveText(/^City: .+ \(\d+\)$/)
 })
 
 test('virtual: 10,000 grouped rows render in a window and scroll to the end', async ({ page }) => {

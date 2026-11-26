@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tipAttrs } from '../internal/tooltip'
 import { computed } from 'vue'
 import type { CellRendererEmits, CellRendererProps } from '../types'
 import { resolveOption, type EditOptions } from './options'
@@ -27,7 +28,7 @@ const label = computed(() =>
         'vg-text-ellipsis',
         { 'vg-text-bold': options.bold, 'vg-text-muted': !text },
       ]"
-      :title="text || undefined"
+      v-bind="tipAttrs(text, { overflow: true })"
       >{{ text || options.placeholder || '' }}</span
     >
     <button
@@ -35,7 +36,7 @@ const label = computed(() =>
       type="button"
       class="vg-icon-button vg-edit-button"
       :aria-label="label"
-      :title="label"
+      v-bind="tipAttrs(label)"
       @click="emit('action', 'edit', value)"
     >
       <PencilIcon />

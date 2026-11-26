@@ -1,6 +1,6 @@
 {
   "package": "@nocopypaste/vue-grid",
-  "version": "0.22.1",
+  "version": "0.23.0",
   "component": "VGrid",
   "props": [
     {
@@ -289,6 +289,12 @@
       "required": false,
       "default": "false",
       "description": "Shows a progress bar and sets `aria-busy` (server data sets it by itself)."
+    },
+    {
+      "name": "skeleton",
+      "type": "boolean | number",
+      "required": false,
+      "description": "While loading with no rows to show yet: placeholder rows in the grid's own columns instead of the `Loading…` line (still read out to screen readers). `true` = 8 rows, or a number."
     },
     {
       "name": "emptyText",
@@ -1387,13 +1393,13 @@
           "name": "ellipsis",
           "type": "boolean",
           "required": false,
-          "description": "Single line with ellipsis (full text in a tooltip)."
+          "description": "Single line with ellipsis (the full text as a tooltip while it is cut off)."
         },
         {
           "name": "lines",
           "type": "number",
           "required": false,
-          "description": "Clamp to N lines."
+          "description": "Clamp to N lines (the full text as a tooltip while it is cut off)."
         },
         {
           "name": "maxWidth",
@@ -1409,9 +1415,15 @@
         },
         {
           "name": "tooltip",
-          "type": "boolean | RowFn<string | undefined>",
+          "type": "boolean | 'always' | 'overflow' | RowFn<string | readonly string[] | undefined>",
           "required": false,
-          "description": "`true` = value as tooltip; a function computes it."
+          "description": "The full text as a tooltip: `'always'` (or `true`), or `'overflow'` only while it is cut off (the default with `ellipsis` / `lines`); `false` = none. A function returns its own text, which is also read out as the cell text's description."
+        },
+        {
+          "name": "hoverCard",
+          "type": "RowFn<HoverCardSpec | readonly (string | HoverCardLine)[] | null | undefined>",
+          "required": false,
+          "description": "A hover card instead of a tooltip: lines (and copy buttons) in a small popup that opens on hover, or on click / Enter, which also moves focus into it. `(value, row) => ({ title, lines, copy })`, or just the lines. Copy buttons emit `copy` with the copied text, like `copyable`."
         },
         {
           "name": "placeholder",
@@ -2615,9 +2627,9 @@
       },
       {
         "name": "disabled",
-        "type": "boolean",
+        "type": "boolean | string",
         "required": false,
-        "description": "Shown but can’t be chosen."
+        "description": "Shown but can’t be chosen. A string also says why (“Settled bets can’t be voided”): shown under the label and read out as the item’s description. Such an item stays focusable, so keyboard and screen reader users reach the reason too."
       },
       {
         "name": "tone",
@@ -2834,6 +2846,86 @@
         "type": "GridParts",
         "required": false,
         "description": "Built-in parts to turn off in every grid; a grid's own `parts` win."
+      }
+    ],
+    "HoverCardSpec": [
+      {
+        "name": "title",
+        "type": "string",
+        "required": false,
+        "description": "Heading, and the card's accessible name (default: the cell text)."
+      },
+      {
+        "name": "lines",
+        "type": "readonly (string | HoverCardLine)[]",
+        "required": true,
+        "description": "The lines, in order: text, or `{ text, label, copy }`."
+      },
+      {
+        "name": "copy",
+        "type": "'lines' | 'all'",
+        "required": false,
+        "description": "Copy buttons: one per line (`'lines'`), one for every line (`'all'`), or none (default)."
+      }
+    ],
+    "HoverCardLine": [
+      {
+        "name": "text",
+        "type": "string",
+        "required": true,
+        "description": "The line's text."
+      },
+      {
+        "name": "label",
+        "type": "string",
+        "required": false,
+        "description": "Shown before the text, muted, e.g. `IBAN`."
+      },
+      {
+        "name": "copy",
+        "type": "string | false",
+        "required": false,
+        "description": "What its copy button copies (default: `text`); `false`: no button on this line."
+      }
+    ],
+    "BadgeSpec": [
+      {
+        "name": "text",
+        "type": "string",
+        "required": true,
+        "description": "What the badge shows, e.g. `A`."
+      },
+      {
+        "name": "tone",
+        "type": "Tone",
+        "required": false,
+        "description": "Its colour (`success`, `danger`, …); default `neutral`."
+      },
+      {
+        "name": "title",
+        "type": "string",
+        "required": false,
+        "description": "Accessible / hover text."
+      }
+    ],
+    "IconSpec": [
+      {
+        "name": "icon",
+        "type": "Component",
+        "required": true,
+        "description": "The icon component (any SVG component)."
+      },
+      {
+        "name": "tone",
+        "type": "Tone",
+        "required": false,
+        "description": "Its colour (`success`, `danger`, …)."
+      },
+      {
+        "name": "label",
+        "type": "string",
+        "required": false,
+        "description": "Accessible label; without one the icon is decorative."
       }
     ]
   }

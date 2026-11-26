@@ -105,7 +105,7 @@ export const TextEllipsis: Story = {
   name: 'Text · ellipsis',
   args: {
     renderer: 'text',
-    rendererOptions: { ellipsis: true },
+    rendererOptions: { ellipsis: true, maxWidth: '16rem' },
     samples: samples(['long text (hover)', long], ['short', 'Fits']),
   },
 }
@@ -114,8 +114,18 @@ export const TextClamp: Story = {
   name: 'Text · line clamp',
   args: {
     renderer: 'text',
-    rendererOptions: { lines: 2 },
-    samples: samples(['clamped to 2 lines', long]),
+    rendererOptions: { lines: 2, maxWidth: '16rem' },
+    samples: samples(['clamped to 2 lines (hover)', long], ['short', 'Fits']),
+  },
+}
+
+/** `tooltip: 'always'`: the full text as a tooltip on every cell, cut off or not (default with `ellipsis`: `'overflow'`). */
+export const TextTooltipAlways: Story = {
+  name: 'Text · tooltip always',
+  args: {
+    renderer: 'text',
+    rendererOptions: { ellipsis: true, maxWidth: '16rem', tooltip: 'always' },
+    samples: samples(['long text (hover)', long], ['short (hover)', 'Fits']),
   },
 }
 
@@ -416,10 +426,20 @@ export const ActionsMenu: Story = {
         { name: 'duplicate', label: 'Duplicate' },
         { name: 'archive', label: 'Archive', disabled: row.id === 2 },
         { separator: true },
-        { name: 'delete', label: 'Delete', tone: 'danger' },
+        {
+          name: 'delete',
+          label: 'Delete',
+          tone: 'danger',
+          // a string says why it can't be chosen: shown under the label, read out as its description
+          disabled: row.id === 3 && 'Settled rows can’t be deleted',
+        },
       ],
     },
-    samples: samples(['all actions', null], ['“Archive” disabled', null]),
+    samples: samples(
+      ['all actions', null],
+      ['“Archive” disabled', null],
+      ['“Delete” disabled, with a reason', null],
+    ),
   },
 }
 
@@ -475,6 +495,41 @@ export const TextFill: Story = {
       ['danger fill', 'Rejected'],
       ['success fill', 'Approved'],
       ['line breaks kept', 'First line\nSecond line'],
+    ),
+  },
+}
+
+/**
+ * `hoverCard`: lines with copy buttons in a small popup. Hover the text (after a short delay), or
+ * click it / press Enter, which also moves focus into the card; Esc closes it. `copy: 'lines'` puts
+ * a button on each line, `'all'` one for every line. A `tooltip` function can return lines too.
+ */
+export const TextHoverCard: Story = {
+  name: 'Text · hover card',
+  args: {
+    renderer: 'text',
+    rendererOptions: {
+      hoverCard: (_v: unknown, row: Sample) =>
+        row.id === 1
+          ? {
+              title: 'Payout account',
+              copy: 'lines',
+              lines: [
+                { label: 'IBAN', text: 'RS35 1050 0812 3123 1231 73' },
+                { label: 'SWIFT', text: 'AIKBRS22' },
+                { label: 'Holder', text: 'Ana Petrović', copy: false },
+              ],
+            }
+          : row.id === 2
+            ? { copy: 'all', lines: ['TK-2026-000481', 'TK-2026-000482', 'TK-2026-000483'] }
+            : null,
+      tooltip: (_v: unknown, row: Sample) =>
+        row.id === 3 ? ['Opened 10:42', 'Closed 11:07'] : undefined,
+    },
+    samples: samples(
+      ['card, copy per line', 'Ana Petrović'],
+      ['card, copy all', '3 tickets'],
+      ['multi-line tooltip', 'Session 8812'],
     ),
   },
 }

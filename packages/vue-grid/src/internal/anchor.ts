@@ -21,7 +21,7 @@ export function anchorNameFor(id: string): string {
 
 export type AnchorTarget = HTMLElement | { x: number; y: number }
 
-export type Placement = 'bottom-start' | 'bottom-end' | 'point'
+export type Placement = 'bottom-start' | 'bottom-end' | 'point' | 'top'
 
 /** JS placement used only when CSS anchor positioning is unavailable. Flips to stay in the viewport. */
 export function placeWithoutAnchorSupport(
@@ -41,15 +41,22 @@ export function placeWithoutAnchorSupport(
   let left =
     placement === 'bottom-end'
       ? rect.right - pop.width
-      : placement === 'point'
-        ? rect.left
+      : placement === 'top'
+        ? rect.left + (rect.width - pop.width) / 2
         : rect.left
   if (left + pop.width > vw - gap)
     left = placement === 'point' ? rect.left - pop.width : vw - gap - pop.width
   left = Math.max(gap, left)
 
-  let top = rect.bottom + (placement === 'point' ? 0 : gap)
-  if (top + pop.height > vh - gap) top = rect.top - (placement === 'point' ? 0 : gap) - pop.height
+  let top: number
+  if (placement === 'top') {
+    // above, centred; below when there's no room above
+    top = rect.top - gap - pop.height
+    if (top < gap) top = rect.bottom + gap
+  } else {
+    top = rect.bottom + (placement === 'point' ? 0 : gap)
+    if (top + pop.height > vh - gap) top = rect.top - (placement === 'point' ? 0 : gap) - pop.height
+  }
   top = Math.max(gap, top)
 
   floating.style.left = `${left}px`

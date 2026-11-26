@@ -208,6 +208,9 @@ const typeNames = [
   'VueGridConfig',
 ]
 const types = Object.fromEntries(typeNames.map((n) => [n, interfaceMembers(file('types.ts'), n)]))
+// shapes that renderer options take (a text cell's `hoverCard`, `badge`, `icon`)
+for (const n of ['HoverCardSpec', 'HoverCardLine', 'BadgeSpec', 'IconSpec'])
+  types[n] = interfaceMembers(file('renderers/options.ts'), n)
 
 // Renderers: `export const xRenderer = defineCellRenderer<Options>({ name, align, filterType, defaults })`
 const renderers = []

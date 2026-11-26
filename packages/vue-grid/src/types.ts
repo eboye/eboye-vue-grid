@@ -452,8 +452,12 @@ export interface MenuAction {
   name: string
   /** Text of the item. */
   label: string
-  /** Shown but can’t be chosen. */
-  disabled?: boolean
+  /**
+   * Shown but can’t be chosen. A string also says why (“Settled bets can’t be voided”): shown under
+   * the label and read out as the item’s description. Such an item stays focusable, so keyboard
+   * and screen reader users reach the reason too.
+   */
+  disabled?: boolean | string
   /** Colour, e.g. `danger` for a delete item. */
   tone?: MenuTone
   /** An icon component before the label. */

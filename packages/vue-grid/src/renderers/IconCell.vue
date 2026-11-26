@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tipAttrs } from '../internal/tooltip'
 import { computed, toRaw } from 'vue'
 import type { CellRendererProps } from '../types'
 import { resolveOption, type IconOptions } from './options'
@@ -25,7 +26,7 @@ const tone = computed(() => resolveOption(props.options.tone, props.value, props
     :role="label ? 'img' : undefined"
     :aria-label="visible ? label : undefined"
     :aria-hidden="!label || !visible ? 'true' : undefined"
-    :title="visible ? label : undefined"
+    v-bind="tipAttrs(visible ? label : undefined)"
   >
     <component :is="icon" v-if="icon" />
   </span>

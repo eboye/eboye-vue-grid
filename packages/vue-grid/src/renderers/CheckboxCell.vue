@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tipAttrs } from '../internal/tooltip'
 import type { CellRendererEmits, CellRendererProps } from '../types'
 import type { CheckboxOptions } from './options'
 import { useToggleControl } from './parts/useToggleControl'
@@ -15,13 +16,14 @@ function onChange(event: Event) {
 </script>
 
 <template>
-  <span class="vg-control" :title="reason">
+  <span class="vg-control" v-bind="tipAttrs(reason)">
     <input
       type="checkbox"
       class="vg-control-checkbox"
       :checked="checked"
       :disabled="disabled"
       :aria-label="label"
+      :aria-description="reason || undefined"
       @change="onChange"
       @click.stop
     />

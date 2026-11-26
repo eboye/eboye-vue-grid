@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { tipAttrs } from '../internal/tooltip'
 import { computed } from 'vue'
 import { supportsRelativeColor } from '../internal/supports'
 import type { CellRendererProps } from '../types'
@@ -64,7 +65,7 @@ const tooltip = computed(() => {
       color ? 'vg-chip-raw' : 'vg-chip-toned',
     ]"
     :style="style"
-    :title="tooltip"
+    v-bind="tipAttrs(tooltip, { describe: true })"
     >{{ label }}</span
   >
   <span v-else-if="options.placeholder" class="vg-text vg-text-muted">{{
