@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { onBeforeUnmount, shallowRef, watch } from 'vue'
 import type { SelectionSummary } from '../core/selection'
 import { useInternalGrid, type ResolvedColumn } from '../internal/context'
 import { partOn, useMessages, useParts } from '../internal/messages'
@@ -25,6 +26,26 @@ const emit = defineEmits<{
 
 const grid = useInternalGrid()
 const m = useMessages()
+
+// The header sticks to the top: publish its height on the scroll container, so a row scrolled
+// into view (arrow keys, scrollToRow) lands below it, not under it (`scroll-padding` in base.css).
+const row = shallowRef<HTMLElement>()
+let observer: ResizeObserver | undefined
+watch(
+  row,
+  (el) => {
+    observer?.disconnect()
+    const cell = el?.firstElementChild as HTMLElement | null | undefined
+    const host = el?.closest<HTMLElement>('.vg')
+    if (!cell || !host || typeof ResizeObserver === 'undefined') return
+    const publish = () => host.style.setProperty('--vg-header-height', `${cell.offsetHeight}px`)
+    observer = new ResizeObserver(publish)
+    observer.observe(cell)
+    publish()
+  },
+  { flush: 'post' },
+)
+onBeforeUnmount(() => observer?.disconnect())
 const parts = useParts()
 const part = (name: Parameters<typeof partOn>[1]) => partOn(parts.value, name)
 
@@ -44,6 +65,7 @@ function ariaSort(col: ResolvedColumn) {
 
 <template>
   <div
+    ref="row"
     role="row"
     :class="['vg-header', grid.ui.value.header]"
     @click.capture="emit('headerClick', $event)"
@@ -94,6 +116,8 @@ function ariaSort(col: ResolvedColumn) {
           :label="m.selectAllRows ?? 'Select all rows'"
           @toggle="emit('toggleAll')"
         />
+        <!-- a column header needs a name; without the select-all box, say what the column is -->
+        <span v-else class="vg-sr-only">{{ m.selectRow ?? 'Select row' }}</span>
       </template>
       <template v-else-if="col.kind === 'data'">
         <button
@@ -151,6 +175,7 @@ function ariaSort(col: ResolvedColumn) {
           :label="col.def.header ?? col.key"
         />
       </template>
+      <span v-else-if="col.kind === 'drag'" class="vg-sr-only">{{ m.moveRow ?? 'Move row' }}</span>
     </div>
   </div>
 </template>

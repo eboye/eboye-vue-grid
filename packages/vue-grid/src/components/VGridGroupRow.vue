@@ -70,7 +70,7 @@ onBeforeUnmount(() => {
     <div
       v-for="seg in segments"
       :key="`${seg.first}:${seg.label ?? ''}`"
-      role="columnheader"
+      :role="seg.label ? 'columnheader' : grid.cellRole"
       :aria-colspan="seg.span > 1 ? seg.span : undefined"
       :class="[
         'vg-group-cell',

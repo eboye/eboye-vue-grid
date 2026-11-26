@@ -462,6 +462,9 @@
     margin: 0;
     padding: 0;
     list-style: none;
+  }
+  /* on the tree only: nested lists inherit it (an `em` on each level would shrink every level) */
+  .vg-json-tree {
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     font-size: 0.8125em;
   }

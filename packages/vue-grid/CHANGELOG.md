@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.22.0 — 2026-11-26
+
+**Accessibility audit** (axe with WCAG 2.2 and best-practice rules on every story, popups and
+editors opened, keyboard-only checks, Windows high contrast), and its fixes:
+
+- Fix: moving up with the arrow keys could leave the focused row hidden under the sticky header
+  (WCAG 2.4.11). Rows now scroll below the header on every grid, not only with pinned rows.
+- Fix: in Windows high contrast (forced colours) a cell range, find matches and the selected-row
+  highlight disappeared, and so did the row and column drop markers. They're drawn in the system
+  `Highlight` colours now.
+- After filtering or searching, screen readers hear how many rows match (“3 of 22 rows”, from the
+  `rowCount` text), once typing pauses (WCAG 4.1.3 status messages).
+- Fix: the details renderer's popup moves focus into itself when it opens (Esc returns it to the
+  button).
+- Fix: json-tree text no longer shrinks at every nesting level (three levels down it was about half
+  the size).
+- Fix: at the grid's edge an arrow key does nothing; at the last column ArrowRight used to scroll
+  the grid sideways.
+- The checkbox column without a select-all box, the drag-handle column and empty column-group cells
+  have a name for screen readers (or are plain cells).
+- The rating add-on's stars are at least 24 × 24 px to tap (WCAG 2.5.8). The json-tree toggles
+  stay 18 px tall (a compact tree), the one known exception.
+- The axe check on every story now covers WCAG 2.2 A / AA and axe's best practices (was 2.1).
+
 ## 0.21.1 — 2026-11-26
 
 Fix: Excel export. A sheet name starting or ending with an apostrophe (`'Q4'`), which Excel rejects

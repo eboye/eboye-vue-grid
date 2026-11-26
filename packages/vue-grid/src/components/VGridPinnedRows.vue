@@ -20,8 +20,9 @@ const grid = useInternalGrid()
 /** `row-attrs` (attributes feature; nothing without it). */
 const vExtraAttrs = grid.attrs?.directive
 
-// The top section sticks right under the header, and both keep focused rows clear of themselves
-// (`scroll-padding`): publish the header's and the section's heights on the scroll container.
+// The top section sticks right under the header (whose height the header publishes), and both
+// keep focused rows clear of themselves (`scroll-padding`): publish the section's height on the
+// scroll container.
 const section = shallowRef<HTMLElement>()
 let observer: ResizeObserver | undefined
 let host: HTMLElement | null = null
@@ -33,17 +34,9 @@ watch(
     host = el?.closest<HTMLElement>('.vg') ?? null
     if (!el || !host || typeof ResizeObserver === 'undefined') return
     const grid = host
-    const header =
-      props.position === 'top'
-        ? grid.querySelector<HTMLElement>(':scope > .vg-header > .vg-header-cell')
-        : null
-    const publish = () => {
-      grid.style.setProperty(heightVar(), `${el.offsetHeight}px`)
-      if (header) grid.style.setProperty('--vg-header-height', `${header.offsetHeight}px`)
-    }
+    const publish = () => grid.style.setProperty(heightVar(), `${el.offsetHeight}px`)
     observer = new ResizeObserver(publish)
     observer.observe(el)
-    if (header) observer.observe(header)
     publish()
   },
   { flush: 'post' },
@@ -51,7 +44,6 @@ watch(
 onBeforeUnmount(() => {
   observer?.disconnect()
   host?.style.removeProperty(heightVar())
-  if (props.position === 'top') host?.style.removeProperty('--vg-header-height')
 })
 </script>
 

@@ -101,6 +101,46 @@ test('details: popover anchored under its button, lists items, closes with Esc a
   await expect(valueCell(page, 3).getByRole('button')).toHaveCount(0) // no devices → no button
 })
 
+test('details: opened from the keyboard, focus moves into the dialog and Esc brings it back', async ({
+  page,
+}) => {
+  await story(page, 'renderers--details')
+  const trigger = valueCell(page, 1).getByRole('button', { name: /^Details/ })
+  await trigger.focus()
+  await page.keyboard.press('Enter')
+  const dialog = page.locator('.vg-details-panel:popover-open')
+  await expect(dialog).toHaveRole('dialog')
+  await expect(dialog).toBeFocused()
+  await page.keyboard.press('Tab') // into it: the close button
+  await expect(dialog.getByRole('button', { name: 'Close' })).toBeFocused()
+  await page.keyboard.press('Escape')
+  await expect(dialog).toBeHidden()
+  await expect(trigger).toBeFocused()
+})
+
+test('json-tree: nested levels keep the same text size (it does not shrink with depth)', async ({
+  page,
+}) => {
+  await story(page, 'renderers--json-tree')
+  const closed = page.locator('#storybook-root .vg-json-node details:not([open]) > summary')
+  for (let i = 0; i < 6 && (await closed.count()); i++) await closed.first().click()
+  const sizes = await page.evaluate(() => {
+    const px = (el: Element) => parseFloat(getComputedStyle(el).fontSize)
+    const tree = document.querySelector('#storybook-root .vg-json-tree')!
+    const depth = (el: Element) => {
+      let d = 0
+      for (let p = el.parentElement; p && p !== tree; p = p.parentElement)
+        if (p.classList.contains('vg-json-children')) d++
+      return d
+    }
+    const keys = [...tree.querySelectorAll('.vg-json-key')]
+    const deepest = keys.reduce((a, b) => (depth(b) > depth(a) ? b : a))
+    return { root: px(tree), deepest: px(deepest), depth: depth(deepest) }
+  })
+  expect(sizes.depth).toBeGreaterThanOrEqual(2)
+  expect(sizes.deepest).toBe(sizes.root)
+})
+
 test('native <details>: list "+N more", collapsed json-tree and tree nodes, by mouse and keyboard', async ({
   page,
 }) => {

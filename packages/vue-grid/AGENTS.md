@@ -648,6 +648,8 @@ only sees stylesheet rules. Density:
 - Text translated but money / dates still formatted in English → a pack only translates text; set
   `locale` too (`createVueGrid({ messages: de, locale: 'de' })`).
 - Hiding a built-in piece with CSS → `parts: { filterButtons: false, … }` leaves it out of the DOM (and the tab order).
+- An `aria-live` region of your own for "N results" after filtering → the grid already announces
+  the row count (filtering feature); Windows high-contrast styles for selection → built in too.
 - Grouped server data shows groups of one page only → add `serverGroupingFeature` and answer `query.groupBy` with `{ groups }` (`count` per group, `total` = number of groups).
 - A batch action on a selected server group touched only loaded rows → act on `selectedGroups` (paths) with the filters on the server.
 - Copied numbers come out as `€1,234.50` → copying uses displayed values; pass `{ values: 'raw' }`

@@ -953,6 +953,60 @@
     }
   }
 
+  /*
+   * Forced colours (Windows high contrast): the browser drops backgrounds and box-shadows, which
+   * is how selected rows, a cell range, find matches and drop markers show. Opt those cells out
+   * and draw them with the user's system colours instead.
+   */
+  @media (forced-colors: active) {
+    /* `!important`: these states must win over every hover, range and find rule above */
+    .vg-row-selected > .vg-cell,
+    .vg-row > .vg-cell:is(.vg-in-range, .vg-find-match, .vg-find-current) {
+      forced-color-adjust: none;
+      background: Highlight !important;
+      color: HighlightText !important;
+    }
+    /*
+     * What's inside (badges, links, icons) stays opted out, in the same colours: opted back in,
+     * the browser would paint its own backplate behind the text and hide it.
+     */
+    .vg-row-selected > .vg-cell *,
+    .vg-row > .vg-cell:is(.vg-in-range, .vg-find-match, .vg-find-current) * {
+      color: inherit !important;
+      background-color: transparent !important;
+      border-color: currentColor !important;
+    }
+    .vg-row > .vg-cell.vg-find-current,
+    .vg-row > .vg-cell.vg-cell-editing {
+      outline: 2px solid CanvasText;
+      outline-offset: -2px;
+    }
+    .vg-row[data-vg-drop] > .vg-cell,
+    .vg-header-cell.vg-drop-before,
+    .vg-header-cell.vg-drop-after {
+      forced-color-adjust: none;
+      background: Canvas;
+      color: CanvasText;
+    }
+    .vg-row[data-vg-drop] > .vg-cell *,
+    .vg-header-cell.vg-drop-before *,
+    .vg-header-cell.vg-drop-after * {
+      forced-color-adjust: auto;
+    }
+    .vg-row[data-vg-drop='before'] > .vg-cell {
+      box-shadow: inset 0 3px 0 Highlight;
+    }
+    .vg-row[data-vg-drop='after'] > .vg-cell {
+      box-shadow: inset 0 -3px 0 Highlight;
+    }
+    .vg-header-cell.vg-drop-before {
+      box-shadow: inset 3px 0 0 Highlight;
+    }
+    .vg-header-cell.vg-drop-after {
+      box-shadow: inset -3px 0 0 Highlight;
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .vg-root *,
     .vg-menu * {

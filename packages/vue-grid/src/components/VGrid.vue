@@ -754,6 +754,15 @@ const filt = features.filtering?.useFilters<T>({
   childrenOf,
   getKey,
   timeZone: () => props.timeZone ?? config?.timeZone,
+  // read out after filtering: the status bar's row count (server data: once the page has loaded)
+  shownCount: (): { shown: number; total: number | undefined } | undefined =>
+    isLoading.value
+      ? undefined
+      : serverMode.value
+        ? { shown: ds?.total.value ?? sourceRows.value.length, total: undefined }
+        : { shown: filteredTopRows.value.length, total: sourceRows.value.length },
+  messages: () => messages.value,
+  format: () => formatContext.value,
 })
 const filterIdFor = (key: string) => `vg-filter-${gridId}-${key.replace(/[^\w-]/g, '_')}`
 function openFilter(key: string) {
@@ -1711,6 +1720,8 @@ defineExpose<VGridExposed>({
         </div>
       </slot>
     </template>
+    <!-- after filtering, how many rows match: read out by screen readers (filtering feature) -->
+    <span v-if="filt" class="vg-sr-only" role="status">{{ filt.announcement.value }}</span>
     <div class="vg-viewport">
       <component
         :is="features.rangeSelection.FindBar"

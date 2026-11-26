@@ -67,6 +67,10 @@
     overflow: auto;
     isolation: isolate;
     overscroll-behavior: contain;
+    /* rows scrolled into view (arrow keys, scrollToRow) land below the sticky header rows */
+    scroll-padding-block-start: calc(
+      var(--vg-group-row-height, 0px) + var(--vg-header-height, 0px)
+    );
   }
 
   .vg-header,

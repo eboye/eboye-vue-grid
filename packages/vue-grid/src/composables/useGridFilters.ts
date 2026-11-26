@@ -1,4 +1,14 @@
-import { computed, shallowRef, watch, type ComputedRef, type Ref } from 'vue'
+import {
+  computed,
+  onMounted,
+  onScopeDispose,
+  shallowRef,
+  watch,
+  type ComputedRef,
+  type Ref,
+} from 'vue'
+import { rowCountText } from '../internal/rowCountText'
+import { formatNumber } from '../renderers/format'
 import {
   activeFilterCount,
   emptyFilters,
@@ -18,6 +28,8 @@ import type {
   ColumnDef,
   ColumnFilterOptions,
   FilterOption,
+  FormatContext,
+  GridMessages,
   RowKey,
 } from '../types'
 
@@ -42,6 +54,11 @@ export interface GridFiltersOptions<T> {
   childrenOf: (row: T) => readonly T[] | undefined
   getKey: (row: T) => RowKey
   timeZone: () => string | undefined
+  /** The rows the filters let through (and of how many), or nothing while they load. */
+  shownCount?: () => { shown: number; total: number | undefined } | undefined
+  /** The grid's texts and number format (the grid provides them, so it passes them in). */
+  messages?: () => GridMessages
+  format?: () => FormatContext
 }
 
 /** Value-list options → the panel's entries. */
@@ -206,7 +223,33 @@ export function useGridFilters<T>(opts: GridFiltersOptions<T>) {
 
   const typeOf = (col: ColumnDef<T>) => filterTypeOf(col, opts.definitionOf(col))
 
+  // A status message (WCAG 4.1.3): after the filters or the search change, how many rows match,
+  // read out politely by screen readers. Waits until typing pauses and the rows have loaded.
+  const announcement = shallowRef('')
+  const n = (v: number) => {
+    const format = opts.format?.()
+    return format ? formatNumber(v, format) : String(v)
+  }
+  let announced = JSON.stringify(state.value)
+  let timer: ReturnType<typeof setTimeout> | undefined
+  // once mounted: the counts read rows the grid sets up after its filters
+  onMounted(() =>
+    watch(
+      () => [JSON.stringify(state.value), opts.shownCount?.()] as const,
+      ([key, count]) => {
+        clearTimeout(timer)
+        if (key === announced || !count) return
+        timer = setTimeout(() => {
+          announced = key
+          announcement.value = rowCountText(opts.messages?.() ?? {}, n, count.shown, count.total)
+        }, 500)
+      },
+    ),
+  )
+  onScopeDispose(() => clearTimeout(timer))
+
   return {
+    announcement,
     state,
     setFilters,
     setColumnFilter,

@@ -1,7 +1,7 @@
 import type { Ref } from 'vue'
 
 // Group header cells (column groups) aren't interactive: the arrow keys skip them.
-const CELL = '[role="gridcell"], [role="columnheader"]:not(.vg-group-cell)'
+const CELL = ':is([role="gridcell"], [role="columnheader"]):not(.vg-group-cell)'
 const FOCUSABLE =
   'button, a[href], input, select, textarea, summary, [tabindex]:not([tabindex="-1"])'
 
@@ -223,9 +223,10 @@ export function useGridKeyboard(root: Ref<HTMLElement | undefined>, opts: GridKe
       default:
         return
     }
+    // a navigation key: at the grid's edge it does nothing (not the browser's scrolling either)
+    event.preventDefault()
     if (target) {
       if (target.col < 0 || target.col >= count) return
-      event.preventDefault()
       const { row, col: at } = target
       next = cellAt(allRows, row, at)
       if (next) return void focusCell(next)
@@ -240,7 +241,6 @@ export function useGridKeyboard(root: Ref<HTMLElement | undefined>, opts: GridKe
       return
     }
     if (next) {
-      event.preventDefault()
       focusCell(next)
       sticky = vertical ? { cell: next, col } : null
     }

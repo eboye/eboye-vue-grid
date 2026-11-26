@@ -28,6 +28,11 @@
   }
 
   button.vg-rating-star {
+    /* at least 24 × 24 px to tap or click (WCAG 2.2, 2.5.8 Target Size) */
+    display: inline-grid;
+    place-items: center;
+    min-inline-size: 24px;
+    min-block-size: 24px;
     cursor: pointer;
     border-radius: var(--vg-radius-sm);
     transition: transform var(--vg-transition);

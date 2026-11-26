@@ -40,6 +40,8 @@ function onToggle(event: Event) {
   // Placed, followed and hidden by CSS anchor positioning; JS only where unsupported.
   if ((event as ToggleEvent).newState === 'open' && panel.value && trigger.value) {
     stopTracking = trackAnchor(panel.value, trigger.value, 'bottom-start')
+    // a dialog takes focus when it opens (its title is read out); closing returns it to the button
+    panel.value.focus({ preventScroll: true })
   }
 }
 </script>
@@ -69,6 +71,7 @@ function onToggle(event: Event) {
         ref="panel"
         popover="auto"
         role="dialog"
+        tabindex="-1"
         :aria-label="title || triggerLabel"
         class="vg-menu vg-details-panel"
         data-placement="bottom-start"

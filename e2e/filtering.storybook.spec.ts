@@ -93,6 +93,20 @@ test.describe('client filtering', () => {
     await expect(page.getByLabel('Search rows')).toHaveValue('')
   })
 
+  test('after filtering, screen readers hear how many rows match (a status message)', async ({
+    page,
+  }) => {
+    const status = page.locator('#storybook-root .vg-root > [role="status"]')
+    await expect(status).toHaveText('') // nothing said on load
+    await page.getByLabel('Search rows').pressSequentially('dorde', { delay: 30 })
+    const shown = () => rows(page).count()
+    // said once typing pauses, as the status bar says it: "N of M rows"
+    await expect(status).toHaveText(/^\d+ of [\d,]+ rows$/)
+    expect(Number((await status.textContent())!.split(' ')[0])).toBe(await shown())
+    await page.getByLabel('Search rows').fill('')
+    await expect(status).toHaveText(/^[\d,]+ rows$/)
+  })
+
   test('boolean select, no-match message with Clear filters, header menu items', async ({
     page,
   }) => {

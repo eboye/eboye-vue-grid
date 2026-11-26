@@ -4,6 +4,7 @@ import type { StatusBarState } from '../composables/useStatusBar'
 import { FORMAT_CONTEXT_KEY } from '../registry/plugin'
 import { formatNumber } from '../renderers/format'
 import { useMessages } from '../internal/messages'
+import { rowCountText } from '../internal/rowCountText'
 import type { StatusBarAggregate, StatusBarScope } from '../types'
 
 /**
@@ -26,20 +27,9 @@ const plural = (count: number, one: string, many: string) =>
   `${n(count)} ${count === 1 ? one : many}`
 const m = useMessages()
 
-const rowsText = computed(() => {
-  const { rowCount, totalRowCount } = scope.value
-  const filtered = totalRowCount !== undefined && totalRowCount !== rowCount
-  if (m.value.rowCount)
-    return m.value.rowCount(
-      n(rowCount),
-      filtered ? n(totalRowCount) : undefined,
-      rowCount,
-      filtered ? totalRowCount : undefined,
-    )
-  return filtered
-    ? `${n(rowCount)} of ${plural(totalRowCount, 'row', 'rows')}`
-    : plural(rowCount, 'row', 'rows')
-})
+const rowsText = computed(() =>
+  rowCountText(m.value, n, scope.value.rowCount, scope.value.totalRowCount),
+)
 const selectedText = computed(() => {
   const { selectedCount, allSelected } = scope.value
   return (
