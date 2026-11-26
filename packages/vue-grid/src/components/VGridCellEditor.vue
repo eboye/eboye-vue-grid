@@ -109,6 +109,7 @@ function parse(): unknown {
       return t
     }
     case 'datetime': {
+      if (t === toText(old)) return old
       if (!t) return null
       const d = new Date(t)
       if (old instanceof Date) return d

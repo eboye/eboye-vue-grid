@@ -117,7 +117,7 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
   const findHits = shallowRef<ReadonlySet<string>>(new Set())
   const findCurrent = shallowRef<string | null>(null)
   /** A cell's id for find: its row key and column key. */
-  const cellId = (rowKey: RowKey, columnKey: string) => `${String(rowKey)}\u0000${columnKey}`
+  const cellId = (rowKey: RowKey, columnKey: string) => JSON.stringify([rowKey, columnKey])
 
   /** The body's data rows as laid out, top to bottom: expanded children in, group rows out. */
   const ordered = computed<T[]>(() => {
@@ -140,10 +140,10 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
     return out
   })
 
-  /** Row positions by key, as text (DOM attributes are text). Read only while a range exists. */
+  /** Row positions by key. Read only while a range exists. */
   const rowIndex = computed(() => {
-    const map = new Map<string, number>()
-    ordered.value.forEach((row, i) => map.set(String(opts.getKey(row)), i))
+    const map = new Map<RowKey, number>()
+    ordered.value.forEach((row, i) => map.set(opts.getKey(row), i))
     return map
   })
   const colIndex = computed(() => {
@@ -156,7 +156,7 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
   const bounds = computed(() => {
     const range = opts.enabled() ? opts.model.value : null
     if (!range) return null
-    const r = [range.start, range.end].map((c) => rowIndex.value.get(String(c.rowKey)))
+    const r = [range.start, range.end].map((c) => rowIndex.value.get(c.rowKey))
     const c = [range.start, range.end].map((c) => colIndex.value.get(c.columnKey))
     if (r.some((i) => i === undefined) || c.some((i) => i === undefined)) return null
     const [r1, r2, c1, c2] = [...r, ...c] as number[]
@@ -172,14 +172,13 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
   const selection = computed<Box | null>(() => {
     if (bounds.value) return bounds.value
     const a = opts.enabled() ? anchor.value : null
-    const r = a && rowIndex.value.get(String(a.rowKey))
+    const r = a && rowIndex.value.get(a.rowKey)
     const c = a && colIndex.value.get(a.columnKey)
     return r == null || c == null ? null : { top: r, bottom: r, left: c, right: c }
   })
   const canFill = () => !!opts.fill && opts.fillOn()
 
-  const same = (a: CellRef, b: CellRef) =>
-    String(a.rowKey) === String(b.rowKey) && a.columnKey === b.columnKey
+  const same = (a: CellRef, b: CellRef) => a.rowKey === b.rowKey && a.columnKey === b.columnKey
 
   /** Sets the range; one cell is no range (`null`), but stays the anchor. */
   function set(start: CellRef, end: CellRef) {
@@ -199,7 +198,8 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
   function refOf(el: Element | null): CellRef | null {
     const cell = el?.closest<HTMLElement>(CELL)
     if (!cell || !opts.root.value?.contains(cell)) return null
-    const key = cell.parentElement!.dataset.rowKey!
+    const { rowKey, vgRowKeyType } = cell.parentElement!.dataset
+    const key = vgRowKeyType === 'number' ? Number(rowKey) : rowKey!
     const at = rowIndex.value.get(key)
     const columnKey = cell.dataset.colKey!
     if (at === undefined || !colIndex.value.has(columnKey)) return null
@@ -208,7 +208,7 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
 
   const cellEl = (ref: CellRef) =>
     opts.root.value?.querySelector<HTMLElement>(
-      `[data-row-key="${CSS.escape(String(ref.rowKey))}"] > .vg-cell[data-col-key="${CSS.escape(ref.columnKey)}"]`,
+      `[data-row-key="${CSS.escape(String(ref.rowKey))}"][data-vg-row-key-type="${typeof ref.rowKey}"] > .vg-cell[data-col-key="${CSS.escape(ref.columnKey)}"]`,
     )
 
   // ── Mouse ────────────────────────────────────────────────────────────────────────────────
@@ -306,7 +306,7 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
    */
   function fillTo(ref: CellRef | null) {
     const f = filling.value
-    const r = ref && rowIndex.value.get(String(ref.rowKey))
+    const r = ref && rowIndex.value.get(ref.rowKey)
     const c = ref && colIndex.value.get(ref.columnKey)
     if (!f || r == null || c == null) return
     const s = f.source
@@ -509,7 +509,7 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
       const end = opts.model.value?.end ?? start
       const rows = ordered.value
       const cols = opts.columns()
-      const r = rowIndex.value.get(String(end.rowKey))
+      const r = rowIndex.value.get(end.rowKey)
       const c = colIndex.value.get(end.columnKey)
       if (r === undefined || c === undefined) return false
       // right-to-left: ← goes to the next column
@@ -625,7 +625,7 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
     const b = bounds.value
     if (b) return { row: b.top, col: b.left }
     const a = anchor.value
-    const row = a && rowIndex.value.get(String(a.rowKey))
+    const row = a && rowIndex.value.get(a.rowKey)
     const col = a && colIndex.value.get(a.columnKey)
     return row == null || col == null ? null : { row, col }
   }
@@ -785,7 +785,7 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
     findHits.value = new Set()
     const id = findCurrent.value
     findCurrent.value = null
-    const [rowKey, columnKey] = id ? id.split('\u0000') : []
+    const [rowKey, columnKey] = id ? (JSON.parse(id) as [RowKey, string]) : []
     const r = rowKey !== undefined ? rowIndex.value.get(rowKey) : undefined
     if (r !== undefined && columnKey !== undefined) {
       const ref = { rowKey: opts.getKey(ordered.value[r]!), columnKey }
@@ -857,7 +857,7 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
       if (!sel && !f && !hits.size) return null
       const c = cell()
       if (!c.data) return null
-      const r = rowIndex.value.get(String(c.rowKey))
+      const r = rowIndex.value.get(c.rowKey)
       const col = colIndex.value.get(c.columnKey)
       if (r === undefined || col === undefined) return null
       const inside = (x: Box) => r >= x.top && r <= x.bottom && col >= x.left && col <= x.right
@@ -928,7 +928,7 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
     /** Selects the block around these cells (after an undo: the cells it changed). */
     selectCells(refs: readonly CellRef[]) {
       const at = refs
-        .map((r) => [rowIndex.value.get(String(r.rowKey)), colIndex.value.get(r.columnKey)])
+        .map((r) => [rowIndex.value.get(r.rowKey), colIndex.value.get(r.columnKey)])
         .filter((p): p is [number, number] => p[0] !== undefined && p[1] !== undefined)
       if (!at.length) return
       const rs = at.map((p) => p[0])

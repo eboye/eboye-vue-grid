@@ -101,6 +101,7 @@ watchEffect(() => {
         grid.ui.value.row,
       ]"
       :data-row-key="String(item.key)"
+      :data-vg-row-key-type="typeof item.key"
       :data-depth="depth"
       :data-group-level="item.group?.level"
       :style="depth ? { '--vg-depth': depth } : undefined"

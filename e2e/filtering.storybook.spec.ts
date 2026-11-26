@@ -224,17 +224,21 @@ test.describe('server data', () => {
     await page.keyboard.press('Escape')
     // let the filter request finish first, or it would take the failure armed below
     await expect(requests(page).first()).toHaveAttribute('data-status', 'ok')
+    await expect(header(page, 'city').locator('.vg-filter-summary')).toHaveText('5 selected')
+    const cities = await page.locator('.vg-row > [data-col-key="city"]').allTextContents()
+    expect(cities.length).toBeGreaterThan(0)
+    expect(cities).not.toContain('Novi Sad')
 
     // a failing request → Retry
     await page.getByTestId('fail').click()
     await header(page, 'id').locator('.vg-sort').click()
     await expect(requests(page).first()).toHaveAttribute('data-status', 'error')
-    // no city ticked, so no rows: the empty row says it, with Retry
-    const empty = page.locator('.vg-load-error')
-    await expect(empty).toContainText("Couldn't load the rows")
-    await empty.getByRole('button', { name: 'Retry' }).click()
+    // The other five cities remain selected, so the failure keeps those rows on screen.
+    const notice = page.locator('.vg-load-error-banner')
+    await expect(notice).toContainText("Couldn't load the rows")
+    await notice.getByRole('button', { name: 'Retry' }).click()
     await expect(requests(page).first()).toHaveAttribute('data-status', 'ok')
-    await expect(empty).toBeHidden()
+    await expect(notice).toBeHidden()
   })
 
   test('a failed request with rows on screen keeps them, with a notice and Retry', async ({

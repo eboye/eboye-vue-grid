@@ -14,6 +14,7 @@ function loadCardText() {
 <script setup lang="ts">
 import { computed, defineAsyncComponent, shallowRef, toRaw, watch } from 'vue'
 import { tipAttrs } from '../internal/tooltip'
+import { stringifyJson } from './format'
 import type { CellRendererEmits, CellRendererProps } from '../types'
 import { resolveOption, type HoverCardLine, type HoverCardSpec, type TextOptions } from './options'
 import ValueBadge from './parts/ValueBadge.vue'
@@ -31,7 +32,7 @@ const isEmpty = computed(
 const text = computed(() => {
   const v = props.value
   if (isEmpty.value) return props.options.placeholder ?? ''
-  return typeof v === 'object' ? JSON.stringify(v) : String(v)
+  return typeof v === 'object' ? stringifyJson(v, 0) : String(v)
 })
 
 const secondary = computed(() =>

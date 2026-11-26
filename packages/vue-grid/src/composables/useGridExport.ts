@@ -39,6 +39,8 @@ export interface GridExportOptions<T> {
   selected: Ref<RowKey[]>
   /** Rows shown but not in the data (pinned extra rows): a focused cell may be in one. */
   extraRows: () => readonly T[]
+  /** Keyed pinned rows, including those cached from previous server pages. */
+  pinnedRows?: () => readonly T[]
   /** The totals row, when there is one: its values by column key and its label. */
   totals: () => { values: Record<string, unknown>; label: string } | undefined | false
   onCopy: (event: CopyEvent<T>) => void
@@ -73,7 +75,9 @@ export function useGridExport<T>(opts: GridExportOptions<T>) {
     if (which === 'selected') {
       const picked = new Set(opts.selected.value)
       // nested selected rows count even when `children` is off
-      return flatten(opts.rows('all'), true, false).filter((r) => picked.has(opts.getKey(r)))
+      return [...flatten(opts.rows('all'), true, false), ...(opts.pinnedRows?.() ?? [])].filter(
+        (row) => picked.delete(opts.getKey(row)),
+      )
     }
     if (which === 'all') return flatten(opts.rows('all'), !!o.children, false)
     if (which === 'page') return flatten(opts.rows('page'), !!o.children, true)
@@ -231,17 +235,22 @@ export function useGridExport<T>(opts: GridExportOptions<T>) {
   }
 
   /** The row a body cell belongs to (by its `data-row-key` / `data-pinned-key`). */
-  function rowOf(key: string): T | undefined {
+  function rowOf(key: RowKey): T | undefined {
     const match = (rows: readonly T[]): T | undefined => {
       for (const row of rows) {
-        if (String(opts.getKey(row)) === key) return row
-        const kids = opts.children(row)
+        const group = opts.isGroup(row)
+        if (!group && opts.getKey(row) === key) return row
+        const kids = group ? opts.groupRows?.(row) : opts.children(row)
         const found = kids && match(kids)
         if (found) return found
       }
       return undefined
     }
-    return match(opts.rows('all')) ?? opts.extraRows().find((r) => String(opts.getKey(r)) === key)
+    return (
+      match(opts.rows('all')) ??
+      opts.pinnedRows?.().find((row) => opts.getKey(row) === key) ??
+      opts.extraRows().find((row) => opts.getKey(row) === key)
+    )
   }
 
   /** Ctrl/⌘+C in the grid: the selected rows, else the focused cell. A text selection wins. */
@@ -266,7 +275,10 @@ export function useGridExport<T>(opts: GridExportOptions<T>) {
     const rowEl = cell?.parentElement
     const key = rowEl?.dataset.rowKey ?? rowEl?.dataset.pinnedKey
     const col = cell && opts.allColumns().find((c) => c.key === cell.dataset.colKey)
-    const row = key !== undefined ? rowOf(key) : undefined
+    const row =
+      key !== undefined
+        ? rowOf(rowEl?.dataset.vgRowKeyType === 'number' ? Number(key) : key)
+        : undefined
     if (!col || row === undefined) return
     event.preventDefault()
     const text = cellText(row, col, opts.format())

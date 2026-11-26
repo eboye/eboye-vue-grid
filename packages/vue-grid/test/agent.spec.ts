@@ -85,6 +85,16 @@ describe('validateGridConfig', () => {
     expect(r.ok).toBe(true)
   })
 
+  it('accepts the function string used in JSON server-data configurations', () => {
+    const result = validateGridConfig({
+      ...base,
+      features: ['serverDataFeature'],
+      dataSource: 'async () => ({ rows: [] })',
+    })
+    expect(result.ok).toBe(true)
+    expect(find(result.diagnostics, 'props.dataSource')).toEqual([])
+  })
+
   it('requires rowKey and columns; flags duplicate keys', () => {
     const r = validateGridConfig({ columns: [{ key: 'a' }, { key: 'a' }], features: [] })
     expect(r.ok).toBe(false)

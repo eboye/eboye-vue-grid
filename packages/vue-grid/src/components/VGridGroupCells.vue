@@ -83,7 +83,7 @@ const labelText = computed(() => {
   const format_ = col?.definition?.format
   const text = blank.value
     ? (grid.messages.value.blank ?? '(blank)')
-    : !column.groupValue && format_ && format
+    : firstRow.value !== undefined && !column.groupValue && format_ && format
       ? format_(value, col.options, format.value, firstRow.value)
       : String(value)
   return `${column.header ?? column.key}: ${text} (${count.value})`
@@ -187,7 +187,7 @@ function onLabelClick(event: MouseEvent) {
           grid.messages.value.blank ?? '(blank)'
         }}</span>
         <span
-          v-else-if="group.column.groupValue || !groupColumn?.component"
+          v-else-if="firstRow === undefined || group.column.groupValue || !groupColumn?.component"
           class="vg-rowgroup-value"
           >{{ String(group.value) }}</span
         >

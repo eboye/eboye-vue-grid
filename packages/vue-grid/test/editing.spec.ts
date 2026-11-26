@@ -101,6 +101,19 @@ async function key(el: { trigger: VueWrapper['trigger'] }, k: string, init: obje
 }
 
 describe('inline editing', () => {
+  it('keeps another editor open when a checkbox save completes', async () => {
+    let finish!: () => void
+    const saveCell = () => new Promise<void>((resolve) => (finish = resolve))
+    const { w } = await mountGrid({ saveCell })
+    await dblclick(w, 1, 'active')
+    await dblclick(w, 1, 'name')
+    await input(w).setValue('Draft')
+    finish()
+    await settle()
+    expect(input(w).element.value).toBe('Draft')
+    w.unmount()
+  })
+
   it('double-click opens the editor; Enter emits cell-edit with a typed value and closes it', async () => {
     const { w, edits } = await mountGrid()
     await dblclick(w, 1, 'stake')

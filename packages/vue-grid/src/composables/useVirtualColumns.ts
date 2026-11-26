@@ -17,7 +17,9 @@ export interface UseVirtualColumnsOptions {
   /** `virtual-columns`: on, with options, or off. */
   options: () => VirtualColumnsOptions | boolean | undefined
   /** The shown columns in order, the selection checkbox included. */
-  columns: () => readonly ResolvedColumn[]
+  columns: () => readonly (ResolvedColumn & { sized?: boolean })[]
+  /** Keep the intrinsic width of columns whose pins may be temporarily suspended. */
+  keepSized?: (key: string) => boolean
 }
 
 /** What the grid's components need (part of the grid context). */
@@ -58,6 +60,12 @@ export function useVirtualColumns(o: UseVirtualColumnsOptions): VirtualColumnsSt
     return typeof v === 'object' ? v : {}
   })
 
+  function track(column: ResolvedColumn & { sized?: boolean }): string {
+    return always(column) || column.sized || o.keepSized?.(column.key)
+      ? trackSize(column.def)
+      : virtualTrack(column.def, config.value.width ?? '10rem')
+  }
+
   /** Track sizes in px, as laid out (null: not measured, or not a laid-out grid). */
   const sizes = shallowRef<number[] | null>(null)
   /** Scrolled distance from the start edge, in px (positive in RTL too). */
@@ -85,7 +93,9 @@ export function useVirtualColumns(o: UseVirtualColumnsOptions): VirtualColumnsSt
     // not laid out yet (first render): a first screenful, not every column
     const a = first.value < 0 ? 0 : first.value
     const b = first.value < 0 ? INITIAL - 1 : last.value
-    return cols.filter((c, i) => (i >= a && i <= b) || always(c) || c.key === focusKey.value)
+    return cols.filter(
+      (c, i) => (i >= a && i <= b) || always(c) || o.keepSized?.(c.key) || c.key === focusKey.value,
+    )
   })
 
   function read() {
@@ -147,12 +157,7 @@ export function useVirtualColumns(o: UseVirtualColumnsOptions): VirtualColumnsSt
   )
   // New columns, a resize or a reorder: the tracks move.
   watch(
-    () =>
-      active.value &&
-      o
-        .columns()
-        .map((c) => `${c.key}:${c.def.width ?? ''}:${c.def.minWidth ?? ''}:${c.pinned ?? ''}`)
-        .join('|'),
+    () => active.value && JSON.stringify(o.columns().map((column) => [column.key, track(column)])),
     schedule,
     { flush: 'post' },
   )
@@ -205,13 +210,6 @@ export function useVirtualColumns(o: UseVirtualColumnsOptions): VirtualColumnsSt
     },
     shows: (i, n) => first.value < 0 || (i + n - 1 >= first.value && i <= last.value),
     reveal,
-    template: (columns) => {
-      const fallback = config.value.width ?? '10rem'
-      // always rendered (their content is there) or resized (a width the user set, or auto-fit's
-      // `max-content` while it measures): as without virtualization
-      return columns
-        .map((c) => (always(c) || c.sized ? trackSize(c.def) : virtualTrack(c.def, fallback)))
-        .join(' ')
-    },
+    template: (columns) => columns.map(track).join(' '),
   }
 }

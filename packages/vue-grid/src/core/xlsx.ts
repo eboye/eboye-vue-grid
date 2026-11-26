@@ -7,6 +7,7 @@
 import { toDate, toNumber } from '../renderers/format'
 import type { ColumnDef } from '../types'
 import { plainText } from './csv'
+import { parseIsoDay } from './date'
 import { getCellValue } from './value'
 
 /** How a column's values are written: Excel number formats for money, percentages and dates. */
@@ -114,8 +115,11 @@ const FIRST_SERIAL = 61
 /** An Excel date serial: the wall-clock time in `timeZone` (date-only strings: that day). */
 function dateSerial(value: unknown, timeZone: string | undefined): number | null {
   if (typeof value === 'string') {
-    const m = DATE_ONLY.exec(value.trim())
-    if (m) return (Date.UTC(+m[1]!, +m[2]! - 1, +m[3]!) - EPOCH) / DAY
+    const day = value.trim()
+    if (DATE_ONLY.test(day)) {
+      const date = parseIsoDay(day)
+      return date ? (date.getTime() - EPOCH) / DAY : null
+    }
   }
   const d = toDate(value)
   if (!d) return null

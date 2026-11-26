@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, defineAsyncComponent, onBeforeUnmount, shallowRef, useId } from 'vue'
+import { computed, defineAsyncComponent, onBeforeUnmount, shallowRef } from 'vue'
 import { anchorNameFor, trackAnchor } from '../internal/anchor'
 import { useInternalGrid, type ResolvedColumn } from '../internal/context'
 import { useMessages } from '../internal/messages'
@@ -12,14 +12,16 @@ const VGridFilterPanel = defineAsyncComponent(() => import('./VGridFilterPanel.v
  * `popovertarget` invoker and its CSS anchor; JS only renders the panel while open (and runs the
  * anchor fallback where CSS anchor positioning is missing).
  */
-const props = defineProps<{ column: ResolvedColumn }>()
+const props = withDefaults(defineProps<{ column: ResolvedColumn; showButton?: boolean }>(), {
+  showButton: true,
+})
 const m = useMessages()
 
 // Rendered by the filtering feature only, so the grid always has filters here.
 const grid = useInternalGrid()
 const filters = grid.filters!
-const anchor = anchorNameFor(`filter-${useId()}`)
 const id = computed(() => filters.idFor(props.column.key))
+const anchor = computed(() => anchorNameFor(id.value))
 const button = shallowRef<HTMLButtonElement>()
 const panel = shallowRef<HTMLElement>()
 const open = shallowRef(false)
@@ -38,8 +40,9 @@ onBeforeUnmount(() => stopTracking())
 function onToggle(event: Event) {
   open.value = (event as ToggleEvent).newState === 'open'
   stopTracking()
-  if (open.value && panel.value && button.value)
-    stopTracking = trackAnchor(panel.value, button.value, 'bottom-end')
+  const target = button.value ?? panel.value?.closest<HTMLElement>('.vg-header-cell')
+  if (open.value && panel.value && target)
+    stopTracking = trackAnchor(panel.value, target, 'bottom-end')
   // The panel renders only while open (and loads lazily), so it focuses its own first field on mount.
 }
 // Events inside the popover must not reach the header cell (drag, sort, header menu).
@@ -48,6 +51,7 @@ const stop = (e: Event) => e.stopPropagation()
 
 <template>
   <button
+    v-if="showButton"
     ref="button"
     type="button"
     :class="['vg-icon-button', 'vg-filter-button', { 'vg-filter-on': active }]"

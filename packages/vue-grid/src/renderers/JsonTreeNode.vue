@@ -31,7 +31,7 @@ const isObject = computed(
 const isArray = computed(() => Array.isArray(resolved.value))
 const entries = computed<[string | number, unknown][]>(() =>
   isArray.value
-    ? (resolved.value as unknown[]).map((v, i) => [i, v])
+    ? Array.from(resolved.value as unknown[], (v, i) => [i, v])
     : isObject.value
       ? Object.entries(resolved.value as Record<string, unknown>)
       : [],

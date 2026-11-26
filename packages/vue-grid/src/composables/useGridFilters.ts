@@ -15,7 +15,7 @@ import {
   foldText,
   isFilterActive,
   localFilterStorage,
-  matchesFilter,
+  createFilterMatcher,
   setKey,
   type ColumnFilter,
   type FilterState,
@@ -141,12 +141,15 @@ export function useGridFilters<T>(opts: GridFiltersOptions<T>) {
     const searchable = q ? opts.visibleColumns().filter((c) => c.searchable !== false) : []
     if (!active.length && !q) return null
     const timeZone = opts.timeZone()
+    const checks = active.map(([col, filter]) => ({
+      col,
+      filter,
+      match: col.filterFn ? undefined : createFilterMatcher(filter, timeZone),
+    }))
     return (row: T) => {
-      for (const [col, filter] of active) {
+      for (const { col, filter, match } of checks) {
         const value = valueOf(row, col)
-        const ok = col.filterFn
-          ? col.filterFn(row, filter, value)
-          : matchesFilter(value, filter, { timeZone })
+        const ok = col.filterFn ? col.filterFn(row, filter, value) : match!(value)
         if (!ok) return false
       }
       return !q || searchable.some((col) => foldText(valueOf(row, col)).includes(q))

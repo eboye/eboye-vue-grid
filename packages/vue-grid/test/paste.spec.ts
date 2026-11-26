@@ -49,6 +49,14 @@ describe('parseNumber', () => {
 
 describe('parseDate', () => {
   const ymd = (d: Date | null) => d && [d.getFullYear(), d.getMonth() + 1, d.getDate()]
+  it('rejects impossible ISO dates and preserves years below 100', () => {
+    expect(parseDate('2026-02-30', 'en-US')).toBeNull()
+    expect(parseDate('2026-02-30T12:00', 'en-US')).toBeNull()
+    expect(ymd(parseDate('0050-01-01', 'en-US'))).toEqual([50, 1, 1])
+    expect(pasteValue('0050-01-01', 'date', { locale: 'en-US', oldValue: '2026-01-01' })).toBe(
+      '0050-01-01',
+    )
+  })
   it('ISO, and the locale’s order', () => {
     expect(ymd(parseDate('2026-05-23', 'en-US'))).toEqual([2026, 5, 23])
     expect(ymd(parseDate('05/23/2026', 'en-US'))).toEqual([2026, 5, 23])

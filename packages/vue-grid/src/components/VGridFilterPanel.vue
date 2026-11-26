@@ -101,6 +101,10 @@ function update(patch: Record<string, unknown>, debounce = false) {
   if (debounce) timer = window.setTimeout(() => emit('update:modelValue', next), 150)
   else emit('update:modelValue', next)
 }
+function clearFilter() {
+  window.clearTimeout(timer)
+  emit('update:modelValue', undefined)
+}
 const num = (s: string) => (s.trim() === '' ? null : Number(s))
 
 // ── Value list ──────────────────────────────────────────────────────────────────────────────
@@ -108,6 +112,8 @@ const search = ref('')
 
 // Options from a loader (e.g. a backend): fetched on open and per search (debounced, cancellable).
 const loaded = shallowRef<DistinctValue[]>([])
+const unsearched = shallowRef<DistinctValue[]>([])
+const loadedQuery = ref<string>()
 const loadingValues = ref(false)
 let valuesController: AbortController | undefined
 let searchTimer = 0
@@ -119,7 +125,11 @@ async function fetchValues(q: string) {
   loadingValues.value = true
   try {
     const result = await props.loadValues(q, { signal })
-    if (!signal.aborted) loaded.value = toDistinct(result)
+    if (!signal.aborted) {
+      loaded.value = toDistinct(result)
+      loadedQuery.value = q
+      if (!q) unsearched.value = loaded.value
+    }
   } catch {
     if (!signal.aborted) loaded.value = []
   } finally {
@@ -152,11 +162,11 @@ const hiddenValueCount = computed(() => shownValues.value.length - renderedValue
 const selected = computed(() =>
   props.modelValue?.type === 'set'
     ? new Set(props.modelValue.values)
-    : new Set(options.value.map((v) => v.key)),
+    : new Set([...(props.loadValues ? unsearched.value : []), ...options.value].map((v) => v.key)),
 )
 function emitSelection(keys: Set<string>) {
   // "Everything selected" means no filter — only knowable when the full list is shown.
-  const complete = !props.loadValues || !search.value
+  const complete = !props.loadValues || loadedQuery.value === ''
   const all = complete && options.value.every((v) => keys.has(v.key))
   const values = props.loadValues
     ? [...keys]
@@ -202,12 +212,7 @@ const customComponent = computed(
   <div ref="root" class="vg-filter-panel">
     <header class="vg-filter-head">
       <strong :id="`${uid}-title`">{{ title }}</strong>
-      <button
-        type="button"
-        class="vg-link-button"
-        :disabled="!modelValue"
-        @click="emit('update:modelValue', undefined)"
-      >
+      <button type="button" class="vg-link-button" :disabled="!modelValue" @click="clearFilter">
         Clear
       </button>
     </header>

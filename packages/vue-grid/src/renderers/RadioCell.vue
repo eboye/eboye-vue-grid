@@ -12,6 +12,15 @@ const { checked, disabled, reason, label } = useToggleControl(props)
 // (which would also fight the grid's arrow-key navigation) unless a `name` is given.
 const name = props.options.name ?? `vg-radio-${useId()}`
 
+function onClick(event: MouseEvent) {
+  if (props.options.name === undefined) return
+  event.preventDefault()
+  if (checked.value) return
+  const rowKey = props.rowKey
+  // Let native activation restore the old group before the app applies its decision.
+  window.setTimeout(() => emit('action', 'select', rowKey), 0)
+}
+
 function onChange(event: Event) {
   ;(event.target as HTMLInputElement).checked = checked.value
   if (!checked.value) emit('action', 'select', props.rowKey)
@@ -29,7 +38,7 @@ function onChange(event: Event) {
       :aria-label="label"
       :aria-description="reason || undefined"
       @change="onChange"
-      @click.stop
+      @click.stop="onClick"
     />
   </span>
 </template>

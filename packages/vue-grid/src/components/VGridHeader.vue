@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { anchorNameFor } from '../internal/anchor'
 import { tipAttrs } from '../internal/tooltip'
 import { onBeforeUnmount, shallowRef, watch } from 'vue'
 import type { SelectionSummary } from '../core/selection'
@@ -99,7 +100,12 @@ function ariaSort(col: ResolvedColumn) {
         col.def.headerClass,
         grid.ui.value.headerCell,
       ]"
-      :style="grid.pinStyle(col.key)"
+      :style="[
+        grid.pinStyle(col.key),
+        grid.filters && col.kind === 'data' && col.def.filterable && !part('filterButtons')
+          ? { 'anchor-name': anchorNameFor(grid.filters.idFor(col.key)) }
+          : undefined,
+      ]"
       :aria-colindex="grid.cols?.at(col.key)"
       @pointerdown="col.kind === 'data' && part('headerDrag') && emit('dragStart', $event, col.key)"
       @contextmenu="
@@ -158,7 +164,11 @@ function ariaSort(col: ResolvedColumn) {
           <template v-else>{{ col.def.header ?? col.key }}</template>
         </span>
         <template v-if="grid.filters && col.def.filterable">
-          <component :is="grid.filters.FilterButton" v-if="part('filterButtons')" :column="col" />
+          <component
+            :is="grid.filters.FilterButton"
+            :column="col"
+            :show-button="part('filterButtons')"
+          />
           <component
             :is="grid.filters.FilterInput"
             v-if="grid.filters.filterRow.value"

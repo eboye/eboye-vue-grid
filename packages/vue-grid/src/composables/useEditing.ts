@@ -111,7 +111,7 @@ export function editorOf(
 }
 
 const cellSelector = (rowKey: RowKey, key: string) =>
-  `[data-row-key="${CSS.escape(String(rowKey))}"] > .vg-cell[data-col-key="${CSS.escape(key)}"]`
+  `[data-row-key="${CSS.escape(String(rowKey))}"][data-vg-row-key-type="${typeof rowKey}"] > .vg-cell[data-col-key="${CSS.escape(key)}"]`
 
 /**
  * Inline cell editing (editing feature): one editor at a time. Opens on double-click, Enter / F2
@@ -225,10 +225,11 @@ export function useEditing<T>(opts: EditingOptions<T>) {
       }
       record([event])
     }
-    if (!toggle && !isEditing(rowKey, column.key)) return // another cell took over meanwhile
+    if (toggle ? state.value : !isEditing(rowKey, column.key)) return
     state.value = null
     if (move === 'blur') return
     await nextTick()
+    if (state.value) return
     if (move === 0 || !next(rowKey, column.key, move)) focusCell(rowKey, column.key)
   }
 
@@ -384,7 +385,7 @@ export function useEditing<T>(opts: EditingOptions<T>) {
     }
     const saver = opts.save()
     if (saver && result.edits.length) {
-      const settled = await Promise.allSettled(result.edits.map((e) => saver(e)))
+      const settled = await Promise.allSettled(result.edits.map(async (e) => saver(e)))
       settled.forEach((s, i) => {
         if (s.status === 'rejected') result.failed.push({ edit: result.edits[i]!, error: s.reason })
       })
@@ -437,16 +438,16 @@ export function useEditing<T>(opts: EditingOptions<T>) {
       stack.value = stack.value.slice(0, -1)
       state.value = null
       // the rows the grid has now, nested ones too (rows may have been replaced since the edit)
-      const byKey = new Map<string, T>()
+      const byKey = new Map<RowKey, T>()
       const walk = (rows: readonly T[]) => {
         for (const row of rows) {
-          byKey.set(String(opts.getKey(row)), row)
+          byKey.set(opts.getKey(row), row)
           const kids = opts.children(row)
           if (kids?.length) walk(kids)
         }
       }
       walk(opts.rows())
-      const find = (key: RowKey) => byKey.get(String(key))
+      const find = (key: RowKey) => byKey.get(key)
       const moves: { change: HistoryChange<T>; event: CellEditEvent<T> }[] = []
       for (const change of step) {
         const row = find(change.rowKey) ?? change.row
@@ -468,7 +469,7 @@ export function useEditing<T>(opts: EditingOptions<T>) {
       const saver = opts.save()
       let done = moves
       if (saver && moves.length) {
-        const settled = await Promise.allSettled(moves.map((m) => saver(m.event)))
+        const settled = await Promise.allSettled(moves.map(async (m) => saver(m.event)))
         done = moves.filter((_, i) => settled[i]!.status === 'fulfilled')
         // a save that failed: that change stays where it was, to try again
         const kept = moves.filter((_, i) => settled[i]!.status === 'rejected')

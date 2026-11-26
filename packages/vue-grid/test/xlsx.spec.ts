@@ -40,6 +40,13 @@ function cells(sheet: string, row: number) {
 // styles: index = format * 2 + bold; formats 0 general, 1 money, 2 date, 3 datetime, 4 percent
 const S = { text: 0, bold: 1, money: 2, date: 4, datetime: 6, percent: 8, boldMoney: 3 }
 
+it('keeps early years and invalid date-only string values as text', () => {
+  const dates = [{ day: '0050-01-01' }, { day: '2026-02-30' }]
+  const sheet = sheetOf(toXlsx(dates, [{ key: 'day' }], { formats: { day: 'date' } }))
+  expect(cells(sheet, 2)).toEqual([['A2', S.text, 'inlineStr', '0050-01-01']])
+  expect(cells(sheet, 3)).toEqual([['A3', S.text, 'inlineStr', '2026-02-30']])
+})
+
 describe('toXlsx', () => {
   const rows = [
     {

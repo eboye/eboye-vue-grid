@@ -73,6 +73,7 @@ onBeforeUnmount(() => {
             ],
       ]"
       :data-pinned-key="item.kind === 'total' ? undefined : String(item.key)"
+      :data-vg-row-key-type="item.kind === 'total' ? undefined : typeof item.key"
       :aria-rowindex="ariaStart !== undefined ? ariaStart + i : undefined"
       :aria-label="item.kind === 'total' ? grid.totals?.label.value : undefined"
     >
