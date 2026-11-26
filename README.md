@@ -626,11 +626,6 @@ publishes the grid, then the MCP server and the renderer template (skipping vers
 has, so a failed run can be re-run), and creates the GitHub release. A pre-release tag
 (`v0.4.0-beta.1`) publishes under the `next` dist-tag and marks the release as a pre-release.
 
-One-time setup, per package on npmjs.com (Package → Settings → Trusted publishing → GitHub
-Actions): organization `eboye`, repository `eboye-vue-grid`, workflow `release.yml`, no
-environment, and allow `npm publish` under the allowed actions. Then, under Publishing access,
-choose "Require two-factor authentication and disallow tokens".
-
 ## License
 
 MIT
