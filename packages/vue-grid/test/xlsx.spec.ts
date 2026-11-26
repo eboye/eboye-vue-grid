@@ -122,6 +122,58 @@ describe('toXlsx', () => {
     expect(cells(sheet, 1)).toEqual([['A1', S.percent, 'n', '0.125']])
   })
 
+  it('a sheet name Excel would reject: no apostrophe at either end', () => {
+    const name = (sheetName: string) =>
+      /<sheet name="([^"]*)"/.exec(
+        unzip(toXlsx([], [{ key: 'a' }], { sheetName }))['xl/workbook.xml']!,
+      )?.[1]
+    expect(name("'Q4'")).toBe('Q4')
+    expect(name("Bob's bets")).toBe("Bob's bets")
+    expect(name(`${'a'.repeat(30)}'tail`)).toBe('a'.repeat(30)) // cut at 31, then trimmed again
+    expect(name("''")).toBe('Sheet1')
+  })
+
+  it('dates Excel cannot show (before 1900-03-01) are written as text', () => {
+    const sheet = sheetOf(
+      toXlsx(
+        [
+          { d: '1900-03-01', t: '1900-03-01T06:00:00Z' },
+          { d: '1900-02-28', t: '1899-12-31T06:00:00Z' },
+          { d: '1850-06-15', t: new Date(Date.UTC(1850, 5, 15, 12, 5)) },
+        ],
+        [
+          { key: 'd', renderer: 'date' },
+          { key: 't', renderer: 'datetime' },
+        ],
+        { header: false, timeZone: 'UTC' },
+      ),
+    )
+    expect(cells(sheet, 1)).toEqual([
+      ['A1', S.date, 'n', '61'],
+      ['B1', S.datetime, 'n', '61.25'],
+    ])
+    expect(cells(sheet, 2)).toEqual([
+      ['A2', S.text, 'inlineStr', '1900-02-28'],
+      ['B2', S.text, 'inlineStr', '1899-12-31 06:00'],
+    ])
+    expect(cells(sheet, 3)).toEqual([
+      ['A3', S.text, 'inlineStr', '1850-06-15'],
+      ['B3', S.text, 'inlineStr', '1850-06-15 12:05'],
+    ])
+  })
+
+  it('columns are wide enough for numbers as Excel shows them', () => {
+    const widths = (v: number, renderer?: string) =>
+      [
+        ...sheetOf(toXlsx([{ v }], [{ key: 'v', header: 'V', renderer }])).matchAll(
+          /width="([\d.]+)"/g,
+        ),
+      ].map((m) => Number(m[1]))[0]!
+    // shown as 1,000,000,000,000,000,000,000.00 (32 characters)
+    expect(widths(1e21, 'currency')).toBeGreaterThanOrEqual(34)
+    expect(widths(1234.5, 'currency')).toBe(10) // 1,234.50 and 2 to spare
+  })
+
   it('drops characters XML does not allow', () => {
     const sheet = sheetOf(toXlsx([{ t: 'a\u0001b\u0007c' }], [{ key: 't' }]))
     expect(cells(sheet, 2)[0]![3]).toBe('abc')

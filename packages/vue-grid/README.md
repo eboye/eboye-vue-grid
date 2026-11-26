@@ -1089,7 +1089,8 @@ await grid.value?.exportXlsx({ filename: 'orders.xlsx', sheetName: 'Orders', tot
 - **Typed cells**: numbers stay numbers, booleans booleans, and dates are Excel dates, so the sheet
   can sum, sort and filter them. Number formats follow the renderer: `currency` (and `change` with
   `currency`) → `#,##0.00`, a percent `number` → `0.00%`, `date` → `yyyy-mm-dd`, `datetime` →
-  `yyyy-mm-dd hh:mm`, in the grid's `time-zone` (date-only values stay that day).
+  `yyyy-mm-dd hh:mm`, in the grid's `time-zone` (date-only values stay that day). Dates before
+  1900-03-01, which Excel can't show right, are written as text (`1899-12-31`).
 - A bold header frozen at the top, the totals as a bold last line, column widths from the content.
 - Text is written as text, never as a formula. `values: 'formatted'` writes the cells as shown.
 - The writer (2.9 kB gzip) loads the first time you export; it has no dependencies.

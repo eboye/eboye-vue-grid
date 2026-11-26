@@ -1,6 +1,6 @@
 {
   "name": "vue-grid",
-  "version": "0.21.0",
+  "version": "0.21.1",
   "description": "Build and fix <VGrid> data grids with @nocopypaste/vue-grid: the grid's rules and workflow as a skill, and an MCP server for exact API lookup, renderer details, doc search and config validation.",
   "author": {
     "name": "eboye"

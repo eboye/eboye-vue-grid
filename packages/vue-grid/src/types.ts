@@ -706,7 +706,7 @@ export interface ExportOptions {
 
 /** Options of `getXlsx` / `exportXlsx` (export feature): the CSV ones, without the text-only ones. */
 export interface XlsxExportOptions extends Omit<ExportOptions, 'delimiter' | 'guard'> {
-  /** The sheet's name (31 characters at most). Default `Sheet1`. */
+  /** The sheet's name (31 characters at most; `[]:*?/\` and an apostrophe at either end are dropped). Default `Sheet1`. */
   sheetName?: string
 }
 

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.21.1 — 2026-11-26
+
+Fix: Excel export. A sheet name starting or ending with an apostrophe (`'Q4'`), which Excel rejects
+as a damaged file, loses the apostrophe. Dates before 1900-03-01 are written as text: Excel showed
+January and February 1900 a day late and couldn't show earlier dates at all. Money and percentage
+columns are as wide as the amounts are shown (`1,000,000,000.00` showed as `###`). Checked by
+opening the files in LibreOffice, Gnumeric and openpyxl: types, number formats, Unicode, formula-like text, the
+frozen header and the totals line all come through.
+
 ## 0.21.0 — 2026-11-26
 
 **Five more language packs**: Italian (`locales/it`), Brazilian Portuguese (`locales/pt-BR`,

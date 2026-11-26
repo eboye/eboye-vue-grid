@@ -13,7 +13,7 @@ import { getCellValue } from './value'
 export type XlsxFormat = 'auto' | 'number' | 'money' | 'percent' | 'date' | 'datetime'
 
 export interface ToXlsxOptions {
-  /** The sheet's name (31 characters at most; `[]:*?/\` are dropped). Default `Sheet1`. */
+  /** The sheet's name (31 characters at most; `[]:*?/\` and an apostrophe at either end are dropped). Default `Sheet1`. */
   sheetName?: string
   /** A bold header line with the column headers, frozen. Default `true`. */
   header?: boolean
@@ -106,6 +106,8 @@ const styleOf = (fmt: number, bold: boolean) => STYLE_FMTS.indexOf(fmt) * 2 + (b
 const DAY = 86_400_000
 const EPOCH = Date.UTC(1899, 11, 30)
 const DATE_ONLY = /^(\d{4})-(\d{2})-(\d{2})$/
+/** 1900-03-01: from here on Excel's date serials match the real calendar. */
+const FIRST_SERIAL = 61
 
 /** An Excel date serial: the wall-clock time in `timeZone` (date-only strings: that day). */
 function dateSerial(value: unknown, timeZone: string | undefined): number | null {
@@ -181,13 +183,30 @@ function cell(
   })
   if (format === 'date' || format === 'datetime' || value instanceof Date) {
     const serial = dateSerial(value, tz)
-    if (serial !== null) {
-      const fmt = format === 'date' ? FMT_ID.date : FMT_ID.datetime
+    const fmt = format === 'date' ? FMT_ID.date : FMT_ID.datetime
+    if (serial !== null && serial >= FIRST_SERIAL)
       return num(serial, fmt, fmt === FMT_ID.date ? 10 : 16)
-    }
+    // Excel can't show it (its 1900 has a 29 February; nothing before 1900): the date as text
+    if (serial !== null)
+      value = new Date(EPOCH + serial * DAY)
+        .toISOString()
+        .slice(0, fmt === FMT_ID.date ? 10 : 16)
+        .replace('T', ' ')
   } else if (format === 'money' || format === 'number' || format === 'percent') {
     const n = toNumber(value)
-    if (n !== null) return num(n, FMT_ID[format], String(Math.round(n * 100) / 100).length + 4)
+    // the width of the number as shown (`#,##0.00` writes every digit of a large amount)
+    const shown = (x: number) =>
+      x.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    if (n !== null)
+      return num(
+        n,
+        FMT_ID[format],
+        format === 'money'
+          ? shown(n).length
+          : format === 'percent'
+            ? shown(n * 100).length + 1
+            : String(n).length + 2,
+      )
   } else if (typeof value === 'number' && Number.isFinite(value)) {
     return num(value, 0, String(value).length)
   } else if (typeof value === 'boolean') {
@@ -270,12 +289,13 @@ function stylesXml(): string {
   )
 }
 
-/** A valid sheet name: 1–31 characters, none of `[]:*?/\`. */
+/** A valid sheet name: 1–31 characters, none of `[]:*?/\`, no apostrophe at either end. */
 const sheetName = (name: string | undefined) =>
   (name ?? '')
     .replace(/[[\]:*?/\\]/g, '')
     .trim()
-    .slice(0, 31) || 'Sheet1'
+    .slice(0, 31)
+    .replace(/^['\s]+|['\s]+$/g, '') || 'Sheet1'
 
 /** The bytes of an .xlsx file with one sheet. */
 export function writeXlsx(sheet: XlsxSheet): Uint8Array {
