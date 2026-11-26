@@ -74,7 +74,7 @@ const icon = computed(() => {
   return spec ? { ...spec, icon: toRaw(spec.icon) } : null
 })
 const copyText = computed(() =>
-  props.options.copyable && !isEmpty.value
+  resolveOption(props.options.copyable, props.value, props.row) && !isEmpty.value
     ? (props.options.copyValue?.(props.value, props.row) ?? fullText.value)
     : '',
 )

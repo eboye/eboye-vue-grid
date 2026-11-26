@@ -812,9 +812,14 @@ const serverGroupBy = computed<string[] | undefined>(() => {
   const known = [...new Set(keys)].filter((k) => props.columns.some((c) => c.key === k))
   return known.length ? known : undefined
 })
+/** A sort key as the server reads it: with `field`, the column's `sortField` (else its key). */
+const forServer = (s: SortState): SortState => ({
+  ...s,
+  field: props.columns.find((c) => c.key === s.key)?.sortField ?? s.key,
+})
 const query = computed<GridQuery>(() => ({
-  sort: sortList.value[0] ?? null,
-  ...(props.multiSort ? { sorts: sortList.value } : {}),
+  sort: sortList.value[0] ? forServer(sortList.value[0]) : null,
+  ...(props.multiSort ? { sorts: sortList.value.map(forServer) } : {}),
   filters: filterState.value,
   page: paginated.value ? currentPage.value : 1,
   pageSize: paginated.value ? currentPageSize.value : null,
@@ -1727,19 +1732,15 @@ defineExpose<VGridExposed>({
     </template>
     <!-- A failed request keeps the rows already shown: say they're out of date. (With no rows, the
          empty row says it instead.) The next request clears it. -->
-    <template v-if="loadError && windowRows.length && part('loadErrorNotice')">
-      <slot name="load-error" :error="loadError" :retry="reload" :stale="true">
-        <div class="vg-load-error-banner" role="alert">
-          <span
-            >{{ messages.loadError ?? "Couldn't load the rows." }}
-            {{ messages.staleRows ?? 'These are from before.' }}</span
-          >
-          <button v-if="part('retry')" type="button" class="vg-link-button" @click="reload()">
-            {{ messages.retry ?? 'Retry' }}
-          </button>
-        </div>
-      </slot>
-    </template>
+    <!-- the error notices and "no match" come with their features (server data, filtering) -->
+    <component
+      :is="features.serverData.LoadError"
+      v-if="loadError && windowRows.length && part('loadErrorNotice') && features.serverData"
+      :error="loadError"
+      :retry="reload"
+      stale
+      :render="slots['load-error']"
+    />
     <!-- after filtering, how many rows match: read out by screen readers (filtering feature) -->
     <span v-if="filt" class="vg-sr-only" role="status">{{ filt.announcement.value }}</span>
     <div class="vg-viewport">
@@ -1819,38 +1820,21 @@ defineExpose<VGridExposed>({
             :class="['vg-empty', ui?.empty, { 'vg-sr-only': skeletonRows }]"
           >
             <slot v-if="isLoading" name="loading">{{ messages.loading ?? 'Loading…' }}</slot>
-            <slot
-              v-else-if="loadError"
-              name="load-error"
+            <component
+              :is="features.serverData.LoadError"
+              v-else-if="loadError && features.serverData"
               :error="loadError"
               :retry="reload"
-              :stale="false"
-            >
-              <span class="vg-no-match vg-load-error" role="alert">
-                {{ messages.loadError ?? "Couldn't load the rows." }}
-                <button v-if="part('retry')" type="button" class="vg-link-button" @click="reload()">
-                  {{ messages.retry ?? 'Retry' }}
-                </button>
-              </span>
-            </slot>
-            <slot
-              v-else-if="(serverMode || rows.length) && activeFilterCount"
-              name="no-match"
+              :render="slots['load-error']"
+            />
+            <component
+              :is="features.filtering.NoMatch"
+              v-else-if="(serverMode || rows.length) && activeFilterCount && features.filtering"
               :clear-filters="clearFilters"
               :filter-count="activeFilterCount"
-            >
-              <span class="vg-no-match">
-                {{ noMatchText ?? messages.noMatch ?? 'No rows match the current filters.' }}
-                <button
-                  v-if="part('clearFiltersButton')"
-                  type="button"
-                  class="vg-link-button"
-                  @click="clearFilters()"
-                >
-                  {{ messages.clearFilters ?? 'Clear filters' }}
-                </button>
-              </span>
-            </slot>
+              :text="noMatchText"
+              :render="slots['no-match']"
+            />
             <slot v-else name="empty">{{ emptyText ?? messages.empty ?? 'No data to show.' }}</slot>
           </div>
         </div>

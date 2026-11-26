@@ -15,7 +15,9 @@ const columns = [
 ]
 
 describe('agent API reference (generated)', () => {
-  it('is up to date with the sources', () => {
+  // 30 s: the generator builds a TypeScript program of the whole package (several seconds, more
+  // on a busy machine), which overran the default 5 s
+  it('is up to date with the sources', { timeout: 30_000 }, () => {
     // fails when a prop, column option, renderer or doc comment changed without `npm run gen:agent`
     expect(() =>
       execFileSync(process.execPath, ['scripts/gen-agent.mjs', '--check'], {

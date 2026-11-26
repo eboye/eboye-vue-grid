@@ -337,6 +337,10 @@
             },
             "dir": {
               "description": "`asc` or `desc`."
+            },
+            "field": {
+              "type": "string",
+              "description": "In a server query (`query.sort`, `query.sorts`, `query-change`): what the backend sorts by, the column's `sortField`, else its key. The grid adds it; you don't pass it."
             }
           },
           "required": [
@@ -362,6 +366,10 @@
           },
           "dir": {
             "description": "`asc` or `desc`."
+          },
+          "field": {
+            "type": "string",
+            "description": "In a server query (`query.sort`, `query.sorts`, `query-change`): what the backend sorts by, the column's `sortField`, else its key. The grid adds it; you don't pass it."
           }
         },
         "required": [
@@ -614,6 +622,10 @@
         "sortable": {
           "type": "boolean",
           "description": "A sort button in the header (sorting feature). Client sorting needs `sort-mode=\"client\"`."
+        },
+        "sortField": {
+          "type": "string",
+          "description": "Server sorting: the name the backend sorts this column by, when it isn't the column key (e.g. `'player.lastName'` or `'PLACED_AT'`). It arrives as `field` in `query.sort` / `query.sorts`; `v-model:sort` keeps the column key."
         },
         "sortValue": {
           "description": "The value client sorting compares (default: the renderer's sort value, else the cell value)."

@@ -19,6 +19,11 @@ export interface SortState {
   key: string
   /** `asc` or `desc`. */
   dir: SortDir
+  /**
+   * In a server query (`query.sort`, `query.sorts`, `query-change`): what the backend sorts by,
+   * the column's `sortField`, else its key. The grid adds it; you don't pass it.
+   */
+  field?: string
 }
 
 export type PinSide = 'left' | 'right'
@@ -146,6 +151,12 @@ export interface ColumnDef<T = any, R extends RendererRef = RendererName> {
   align?: Align
   /** A sort button in the header (sorting feature). Client sorting needs `sort-mode="client"`. */
   sortable?: boolean
+  /**
+   * Server sorting: the name the backend sorts this column by, when it isn't the column key
+   * (e.g. `'player.lastName'` or `'PLACED_AT'`). It arrives as `field` in `query.sort` /
+   * `query.sorts`; `v-model:sort` keeps the column key.
+   */
+  sortField?: string
   /** The value client sorting compares (default: the renderer's sort value, else the cell value). */
   sortValue?: (row: T) => unknown
   /** A full comparator for client sorting; wins over `sortValue`. */
@@ -833,10 +844,14 @@ export interface FilteringFeature {
   FilterButton: Component
   /** The filter-row editor. */
   FilterInput: Component
+  /** "No rows match the current filters" with Clear filters (the `#no-match` slot replaces it). */
+  NoMatch: Component
 }
 export interface ServerDataFeature {
   readonly feature: 'serverData'
   useDataSource: typeof import('./composables/useDataSource').useDataSource
+  /** A failed request: the notice with Retry (the `#load-error` slot replaces it). */
+  LoadError: Component
 }
 export interface PaginationFeature {
   readonly feature: 'pagination'

@@ -1,4 +1,4 @@
-# @nocopypaste/vue-grid 0.24.0 — API reference
+# @nocopypaste/vue-grid 0.25.0 — API reference
 
 > Generated from the TypeScript sources (`scripts/gen-agent.mjs`). Machine-readable: `agent/api.json`, `agent/grid-config.schema.json`.
 
@@ -209,6 +209,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `group` | `string` | `columnGroupsFeature` | Header group label (column groups feature): adjacent visible columns with the same `group` share one header cell above their own headers. |
 | `align` | `Align` |  | Cell and header alignment (default: the renderer's, e.g. `end` for numbers, else `start`). |
 | `sortable` | `boolean` | `sortingFeature` | A sort button in the header (sorting feature). Client sorting needs `sort-mode="client"`. |
+| `sortField` | `string` |  | Server sorting: the name the backend sorts this column by, when it isn't the column key (e.g. `'player.lastName'` or `'PLACED_AT'`). It arrives as `field` in `query.sort` / `query.sorts`; `v-model:sort` keeps the column key. |
 | `sortValue` | `(row: T) => unknown` | `sortingFeature` | The value client sorting compares (default: the renderer's sort value, else the cell value). |
 | `sortFn` | `(a: T, b: T) => number` | `sortingFeature` | A full comparator for client sorting; wins over `sortValue`. |
 | `pinned` | `PinSide` | `columnPinningFeature` | Initial pin side (the header menu can change it at runtime unless `pinnable: false`). |
@@ -260,7 +261,7 @@ Text, the default renderer (the only one `<VGrid>` bundles): ellipsis, line clam
 | `badge` | `RowFn<BadgeSpec \| string \| null \| undefined>` | Badge before (default) or after the value. |
 | `badgePosition` | `'start' \| 'end'` | Where `badge` goes: `start` (default, before the value) or `end`. |
 | `icon` | `RowFn<IconSpec \| null \| undefined>` | Icon before the value, e.g. `{ icon: BellIcon, tone: 'warning', label: 'Notify' }`. |
-| `copyable` | `boolean` | Adds a copy-to-clipboard button; emits `copy` with the copied text. |
+| `copyable` | `RowOption<boolean>` | Adds a copy-to-clipboard button, for every row or `(value, row) => boolean`; emits `copy` with the copied text. |
 | `copyValue` | `RowFn<string>` | What gets copied (default: the displayed text). |
 
 ### `toggle-text` — `toggleTextRenderer`
@@ -617,6 +618,7 @@ The first items of a list, with a “+N more” toggle. Emits `expand`. Align: `
 |---|---|---|
 | `key` | `string` | The sorted column’s `key`. |
 | `dir` | `SortDir` | `asc` or `desc`. |
+| `field`? | `string` | In a server query (`query.sort`, `query.sorts`, `query-change`): what the backend sorts by, the column's `sortField`, else its key. The grid adds it; you don't pass it. |
 
 ### `ColumnFilterOptions`
 

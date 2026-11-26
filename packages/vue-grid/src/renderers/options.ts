@@ -95,8 +95,8 @@ export interface TextOptions {
   badgePosition?: 'start' | 'end'
   /** Icon before the value, e.g. `{ icon: BellIcon, tone: 'warning', label: 'Notify' }`. */
   icon?: RowFn<IconSpec | null | undefined>
-  /** Adds a copy-to-clipboard button; emits `copy` with the copied text. */
-  copyable?: boolean
+  /** Adds a copy-to-clipboard button, for every row or `(value, row) => boolean`; emits `copy` with the copied text. */
+  copyable?: RowOption<boolean>
   /** What gets copied (default: the displayed text). */
   copyValue?: RowFn<string>
 }

@@ -1,6 +1,6 @@
 {
   "package": "@nocopypaste/vue-grid",
-  "version": "0.24.0",
+  "version": "0.25.0",
   "component": "VGrid",
   "props": [
     {
@@ -928,6 +928,12 @@
       "feature": "sorting"
     },
     {
+      "name": "sortField",
+      "type": "string",
+      "required": false,
+      "description": "Server sorting: the name the backend sorts this column by, when it isn't the column key (e.g. `'player.lastName'` or `'PLACED_AT'`). It arrives as `field` in `query.sort` / `query.sorts`; `v-model:sort` keeps the column key."
+    },
+    {
       "name": "sortValue",
       "type": "(row: T) => unknown",
       "required": false,
@@ -1475,9 +1481,9 @@
         },
         {
           "name": "copyable",
-          "type": "boolean",
+          "type": "RowOption<boolean>",
           "required": false,
-          "description": "Adds a copy-to-clipboard button; emits `copy` with the copied text."
+          "description": "Adds a copy-to-clipboard button, for every row or `(value, row) => boolean`; emits `copy` with the copied text."
         },
         {
           "name": "copyValue",
@@ -2570,6 +2576,12 @@
         "type": "SortDir",
         "required": true,
         "description": "`asc` or `desc`."
+      },
+      {
+        "name": "field",
+        "type": "string",
+        "required": false,
+        "description": "In a server query (`query.sort`, `query.sorts`, `query-change`): what the backend sorts by, the column's `sortField`, else its key. The grid adds it; you don't pass it."
       }
     ],
     "ColumnFilterOptions": [

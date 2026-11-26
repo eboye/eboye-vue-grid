@@ -61,6 +61,25 @@ describe('dataSource (server rows)', () => {
     expect(shownIds(w)).toHaveLength(23)
   })
 
+  it('sortField: the query says what the backend sorts by; v-model:sort keeps the column key', async () => {
+    const api = backend()
+    const w = mount(VGrid, {
+      props: {
+        dataSource: api.source,
+        columns: columns.map((c) => (c.key === 'score' ? { ...c, sortField: 'SCORE_TOTAL' } : c)),
+        rowKey: 'id',
+        multiSort: true,
+      },
+    })
+    await flushPromises()
+    await w.find('[data-col-key="score"] .vg-sort').trigger('click')
+    await flushPromises()
+    const last = api.queries.at(-1)!
+    expect(last.sort).toEqual({ key: 'score', dir: 'asc', field: 'SCORE_TOTAL' })
+    expect(last.sorts).toEqual([{ key: 'score', dir: 'asc', field: 'SCORE_TOTAL' }])
+    expect(w.emitted('update:sort')!.at(-1)).toEqual([{ key: 'score', dir: 'asc' }])
+  })
+
   it('sort and filter changes go to the backend; the grid does not sort or filter itself; page resets', async () => {
     const api = backend()
     const w = mount(VGrid, {
@@ -80,7 +99,7 @@ describe('dataSource (server rows)', () => {
     await w.find('[data-col-key="score"] .vg-sort').trigger('click')
     await flushPromises()
     const last = api.queries.at(-1)!
-    expect(last.sort).toEqual({ key: 'score', dir: 'asc' })
+    expect(last.sort).toEqual({ key: 'score', dir: 'asc', field: 'score' })
     expect(last.page).toBe(1) // new sort → first page
     expect(w.emitted('update:page')!.at(-1)).toEqual([1])
 
@@ -209,6 +228,7 @@ describe('query-change and client pagination', () => {
     expect((w.emitted('query-change') as GridQuery[][]).at(-1)![0]!.sort).toEqual({
       key: 'name',
       dir: 'asc',
+      field: 'name',
     })
     const count = w.emitted('query-change')!.length
     ;(w.vm as unknown as VGridExposed).setFilters({ columns: {}, search: '' }) // same as before

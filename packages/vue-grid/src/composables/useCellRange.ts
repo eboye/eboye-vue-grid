@@ -364,7 +364,7 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
           : 0
     if (!dx && !dy) return
     const before = [el.scrollLeft, el.scrollTop]
-    el.scrollBy(dx, dy)
+    el.scrollBy?.(dx, dy) // every browser has it; jsdom (unit tests) doesn't
     if (el.scrollLeft === before[0] && el.scrollTop === before[1]) return // at the end
     // the cell under the pointer, kept inside the rows
     const x = Math.min(Math.max(pointer.x, box.left + 2), box.right - 2)
