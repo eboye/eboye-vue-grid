@@ -159,6 +159,32 @@ describe('find', () => {
 })
 
 describe('replace', () => {
+  it('replaces only the original selected cells after rows and columns reorder', async () => {
+    const { w, rows } = make()
+    for (const row of rows) row.name = row.city = 'match'
+    api(w).selectRange({
+      start: { rowKey: 1, columnKey: 'name' },
+      end: { rowKey: 2, columnKey: 'name' },
+    })
+    await flushPromises()
+    await open(w, { key: 'h', ctrlKey: true })
+    await type('find', 'match')
+    await type('replace', 'changed')
+    rows.unshift(rows.splice(2, 1)[0]!)
+    await w.setProps({ columns: [columns[0], columns[2], columns[1], columns[3]] })
+    const replaceAll = [...bar()!.querySelectorAll('button')].find(
+      (button) => button.textContent?.trim() === 'Replace all',
+    )!
+    replaceAll.click()
+    await vi.waitFor(() => expect(w.emitted('cells-replace')).toHaveLength(1))
+    expect(rows.map(({ id, name, city }) => [id, name, city])).toEqual([
+      [3, 'match', 'match'],
+      [1, 'changed', 'match'],
+      [2, 'changed', 'match'],
+      [4, 'match', 'match'],
+    ])
+  })
+
   it('Replace all: every match, read as each column’s kind; read-only skipped; one undo', async () => {
     const { w, rows } = make()
     await open(w, { key: 'h', ctrlKey: true })
@@ -198,6 +224,31 @@ describe('replace', () => {
     expect(current(w)).toEqual(['3:name'])
     expect(matches(w)).toEqual(['3:name', '4:name'])
     w.unmount()
+  })
+
+  it('uses the same Unicode case matching for highlighting and replacing', async () => {
+    const { w, rows } = make()
+    rows[0]!.name = 'Kelvin'
+    await open(w, { key: 'h', ctrlKey: true })
+    await type('find', 'k')
+    expect(matches(w)).toEqual(['1:name'])
+    await type('replace', 'T')
+    await key(box('replace'), { key: 'Enter' })
+    await vi.waitFor(() => expect(rows[0]!.name).toBe('Telvin'))
+  })
+
+  it('counts a rejected save as unchanged only', async () => {
+    const { w } = make({
+      'onCell-edit': () => {},
+      saveCell: async () => {
+        throw new Error('Save failed')
+      },
+    })
+    await open(w, { key: 'h', ctrlKey: true })
+    await type('find', 'Bojan')
+    await type('replace', 'New name')
+    await key(box('replace'), { key: 'Enter' })
+    await vi.waitFor(() => expect(status()).toBe('0 replaced, 1 left as they were'))
   })
 
   it('without the editing feature, find only finds', async () => {

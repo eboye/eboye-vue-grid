@@ -841,9 +841,10 @@ const ds = features.serverData?.useDataSource<T>({
   onError: (error) => emit('load-error', error),
 })
 
-const sourceRows = computed<readonly T[]>(() =>
-  serverMode.value && ds ? ds.rows.value : props.rows,
-)
+const sourceRows = computed<readonly T[]>(() => {
+  if (!serverMode.value || !ds) return props.rows
+  return ds.matchesGrouping.value ? ds.rows.value : []
+})
 const isLoading = computed(() => props.loading || !!ds?.loading.value)
 /** Placeholder rows while loading with nothing to show yet (`skeleton`). */
 const skeletonRows = computed(() =>
@@ -902,7 +903,7 @@ const sel = features.selection?.useSelection<T>({
   matchingTotal: () => (serverMode.value ? ds?.total.value : undefined),
   matchKey: () => JSON.stringify(filterState.value),
 })
-// With server groups, the header checkbox selects every top-level group (by query).
+// With server groups, the header checkbox selects the current page's top-level groups.
 const allState = computed(() =>
   grouping?.server.value ? grouping.allServerState.value : (sel?.allState.value ?? 'none'),
 )
@@ -958,7 +959,12 @@ if (process.env.NODE_ENV !== 'production' && features.rowGrouping && !features.s
   })
 if (process.env.NODE_ENV !== 'production')
   watch(
-    () => serverGroupBy.value && ds && !ds.loading.value && !ds.error.value && !ds.groups.value,
+    () =>
+      serverGroupBy.value &&
+      ds?.matchesGrouping.value &&
+      !ds.loading.value &&
+      !ds.error.value &&
+      !ds.groups.value,
     (ignored) => {
       if (ignored)
         warnOnce(
@@ -1212,6 +1218,7 @@ const windowRows = computed(() => {
   }
   return displayRows.value
 })
+const virtualBodyCount = computed(() => Math.max(1, virtualLayout.value?.rowCount ?? 0))
 // Stay on a page that exists — when filters shrink the rows, the page size grows, the app sets an
 // out-of-range page, or the server's total shrinks — and write it back, so the pager and the rows
 // agree. (Server mode: once a response has said how many rows there are.)
@@ -1254,6 +1261,12 @@ const exporter = features.export?.useExport<T>({
   children: childrenOf,
   prepare: (rows, filtered) => (filtered ? prepareRows : sortRowsFn)(rows),
   selected,
+  isImplicitlySelected: (row) =>
+    !!grouping?.serverSelected(row) ||
+    (serverMode.value && selectAllMatching.value && !!sel?.isRowSelectable(row)),
+  hasImplicitSelection: () =>
+    (serverMode.value && selectAllMatching.value) ||
+    (!!grouping?.server.value && selectedGroups.value.length > 0),
   extraRows: () => [...(props.pinnedTopRows ?? []), ...(props.pinnedBottomRows ?? [])],
   pinnedRows: () => {
     const items = pins?.items.value
@@ -1268,15 +1281,21 @@ const exporter = features.export?.useExport<T>({
 })
 
 // ── Editing ─────────────────────────────────────────────────────────────────────────────────
+const availableDataRows = computed(() =>
+  grouping?.server.value
+    ? grouping.groups.value.flatMap((group) => grouping.rowsIn(group))
+    : sourceRows.value,
+)
 const editing = features.editing?.useEditing<T>({
   root,
   messages: () => messages.value,
   emit: (event) => emit('cell-edit', event),
   save: () => props.saveCell,
-  rows: () => sourceRows.value,
+  rows: () => availableDataRows.value,
   columns: () => props.columns,
   preload: () => features.editing!.preload(),
   locale: () => formatContext.value.locale,
+  timeZone: () => formatContext.value.timeZone,
   historyLimit: () => props.undoLimit ?? 100,
   undoKeys: () => part('undoShortcut'),
   children: childrenOf,
@@ -1348,10 +1367,7 @@ const statusBar = features.statusBar?.useStatusBar<T>({
         ? (ds?.total.value ?? sourceRows.value.length)
         : filteredTopRows.value.length,
   totalRowCount: () => (serverMode.value ? undefined : sourceRows.value.length),
-  rows: () =>
-    grouping?.server.value
-      ? grouping.groups.value.flatMap((group) => grouping.rowsIn(group))
-      : sourceRows.value,
+  rows: () => availableDataRows.value,
   selection: sel && { count: selectedTotal },
   selected,
   allMatching: selectAllMatching,
@@ -1595,7 +1611,10 @@ function collapseAll() {
 
 /** Field patches for lazily loaded child rows (top-level rows belong to the app: patch those). */
 function patchLoadedRows(patches: RowPatches<T>): number {
-  return (sub?.patchLoaded(patches) ?? 0) + (serverMode.value && ds ? ds.patch(patches) : 0)
+  return (
+    (sub?.patchLoaded(patches) ?? 0) +
+    (serverMode.value ? (ds?.patch(patches) ?? 0) + (grouping?.patchLoaded?.(patches) ?? 0) : 0)
+  )
 }
 
 function setFilters(state: FilterState) {
@@ -1796,10 +1815,7 @@ defineExpose<VGridExposed>({
         :aria-busy="isLoading || undefined"
         :aria-rowcount="
           virtualLayout
-            ? virtualLayout.rowCount +
-              headerRows +
-              pinnedItems.top.length +
-              pinnedItems.bottom.length
+            ? virtualBodyCount + headerRows + pinnedItems.top.length + pinnedItems.bottom.length
             : undefined
         "
         :aria-colcount="resolvedColumns.length"
@@ -1815,8 +1831,13 @@ defineExpose<VGridExposed>({
         @focusin="onFocusIn"
         @pointerdown="onPointerDown"
       >
-        <component :is="features.columnGroups.GroupRow" v-if="hasGroups && features.columnGroups" />
+        <component
+          :is="features.columnGroups.GroupRow"
+          v-if="hasGroups && features.columnGroups"
+          :aria-rowindex="virtualLayout ? 1 : undefined"
+        />
         <VGridHeader
+          :aria-rowindex="virtualLayout ? headerRows : undefined"
           :sorts="sortList"
           :all-state="allState"
           :has-selectable-rows="hasSelectableRows"
@@ -1838,7 +1859,12 @@ defineExpose<VGridExposed>({
         <template v-if="windowRows.length">
           <VGridRows :rows="windowRows" presorted :layout="virtualLayout ?? undefined" />
         </template>
-        <div v-else role="row" class="vg-empty-row">
+        <div
+          v-else
+          role="row"
+          class="vg-empty-row"
+          :aria-rowindex="virtualLayout ? headerRows + pinnedTopCount + 1 : undefined"
+        >
           <div
             :role="context.cellRole"
             :tabindex="context.rovingTabindex"
@@ -1881,9 +1907,7 @@ defineExpose<VGridExposed>({
           position="bottom"
           :items="pinnedItems.bottom"
           :aria-start="
-            virtualLayout
-              ? headerRows + pinnedItems.top.length + virtualLayout.rowCount + 1
-              : undefined
+            virtualLayout ? headerRows + pinnedItems.top.length + virtualBodyCount + 1 : undefined
           "
         />
       </div>

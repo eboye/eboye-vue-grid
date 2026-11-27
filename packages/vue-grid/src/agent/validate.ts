@@ -314,13 +314,29 @@ export function validateGridConfig(config: GridConfigInput): ValidationResult {
         `\`${kebab(fnProp)}\` must be a function (got ${typeName(v)}).`,
       )
   }
-  const pinnedRows = props.pinnedRows as any
+  const pinnedRows = props.pinnedRows
   if (
-    pinnedRows &&
+    pinnedRows != null &&
     (typeof pinnedRows !== 'object' ||
+      Array.isArray(pinnedRows) ||
       Object.keys(pinnedRows).some((k) => k !== 'top' && k !== 'bottom'))
   )
     report('error', 'props.pinnedRows', '`pinned-rows` is `{ top?: RowKey[], bottom?: RowKey[] }`.')
+  else if (pinnedRows && typeof pinnedRows === 'object') {
+    for (const side of ['top', 'bottom'] as const) {
+      const keys = (pinnedRows as Record<string, unknown>)[side]
+      if (
+        keys !== undefined &&
+        (!Array.isArray(keys) ||
+          Array.from(keys).some((key) => typeof key !== 'string' && !Number.isFinite(key)))
+      )
+        report(
+          'error',
+          `props.pinnedRows.${side}`,
+          'Expected an array of string or numeric row keys.',
+        )
+    }
+  }
 
   // ── columns ────────────────────────────────────────────────────────────────────────────────
   const columns = config.columns

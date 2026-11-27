@@ -10,8 +10,12 @@ import {
   type Ref,
 } from 'vue'
 import { buildLayout, locateRow, visibleSpan, type LevelLayout } from '../core/virtual'
+import { domRowKey, gridElement, gridElements, rowKeyAttrs } from '../internal/gridDom'
 import type { RowKey, VirtualOptions } from '../types'
 import type { SubRowEntry } from './useSubRows'
+
+const rowSelector = '.vg-row[data-row-key]'
+const heightId = (kind: 'd' | 's', key: RowKey) => `${kind}:${typeof key}:${key}`
 
 /** Plain-value readers over the sub-row cache, for a pass over many rows (see `useSubRows`). */
 export interface SubRowsSnapshot<T> {
@@ -136,7 +140,7 @@ export function useVirtualRows<T>(opts: VirtualRowsOptions<T>) {
   )
 
   // ── Measured heights ──────────────────────────────────────────────────────────────────────
-  /** Rendered heights by id (`d:<key>` detail rows, `s:<key>` status rows). */
+  /** Rendered heights by row kind and typed key. */
   const heights = shallowReactive(new Map<string, number>())
   /** Border + padding of sub-grid containers, above and below their rows. */
   const subgridChrome = shallowRef({ top: 0, bottom: 0 })
@@ -227,10 +231,11 @@ export function useVirtualRows<T>(opts: VirtualRowsOptions<T>) {
       getKey: key,
       rowHeight: v.rowHeight,
       prepare: opts.preparer(),
-      isExpanded: (row) => expandedKeys.has(rawKey(row)) && expandable(row),
+      isExpanded: (row) => expandedKeys.has(rawKey(row)),
+      canExpand: expandable,
       // group rows (row grouping) have no detail row
       detailHeight: (row, k) =>
-        detail && !isGroup?.(row) ? (measured.get(`d:${String(k)}`) ?? detailEstimate) : 0,
+        detail && !isGroup?.(row) ? (measured.get(heightId('d', k)) ?? detailEstimate) : 0,
       subRows: (row) => {
         if (!tree) return undefined
         const state = tree.state(row)
@@ -240,7 +245,7 @@ export function useVirtualRows<T>(opts: VirtualRowsOptions<T>) {
           return { status: state.status }
         return { children: kids ?? [] }
       },
-      statusHeight: (k) => measured.get(`s:${String(k)}`) ?? v.rowHeight,
+      statusHeight: (k) => measured.get(heightId('s', k)) ?? v.rowHeight,
       subgridChrome: subgridChrome.value,
     })
   })
@@ -262,18 +267,35 @@ export function useVirtualRows<T>(opts: VirtualRowsOptions<T>) {
   // themselves: around every re-render of a grid with variable-height rows, note the first row in
   // view, and correct the drift left after the DOM updates. Changes the user makes (rows, sort,
   // filter, expanding) are left alone, and flat grids (fixed-height rows only) skip all of it.
-  let anchor: { key: string; offset: number } | null = null
+  let anchor: { key: RowKey; offset: number } | null = null
   let lastRows: unknown
   let lastExpanded: unknown
   const variableHeights = () => opts.hasDetail() || opts.subRows() !== null
-  function firstRowInView(el: HTMLElement): { key: string; offset: number } | null {
-    const header =
-      el.querySelector(':scope > .vg-header')?.lastElementChild ??
-      el.querySelector('.vg-header-cell')
-    const top = header ? header.getBoundingClientRect().bottom : el.getBoundingClientRect().top
-    for (const row of el.querySelectorAll<HTMLElement>('.vg-row[data-row-key]')) {
+  function bodyBounds(el: HTMLElement) {
+    const viewport = el.getBoundingClientRect()
+    const header = el.querySelector(':scope > .vg-header > .vg-header-cell')
+    const pinnedTop = el.querySelector(':scope > .vg-pinned-top')
+    const pinnedBottom = el.querySelector(':scope > .vg-pinned-bottom')
+    const top = Math.max(
+      viewport.top,
+      header?.getBoundingClientRect().bottom ?? viewport.top,
+      pinnedTop?.getBoundingClientRect().bottom ?? viewport.top,
+    )
+    const bottom = Math.min(
+      viewport.bottom,
+      pinnedBottom?.getBoundingClientRect().top ?? viewport.bottom,
+    )
+    return { top, bottom }
+  }
+  function firstRowInView(el: HTMLElement): { key: RowKey; offset: number } | null {
+    const { top, bottom } = bodyBounds(el)
+    for (const row of gridElements<HTMLElement>(el, rowSelector)) {
       const cell = row.firstElementChild?.getBoundingClientRect()
-      if (cell && cell.bottom > top + 1) return { key: row.dataset.rowKey!, offset: cell.top - top }
+      if (cell && cell.bottom > top + 1 && cell.top < bottom)
+        return {
+          key: domRowKey(row.dataset.rowKey!, row.dataset.vgRowKeyType ?? null),
+          offset: cell.top - top,
+        }
     }
     return null
   }
@@ -305,13 +327,9 @@ export function useVirtualRows<T>(opts: VirtualRowsOptions<T>) {
       // the same row, if it is still the first one in view; otherwise find it
       let offset = now.key === held.key ? now.offset : null
       if (offset === null) {
-        const row = el.querySelector<HTMLElement>(`.vg-row[data-row-key="${CSS.escape(held.key)}"]`)
-        const header =
-          el.querySelector(':scope > .vg-header')?.lastElementChild ??
-          el.querySelector('.vg-header-cell')
-        if (!row || !header) return
-        offset =
-          row.firstElementChild!.getBoundingClientRect().top - header.getBoundingClientRect().bottom
+        const row = gridElement(el, `${rowSelector}${rowKeyAttrs(held.key)}`)
+        if (!row?.firstElementChild) return
+        offset = row.firstElementChild.getBoundingClientRect().top - bodyBounds(el).top
       }
       // whole pixels: sub-pixel offsets would otherwise nudge the scroll back and forth
       const drift = Math.round(offset - held.offset)
@@ -362,8 +380,8 @@ export function useVirtualRows<T>(opts: VirtualRowsOptions<T>) {
       }
     },
     scrolling,
-    measureDetail: (key) => (el) => measure(`d:${String(key)}`, el),
-    measureStatus: (key) => (el) => measure(`s:${String(key)}`, el),
+    measureDetail: (key) => (el) => measure(heightId('d', key), el),
+    measureStatus: (key) => (el) => measure(heightId('s', key), el),
     measureSubgrid,
   }
 

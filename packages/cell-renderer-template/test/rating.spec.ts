@@ -32,6 +32,25 @@ describe('RatingCell', () => {
     expect(w.find('[role="img"]').attributes('aria-label')).toMatch(/2 of 4/)
   })
 
+  it('sets one radio tab stop and wraps arrow-key selection', async () => {
+    const w = mount(RatingCell, {
+      attachTo: document.body,
+      props: { ...base, value: 3, options: { max: 3 } },
+    })
+    try {
+      const stars = w.findAll('[role="radio"]')
+      expect(stars.map((star) => star.attributes('tabindex'))).toEqual(['-1', '-1', '0'])
+      ;(stars[2]!.element as HTMLButtonElement).focus()
+      await stars[2]!.trigger('keydown', { key: 'ArrowRight' })
+      expect(document.activeElement).toBe(stars[0]!.element)
+      expect(stars.map((star) => star.attributes('tabindex'))).toEqual(['0', '-1', '-1'])
+      expect(w.emitted('action')).toEqual([['rate', 1]])
+      expect(stars[2]!.attributes('aria-checked')).toBe('true') // controlled by the app
+    } finally {
+      w.unmount()
+    }
+  })
+
   it('works inside VGrid via the plugin, with typed column options', async () => {
     const col = createColumnHelper<Product>()
     const columns = [

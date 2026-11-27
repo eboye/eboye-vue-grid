@@ -2,7 +2,7 @@
  * Pasting into the grid (range selection + editing): clipboard text as a block of cells, and a
  * cell's text as the value its column holds. Pure functions, no DOM.
  */
-import { parseIsoDay } from './date'
+import { fromWallTime, localDay, localDayKey, parseIsoDay, utcDay, wallFormatter } from './date'
 
 /**
  * Tab-separated text as rows of cells, the way spreadsheets put cells on the clipboard: tabs
@@ -74,6 +74,10 @@ export type PasteKind = 'text' | 'number' | 'date' | 'datetime' | 'select' | 'ch
 export interface PasteContext {
   /** The format locale (for `1.234,5` vs `1,234.5`, and the order of day, month and year). */
   locale: string
+  /** Offset-free datetimes are read in the renderer's time zone (default: local). */
+  timeZone?: string
+  /** A renderer showing a percentage uses fractional values. */
+  percent?: boolean
   /** The cell's value before: a date keeps its type (Date, timestamp, ISO text). */
   oldValue: unknown
   /** A select's choices (value and label). */
@@ -89,13 +93,15 @@ export function pasteValue(text: string, kind: PasteKind, ctx: PasteContext): un
   switch (kind) {
     case 'number': {
       if (!t) return null
+      const percent =
+        ctx.percent && (t.includes('%') || t.includes(numberParts(ctx.locale).percent))
       const n = parseNumber(t, ctx.locale)
-      return n === null ? new Error(`"${t}" is not a number.`) : n
+      return n === null ? new Error(`"${t}" is not a number.`) : percent ? n / 100 : n
     }
     case 'date':
     case 'datetime': {
       if (!t) return null
-      const d = parseDate(t, ctx.locale)
+      const d = parseDate(t, ctx.locale, kind === 'datetime' ? ctx.timeZone : undefined)
       if (!d) return new Error(`"${t}" is not a date.`)
       return asOld(d, ctx.oldValue, kind)
     }
@@ -120,16 +126,35 @@ export function pasteValue(text: string, kind: PasteKind, ctx: PasteContext): un
   }
 }
 
-/** The locale's decimal separator (`.` or `,`). */
-function decimalOf(locale: string): string {
+const localeNumbers = new Map<string, { decimal: string; percent: string; digits: string[] }>()
+function numberParts(locale: string) {
+  const cached = localeNumbers.get(locale)
+  if (cached) return cached
+  let result = { decimal: '.', percent: '%', digits: [] as string[] }
   try {
-    return (
-      new Intl.NumberFormat(locale).formatToParts(1.5).find((p) => p.type === 'decimal')?.value ??
-      '.'
-    )
+    const number = new Intl.NumberFormat(locale, { useGrouping: false })
+    result = {
+      decimal: number.formatToParts(1.5).find((p) => p.type === 'decimal')?.value ?? '.',
+      percent:
+        new Intl.NumberFormat(locale, { style: 'percent' })
+          .formatToParts(1)
+          .find((p) => p.type === 'percentSign')?.value ?? '%',
+      digits: Array.from({ length: 10 }, (_, digit) => number.format(digit)),
+    }
   } catch {
-    return '.'
+    // Unknown locale: keep the plain ASCII forms.
   }
+  localeNumbers.set(locale, result)
+  return result
+}
+
+function asciiDigits(text: string, locale: string): string {
+  if (/^[\x00-\x7f]*$/.test(text)) return text
+  let normalized = text.replace(/\p{Bidi_Control}/gu, '')
+  numberParts(locale).digits.forEach((digit, index) => {
+    if (digit !== String(index)) normalized = normalized.replaceAll(digit, String(index))
+  })
+  return normalized
 }
 
 /**
@@ -137,7 +162,12 @@ function decimalOf(locale: string): string {
  * With one separator that could be either (`1,234` / `1.234`), the locale decides.
  */
 export function parseNumber(text: string, locale: string): number | null {
-  let s = text.replace(/[\s  ']/g, '')
+  let s = asciiDigits(text, locale)
+    .replace(/[\s  '٬]/g, '')
+    .replaceAll('−', '-')
+  const localDecimal = numberParts(locale).decimal
+  const decimalSymbol = localDecimal === ',' ? ',' : '.'
+  if (localDecimal !== decimalSymbol) s = s.replaceAll(localDecimal, decimalSymbol)
   let sign = 1
   if (/^\(.*\)$/.test(s)) {
     sign = -1 // accounting negatives
@@ -154,7 +184,7 @@ export function parseNumber(text: string, locale: string): number | null {
     const parts = s.split(sep)
     // `1,234` / `1.234,567,8`: groups of three after it read as thousands, unless the locale says
     // that separator is its decimal one
-    const grouped = parts.length > 2 || (parts[1]!.length === 3 && decimalOf(locale) !== sep)
+    const grouped = parts.length > 2 || (parts[1]!.length === 3 && decimalSymbol !== sep)
     decimal = grouped ? null : sep
   }
   const thousands = decimal === '.' ? ',' : decimal === ',' ? '.' : s.includes(',') ? ',' : '.'
@@ -168,19 +198,33 @@ export function parseNumber(text: string, locale: string): number | null {
  * A date as people paste it: ISO (`2026-05-23`, with a time or not), or in the locale's order
  * (`05/23/2026` in en-US, `23.05.2026` in de, `23/05/2026` in en-GB), with an optional time.
  */
-export function parseDate(text: string, locale: string): Date | null {
-  const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text)
+export function parseDate(text: string, locale: string, timeZone?: string): Date | null {
+  text = asciiDigits(text, locale)
+  const iso =
+    /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2})(?:\.(\d+))?)?(Z|[+-]\d{2}:?\d{2})?)?$/i.exec(
+      text,
+    )
   if (iso) {
-    if (!parseIsoDay(text)) return null
-    return new Date(`${text}T00:00:00`)
-  }
-  if (/^\d{4}-\d{2}-\d{2}[T ]\d/.test(text)) {
     if (!parseIsoDay(text.slice(0, 10))) return null
-    const d = new Date(text.replace(' ', 'T'))
-    return Number.isNaN(d.getTime()) ? null : d
+    if (iso[8]) {
+      const instant = new Date(text.replace(' ', 'T'))
+      return Number.isFinite(instant.getTime()) ? instant : null
+    }
+    return readWallTime(
+      Number(iso[1]),
+      Number(iso[2]),
+      Number(iso[3]),
+      Number(iso[4] ?? 0),
+      Number(iso[5] ?? 0),
+      Number(iso[6] ?? 0),
+      Number((iso[7] ?? '').padEnd(3, '0').slice(0, 3)),
+      timeZone,
+    )
   }
   const m =
-    /^(\d{1,4})[./-](\d{1,2})[./-](\d{1,4})\.?(?:[ ,T]+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/.exec(text)
+    /^(\d{1,4})[./-](\d{1,2})[./-](\d{1,4})\.?(?:[\s,T]+(\d{1,2}):(\d{2})(?::(\d{2})(?:[.,](\d{1,3}))?)?(?:\s*(\p{L}[\p{L} .]*))?)?$/u.exec(
+      text,
+    )
   if (m) {
     const nums = [m[1], m[2], m[3]].map(Number) as [number, number, number]
     let y: number, mo: number, d: number
@@ -189,16 +233,79 @@ export function parseDate(text: string, locale: string): Date | null {
       const order = dateOrder(locale)
       const at = (k: 'year' | 'month' | 'day') => nums[order.indexOf(k)]!
       ;[y, mo, d] = [at('year'), at('month'), at('day')]
-      if (y < 100) y += 2000
+      if (y < 100 && m[order.indexOf('year') + 1]!.length <= 2) y += 2000
     }
-    const date = new Date(0)
-    date.setFullYear(y, mo - 1, d)
-    date.setHours(Number(m[4] ?? 0), Number(m[5] ?? 0), Number(m[6] ?? 0), 0)
-    // 31.02. rolls over into March: not a date
-    return date.getMonth() === mo - 1 && date.getDate() === d ? date : null
+    let hour = Number(m[4] ?? 0)
+    if (m[8]) {
+      const period = m[8].trim().toLowerCase()
+      const parts = new Intl.DateTimeFormat(locale, {
+        hour: 'numeric',
+        hour12: true,
+        timeZone: 'UTC',
+      })
+      const name = (h: number) =>
+        parts
+          .formatToParts(h * 3_600_000)
+          .find((part) => part.type === 'dayPeriod')
+          ?.value.toLowerCase()
+      if (hour < 1 || hour > 12) return null
+      if (period === 'am' || period === name(1)) hour %= 12
+      else if (period === 'pm' || period === name(13)) hour = (hour % 12) + 12
+      else return null
+    }
+    return readWallTime(
+      y,
+      mo,
+      d,
+      hour,
+      Number(m[5] ?? 0),
+      Number(m[6] ?? 0),
+      Number((m[7] ?? '').padEnd(3, '0')),
+      timeZone,
+    )
   }
+  // Don't let the engine normalize malformed ISO-looking dates in the fallback.
+  if (/^\d{4}-\d{2}-\d{2}[T ]\d/.test(text)) return null
   const any = new Date(text) // `May 23, 2026`, `23 May 2026` and friends
-  return Number.isNaN(any.getTime()) ? null : any
+  if (Number.isNaN(any.getTime())) return null
+  if (!timeZone || /(?:\b(?:GMT|UTC)|\d(?:Z|[+-]\d{2}:?\d{2})$)/i.test(text)) return any
+  return readWallTime(
+    any.getFullYear(),
+    any.getMonth() + 1,
+    any.getDate(),
+    any.getHours(),
+    any.getMinutes(),
+    any.getSeconds(),
+    any.getMilliseconds(),
+    timeZone,
+  )
+}
+
+const wallFormats = new Map<string, Intl.DateTimeFormat>()
+
+function readWallTime(
+  year: number,
+  month: number,
+  day: number,
+  hour: number,
+  minute: number,
+  second: number,
+  ms: number,
+  timeZone?: string,
+): Date | null {
+  if (hour > 23 || minute > 59 || second > 59) return null
+  const midnight = utcDay(year, month - 1, day)
+  const date = new Date(midnight)
+  if (date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) return null
+  if (timeZone) {
+    const wall = midnight + ((hour * 60 + minute) * 60 + second) * 1000 + ms
+    let formatter = wallFormats.get(timeZone)
+    if (!formatter) wallFormats.set(timeZone, (formatter = wallFormatter(timeZone)))
+    return fromWallTime(wall, formatter)
+  }
+  const local = localDay(year, month - 1, day)
+  local.setHours(hour, minute, second, ms)
+  return local.getDate() === day ? local : null
 }
 
 /** The order of day, month and year in the locale's short dates. */
@@ -224,8 +331,7 @@ function asOld(d: Date, old: unknown, kind: 'date' | 'datetime'): unknown {
   if (old instanceof Date) return d
   if (typeof old === 'number') return d.getTime()
   if (kind === 'datetime' || (typeof old === 'string' && old.length > 10)) return d.toISOString()
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${String(d.getFullYear()).padStart(4, '0')}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+  return localDayKey(d)
 }
 
 /**
@@ -247,7 +353,7 @@ function asDay(value: unknown): Date | null {
   if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value
   if (typeof value !== 'string') return null
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
-  if (m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]))
+  if (m) return parseIsoDay(value) ? localDay(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : null
   if (!/^\d{4}-\d{2}-\d{2}T\d/.test(value)) return null
   const d = new Date(value)
   return Number.isNaN(d.getTime()) ? null : d
@@ -256,8 +362,8 @@ function asDay(value: unknown): Date | null {
 /** Whole days from `a` to `b`, by the calendar (a daylight-saving change doesn't count). */
 const dayGap = (a: Date, b: Date) =>
   Math.round(
-    (Date.UTC(b.getFullYear(), b.getMonth(), b.getDate()) -
-      Date.UTC(a.getFullYear(), a.getMonth(), a.getDate())) /
+    (utcDay(b.getFullYear(), b.getMonth(), b.getDate()) -
+      utcDay(a.getFullYear(), a.getMonth(), a.getDate())) /
       86_400_000,
   )
 
@@ -266,10 +372,7 @@ function shiftDay(d: Date, days: number, like: unknown): unknown {
   const next = new Date(d)
   next.setDate(next.getDate() + days)
   if (like instanceof Date) return next
-  if (typeof like === 'string' && like.length === 10) {
-    const pad = (n: number) => String(n).padStart(2, '0')
-    return `${next.getFullYear()}-${pad(next.getMonth() + 1)}-${pad(next.getDate())}`
-  }
+  if (typeof like === 'string' && like.length === 10) return localDayKey(next)
   return next.toISOString()
 }
 
@@ -292,8 +395,11 @@ export function fillSeries(source: readonly unknown[], count: number): unknown[]
     )
     if (steady) {
       // rounded: 0.1 + 0.2 shows as 0.3, not 0.30000000000000004
-      for (let i = 1; i <= count; i++)
-        out.push(Number(((last as number) + step * i).toPrecision(12)))
+      const integerSeries = Number.isSafeInteger(step) && nums.every(Number.isSafeInteger)
+      for (let i = 1; i <= count; i++) {
+        const value = (last as number) + step * i
+        out.push(integerSeries ? value : Number(value.toPrecision(12)))
+      }
       return out
     }
   }
@@ -331,7 +437,7 @@ export function fillValue(value: unknown, kind: PasteKind, ctx: PasteContext): u
           ? value
           : typeof value === 'number'
             ? new Date(value)
-            : parseDate(String(value), ctx.locale)
+            : parseDate(String(value), ctx.locale, kind === 'datetime' ? ctx.timeZone : undefined)
       if (!d || Number.isNaN(d.getTime())) return new Error(`"${String(value)}" is not a date.`)
       return asOld(d, ctx.oldValue, kind)
     }

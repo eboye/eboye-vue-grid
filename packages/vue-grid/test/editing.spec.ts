@@ -236,6 +236,22 @@ describe('inline editing', () => {
     w.unmount()
   })
 
+  it('keeps a Date-backed editor value in its original century', async () => {
+    const early = new Date(0)
+    early.setFullYear(99, 0, 2)
+    early.setHours(0, 0, 0, 0)
+    const { w, edits } = await mountGrid({
+      rows: [{ ...makeRows()[0], placed: early }],
+    })
+    await dblclick(w, 1, 'placed')
+    expect(input(w).element.value).toBe('0099-01-02')
+    await input(w).setValue('0099-01-03')
+    await key(input(w), 'Enter')
+    expect(edits.at(-1)?.value).toBeInstanceOf(Date)
+    expect((edits.at(-1)?.value as Date).getFullYear()).toBe(99)
+    w.unmount()
+  })
+
   it('save-cell: saving state, a rejection reopens with its message, success closes', async () => {
     let reject: (e: unknown) => void = () => {}
     let resolve: () => void = () => {}

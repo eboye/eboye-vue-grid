@@ -74,6 +74,14 @@ const range = (a: [number, string], b: [number, string]): CellRange => ({
 const pasted = (w: VueWrapper) => w.emitted('cells-paste')!.at(-1)![0] as CellsPasteEvent<Row>
 
 describe('pasting into a range', () => {
+  it('clips a tall clipboard payload to the available rows', async () => {
+    const { w, rows } = make()
+    api(w).selectRange(range([2, 'name'], [2, 'name']))
+    const result = await api(w).pasteText('new name\n'.repeat(200_000))
+    expect(result?.edits.map(({ rowKey }) => rowKey)).toEqual([2, 3, 4])
+    expect(rows.slice(1).map(({ name }) => name)).toEqual(['new name', 'new name', 'new name'])
+  })
+
   it('a block from the top-left cell: typed values, skipped cells reported, the area selected', async () => {
     const { w, rows } = make()
     api(w).selectRange(range([3, 'stake'], [2, 'name'])) // top-left: Bo / name
@@ -138,6 +146,45 @@ describe('pasting into a range', () => {
     await flushPromises()
     await api(w).pasteText('23.05.2026\n1.6.2026')
     expect(rows.map((r) => r.placed).slice(0, 2)).toEqual(['2026-05-23', '2026-06-01'])
+    w.unmount()
+  })
+
+  it('uses the renderer’s percentage and grid time-zone formatting to paste displayed values', async () => {
+    const { w, rows } = make({
+      locale: 'en-GB',
+      timeZone: 'America/New_York',
+      columns: [
+        {
+          key: 'stake',
+          renderer: 'number',
+          rendererOptions: { format: { style: 'percent' } },
+          editable: true,
+        },
+        { key: 'placed', renderer: 'datetime', editable: true },
+      ],
+    })
+    api(w).selectRange(range([1, 'stake'], [1, 'stake']))
+    await flushPromises()
+    const result = await api(w).pasteText('15%\t23/05/2026 08:00:00')
+    expect(result?.skipped).toEqual([])
+    expect(rows[0]).toMatchObject({ stake: 0.15, placed: '2026-05-23T12:00:00.000Z' })
+    w.unmount()
+  })
+
+  it('builds inferred select choices once per column in a bulk paste', async () => {
+    const rows = Array.from({ length: 128 }, (_, id) => ({ id, status: 'Open' }))
+    const value = vi.fn((row: (typeof rows)[number]) => row.status)
+    const { w } = make({
+      rows,
+      columns: [{ key: 'status', editor: 'select', editable: true, value }],
+    })
+    api(w).selectRange(range([0, 'status'], [127, 'status']))
+    await flushPromises()
+    value.mockClear()
+    const result = await api(w).pasteText('Open')
+    expect(result?.skipped).toEqual([])
+    expect(result?.edits).toEqual([])
+    expect(value.mock.calls.length).toBeLessThan(512)
     w.unmount()
   })
 

@@ -11,7 +11,7 @@ import VGridPagination from '../src/components/VGridPagination.vue'
 import { defineCellRenderer } from '../src/registry/registry'
 import { numberRenderer } from '../src/renderers'
 import { createVueGrid } from '../src/registry/plugin'
-import type { ColumnDef } from '../src/types'
+import type { ColumnDef, VGridExposed } from '../src/types'
 
 interface Row {
   id: number
@@ -427,6 +427,210 @@ describe('VGrid selection', () => {
 })
 
 describe('VGrid virtual mode', () => {
+  function mockMeasurements() {
+    const observers = new Map<Element, ResizeObserverCallback>()
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        constructor(private callback: ResizeObserverCallback) {}
+        observe(el: Element) {
+          observers.set(el, this.callback)
+        }
+        unobserve(el: Element) {
+          observers.delete(el)
+        }
+        disconnect() {}
+      },
+    )
+    return (element: Element, height: number) => {
+      const size = [{ inlineSize: 100, blockSize: height }]
+      observers.get(element)!(
+        [
+          {
+            target: element,
+            borderBoxSize: size,
+            contentBoxSize: size,
+            devicePixelContentBoxSize: size,
+            contentRect: new DOMRect(0, 0, 100, height),
+          },
+        ],
+        {} as ResizeObserver,
+      )
+    }
+  }
+
+  const frame = () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
+
+  it('indexes header, detail, lazy status and empty rows', async () => {
+    const w = mount(VGrid, {
+      props: {
+        rows: [{ id: 1, name: 'Parent' }],
+        columns: [{ key: 'name', group: 'Name' }],
+        rowKey: 'id',
+        virtual: { rowHeight: 40 },
+        expanded: [1],
+        loadSubRows: () => new Promise(() => {}),
+      },
+      slots: { detail: '<p>Detail</p>' },
+    })
+    try {
+      await flushPromises()
+      expect(w.find('.vg').attributes('aria-rowcount')).toBe('5')
+      expect(w.findAll('[role="row"]').map((row) => row.attributes('aria-rowindex'))).toEqual([
+        '1',
+        '2',
+        '3',
+        '4',
+        '5',
+      ])
+      await w.setProps({ rows: [] })
+      expect(w.find('.vg').attributes('aria-rowcount')).toBe('3')
+      expect(w.find('.vg-empty-row').attributes('aria-rowindex')).toBe('3')
+    } finally {
+      w.unmount()
+    }
+  })
+
+  it('renders the first reactive child of a row that is already expanded', async () => {
+    type TreeRow = { id: number; name: string; kids?: TreeRow[] }
+    const rows = reactive<TreeRow[]>([{ id: 1, name: 'Parent', kids: [] }])
+    const w = mount(VGrid, {
+      props: {
+        rows,
+        columns: [{ key: 'name' }],
+        rowKey: 'id',
+        virtual: { rowHeight: 40 },
+        expanded: [1],
+        subRows: (row: TreeRow) => row.kids,
+      },
+    })
+    try {
+      expect(w.find('.vg').attributes('aria-rowcount')).toBe('2')
+      rows[0]!.kids!.push({ id: 2, name: 'Child' })
+      await nextTick()
+      expect(w.find('[data-row-key="2"]').text()).toBe('Child')
+      expect(w.find('.vg').attributes('aria-rowcount')).toBe('3')
+    } finally {
+      w.unmount()
+    }
+  })
+
+  it('keeps measured detail heights separate for numeric and string row keys', async () => {
+    const measure = mockMeasurements()
+    const w = mount(VGrid, {
+      attachTo: document.body,
+      props: {
+        rows: [{ id: 1 }, { id: '1' }, { id: 2 }],
+        columns: [{ key: 'id' }],
+        rowKey: 'id',
+        virtual: { rowHeight: 40 },
+        expanded: [1, '1'],
+      },
+      slots: { detail: '<p>Detail</p>' },
+    })
+    try {
+      const details = w.findAll('.vg-detail')
+      for (const [i, detail] of details.entries()) measure(detail.element, i ? 180 : 60)
+      await frame()
+      await nextTick()
+      const api = w.vm as unknown as VGridExposed
+      api.scrollToRow(2)
+      expect(w.find('.vg').element.scrollTop).toBe(320)
+    } finally {
+      w.unmount()
+      vi.unstubAllGlobals()
+    }
+  })
+
+  it('anchors a virtual height change to an owned row in the unobscured body', async () => {
+    const measure = mockMeasurements()
+    const w = mount(VGrid, {
+      attachTo: document.body,
+      props: {
+        rows: [{ id: 1 }, { id: 2 }],
+        columns: [{ key: 'id' }],
+        rowKey: 'id',
+        expanded: [1],
+        virtual: { rowHeight: 40 },
+        pinnedTopRows: [{ id: 9 }],
+      },
+      slots: {
+        detail: () => h(VGrid, { rows: [{ id: 2 }], columns: [{ key: 'id' }], rowKey: 'id' }),
+      },
+    })
+    try {
+      const outer = w.find<HTMLElement>('.vg')
+      const rect = (top: number, bottom: number) => new DOMRect(0, top, 100, bottom - top)
+      for (const [selector, top, bottom] of [
+        [':scope > .vg-header > .vg-header-cell', 0, 35],
+        [':scope > .vg-pinned-top', 35, 100],
+        [':scope > [data-row-key="1"] > .vg-cell', 40, 80],
+        ['.vg-detail .vg-row > .vg-cell', 110, 130],
+      ] as const) {
+        const el = outer.find(selector).element
+        vi.spyOn(el, 'getBoundingClientRect').mockReturnValue(rect(top, bottom))
+      }
+      vi.spyOn(outer.element, 'getBoundingClientRect').mockReturnValue(rect(0, 300))
+      outer.element.scrollTop = 20
+      await outer.trigger('scroll')
+      await frame()
+      await nextTick()
+      const bodyCell = outer.find(':scope > [data-row-key="2"] > .vg-cell').element
+      vi.spyOn(bodyCell, 'getBoundingClientRect')
+        .mockReturnValueOnce(rect(140, 180))
+        .mockReturnValue(rect(170, 210))
+      measure(outer.find('.vg-detail').element, 190)
+      await frame()
+      await nextTick()
+      expect(outer.element.scrollTop).toBe(50)
+    } finally {
+      w.unmount()
+      vi.unstubAllGlobals()
+    }
+  })
+
+  it('keeps outer arrow navigation out of an independent detail grid', async () => {
+    const w = mount(VGrid, {
+      attachTo: document.body,
+      props: {
+        rows: [{ id: 1 }, { id: 2 }],
+        columns: [{ key: 'id' }],
+        rowKey: 'id',
+        expanded: [1],
+      },
+      slots: {
+        detail: () => h(VGrid, { rows: [{ id: 3 }], columns: [{ key: 'id' }], rowKey: 'id' }),
+      },
+    })
+    try {
+      const detail = w.find<HTMLElement>('.vg-detail')
+      detail.element.focus()
+      await detail.trigger('keydown', { key: 'ArrowDown' })
+      expect(document.activeElement).toBe(w.find('[data-row-key="2"] > [role="gridcell"]').element)
+    } finally {
+      w.unmount()
+    }
+  })
+
+  it('enters a radio group at its active tab stop', async () => {
+    const w = mount(VGrid, {
+      attachTo: document.body,
+      props: { rows: [{ id: 1 }], columns: [{ key: 'id' }], rowKey: 'id' },
+      slots: {
+        'cell-id': `<span role="radiogroup">
+          <button role="radio" tabindex="-1" aria-checked="false">First</button>
+          <button role="radio" tabindex="0" aria-checked="true">Second</button>
+        </span>`,
+      },
+    })
+    try {
+      await w.find('[data-row-key="1"] > [role="gridcell"]').trigger('keydown', { key: 'Enter' })
+      expect(document.activeElement).toBe(w.find('[role="radio"][tabindex="0"]').element)
+    } finally {
+      w.unmount()
+    }
+  })
+
   it('renders a bounded window of rows', () => {
     const many = Array.from({ length: 10_000 }, (_, i) => ({
       id: i,

@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { config, flushPromises, mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import VGridComponent from '../src/components/VGrid.vue'
-import { groupRows, isRowGroup, type RowGroup } from '../src/core/grouping'
+import { groupRows, isRowGroup, pathKey, type RowGroup } from '../src/core/grouping'
 import { sortingFeature } from '../src/features'
 import { createVueGrid } from '../src/registry/plugin'
 import { allRenderers } from '../src/renderers'
@@ -56,6 +56,15 @@ const groupRow = (w: Wrapper, label: string) =>
 
 describe('groupRows', () => {
   const opts = { columns: [columns[1]!], allColumns: columns }
+
+  it('keeps hierarchy tokens in group values and column keys distinct from path boundaries', () => {
+    const parent = { key: 'a', value: 'one' }
+    const child = { key: 'b', value: 'two' }
+    expect(pathKey([{ key: 'a', value: 'one\u001eb=stwo' }])).not.toBe(pathKey([parent, child]))
+    expect(pathKey([{ key: 'a', value: 'one=stwo' }])).not.toBe(
+      pathKey([{ key: 'a=sone', value: 'two' }]),
+    )
+  })
 
   it('groups by value in value order, blank last, keeping row order inside', () => {
     const groups = groupRows(rows, opts)

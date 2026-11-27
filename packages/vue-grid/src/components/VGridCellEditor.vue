@@ -10,6 +10,7 @@ import {
   type Component,
 } from 'vue'
 import { editorOf, type EditMove } from '../composables/useEditing'
+import { localDay, localDayKey } from '../core/date'
 import { getCellValue } from '../core/value'
 import {
   anchorNameFor,
@@ -37,7 +38,6 @@ const options = computed(() => def.editorOptions ?? {})
 const choices = kind === 'select' ? editing.choices(def) : []
 
 const pad = (n: number) => String(n).padStart(2, '0')
-const localDate = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 function toDate(v: unknown): Date | null {
   if (v === null || v === undefined || v === '') return null
   const d = v instanceof Date ? v : new Date(v as string | number)
@@ -48,11 +48,11 @@ function toText(v: unknown): string {
   if (kind === 'date') {
     if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v)) return v
     const d = toDate(v)
-    return d ? localDate(d) : ''
+    return d ? localDayKey(d) : ''
   }
   if (kind === 'datetime') {
     const d = toDate(v)
-    return d ? `${localDate(d)}T${pad(d.getHours())}:${pad(d.getMinutes())}` : ''
+    return d ? `${localDayKey(d)}T${pad(d.getHours())}:${pad(d.getMinutes())}` : ''
   }
   if (kind === 'select') return String(choices.findIndex((c) => Object.is(c.value, v)))
   return v === null || v === undefined ? '' : String(v)
@@ -98,8 +98,8 @@ function parse(): unknown {
     case 'date': {
       if (!t) return null
       const [y, mo, d] = t.split('-').map(Number) as [number, number, number]
-      if (old instanceof Date) return new Date(y, mo - 1, d)
-      if (typeof old === 'number') return new Date(y, mo - 1, d).getTime()
+      if (old instanceof Date) return localDay(y, mo - 1, d)
+      if (typeof old === 'number') return localDay(y, mo - 1, d).getTime()
       // an ISO date-time: the new day, the same time of day (as the input showed it, local)
       const was = typeof old === 'string' && old.length > 10 ? toDate(old) : null
       if (was) {

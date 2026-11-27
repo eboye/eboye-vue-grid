@@ -64,6 +64,7 @@ export function useRowGrouping<T>(opts: RowGroupingOptions<T>) {
   })
   const server = computed(() => !!groups.value[0]?.server)
   const selectedGroupCount = srv?.selectedCount(eachGroup) ?? computed(() => 0)
+  const selectedRowKeys = computed(() => new Set(opts.selected.value))
 
   /** A group's sub-groups or rows: the built ones, or (server) the loaded ones. */
   const childrenOf = (group: RowGroup<T>): T[] | undefined =>
@@ -90,7 +91,7 @@ export function useRowGrouping<T>(opts: RowGroupingOptions<T>) {
   /** Groups toggled away from the default. */
   const toggled = shallowRef<ReadonlySet<RowKey>>(new Set())
   watch(
-    [() => by.value.map((c) => c.key).join('\u001e'), opts.expandedByDefault],
+    [() => JSON.stringify(by.value.map((c) => c.key)), opts.expandedByDefault],
     () => (toggled.value = new Set()),
   )
 
@@ -165,7 +166,7 @@ export function useRowGrouping<T>(opts: RowGroupingOptions<T>) {
     const checkState = (group: RowGroup<T>) => {
       if (group.server && srv) return srv.checkState(group)
       const keys = selectableKeys(group)
-      const picked = new Set(opts.selected.value)
+      const picked = selectedRowKeys.value
       const n = keys.filter((k) => picked.has(k)).length
       return n === 0 ? 'none' : n === keys.length ? 'all' : 'some'
     }
@@ -246,6 +247,8 @@ export function useRowGrouping<T>(opts: RowGroupingOptions<T>) {
     /** A group's rows (export, print): server groups' loaded ones. */
     rowsIn: (group: RowGroup<T>): T[] =>
       group.server ? (srv?.rowsIn(group) ?? []) : (group.rows as T[]),
+    serverSelected: (row: T) => server.value && !!srv?.locked(row),
+    patchLoaded: srv?.patchLoaded,
     /** Rows of the selected server groups. */
     selectedGroupCount,
     allServerState: computed(() => (srv ? srv.allState(groups.value) : 'none')),

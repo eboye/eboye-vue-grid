@@ -18,6 +18,7 @@ concurrency:
 
 jobs:
   publish:
+    if: github.server_url == 'https://github.com'
     runs-on: ubuntu-latest # trusted publishing needs a GitHub-hosted runner
     steps:
       - uses: actions/checkout@v6

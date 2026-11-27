@@ -1,4 +1,5 @@
 import type { Ref } from 'vue'
+import { gridElement, gridElements } from '../internal/gridDom'
 
 // Group header cells (column groups) aren't interactive: the arrow keys skip them.
 const CELL = ':is([role="gridcell"], [role="columnheader"]):not(.vg-group-cell)'
@@ -27,10 +28,7 @@ const RESIZE_STEP = 16
 export function useGridKeyboard(root: Ref<HTMLElement | undefined>, opts: GridKeyboardOptions) {
   let lastCell: HTMLElement | null = null
 
-  const rows = () =>
-    Array.from(
-      root.value?.querySelectorAll<HTMLElement>('[role="row"]:not(.vg-header-groups)') ?? [],
-    )
+  const rows = () => gridElements<HTMLElement>(root.value, '[role="row"]:not(.vg-header-groups)')
   const cellsOf = (row: Element) =>
     Array.from(row.children).filter((c): c is HTMLElement => c.matches(CELL))
 
@@ -91,9 +89,12 @@ export function useGridKeyboard(root: Ref<HTMLElement | undefined>, opts: GridKe
     const target = event.target as HTMLElement
     if (target === root.value) {
       // Tabbing into the grid: resume where the user left off, else the first header cell.
-      const resume = lastCell?.isConnected ? lastCell : root.value?.querySelector<HTMLElement>(CELL)
+      const resume =
+        lastCell?.isConnected && lastCell.closest('.vg') === root.value
+          ? lastCell
+          : gridElement<HTMLElement>(root.value, CELL)
       focusCell(resume)
-    } else if (target.matches(CELL)) {
+    } else if (target.matches(CELL) && target.closest('.vg') === root.value) {
       lastCell = target
     }
   }
@@ -134,7 +135,7 @@ export function useGridKeyboard(root: Ref<HTMLElement | undefined>, opts: GridKe
       return
     }
 
-    const expander = cell.querySelector<HTMLButtonElement>(':scope .vg-expander')
+    const expander = gridElement<HTMLButtonElement>(root.value, '.vg-expander', cell)
     let next: HTMLElement | undefined
     let vertical = false
     /** Virtualized columns: the column a horizontal key goes to, and the row it is in. */
@@ -202,7 +203,15 @@ export function useGridKeyboard(root: Ref<HTMLElement | undefined>, opts: GridKe
                 shiftKey: event.shiftKey,
               }),
             )
-          else inner.focus()
+          else {
+            const radio = inner.matches('[role="radio"]')
+              ? inner
+                  .closest('[role="radiogroup"]')
+                  ?.querySelector<HTMLElement>('[role="radio"][tabindex="0"]')
+              : null
+            const target = radio ?? inner
+            target.focus()
+          }
         } else if (!isHeader) {
           cell.click()
         }
@@ -210,7 +219,11 @@ export function useGridKeyboard(root: Ref<HTMLElement | undefined>, opts: GridKe
         return
       }
       case ' ': {
-        const checkbox = cell.parentElement?.querySelector<HTMLInputElement>('.vg-checkbox input')
+        const checkbox = gridElement<HTMLInputElement>(
+          root.value,
+          '.vg-checkbox input',
+          cell.parentElement,
+        )
         if (checkbox && !isHeader) {
           // Shift+Space selects a range, like a shift-click
           checkbox.dispatchEvent(

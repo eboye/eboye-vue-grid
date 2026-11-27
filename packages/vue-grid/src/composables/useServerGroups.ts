@@ -1,6 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- rows are an opaque, type-erased T inside the grid internals. */
 import { computed, onScopeDispose, shallowReactive, toRaw, watch, watchEffect, type Ref } from 'vue'
-import { groupedLevels, isRowGroup, pathKey, serverGroups, type RowGroup } from '../core/grouping'
+import {
+  GROUP_PATH_SEPARATOR,
+  groupedLevels,
+  isRowGroup,
+  pathKey,
+  serverGroups,
+  type RowGroup,
+} from '../core/grouping'
+import { patchRows, type RowPatches } from '../core/patch'
 import type { ColumnDef, RowKey } from '../types'
 import type { DataSourceResult, GroupPath, ServerGroup } from './useDataSource'
 import type { SubRowEntry } from './useSubRows'
@@ -20,7 +28,7 @@ export interface ServerGroupsOptions<T> {
 }
 
 /** `key` is the group `of` or inside it. */
-const within = (key: string, of: string) => key === of || key.startsWith(`${of}\u001e`)
+const within = (key: string, of: string) => key === of || key.startsWith(of + GROUP_PATH_SEPARATOR)
 
 /**
  * The server grouping feature: groups from the data source, each one's contents loaded when it
@@ -49,13 +57,18 @@ export function useServerGroups<T>(opts: ServerGroupsOptions<T>) {
   }
 
   function load(group: RowGroup<T>, by: readonly ColumnDef<T>[]) {
+    if (!opts.top()) return
     requests.get(group.key)?.abort()
     const controller = new AbortController()
     requests.set(group.key, controller)
     cache.set(group.key, { status: 'loading' })
     const next = by[group.level + 1]
     Promise.resolve()
-      .then(() => opts.load(group.path as GroupPath, controller.signal))
+      .then(() =>
+        !controller.signal.aborted && opts.top()
+          ? opts.load(group.path as GroupPath, controller.signal)
+          : undefined,
+      )
       .then(
         (result) => {
           if (requests.get(group.key) !== controller) return
@@ -90,6 +103,7 @@ export function useServerGroups<T>(opts: ServerGroupsOptions<T>) {
 
   // ── Selection by query ──────────────────────────────────────────────────────────────────
   const selectedKeys = computed(() => new Set(opts.selectedGroups.value.map((p) => pathKey(p))))
+  const selectedRowKeys = computed(() => new Set(opts.selected.value))
   /** The selected group a group (by key) is, or is inside. */
   function selecting(key: string | undefined): string | undefined {
     if (!key) return undefined
@@ -110,7 +124,8 @@ export function useServerGroups<T>(opts: ServerGroupsOptions<T>) {
   function checkState(group: RowGroup<T>): 'all' | 'some' | 'none' {
     if (selecting(group.key)) return 'all'
     for (const k of selectedKeys.value) if (within(k, group.key)) return 'some'
-    const picked = new Set(opts.selected.value)
+    const picked = selectedRowKeys.value
+    if (!picked.size) return 'none'
     let some = false
     loadedRows(group, (r) => {
       if (picked.has(opts.getKey(r))) some = true
@@ -146,16 +161,46 @@ export function useServerGroups<T>(opts: ServerGroupsOptions<T>) {
     watchEffect(() => void counts.value, { flush: 'post' })
     return computed(() => [...counts.value.values()].reduce((total, count) => total + count, 0))
   }
-  /** The header checkbox: every top-level group, or none. */
+  /** The header checkbox represents the currently displayed page of groups. */
   function allState(top: readonly RowGroup<T>[]): 'all' | 'some' | 'none' {
     if (!top.length) return 'none'
-    const n = top.filter((g) => selectedKeys.value.has(g.key)).length
-    if (n === top.length) return 'all'
-    return n || opts.selectedGroups.value.length || opts.selected.value.length ? 'some' : 'none'
+    if (top.every((g) => selectedKeys.value.has(g.key))) return 'all'
+    return top.some((g) => checkState(g) !== 'none') ? 'some' : 'none'
   }
   function toggleAll(top: readonly RowGroup<T>[]) {
-    opts.selectedGroups.value = allState(top) === 'all' ? [] : top.map((g) => g.path as GroupPath)
-    opts.selected.value = []
+    const checked = allState(top) !== 'all'
+    const topKeys = new Set(top.map((g) => g.key))
+    const onPage = (key: string) => topKeys.has(key.split(GROUP_PATH_SEPARATOR, 1)[0]!)
+    const retained = opts.selectedGroups.value.filter((path) => !onPage(pathKey(path)))
+    opts.selectedGroups.value = checked
+      ? [...retained, ...top.map((g) => g.path as GroupPath)]
+      : retained
+    if (opts.selected.value.length) {
+      const onPageRows = new Set<RowKey>()
+      for (const [key, entry] of cache)
+        if (onPage(key) && entry.status === 'loaded')
+          for (const row of entry.rows) if (!isRowGroup(row)) onPageRows.add(opts.getKey(row as T))
+      const retainedRows = opts.selected.value.filter((key) => !onPageRows.has(key))
+      if (retainedRows.length !== opts.selected.value.length) opts.selected.value = retainedRows
+    }
+  }
+
+  /** Patches cached leaf rows, keeping their group association and prepared-level marker. */
+  function patchLoaded(patches: RowPatches<T>): number {
+    let count = 0
+    for (const [key, entry] of cache) {
+      if (entry.status !== 'loaded' || !entry.rows.length || isRowGroup(entry.rows[0])) continue
+      const next = patchRows(entry.rows as T[], patches, opts.getKey)
+      if (next === entry.rows) continue
+      for (const [index, row] of next.entries()) {
+        if (row === entry.rows[index]) continue
+        rowGroup.set(toRaw(row as object), key)
+        count++
+      }
+      groupedLevels.add(next)
+      cache.set(key, { status: 'loaded', rows: next })
+    }
+    return count
   }
   /** A group's loaded rows (export, print). */
   function rowsIn(group: RowGroup<T>): T[] {
@@ -177,6 +222,7 @@ export function useServerGroups<T>(opts: ServerGroupsOptions<T>) {
     ensure,
     retry: load,
     track,
+    patchLoaded,
     locked,
     checkState,
     toggle,

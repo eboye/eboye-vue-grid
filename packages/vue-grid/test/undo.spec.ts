@@ -147,6 +147,86 @@ describe('undo / redo', () => {
     w.unmount()
   })
 
+  it('does not replay old edits against a locked, rebound, or absent target', async () => {
+    const { w, rows, edits } = make({
+      columns: columns.map((column) =>
+        column.key === 'name' ? { ...column, editable: (row: Row) => !row.vip } : column,
+      ),
+    })
+    await flushPromises()
+    await editCell(w, 1, 'name', 'First')
+    rows[0]!.vip = true
+    expect(await api(w).undo()).toBe(false)
+    expect(rows[0]!.name).toBe('First')
+
+    rows[0]!.vip = false
+    await editCell(w, 1, 'name', 'Second')
+    await w.setProps({
+      columns: columns.map((column) =>
+        column.key === 'name' ? { ...column, field: 'stake' } : column,
+      ),
+    })
+    expect(await api(w).undo()).toBe(false)
+    expect(rows[0]!.name).toBe('Second')
+
+    await w.setProps({ columns })
+    await editCell(w, 1, 'name', 'Third')
+    const [removed] = rows.splice(0, 1)
+    await flushPromises()
+    expect(await api(w).undo()).toBe(false)
+    expect(removed?.name).toBe('Third')
+    expect(edits.map((event) => event.source)).toEqual(['edit', 'edit', 'edit'])
+    w.unmount()
+  })
+
+  it('captures the original edit binding before an async save can rebind its column', async () => {
+    const name = reactive<ColumnDef<Row>>({ key: 'name', field: 'name', editable: true })
+    let finishSave: (() => void) | undefined
+    const { w, rows, edits } = make({
+      columns: [name],
+      saveCell: (event: CellEditEvent<Row>) =>
+        event.source === 'edit'
+          ? new Promise<void>((resolve) => {
+              finishSave = resolve
+            })
+          : undefined,
+    })
+    Object.assign(rows[0]!, { alias: 'Changed' })
+    await flushPromises()
+    await editCell(w, 1, 'name', 'Changed')
+    name.field = 'alias'
+    finishSave!()
+    await settle()
+    expect(await api(w).undo()).toBe(false)
+    expect(edits.map((event) => event.source)).toEqual(['edit'])
+    expect(rows[0]).toMatchObject({ name: 'Changed', alias: 'Changed' })
+    w.unmount()
+  })
+
+  it('remembers a successful edit completed while another cell is being undone', async () => {
+    let finishUndo: (() => void) | undefined
+    const saveCell = async (e: CellEditEvent<Row>) => {
+      if (e.source === 'undo' && e.rowKey === 1) {
+        await new Promise<void>((resolve) => {
+          finishUndo = resolve
+        })
+      }
+      setCellValue(e.row, e.column, e.value)
+    }
+    const { w, rows } = make({ saveCell, 'onCell-edit': undefined })
+    await flushPromises()
+    await editCell(w, 1, 'stake', '11')
+    const pending = api(w).undo()
+    await editCell(w, 2, 'stake', '22')
+    finishUndo!()
+    expect(await pending).toBe(true)
+    expect(rows.map((row) => row.stake)).toEqual([10, 22, 30])
+    expect(api(w).canRedo()).toBe(false)
+    expect(await api(w).undo()).toBe(true)
+    expect(rows.map((row) => row.stake)).toEqual([10, 20, 30])
+    w.unmount()
+  })
+
   it('save-cell: a refused save is not remembered; a refused undo can be tried again', async () => {
     let refuse = false
     // the app writes once the server has saved (the pattern for save-cell)

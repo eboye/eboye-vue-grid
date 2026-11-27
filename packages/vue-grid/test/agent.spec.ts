@@ -15,6 +15,14 @@ const columns = [
   { key: 'total', renderer: 'currency', rendererOptions: { currency: 'EUR' }, aggregate: 'sum' },
 ]
 
+it('rejects invalid pinned-row keys without rejecting a valid mixed-key array', () => {
+  const config = { rowKey: 'id', columns, features: ['rowPinningFeature'] }
+  expect(validateGridConfig({ ...config, pinnedRows: { top: [42, '42'] } }).ok).toBe(true)
+  const { diagnostics } = validateGridConfig({ ...config, pinnedRows: { top: 42, bottom: [{}] } })
+  expect(find(diagnostics, 'props.pinnedRows.top')[0]?.severity).toBe('error')
+  expect(find(diagnostics, 'props.pinnedRows.bottom')[0]?.severity).toBe('error')
+})
+
 describe('agent API reference (generated)', () => {
   it('is up to date with the sources', { timeout: 30_000 }, async () => {
     // The generator runs in a separate Node process and can take over 5 seconds on CI.

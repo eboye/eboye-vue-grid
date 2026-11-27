@@ -1,4 +1,4 @@
-import { shallowReactive, toRaw } from 'vue'
+import { onScopeDispose, shallowReactive, toRaw } from 'vue'
 import { patchRows, type RowPatches } from '../core/patch'
 import type { RowKey } from '../types'
 
@@ -56,7 +56,7 @@ export function useSubRows<T>(opts: SubRowsOptions<T>) {
     pending.set(key, token)
     cache.set(key, { status: 'loading' })
     Promise.resolve()
-      .then(() => loader(row))
+      .then(() => (pending.get(key) === token ? loader(row) : undefined))
       .then(
         (rows) => {
           if (pending.get(key) !== token) return
@@ -75,8 +75,9 @@ export function useSubRows<T>(opts: SubRowsOptions<T>) {
 
   /** Starts loading if this row needs async children and has not been requested yet. */
   function ensure(row: T) {
-    if (syncChildren(row) || !opts.loadSubRows()) return
-    if (!cache.has(opts.getKey(row))) load(row)
+    if (!opts.loadSubRows() || cache.has(opts.getKey(row))) return
+    if (syncChildren(row) || opts.hasSubRows()?.(row) === false) return
+    load(row)
   }
 
   function state(row: T): SubRowEntry | undefined {
@@ -114,6 +115,7 @@ export function useSubRows<T>(opts: SubRowsOptions<T>) {
       pending.delete(key)
     }
   }
+  onScopeDispose(clear)
 
   /**
    * `children` / `mayHaveChildren` / `state` over plain values, for a pass over many rows (the

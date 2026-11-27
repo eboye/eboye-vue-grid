@@ -1,17 +1,28 @@
 <script setup lang="ts">
-import { defineAsyncComponent, ref, shallowRef, useId, useTemplateRef } from 'vue'
+import { ref, shallowRef, useId, useTemplateRef, type Component } from 'vue'
 import { docsUrl, loadDemo, loadSource, type Page } from '../pages'
 import CodeView from './CodeView.vue'
 
 const props = defineProps<{ page: Page }>()
 
-const Demo = defineAsyncComponent(() => loadDemo(props.page.files[0]!))
+const demo = shallowRef<Component>()
+const demoUnavailable = ref(false)
+void loadDemo(props.page.files[0]!).then(
+  (component) => (demo.value = component),
+  () => (demoUnavailable.value = true),
+)
 
 const file = ref(props.page.files[0]!)
 const tabStop = ref(file.value)
 const tabs = useTemplateRef<HTMLElement>('tabs')
 const sourceId = useId()
 const source = shallowRef<DemoSource>()
+const sourceUnavailable = ref(false)
+let sourceRequest = 0
+
+function reloadPage() {
+  window.location.reload()
+}
 
 function moveTabFocus(event: KeyboardEvent, index: number) {
   const last = props.page.files.length - 1
@@ -47,8 +58,14 @@ async function show(name: string) {
   file.value = name
   tabStop.value = name
   source.value = undefined
-  const loaded = await loadSource(name)
-  if (file.value === name) source.value = loaded
+  sourceUnavailable.value = false
+  const request = ++sourceRequest
+  try {
+    const loaded = await loadSource(name)
+    if (request === sourceRequest) source.value = loaded
+  } catch {
+    if (request === sourceRequest) sourceUnavailable.value = true
+  }
 }
 show(file.value)
 </script>
@@ -65,7 +82,13 @@ show(file.value)
     </header>
 
     <section class="demo-card" aria-label="Live demo">
-      <Demo />
+      <component :is="demo" v-if="demo" />
+      <div v-else class="demo-code-loading">
+        <p role="status">
+          {{ demoUnavailable ? 'Could not load the demo.' : 'Loading the demo…' }}
+        </p>
+        <button v-if="demoUnavailable" type="button" @click="reloadPage">Reload page</button>
+      </div>
     </section>
 
     <section class="demo-code" aria-label="Source">
@@ -107,6 +130,10 @@ show(file.value)
       >
         <template v-if="file === name">
           <CodeView v-if="source" :source="source" :label="`${name}.vue`" />
+          <div v-else-if="sourceUnavailable" class="demo-code-loading">
+            <p role="status">Could not load the source.</p>
+            <button type="button" @click="reloadPage">Reload page</button>
+          </div>
           <p v-else class="demo-code-loading" role="status">Loading the source…</p>
         </template>
       </div>

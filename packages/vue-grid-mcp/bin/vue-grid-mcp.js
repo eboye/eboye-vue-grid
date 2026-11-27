@@ -23,7 +23,7 @@ if (!command) {
       `${d.severity.padEnd(7)} ${d.path || '(config)'}: ${d.message}${d.fix ? `\n        fix: ${d.fix}` : ''}`,
     )
   console.log(ok ? `\nOK (${diagnostics.length} note(s))` : '\nNOT OK')
-  process.exit(ok ? 0 : 1)
+  process.exitCode = ok ? 0 : 1
 } else if (command === 'guide') {
   process.stdout.write((await loadDocs()).files['AGENTS.md'])
 } else {

@@ -1038,11 +1038,13 @@ const source: DataSource<Bet> = async (query, { signal }) => {
   contents again.
 - **Selection by query.** A group's checkbox selects it by its path in `v-model:selected-groups`
   (`[[{ key: 'status', value: 'Won' }]]`), without loading its rows; rows and sub-groups inside a
-  selected group show ticked and locked. The header checkbox selects every top-level group. Act on
+  selected group show ticked and locked. The header checkbox toggles the top-level groups on the
+  current page and keeps selections on other pages. Act on
   `selectedGroups` + `selected` + the filters on the server. The selected groups end when the
   filters or the grouping change, or with `clearSelection()`; the status bar and the toolbar's
   `selectedCount` add their counts.
 - **Export, print, totals.** `exportCsv()`, `print()` and the others cover the rows that are loaded.
+  Selecting a group includes its loaded rows in selected exports and copies.
   For the totals row pass `aggregates` (the server's totals).
 - Without the feature, a grouped grid with a data source groups only the rows it has loaded (with
   a dev warning). A source that returns `rows` to a grouped query gets the same.
@@ -1216,9 +1218,9 @@ Every change made in the grid can be undone: an edit, a checkbox flip, and a who
 step, however many cells). **Ctrl/⌘+Z** undoes, **Ctrl+Y** or **Ctrl/⌘+Shift+Z** redoes; inside an
 open editor those keys are the text box's own. Undoing works like editing: each cell gets its
 value back through `cell-edit` (with `source: 'undo'` / `'redo'`) and `save-cell`, so your data
-and your server stay in charge. A cell that has changed since by something else (a live update,
-another user) is left alone rather than overwritten, and a change whose save fails stays
-undoable. The cells undone are selected (with range selection) or focused.
+and your server stay in charge. Undo and redo skip cells that have changed since, are no longer
+loaded, or are read-only. A change whose save fails stays undoable. The cells undone are selected
+(with range selection) or focused.
 
 ```vue
 <VGrid :rows :columns row-key="id" :undo-limit="50" @cell-edit="store">
@@ -1285,7 +1287,10 @@ const range = ref<CellRange | null>(null) // { start: { rowKey, columnKey }, end
   times; otherwise the block lands as it is, clipped at the grid's edges, and becomes the range.
   Each text is read as its column's kind: numbers in any locale and with currency signs
   (`€1,234.50`, `1.234,50`), dates in ISO or the locale's order (`23.05.2026` with `locale="de"`;
-  a date keeps the cell's type), yes / no, and a select's choices by value or label. `validate`
+  a date keeps the cell's type), yes / no, and a select's choices by value or label. Percentage
+  columns read explicit percentages as fractions. Datetimes without an explicit offset use the
+  display time zone when configured. In that zone, ambiguous times use the earlier instant, and
+  nonexistent times are invalid. `validate`
   and `editorOptions.min` / `max` apply. Like typing, every changed cell is a `cell-edit` and goes
   through `save-cell`; then `cells-paste({ edits, skipped, failed })` reports the lot, with the
   cells left alone (`read-only`, `invalid` with a message, or `unsupported` for your own editor

@@ -72,6 +72,58 @@ afterEach(() => {
 })
 
 describe('virtual-columns in the grid', () => {
+  it('remeasures tracks when a pinned header gets wider in a fixed-width viewport', async () => {
+    const observed = new Map<Element, Set<ResizeObserverCallback>>()
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        constructor(private callback: ResizeObserverCallback) {}
+        observe(el: Element) {
+          if (!observed.has(el)) observed.set(el, new Set())
+          observed.get(el)!.add(this.callback)
+        }
+        disconnect() {}
+      },
+    )
+    let pinnedWidth = 40
+    const originalStyle = window.getComputedStyle
+    const style = vi.spyOn(window, 'getComputedStyle').mockImplementation((el) => {
+      const result = originalStyle(el)
+      if (el.classList.contains('vg'))
+        Object.defineProperty(result, 'gridTemplateColumns', {
+          value: [`${pinnedWidth}px`, ...Array(30).fill('80px')].join(' '),
+        })
+      return result
+    })
+    const viewport = vi.spyOn(Element.prototype, 'clientWidth', 'get').mockReturnValue(100)
+    const w = mount(VGrid, {
+      props: {
+        rows,
+        columns,
+        rowKey: 'id',
+        virtualColumns: { overscan: 0 },
+        pinnedMaxShare: false,
+      },
+    })
+    try {
+      const grid = w.find<HTMLElement>('.vg')
+      grid.element.scrollLeft = 130
+      await grid.trigger('scroll')
+      expect(w.find('.vg-header > [data-col-key="c0"]').exists()).toBe(false)
+      const pinned = w.find('.vg-header > [data-col-key="id"]').element
+      pinnedWidth = 150
+      for (const resized of observed.get(pinned) ?? []) resized([], {} as ResizeObserver)
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
+      await flushPromises()
+      expect(w.find('.vg-header > [data-col-key="c0"]').exists()).toBe(true)
+    } finally {
+      w.unmount()
+      viewport.mockRestore()
+      style.mockRestore()
+      vi.unstubAllGlobals()
+    }
+  })
+
   it('without a laid-out grid (jsdom) every column renders, each placed on its track', async () => {
     const w = mount(VGrid, { props: { rows, columns, rowKey: 'id', virtualColumns: true } })
     mounted.push(w)

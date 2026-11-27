@@ -1,4 +1,4 @@
-import { onBeforeUnmount, ref, shallowRef, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, shallowRef, watch } from 'vue'
 import { patchRows, type RowPatches } from '../core/patch'
 import type { RowKey } from '../types'
 import type { FilterState } from '../core/filter'
@@ -71,7 +71,12 @@ export function useDataSource<T>(opts: DataSourceOptions<T>) {
   const rows = shallowRef<T[]>([])
   const total = ref<number | undefined>(undefined)
   /** Grouped server data: the top-level groups of the last response (undefined: it sent rows). */
-  const groups = shallowRef<ServerGroup[] | undefined>(undefined)
+  const loadedGroups = shallowRef<ServerGroup[] | undefined>(undefined)
+  const loadedGrouping = shallowRef<string>()
+  const matchesGrouping = computed(
+    () => loadedGrouping.value === JSON.stringify(opts.query().groupBy),
+  )
+  const groups = computed(() => (matchesGrouping.value ? loadedGroups.value : undefined))
   const rowTotal = ref<number | undefined>(undefined)
   const revision = ref(0)
   const loading = ref(false)
@@ -92,10 +97,13 @@ export function useDataSource<T>(opts: DataSourceOptions<T>) {
     loading.value = true
     error.value = null
     try {
-      const result = await source(opts.query(), { signal })
+      const query = opts.query()
+      const grouping = JSON.stringify(query.groupBy)
+      const result = await source(query, { signal })
       if (id !== seq || signal.aborted) return // superseded
       rows.value = result?.rows ?? []
-      groups.value = result?.groups
+      loadedGroups.value = result?.groups
+      loadedGrouping.value = grouping
       total.value = result?.total ?? (result?.groups ?? rows.value).length
       rowTotal.value = result?.rowTotal
       revision.value++
@@ -124,5 +132,16 @@ export function useDataSource<T>(opts: DataSourceOptions<T>) {
     return count
   }
 
-  return { rows, groups, total, rowTotal, revision, loading, error, reload: load, patch }
+  return {
+    rows,
+    groups,
+    matchesGrouping,
+    total,
+    rowTotal,
+    revision,
+    loading,
+    error,
+    reload: load,
+    patch,
+  }
 }

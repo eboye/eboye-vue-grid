@@ -56,6 +56,10 @@ describe('matchesFilter', () => {
       true,
     )
     expect(matchesFilter('nope', f('after', '2020-01-01'))).toBe(false)
+    for (const year of ['0000', '0099']) {
+      const early = new Date(`${year}-01-02T12:00:00Z`)
+      expect(matchesFilter(early, f('on', `${year}-01-02`), { timeZone: 'UTC' })).toBe(true)
+    }
   })
 
   it('boolean and set (incl. blanks)', () => {

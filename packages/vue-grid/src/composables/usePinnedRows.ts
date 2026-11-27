@@ -21,8 +21,14 @@ export interface PinnedRowsOptions<T> {
  * the items of the two sticky sections; the keys the body leaves out; and `pinRow()`.
  */
 export function usePinnedRows<T>(opts: PinnedRowsOptions<T>) {
-  const topKeys = computed<readonly RowKey[]>(() => opts.model.value?.top ?? [])
-  const bottomKeys = computed<readonly RowKey[]>(() => opts.model.value?.bottom ?? [])
+  const topKeys = computed<readonly RowKey[]>(() => {
+    const keys = opts.model.value?.top
+    return Array.isArray(keys) ? keys : []
+  })
+  const bottomKeys = computed<readonly RowKey[]>(() => {
+    const keys = opts.model.value?.bottom
+    return Array.isArray(keys) ? keys : []
+  })
   /** Keys of the data rows pinned anywhere: the body leaves them out. */
   const keys = computed(() => new Set([...topKeys.value, ...bottomKeys.value]))
 

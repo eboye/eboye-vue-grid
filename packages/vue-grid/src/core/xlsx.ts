@@ -7,7 +7,7 @@
 import { toDate, toNumber } from '../renderers/format'
 import type { ColumnDef } from '../types'
 import { plainText } from './csv'
-import { parseIsoDay } from './date'
+import { parseIsoDay, wallFormatter, wallTime } from './date'
 import { getCellValue } from './value'
 
 /** How a column's values are written: Excel number formats for money, percentages and dates. */
@@ -113,7 +113,10 @@ const DATE_ONLY = /^(\d{4})-(\d{2})-(\d{2})$/
 const FIRST_SERIAL = 61
 
 /** An Excel date serial: the wall-clock time in `timeZone` (date-only strings: that day). */
-function dateSerial(value: unknown, timeZone: string | undefined): number | null {
+function dateSerial(
+  value: unknown,
+  formatWall: ((date: Date) => number) | undefined,
+): number | null {
   if (typeof value === 'string') {
     const day = value.trim()
     if (DATE_ONLY.test(day)) {
@@ -123,32 +126,7 @@ function dateSerial(value: unknown, timeZone: string | undefined): number | null
   }
   const d = toDate(value)
   if (!d) return null
-  let wall: number
-  if (timeZone) {
-    const parts: Record<string, number> = {}
-    for (const p of new Intl.DateTimeFormat('en-US', {
-      timeZone,
-      hourCycle: 'h23',
-      year: 'numeric',
-      month: 'numeric',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: 'numeric',
-      second: 'numeric',
-    }).formatToParts(d))
-      if (p.type !== 'literal') parts[p.type] = Number(p.value)
-    wall = Date.UTC(
-      parts.year!,
-      parts.month! - 1,
-      parts.day!,
-      parts.hour!,
-      parts.minute!,
-      parts.second!,
-      d.getMilliseconds(),
-    )
-  } else {
-    wall = d.getTime() - d.getTimezoneOffset() * 60_000
-  }
+  const wall = formatWall ? formatWall(d) : d.getTime() - d.getTimezoneOffset() * 60_000
   return (wall - EPOCH) / DAY
 }
 
@@ -182,7 +160,7 @@ function cell(
   value: unknown,
   format: XlsxFormat,
   bold: boolean,
-  tz?: string,
+  formatWall?: (date: Date) => number,
 ): Cell | null {
   if (value === null || value === undefined || value === '') return null
   const num = (n: number, fmt: number, width: number): Cell => ({
@@ -190,7 +168,7 @@ function cell(
     width,
   })
   if (format === 'date' || format === 'datetime' || value instanceof Date) {
-    const serial = dateSerial(value, tz)
+    const serial = dateSerial(value, formatWall)
     const fmt = format === 'date' ? FMT_ID.date : FMT_ID.datetime
     if (serial !== null && serial >= FIRST_SERIAL)
       return num(serial, fmt, fmt === FMT_ID.date ? 10 : 16)
@@ -236,6 +214,11 @@ function cell(
 // ── Workbook ──────────────────────────────────────────────────────────────────────────────────
 
 function sheetXml(sheet: XlsxSheet): string {
+  const timeZone = sheet.timeZone
+  let formatter: Intl.DateTimeFormat | undefined
+  const formatWall = timeZone
+    ? (date: Date) => wallTime(date, (formatter ??= wallFormatter(timeZone)))
+    : undefined
   const widths = sheet.formats.map(() => 8)
   const lines: string[] = []
   const addRow = (values: readonly unknown[], bold: boolean, formats: readonly XlsxFormat[]) => {
@@ -243,7 +226,7 @@ function sheetXml(sheet: XlsxSheet): string {
     const cells: string[] = []
     let rowLines = 1
     values.forEach((value, i) => {
-      const c = cell(`${columnName(i)}${r}`, value, formats[i] ?? 'auto', bold, sheet.timeZone)
+      const c = cell(`${columnName(i)}${r}`, value, formats[i] ?? 'auto', bold, formatWall)
       if (!c) return
       cells.push(c.xml)
       widths[i] = Math.max(widths[i] ?? 8, c.width + 2)

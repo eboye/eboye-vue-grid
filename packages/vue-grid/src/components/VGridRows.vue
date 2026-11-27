@@ -66,6 +66,12 @@ const items = computed(() => {
   })
 })
 
+function ariaRowIndex(position: number | undefined) {
+  return position === undefined
+    ? undefined
+    : position + 1 + grid.headerRows.value + grid.pinnedTopCount.value
+}
+
 // Lazy sub-rows: request children for every expanded row that needs them. Covers user clicks,
 // a controlled `v-model:expanded`, and `expandAll()` alike. (Virtual mode: rows in view only, once a
 // scroll has settled, so flying past expanded rows doesn't request their children.)
@@ -110,11 +116,7 @@ watchEffect(() => {
         item.expandable && grid.keyboardNav && grid.treeMode.value ? item.expanded : undefined
       "
       :aria-selected="grid.keyboardNav ? item.selected : undefined"
-      :aria-rowindex="
-        item.virtual
-          ? item.virtual.ariaIndex + 1 + grid.headerRows.value + grid.pinnedTopCount.value
-          : undefined
-      "
+      :aria-rowindex="ariaRowIndex(item.virtual?.ariaIndex)"
     >
       <component
         :is="grid.grouping?.GroupCells"
@@ -141,6 +143,7 @@ watchEffect(() => {
         role="row"
         class="vg-detail-row"
         :data-detail-for="String(item.key)"
+        :aria-rowindex="ariaRowIndex(item.virtual ? item.virtual.ariaIndex + 1 : undefined)"
       >
         <div
           :ref="layout ? virtual?.measureDetail(item.key) : undefined"
@@ -161,12 +164,14 @@ watchEffect(() => {
         :class="['vg-subgrid', grid.ui.value.subgrid]"
         :data-depth="depth + 1"
         :data-subgrid-for="String(item.key)"
+        :data-vg-subgrid-key-type="typeof item.key"
         :style="{ '--vg-depth': depth + 1 }"
       >
         <div
           v-if="grid.subRowState(item.row)?.status === 'loading'"
           role="row"
           class="vg-status-row"
+          :aria-rowindex="ariaRowIndex(item.virtual?.childAriaBase)"
         >
           <div
             :ref="layout ? virtual?.measureStatus(item.key) : undefined"
@@ -188,6 +193,7 @@ watchEffect(() => {
           v-else-if="grid.subRowState(item.row)?.status === 'error'"
           role="row"
           class="vg-status-row"
+          :aria-rowindex="ariaRowIndex(item.virtual?.childAriaBase)"
         >
           <div
             :ref="layout ? virtual?.measureStatus(item.key) : undefined"
