@@ -43,6 +43,10 @@ Read [`AGENTS.md`](../packages/vue-grid/AGENTS.md) for the rules and
 
 ## Column properties
 
+With virtual scrolling, rows have a fixed `virtual.rowHeight`. Default text stays on a single line
+and truncated values have an overflow tooltip. If your old cell template shows multiple lines,
+keep the multiline renderer options or custom slot and allow enough height for it.
+
 | RevoGrid                               | vue-grid                                                                                                                       |
 | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | `prop`                                 | `key` (and `field: 'player.name'` for a nested path, or `value: (row) => …`)                                                   |

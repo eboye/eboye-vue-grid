@@ -58,6 +58,7 @@ export interface Order {
 27. [Text and parts](#27-text-and-parts)
 28. [Inline editing](#28-inline-editing)
 29. [Cell-range selection](#29-cell-range-selection)
+30. [Test hooks on rows and cells](#30-test-hooks-on-rows-and-cells)
 
 ---
 
@@ -1394,6 +1395,8 @@ const grid = ref<VGridExposed>()
 
 `grid.setFilters(state)` and `grid.clearFilters()` work the same way. The header right-click menu
 also has _Filter…_, _Clear filter_ and _Clear all filters_.
+With `keyboardNavigationFeature`, focus the header and press Shift+F10 to open that menu.
+Choose _Filter…_ to open the panel beside its column, including when the filter funnel is hidden.
 
 ### A custom filter
 
@@ -1657,6 +1660,9 @@ For thousands of rows, render only what's visible (needs `virtualScrollingFeatur
 - Detail rows can be any height. They're measured as they render (`detailHeight` is the estimate
   until then), and the view doesn't jump while they settle.
 - With `load-sub-rows`, only expanded rows in view request their children, once scrolling settles.
+- Default text in fixed-height data rows stays on one line. Hover over truncated text or focus
+  the cell with keyboard navigation to see the full value. For multiline cells, set the text
+  renderer's `lines` or `preserveNewlines` option and set a large enough `rowHeight`.
 
 Many columns too? Add `virtual-columns` (needs `columnVirtualizationFeature`): only the columns in
 view render their cells, while every column keeps its CSS grid track.
@@ -2680,8 +2686,8 @@ replacing needs `editingFeature`). Or open it from a button:
 
 - It searches what the cells show, in the selected range if there was one, else every cell
   (rows not drawn by virtual scrolling too); Match case and Whole cell narrow it.
-- Enter / Shift+Enter: next / previous match, scrolled into view; Esc closes, the current match
-  stays selected.
+- Enter / Shift+Enter move to the next / previous match and scroll it into view. Esc closes the bar
+  and focuses the current match. If there is no match, focus returns to the opener when available.
 - Replace / Replace all write the new text like a paste (each a `cell-edit` with
   `source: 'replace'`, skipped cells reported); one Ctrl/⌘+Z undoes a Replace all.
 

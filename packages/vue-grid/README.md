@@ -549,6 +549,10 @@ typeahead move through items; focus returns to the cell on close. `disabled` may
 item's description, and the item stays reachable by keyboard (`aria-disabled`) but does nothing. The
 same works in `actions-menu` items.
 
+With `keyboardNavigationFeature`, press **Shift+F10** on a filterable column header and choose
+**Filter…** to open its anchored filter panel. This also works when `parts.filterButtons` is
+`false`.
+
 **Submenus**: give an item `items` and it opens them beside it instead of being chosen. Hover
 (after a short pause), click, → / Enter / Space open it with focus on its first item; ← or Esc go
 back to the item, Tab closes the whole menu. Choosing a nested item emits it like any other.
@@ -957,9 +961,10 @@ const groupBy = ref(['status', 'city'])
 ```
 
 - **What a group shows.** The first column holds the expander, the grouped column's header, the
-  value (with that column's renderer, so a status groups under its badge; a `groupValue` shows as
-  text) and the row count. That cell runs across the columns after it up to the first one with
-  an `aggregate`; those show the group's own aggregate. The `group-<key>` slot renders the value
+  value and the row count. A client group can use the column's renderer with its first data row,
+  so a status can show its badge. Server groups without a data row and groups using
+  `groupValue` display the value as text by default. The label spans the columns up to the first
+  one with an `aggregate`. Those columns show the group's own aggregate. The `group-<key>` slot renders the value
   yourself (`{ value, count, rows, column, group }`); `total-<key>` also renders group cells
   (with `group` set). Empty values form a `(blank)` group, last.
 - **In a narrow column** (a fixed-width first column followed by an aggregate) the label never
@@ -1310,7 +1315,9 @@ const range = ref<CellRange | null>(null) // { start: { rowKey, columnKey }, end
   Match case and Whole cell, in the selected range if one was selected ("In selection"), else
   in every cell, including rows virtual scrolling hasn't drawn. Every match is highlighted;
   Enter / Shift+Enter go to the next / previous one (scrolled into view, "3 of 12" announced),
-  Esc closes the bar and leaves the current match selected. **Replace** changes the current
+  Esc closes the bar and focuses the current match, keeping it selected. With no current match,
+  focus returns to the element that had focus when the bar opened, if it can still receive focus.
+  **Replace** changes the current
   match and moves on, **Replace all** every match: the new text is read as each column's kind,
   like a paste (read-only and invalid cells are skipped), each change is a `cell-edit`
   (`source: 'replace'`) and a `save-cell`, `cells-replace` reports it, and one Ctrl/⌘+Z undoes a
@@ -1445,6 +1452,10 @@ allSelected, filterCount, summary, range, clearFilters }` and replaces the defau
 ```
 
 Rows have a fixed height; only the visible window plus `overscan` is rendered.
+In virtual data rows, the default text renderer uses a single line with an ellipsis when needed.
+Hover over truncated text or focus its cell with keyboard navigation to read the full value.
+Explicit `ellipsis`, `lines` and `preserveNewlines` options still apply. Set `rowHeight` high
+enough for multiline or custom content.
 
 Sub-grids and detail rows work in virtual mode too. The DOM keeps the same CSS grid / `subgrid`
 structure as without it: expanded children stay inside their parent's `subgrid` container (lined up

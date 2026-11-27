@@ -12,10 +12,10 @@
 ![Tested in Chromium, Firefox and WebKit](https://img.shields.io/badge/tested-Chromium%20%C2%B7%20Firefox%20%C2%B7%20WebKit-orange)
 ![License: MIT](https://img.shields.io/badge/license-MIT-blue)
 
-<a href="https://eboye.github.io/eboye-vue-grid/"><img src="docs/media/showcase.gif" alt="vue-grid showcase: sorting, context menus, pinned columns, nested sub-grids, 10,000-row virtual scrolling, cell renderers, theming and dark mode" width="800"></a>
+<a href="https://eboye.github.io/eboye-vue-grid/"><img src="docs/media/showcase.gif" alt="vue-grid showcase: sorting, pinned columns, nested rows, virtual scrolling, keyboard filtering, find and replace, cell renderers, dark mode and source tabs" width="800"></a>
 
 **[Live examples ↗](https://eboye.github.io/eboye-vue-grid/)** ·
-[▶ Watch the full-quality video (MP4, 43 s)](docs/media/showcase.mp4) ·
+[▶ Watch the full-quality video (MP4)](docs/media/showcase.mp4) ·
 [Examples cookbook](docs/examples.md) ·
 [API reference](packages/vue-grid/README.md) ·
 [Storybook](#documentation)
@@ -32,6 +32,10 @@ data · pagination · live updates · selection and batch actions · inline edit
 ranges (copy, paste, fill, find and replace) · spreadsheet mode · row reordering · row grouping · totals and pinned
 rows · sub-grids · detail rows · 100,000-row virtual scrolling · column layout · context menus ·
 CSV / Excel export, printing and copying · status bar · text and parts · theming · your own cells.
+
+On phones, open **Menu** to browse the examples and press Esc to return to the menu button.
+In a source panel, use the arrow keys, Home or End to move between files, then Enter or Space
+to open the focused file. Syntax highlighting has high-contrast palettes for both themes.
 
 ## Why vue-grid
 
@@ -570,9 +574,14 @@ npm run e2e:storybook    # every story renders without errors; interactive rende
                          # (against a static Storybook build it makes itself, or a Storybook already on
                          # :6006; STORYBOOK_DEV=1 uses the dev server). Locally a failed test is retried
                          # once and reported as "flaky"; CI retries twice.
-npm run showcase         # re-record docs/media/showcase.* (needs dev + Storybook running, and ffmpeg)
+npm run showcase         # re-record the README video, GIF and poster
 npm run screenshots      # re-shoot the renderer gallery → docs/media/renderers (needs Storybook running)
 ```
+
+To re-record the showcase, run `npm run build` and `npx playwright install chromium`. Start the
+playground, Storybook and showcase site in separate terminals using the commands above. With
+`ffmpeg` on your PATH, run `npm run showcase` to refresh the MP4, GIF and poster in `docs/media`.
+Pass an output directory after `--` to review a recording before replacing the tracked files.
 
 <details>
 <summary>Repository layout</summary>

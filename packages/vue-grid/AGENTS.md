@@ -31,6 +31,8 @@ runs in the [live examples](https://eboye.github.io/eboye-vue-grid/), each with 
    `min-height: 0`). Sticky headers, pinned rows, virtual scrolling and scroll-into-view need it.
 7. **Virtual scrolling** needs `virtualScrollingFeature`, `:virtual="{ rowHeight: 40 }"` (every
    row that height, px) and a bounded height. `pagination` is ignored while `virtual` is on.
+   Default text stays on one line in virtual data rows, with an overflow tooltip. Allow enough
+   `rowHeight` for explicit multiline options or custom cells.
 8. **Rows are never mutated** by the grid. To change a cell: assign the field on a reactive row, or
    replace rows (`patchRows(rows, patches, rowKey)` keeps unchanged rows' identity).
 9. **Inline editing is controlled too** (`editingFeature`, `editable` columns): the grid emits

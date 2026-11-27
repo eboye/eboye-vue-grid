@@ -4,6 +4,8 @@
 
 Read AGENTS.md first: it lists the rules that cause silent bugs when skipped (register features, pass renderer definitions, `sort-mode="client"`, bounded height), a "which feature for what" table and copy-paste recipes. Validate a grid config with `validateGridConfig()` from `@nocopypaste/vue-grid/agent`.
 
+Default text stays on one line in fixed-height virtual data rows. The full value is available on hover or keyboard focus when it is truncated. With keyboard navigation, Shift+F10 opens the column menu and **Filter…** opens its filter next to the header.
+
 ## Docs
 
 - [AGENTS.md](https://unpkg.com/@nocopypaste/vue-grid/AGENTS.md): rules, feature and renderer choice, recipes, pitfalls — start here

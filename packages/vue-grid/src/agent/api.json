@@ -793,7 +793,7 @@
       "name": "closeFind",
       "type": "void",
       "required": true,
-      "description": "Closes the find bar; the current match becomes the selected cell."
+      "description": "Closes Find and focuses the current match, or returns focus to the opener when available."
     },
     {
       "name": "clearRange",
@@ -2509,7 +2509,7 @@
         "name": "rowHeight",
         "type": "number",
         "required": true,
-        "description": "Fixed row height in px."
+        "description": "Fixed row height in px. Default text uses one line. Allow room for multiline or custom cells."
       },
       {
         "name": "overscan",

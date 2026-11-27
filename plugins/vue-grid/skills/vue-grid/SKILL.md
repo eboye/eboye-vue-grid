@@ -92,6 +92,8 @@ and check:
 - the dev console has no `[vue-grid]` warnings (missing feature, unknown renderer, duplicate key);
 - the header sticks and rows scroll inside the grid;
 - each requested feature responds: sort a column, open a filter, expand a row, select, page;
+- with keyboard navigation, try Shift+F10 and **Filter…** on the header, close Find with Esc,
+  and focus a truncated text cell in a virtual row to verify its full value is available;
 - for mobile requests: at ~375 px wide the page doesn't scroll sideways (the grid scrolls
   inside itself), and touch works — swipe scrolls, hold a header to drag it, hold a cell or
   header (release) for its menu.
