@@ -1,6 +1,6 @@
 {
   "name": "@nocopypaste/vue-grid-mcp",
-  "version": "0.25.0",
+  "version": "0.25.1",
   "description": "MCP server for @nocopypaste/vue-grid: the grid's rules, API reference, renderer catalogue, doc search and a grid-config validator, as tools for coding agents. Zero dependencies besides the grid itself.",
   "license": "MIT",
   "type": "module",
@@ -31,7 +31,7 @@
     "test": "node --test"
   },
   "dependencies": {
-    "@nocopypaste/vue-grid": "^0.25.0"
+    "@nocopypaste/vue-grid": "^0.25.1"
   },
   "repository": {
     "type": "git",

@@ -1,6 +1,22 @@
 # Changelog
 
-## Unreleased
+## 0.25.1 — 2026-11-27
+
+- Find and Replace keeps its original selected cells when rows or columns move. Matching and
+  replacement use the same Unicode rules, and rejected saves are counted as skipped.
+- Undo and redo respect the current row and column binding. Edits saved during an asynchronous
+  undo stay in history. Percentage and datetime paste preserve the displayed scale and time zone,
+  and numeric fill keeps exact integers.
+- Server-group selection survives pagination. Export includes loaded selected group members,
+  field patches reach loaded group rows, and a grouping change discards stale group labels.
+- Virtual rows keep distinct measurements for numeric and string row keys and report indices for
+  headers, details, and loading rows. Keyboard traversal stays within its grid, and the rating
+  renderer supports arrow-key selection.
+- Bulk select edits reuse column choices, and timezone-aware XLSX export reuses its formatter.
+  The config validator rejects malformed pinned-row arrays, and the MCP CLI retains diagnostics
+  when its output is piped.
+- The showcase follows system theme changes and offers a reload when a demo or source fails to
+  load. GitHub Actions can launch Firefox in the browser-test container.
 
 - Keyboard filtering stays anchored to the header when the filter funnel is hidden. Closing
   Find focuses the current match, or restores focus to the opener when there is no match and the
