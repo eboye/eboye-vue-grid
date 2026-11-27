@@ -92,10 +92,15 @@ jobs:
       # Vue's compiler reads prop types imported from the built grid and renderer addon.
       - run: npm run build
         id: build
+      # GitHub mounts this directory with the host UID. Firefox requires it to match the job user.
+      - name: Fix Firefox home directory ownership
+        id: firefox-home
+        if: github.server_url == 'https://github.com'
+        run: chown "$(id -u)" /github/home
       - name: Playground (Chromium, Firefox, WebKit)
         run: npm run e2e -- --workers=1 --output=test-results/playground
       - name: Storybook (Chromium, Firefox, WebKit)
-        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.build.outcome == 'success' && steps.firefox-home.outcome != 'failure' }}
         run: npm run e2e:storybook -- --workers=2 --output=test-results/storybook
       - name: Traces of failed tests
         if: failure()
