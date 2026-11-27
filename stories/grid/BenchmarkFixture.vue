@@ -14,7 +14,9 @@ interface WorkItem {
   children?: WorkItem[]
 }
 
-const props = defineProps<{ workload: Workload }>()
+const props = withDefaults(defineProps<{ workload: Workload; startMounted?: boolean }>(), {
+  startMounted: true,
+})
 const rowsPerBranch = 40
 const rowCount = props.workload === 'page' ? 50 : props.workload === 'flat' ? 10_000 : 2_000
 const leaves = Array.from({ length: rowCount }, (_, index) => ({
@@ -51,7 +53,7 @@ const columns: ColumnDef<WorkItem>[] = [
 const virtual = props.workload === 'page' ? undefined : { rowHeight: 36, overscan: 6 }
 const rows = shallowRef(initialRows)
 const fixture = ref<HTMLElement>()
-const mounted = ref(false)
+const mounted = ref(props.startMounted)
 const changedKeys = new Set(leaves.slice(0, 10).map((item) => item.id))
 
 async function commit() {

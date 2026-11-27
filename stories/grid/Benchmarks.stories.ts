@@ -5,6 +5,7 @@ const meta = {
   title: 'Grid/Benchmarks',
   component: BenchmarkFixture,
   tags: ['!autodocs'],
+  args: { startMounted: true },
 } satisfies Meta<typeof BenchmarkFixture>
 
 export default meta

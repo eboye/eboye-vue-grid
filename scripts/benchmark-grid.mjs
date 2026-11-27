@@ -22,7 +22,9 @@ try {
   const results = []
   for (const workload of workloads) {
     const page = await browser.newPage({ viewport, deviceScaleFactor: 1 })
-    await page.goto(`${base}/iframe.html?id=grid-benchmarks--${workload}&viewMode=story`)
+    await page.goto(
+      `${base}/iframe.html?id=grid-benchmarks--${workload}&viewMode=story&args=startMounted:!false`,
+    )
     await page.evaluate(async () => void (await document.fonts.ready))
     const runs = await page.getByTestId('grid-benchmark').evaluate(
       async (fixture, { count, scrollFrames }) => {
@@ -56,6 +58,7 @@ try {
           return performance.now() - start
         }
 
+        if (grid()) throw new Error('The benchmark grid must start unmounted')
         const runs = []
         for (let run = 0; run < count; run++) {
           const mountMs = await commit('mount')
