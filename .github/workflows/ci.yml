@@ -1,5 +1,6 @@
 # Checks every push to main and every pull request: build, types, lint and unit tests, then the
 # browser tests (the playground and Storybook suites) in Chromium, Firefox and WebKit.
+# Markdown-only changes still run the non-browser checks.
 name: CI
 
 on:
@@ -18,12 +19,50 @@ jobs:
   checks:
     name: Build, types, lint, unit tests
     runs-on: ubuntu-latest
+    outputs:
+      browser-tests: ${{ steps.changes.outputs.browser-tests }}
+      playwright-version: ${{ steps.playwright.outputs.version }}
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Check whether the changes need browser tests
+        id: changes
+        shell: bash
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          browser_tests=true
+          changed_files=$(mktemp)
+          trap 'rm -f "$changed_files"' EXIT
+
+          if [[ "${GITHUB_EVENT_NAME}" == pull_request ]]; then
+            BASE_SHA=$(git merge-base "$BASE_SHA" "$HEAD_SHA") || BASE_SHA=
+          fi
+
+          if [[ -n "$BASE_SHA" && -n "$HEAD_SHA" ]] &&
+            git diff --no-renames --name-only -z "$BASE_SHA" "$HEAD_SHA" -- > "$changed_files" &&
+            [[ -s "$changed_files" ]]; then
+            browser_tests=false
+            while IFS= read -r -d '' changed_file; do
+              if [[ "$changed_file" != *.md ]]; then
+                browser_tests=true
+                break
+              fi
+            done < "$changed_files"
+          fi
+
+          echo "browser-tests=$browser_tests" >> "$GITHUB_OUTPUT"
       - uses: actions/setup-node@v6
         with:
           node-version: '24'
           cache: npm
+      - name: Read the locked Playwright version
+        id: playwright
+        run: |
+          version=$(node -p "require('./package-lock.json').packages['node_modules/@playwright/test'].version")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
       - run: npm ci
       - run: npm run build
       - run: npm run build -w site # the showcase (GitHub Pages)
@@ -33,14 +72,16 @@ jobs:
       - run: npm test # also fails when the generated agent reference is out of date
 
   e2e:
-    name: Browser tests (${{ matrix.suite }}, ${{ matrix.browser }})
+    name: Browser tests (playground and Storybook)
+    needs: checks
+    if: needs.checks.outputs.browser-tests != 'false'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-    strategy:
-      fail-fast: false
-      matrix:
-        browser: [chromium, firefox, webkit]
-        suite: [playground, storybook]
+    timeout-minutes: 180
+    container:
+      image: mcr.microsoft.com/playwright:v${{ needs.checks.outputs.playwright-version }}-noble
+      options: --init --ipc=host
+    env:
+      CI: 'true'
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -48,20 +89,18 @@ jobs:
           node-version: '24'
           cache: npm
       - run: npm ci
-      - name: Install ${{ matrix.browser }}
-        run: npx playwright install --with-deps ${{ matrix.browser }}
-      # The playground and Storybook run the library from source, but Vue's compiler reads prop
-      # types imported from `@nocopypaste/vue-grid` from the built `.d.ts` files.
+      # Vue's compiler reads prop types imported from the built grid and renderer addon.
       - run: npm run build
-      - name: Run
-        run: |
-          config=e2e/playwright.config.ts
-          [ "${{ matrix.suite }}" = storybook ] && config=e2e/storybook.config.ts
-          npx playwright test -c "$config" --project=${{ matrix.browser }}
+        id: build
+      - name: Playground (Chromium, Firefox, WebKit)
+        run: npm run e2e -- --workers=1 --output=test-results/playground
+      - name: Storybook (Chromium, Firefox, WebKit)
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: npm run e2e:storybook -- --workers=1 --output=test-results/storybook
       - name: Traces of failed tests
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: traces-${{ matrix.suite }}-${{ matrix.browser }}
+          name: browser-test-traces
           path: test-results/
           retention-days: 7
