@@ -24,6 +24,9 @@ const sections = computed(() => {
 const systemDark = window.matchMedia('(prefers-color-scheme: dark)')
 const stored = document.documentElement.dataset.theme
 const dark = ref(stored ? stored === 'dark' : systemDark.matches)
+function syncSystemTheme() {
+  if (!document.documentElement.dataset.theme) dark.value = systemDark.matches
+}
 function toggleTheme() {
   dark.value = !dark.value
   const theme = dark.value ? 'dark' : 'light'
@@ -95,11 +98,14 @@ onMounted(() => {
   window.addEventListener('hashchange', onHashChange)
   window.addEventListener('keydown', onKeydown)
   mobileNav.addEventListener('change', onNavBreakpoint)
+  systemDark.addEventListener('change', syncSystemTheme)
+  syncSystemTheme()
 })
 onUnmounted(() => {
   window.removeEventListener('hashchange', onHashChange)
   window.removeEventListener('keydown', onKeydown)
   mobileNav.removeEventListener('change', onNavBreakpoint)
+  systemDark.removeEventListener('change', syncSystemTheme)
 })
 
 const version = __GRID_VERSION__
