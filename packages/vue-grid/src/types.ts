@@ -432,7 +432,7 @@ export type GridPart =
   'root' | 'header' | 'headerCell' | 'row' | 'cell' | 'subgrid' | 'detail' | 'empty'
 
 export interface VirtualOptions {
-  /** Fixed row height in px. */
+  /** Fixed row height in px. Default text uses one line. Allow room for multiline or custom cells. */
   rowHeight: number
   /** Extra rows rendered above/below the viewport. Default 6. */
   overscan?: number
@@ -659,7 +659,7 @@ export interface VGridExposed {
    * selection feature (replacing needs the editing feature too).
    */
   openFind(options?: { replace?: boolean; text?: string }): void
-  /** Closes the find bar; the current match becomes the selected cell. */
+  /** Closes Find and focuses the current match, or returns focus to the opener when available. */
   closeFind(): void
   /**
    * Clears the selected range's editable cells (else the selected cell's), as Delete /

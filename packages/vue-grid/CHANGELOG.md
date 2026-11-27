@@ -1,5 +1,25 @@
 # Changelog
 
+## Unreleased
+
+- Keyboard filtering stays anchored to the header when the filter funnel is hidden. Closing
+  Find focuses the current match, or restores focus to the opener when there is no match and the
+  opener can still receive focus.
+- Default text in fixed-height virtual data rows fits on one line. The full value is available
+  on hover and keyboard focus when it is truncated.
+- Range and clipboard operations preserve the distinction between numeric and string row keys.
+  Cut keeps the rows and columns it copied when the display order changes during the clipboard
+  write. Grid-level keyboard shortcuts stay within the focused grid when a detail contains
+  another grid.
+- Reloads invalidate stale lazy child requests. Server group selections keep their counts while
+  on another page. Selected export includes cached pinned rows, and focused-cell copy can find
+  loaded rows inside server groups.
+- Reactive filter changes take effect when edited in place. Equivalent server queries reuse the
+  current fetch. Date-only paste rejects invalid ISO calendar days, and Excel export preserves
+  early-year and invalid date-only strings as text.
+- The live showcase supports keyboard navigation between source tabs, uses high-contrast syntax
+  palettes, and keeps keyboard focus out of the page behind the mobile examples menu.
+
 ## 0.25.0 — 2026-11-26
 
 - New: column `sortField`, the name the backend sorts a column by when it isn't the column key

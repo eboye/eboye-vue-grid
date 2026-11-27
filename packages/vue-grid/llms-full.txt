@@ -31,6 +31,8 @@ runs in the [live examples](https://eboye.github.io/eboye-vue-grid/), each with 
    `min-height: 0`). Sticky headers, pinned rows, virtual scrolling and scroll-into-view need it.
 7. **Virtual scrolling** needs `virtualScrollingFeature`, `:virtual="{ rowHeight: 40 }"` (every
    row that height, px) and a bounded height. `pagination` is ignored while `virtual` is on.
+   Default text stays on one line in virtual data rows, with an overflow tooltip. Allow enough
+   `rowHeight` for explicit multiline options or custom cells.
 8. **Rows are never mutated** by the grid. To change a cell: assign the field on a reactive row, or
    replace rows (`patchRows(rows, patches, rowKey)` keeps unchanged rows' identity).
 9. **Inline editing is controlled too** (`editingFeature`, `editable` columns): the grid emits
@@ -914,7 +916,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `pasteText` | `Promise<CellsPasteEvent \| null>` |  | Pastes tab-separated text (what spreadsheets copy) into the editable cells from the selected range's top-left cell, as Ctrl/⌘+V does; a range a whole number of blocks in size is filled. Resolves the `cells-paste` event, or `null` with nowhere to paste. Range selection and editing features. |
 | `fillDown` | `Promise<CellsPasteEvent \| null>` |  | Fills the selected range down from its top row, as Ctrl/⌘+D does (the fill handle's rules: one value repeats). Resolves the `cells-fill` event, or `null` without a range of two or more rows. Range selection and editing features. |
 | `openFind` | `void` |  | Opens the find bar (Ctrl/⌘+F in the grid; `replace: true` also shows the replace row, as Ctrl/⌘+H does), searching the selected range if there is one, else every cell. Range selection feature (replacing needs the editing feature too). |
-| `closeFind` | `void` |  | Closes the find bar; the current match becomes the selected cell. |
+| `closeFind` | `void` |  | Closes Find and focuses the current match, or returns focus to the opener when available. |
 | `clearRange` | `Promise<CellsPasteEvent \| null>` |  | Clears the selected range's editable cells (else the selected cell's), as Delete / Backspace do: blank text, no number or date, an unticked checkbox. Resolves the `cells-clear` event, or `null` with nothing selected. Range selection and editing features. |
 | `cutRange` | `Promise<CellsPasteEvent \| null>` |  | Copies the selected cells, then clears them (Ctrl/⌘+X). Range selection and editing features. |
 | `undo` | `Promise<boolean>` |  | Undoes the last change made in the grid (an edit, a checkbox, a whole paste): each cell gets its value back through `cell-edit` (`source: 'undo'`) and `save-cell`, as Ctrl/⌘+Z does. Cells changed since by something else are left alone. Resolves whether anything changed. Editing feature. |
@@ -1324,7 +1326,7 @@ The first items of a list, with a “+N more” toggle. Emits `expand`. Align: `
 
 | Field | Type | Description |
 |---|---|---|
-| `rowHeight` | `number` | Fixed row height in px. |
+| `rowHeight` | `number` | Fixed row height in px. Default text uses one line. Allow room for multiline or custom cells. |
 | `overscan`? | `number` | Extra rows rendered above/below the viewport. Default 6. |
 | `detailHeight`? | `number` | Estimated height in px of a detail row (`#detail` slot) until it has been rendered and measured. Default 4 × `rowHeight`. Data rows always have `rowHeight`. |
 
@@ -2028,6 +2030,10 @@ typeahead move through items; focus returns to the cell on close. `disabled` may
 item's description, and the item stays reachable by keyboard (`aria-disabled`) but does nothing. The
 same works in `actions-menu` items.
 
+With `keyboardNavigationFeature`, press **Shift+F10** on a filterable column header and choose
+**Filter…** to open its anchored filter panel. This also works when `parts.filterButtons` is
+`false`.
+
 **Submenus**: give an item `items` and it opens them beside it instead of being chosen. Hover
 (after a short pause), click, → / Enter / Space open it with focus on its first item; ← or Esc go
 back to the item, Tab closes the whole menu. Choosing a nested item emits it like any other.
@@ -2436,9 +2442,10 @@ const groupBy = ref(['status', 'city'])
 ```
 
 - **What a group shows.** The first column holds the expander, the grouped column's header, the
-  value (with that column's renderer, so a status groups under its badge; a `groupValue` shows as
-  text) and the row count. That cell runs across the columns after it up to the first one with
-  an `aggregate`; those show the group's own aggregate. The `group-<key>` slot renders the value
+  value and the row count. A client group can use the column's renderer with its first data row,
+  so a status can show its badge. Server groups without a data row and groups using
+  `groupValue` display the value as text by default. The label spans the columns up to the first
+  one with an `aggregate`. Those columns show the group's own aggregate. The `group-<key>` slot renders the value
   yourself (`{ value, count, rows, column, group }`); `total-<key>` also renders group cells
   (with `group` set). Empty values form a `(blank)` group, last.
 - **In a narrow column** (a fixed-width first column followed by an aggregate) the label never
@@ -2789,7 +2796,9 @@ const range = ref<CellRange | null>(null) // { start: { rowKey, columnKey }, end
   Match case and Whole cell, in the selected range if one was selected ("In selection"), else
   in every cell, including rows virtual scrolling hasn't drawn. Every match is highlighted;
   Enter / Shift+Enter go to the next / previous one (scrolled into view, "3 of 12" announced),
-  Esc closes the bar and leaves the current match selected. **Replace** changes the current
+  Esc closes the bar and focuses the current match, keeping it selected. With no current match,
+  focus returns to the element that had focus when the bar opened, if it can still receive focus.
+  **Replace** changes the current
   match and moves on, **Replace all** every match: the new text is read as each column's kind,
   like a paste (read-only and invalid cells are skipped), each change is a `cell-edit`
   (`source: 'replace'`) and a `save-cell`, `cells-replace` reports it, and one Ctrl/⌘+Z undoes a
@@ -2924,6 +2933,10 @@ allSelected, filterCount, summary, range, clearFilters }` and replaces the defau
 ```
 
 Rows have a fixed height; only the visible window plus `overscan` is rendered.
+In virtual data rows, the default text renderer uses a single line with an ellipsis when needed.
+Hover over truncated text or focus its cell with keyboard navigation to read the full value.
+Explicit `ellipsis`, `lines` and `preserveNewlines` options still apply. Set `rowHeight` high
+enough for multiline or custom content.
 
 Sub-grids and detail rows work in virtual mode too. The DOM keeps the same CSS grid / `subgrid`
 structure as without it: expanded children stay inside their parent's `subgrid` container (lined up

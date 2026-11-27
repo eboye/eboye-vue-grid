@@ -1,8 +1,8 @@
-// Records the README showcase video: the playground and Storybook driven with a real mouse and
-// keyboard, with an injected visible cursor and scene captions.
+// Records the README showcase using real mouse and keyboard input, with a visible cursor and
+// captions.
 //
-//   npm run dev & npm run storybook      (playground on :5180, Storybook on :6006)
-//   npm run showcase                     → docs/media/showcase.{mp4,gif} + showcase-poster.png (needs ffmpeg)
+// Run npm run build, then start npm run dev, npm run storybook and npm run site in separate terminals.
+// npm run showcase → docs/media/showcase.{mp4,gif} + showcase-poster.png (needs Chromium and ffmpeg).
 import { execFileSync } from 'node:child_process'
 import { mkdirSync, readdirSync, renameSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
@@ -15,8 +15,14 @@ mkdirSync(join(outDir, 'raw'), { recursive: true })
 const size = { width: 1280, height: 720 }
 const PG = 'http://localhost:5180/'
 const SB = 'http://localhost:6006/iframe.html?viewMode=story&id='
+const SITE = 'http://localhost:5190/'
 
 const browser = await chromium.launch()
+// Warm the playground's dev modules before recording so its first build stays out of the video.
+const warmup = await browser.newPage({ viewport: size })
+await warmup.goto(PG)
+await warmup.locator('[data-demo="basic"] .vg').waitFor()
+await warmup.context().close()
 const context = await browser.newContext({
   viewport: size,
   deviceScaleFactor: 1,
@@ -173,8 +179,6 @@ async function sbStory(id, extra = '') {
 
 // ── 0. Title card ──────────────────────────────────────────────────────────────────────────
 await page.goto(PG)
-await page.evaluate(() => localStorage.clear())
-await page.reload()
 await page.evaluate(titleCard, {
   tagline: 'A data grid for Vue 3, built on CSS Grid',
   fadeIn: false,
@@ -282,7 +286,32 @@ await click(demo('virtual').getByTestId('jump'))
 await wait(1200)
 await hideCaption()
 
-// ── 5. Renderer recipes (Storybook) ───────────────────────────────────────────────────────
+// 5. Keyboard filtering and Find
+await sbStory('grid-configuration--parts-off')
+await caption(
+  'Filter from the keyboard',
+  'Shift+F10 opens the header menu · Filter stays with its column',
+)
+await page.locator('.vg-header-cell[data-col-key="city"]').focus()
+await page.keyboard.press('Shift+F10')
+await wait(950)
+await page.getByRole('menuitem', { name: 'Filter…', exact: true }).press('Enter')
+await page.getByRole('dialog', { name: 'Filter City' }).waitFor()
+await wait(1700)
+
+await sbStory('grid-range-selection--find-and-replace')
+await caption('Find and replace', 'Esc returns focus to the toolbar button when there is no match')
+const findButton = page.getByRole('button', { name: 'Find and replace' })
+await findButton.press('Enter')
+await page.getByRole('searchbox', { name: 'Find', exact: true }).pressSequentially('No match', {
+  delay: 75,
+})
+await page.getByText('No matches', { exact: true }).waitFor()
+await wait(1200)
+await page.keyboard.press('Escape')
+await wait(850)
+
+// 6. Renderer recipes
 await sbStory('recipes-back-office-grid--bet-monitor')
 await caption(
   '29 cell renderers — and your own',
@@ -300,7 +329,7 @@ await click(page.locator('[data-row-key="1"] > [data-col-key="reference"]').getB
 await wait(900)
 await hideCaption()
 
-// ── 6. Theming ────────────────────────────────────────────────────────────────────────────
+// 7. Theming
 await sbStory('theming--brand')
 await caption(
   'Themed with CSS variables',
@@ -310,10 +339,28 @@ await wait(1800)
 await sbStory('recipes-back-office-grid--bet-monitor', '&globals=scheme:dark')
 await caption('Dark mode built in', 'light-dark() colours follow the OS or your switch')
 await wait(2200)
+await page.screenshot({ path: join(outDir, 'showcase-poster.png') })
 await hideCaption()
 await wait(300)
 
-// ── 7. End card ───────────────────────────────────────────────────────────────────────────
+// 8. Live examples and source
+await page.goto(`${SITE}#/custom`, { waitUntil: 'networkidle' })
+const firstSource = page.getByRole('tab', { name: 'CustomDemo.vue' })
+await firstSource.scrollIntoViewIfNeeded()
+await caption(
+  'Live examples with source code',
+  'Arrow keys move between files · Enter opens the focused file',
+)
+await firstSource.focus()
+await wait(650)
+await page.keyboard.press('ArrowRight')
+await wait(650)
+await page.keyboard.press('Enter')
+await page.getByRole('tabpanel', { name: 'ProgressCell.vue' }).locator('pre').waitFor()
+await wait(2300)
+await hideCaption()
+
+// 9. End card
 await page.evaluate(titleCard, {
   tagline: 'Sub-grids · pinning · virtual scrolling · menus · 29 renderers · tree-shakeable',
   fadeIn: true,
@@ -327,12 +374,34 @@ const [file] = readdirSync(join(outDir, 'raw')).filter((f) => f.endsWith('.webm'
 const webm = join(outDir, 'raw', 'showcase.webm')
 renameSync(join(outDir, 'raw', file), webm)
 
-// Encode: MP4 (full quality), GIF (plays inline in any README), poster frame.
+// Encode: MP4 (full quality), GIF (plays inline in a README).
 const ffmpeg = (...args) =>
   execFileSync('ffmpeg', ['-v', 'error', '-y', ...args], { stdio: 'inherit' })
+// Chromium may record a few white frames before the title. Detect only the blank lead-in.
+const opening = execFileSync(
+  'ffmpeg',
+  [
+    '-v',
+    'error',
+    '-i',
+    webm,
+    '-t',
+    '6',
+    '-vf',
+    'negate,blackdetect=d=0.1:pix_th=0.10:pic_th=0.98,metadata=print:file=-',
+    '-an',
+    '-f',
+    'null',
+    '-',
+  ],
+  { encoding: 'utf8' },
+)
+const trim = /^lavfi\.black_start=0$/m.test(opening)
+  ? /^lavfi\.black_end=([\d.]+)$/m.exec(opening)?.[1]
+  : undefined
+const source = trim ? ['-ss', trim, '-i', webm] : ['-i', webm]
 ffmpeg(
-  '-i',
-  webm,
+  ...source,
   '-c:v',
   'libx264',
   '-preset',
@@ -347,13 +416,11 @@ ffmpeg(
   join(outDir, 'showcase.mp4'),
 )
 ffmpeg(
-  '-i',
-  webm,
+  ...source,
   '-vf',
   'fps=10,scale=800:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=96:stats_mode=diff[p];[b][p]paletteuse=dither=none:diff_mode=rectangle',
   join(outDir, 'showcase.gif'),
 )
-ffmpeg('-ss', '31', '-i', webm, '-frames:v', '1', join(outDir, 'showcase-poster.png'))
 rmSync(join(outDir, 'raw'), { recursive: true, force: true })
 console.log(
   'wrote',

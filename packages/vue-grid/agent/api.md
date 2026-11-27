@@ -182,7 +182,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `pasteText` | `Promise<CellsPasteEvent \| null>` |  | Pastes tab-separated text (what spreadsheets copy) into the editable cells from the selected range's top-left cell, as Ctrl/⌘+V does; a range a whole number of blocks in size is filled. Resolves the `cells-paste` event, or `null` with nowhere to paste. Range selection and editing features. |
 | `fillDown` | `Promise<CellsPasteEvent \| null>` |  | Fills the selected range down from its top row, as Ctrl/⌘+D does (the fill handle's rules: one value repeats). Resolves the `cells-fill` event, or `null` without a range of two or more rows. Range selection and editing features. |
 | `openFind` | `void` |  | Opens the find bar (Ctrl/⌘+F in the grid; `replace: true` also shows the replace row, as Ctrl/⌘+H does), searching the selected range if there is one, else every cell. Range selection feature (replacing needs the editing feature too). |
-| `closeFind` | `void` |  | Closes the find bar; the current match becomes the selected cell. |
+| `closeFind` | `void` |  | Closes Find and focuses the current match, or returns focus to the opener when available. |
 | `clearRange` | `Promise<CellsPasteEvent \| null>` |  | Clears the selected range's editable cells (else the selected cell's), as Delete / Backspace do: blank text, no number or date, an unticked checkbox. Resolves the `cells-clear` event, or `null` with nothing selected. Range selection and editing features. |
 | `cutRange` | `Promise<CellsPasteEvent \| null>` |  | Copies the selected cells, then clears them (Ctrl/⌘+X). Range selection and editing features. |
 | `undo` | `Promise<boolean>` |  | Undoes the last change made in the grid (an edit, a checkbox, a whole paste): each cell gets its value back through `cell-edit` (`source: 'undo'`) and `save-cell`, as Ctrl/⌘+Z does. Cells changed since by something else are left alone. Resolves whether anything changed. Editing feature. |
@@ -592,7 +592,7 @@ The first items of a list, with a “+N more” toggle. Emits `expand`. Align: `
 
 | Field | Type | Description |
 |---|---|---|
-| `rowHeight` | `number` | Fixed row height in px. |
+| `rowHeight` | `number` | Fixed row height in px. Default text uses one line. Allow room for multiline or custom cells. |
 | `overscan`? | `number` | Extra rows rendered above/below the viewport. Default 6. |
 | `detailHeight`? | `number` | Estimated height in px of a detail row (`#detail` slot) until it has been rendered and measured. Default 4 × `rowHeight`. Data rows always have `rowHeight`. |
 
