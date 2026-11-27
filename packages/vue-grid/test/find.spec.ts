@@ -159,6 +159,32 @@ describe('find', () => {
 })
 
 describe('replace', () => {
+  it('replaces only the original selected cells after rows and columns reorder', async () => {
+    const { w, rows } = make()
+    for (const row of rows) row.name = row.city = 'match'
+    api(w).selectRange({
+      start: { rowKey: 1, columnKey: 'name' },
+      end: { rowKey: 2, columnKey: 'name' },
+    })
+    await flushPromises()
+    await open(w, { key: 'h', ctrlKey: true })
+    await type('find', 'match')
+    await type('replace', 'changed')
+    rows.unshift(rows.splice(2, 1)[0]!)
+    await w.setProps({ columns: [columns[0], columns[2], columns[1], columns[3]] })
+    const replaceAll = [...bar()!.querySelectorAll('button')].find(
+      (button) => button.textContent?.trim() === 'Replace all',
+    )!
+    replaceAll.click()
+    await vi.waitFor(() => expect(w.emitted('cells-replace')).toHaveLength(1))
+    expect(rows.map(({ id, name, city }) => [id, name, city])).toEqual([
+      [3, 'match', 'match'],
+      [1, 'changed', 'match'],
+      [2, 'changed', 'match'],
+      [4, 'match', 'match'],
+    ])
+  })
+
   it('Replace all: every match, read as each column’s kind; read-only skipped; one undo', async () => {
     const { w, rows } = make()
     await open(w, { key: 'h', ctrlKey: true })

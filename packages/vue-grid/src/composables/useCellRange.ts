@@ -103,7 +103,7 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
   /** The replace row shows. */
   const findReplace = shallowRef(false)
   /** The range when find opened with one ("In selection"); null: every cell. */
-  const findScope = shallowRef<Box | null>(null)
+  const findScope = shallowRef<{ rows: Set<RowKey>; columns: Set<string> } | null>(null)
   let findOpener: HTMLElement | null = null
   /** Text to search for when it opens (`openFind({ text })`). */
   const findText = shallowRef('')
@@ -769,7 +769,18 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
   function openFind(o: { replace?: boolean; text?: string } = {}) {
     if (!opts.enabled()) return
     if (!findOpen.value) {
-      findScope.value = bounds.value
+      const b = bounds.value
+      findScope.value = b
+        ? {
+            rows: new Set(ordered.value.slice(b.top, b.bottom + 1).map(opts.getKey)),
+            columns: new Set(
+              opts
+                .columns()
+                .slice(b.left, b.right + 1)
+                .map((col) => col.key),
+            ),
+          }
+        : null
       const active = document.activeElement
       findOpener = active instanceof HTMLElement && active !== document.body ? active : null
     }
@@ -807,14 +818,17 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
     refocusing = false
   }
 
+  const scopedFindArea = computed(() => {
+    const scope = findScope.value
+    return {
+      rows: scope ? ordered.value.filter((row) => scope.rows.has(opts.getKey(row))) : [],
+      columns: scope ? opts.columns().filter((col) => scope.columns.has(col.key)) : [],
+    }
+  })
+
   /** What find searches: the rows and columns of its scope (or of every cell). */
   function findArea(inSelection: boolean) {
-    const b = inSelection ? findScope.value : null
-    const rows = ordered.value
-    const cols = opts.columns()
-    return b
-      ? { rows: rows.slice(b.top, b.bottom + 1), columns: cols.slice(b.left, b.right + 1) }
-      : { rows, columns: cols }
+    return inSelection ? scopedFindArea.value : { rows: ordered.value, columns: opts.columns() }
   }
 
   /** Marks a match as the current one and brings it into view. */
