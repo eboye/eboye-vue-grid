@@ -1,5 +1,6 @@
 import { computed, nextTick, shallowRef, watch, type Ref } from 'vue'
 import { getCellValue } from '../core/value'
+import { gridElement, gridElements, rowKeyAttrs } from '../internal/gridDom'
 import type {
   CellEditEvent,
   CellsPasteEvent,
@@ -41,6 +42,8 @@ export interface EditingOptions<T> {
   preload: () => Promise<unknown>
   /** The format locale: how pasted numbers and dates are read. */
   locale: () => string
+  /** The grid's format time zone for pasted datetimes without an explicit offset. */
+  timeZone?: () => string | undefined
   /** How many changes undo remembers (`undo-limit`); 0: none. */
   historyLimit: () => number
   /** Ctrl/⌘+Z, Ctrl+Y / Ctrl/⌘+Shift+Z undo and redo (`parts.undoShortcut`). */
@@ -54,9 +57,10 @@ export interface EditingOptions<T> {
 
 /** One change to a cell, as undo remembers it: its value before (`from`) and after (`to`). */
 interface HistoryChange<T> {
-  row: T
   rowKey: RowKey
-  column: ColumnDef<T>
+  columnKey: string
+  field: string | undefined
+  getValue: ColumnDef<T>['value']
   from: unknown
   to: unknown
 }
@@ -111,7 +115,23 @@ export function editorOf(
 }
 
 const cellSelector = (rowKey: RowKey, key: string) =>
-  `[data-row-key="${CSS.escape(String(rowKey))}"][data-vg-row-key-type="${typeof rowKey}"] > .vg-cell[data-col-key="${CSS.escape(key)}"]`
+  `${rowKeyAttrs(rowKey)} > .vg-cell[data-col-key="${CSS.escape(key)}"]`
+
+type InputFormat = { format?: { style?: string; timeZone?: string } }
+
+const writableField = <T>(column: ColumnDef<T>) =>
+  column.field ?? (column.value ? undefined : column.key)
+
+function historyChange<T>(event: CellEditEvent<T>): HistoryChange<T> {
+  return {
+    rowKey: event.rowKey,
+    columnKey: event.column.key,
+    field: writableField(event.column),
+    getValue: event.column.value,
+    from: event.oldValue,
+    to: event.value,
+  }
+}
 
 /**
  * Inline cell editing (editing feature): one editor at a time. Opens on double-click, Enter / F2
@@ -131,7 +151,7 @@ export function useEditing<T>(opts: EditingOptions<T>) {
     state.value?.rowKey === rowKey && state.value.column.key === key
 
   const cellEl = (rowKey: RowKey, key: string) =>
-    opts.root.value?.querySelector<HTMLElement>(cellSelector(rowKey, key)) ?? null
+    gridElement<HTMLElement>(opts.root.value, cellSelector(rowKey, key))
 
   function focusCell(rowKey: RowKey, key: string) {
     const el = cellEl(rowKey, key)
@@ -197,6 +217,7 @@ export function useEditing<T>(opts: EditingOptions<T>) {
     if (invalid) return fail(invalid)
     if (!Object.is(value, oldValue) && !sameDate(value, oldValue)) {
       const event: CellEditEvent<T> = { row, rowKey, column, value, oldValue, source: 'edit' }
+      const change = historyChange(event)
       opts.emit(event)
       const saver = opts.save()
       if (saver) {
@@ -223,7 +244,7 @@ export function useEditing<T>(opts: EditingOptions<T>) {
           return
         }
       }
-      record([event])
+      record([change])
     }
     if (toggle ? state.value : !isEditing(rowKey, column.key)) return
     state.value = null
@@ -235,11 +256,10 @@ export function useEditing<T>(opts: EditingOptions<T>) {
 
   /** Opens the next / previous editable cell on screen (rows in display order). */
   function next(rowKey: RowKey, key: string, dir: -1 | 1): boolean {
-    const cells = Array.from(
-      opts.root.value?.querySelectorAll<HTMLElement>('.vg-row > .vg-cell[data-vg-editable]') ?? [],
-    )
+    const cells = gridElements<HTMLElement>(opts.root.value, '.vg-row > .vg-cell[data-vg-editable]')
     const here = cellEl(rowKey, key)
-    const target = here ? cells[cells.indexOf(here) + dir] : undefined
+    const index = here ? cells.indexOf(here) : -1
+    const target = index >= 0 ? cells[index + dir] : undefined
     if (!target) return false
     target.scrollIntoView?.({ block: 'nearest', inline: 'nearest' })
     // the cell opens its own editor (it knows its row and column)
@@ -331,7 +351,14 @@ export function useEditing<T>(opts: EditingOptions<T>) {
     // loads on the first paste or fill (own chunk)
     const { fillValue, pasteValue } = await import('../core/paste')
     const m = opts.messages()
+    const locale = opts.locale()
+    const timeZone = opts.timeZone?.()
+    const columnInputs = new Map<
+      ColumnDef<T>,
+      { options?: EditorOption[]; percent: boolean; timeZone?: string }
+    >()
     const result: CellsPasteEvent<T> = { edits: [], skipped: [], failed: [] }
+    const changes: HistoryChange<T>[] = []
     for (const cell of cells) {
       const { row, rowKey, column, definition } = cell
       const text = cell.text ?? (cell.value == null ? '' : String(cell.value))
@@ -347,10 +374,23 @@ export function useEditing<T>(opts: EditingOptions<T>) {
         continue
       }
       const oldValue = getCellValue(row, column)
+      let input = columnInputs.get(column)
+      if (!input) {
+        const { format } = {
+          ...(definition?.defaults as InputFormat | undefined),
+          ...(column.rendererOptions as InputFormat | undefined),
+        }
+        input = {
+          options: kind === 'select' ? choices(column) : undefined,
+          percent: format?.style === 'percent',
+          timeZone: format?.timeZone ?? timeZone,
+        }
+        columnInputs.set(column, input)
+      }
       const ctx = {
-        locale: opts.locale(),
+        locale,
+        ...input,
         oldValue,
-        options: kind === 'select' ? choices(column) : undefined,
         yes: m.yes,
         no: m.no,
       }
@@ -381,6 +421,7 @@ export function useEditing<T>(opts: EditingOptions<T>) {
       if (Object.is(value, oldValue) || sameDate(value, oldValue)) continue
       const event: CellEditEvent<T> = { row, rowKey, column, value, oldValue, source }
       result.edits.push(event)
+      changes.push(historyChange(event))
       opts.emit(event)
     }
     const saver = opts.save()
@@ -391,7 +432,7 @@ export function useEditing<T>(opts: EditingOptions<T>) {
       })
     }
     const failed = new Set(result.failed.map((f) => f.edit))
-    record(result.edits.filter((e) => !failed.has(e))) // the whole paste / fill is one undo step
+    record(changes.filter((_, i) => !failed.has(result.edits[i]!))) // a paste / fill is one undo step
     return result
   }
   const pasteCells = (cells: readonly PasteCell<T>[]) => writeCells(cells, 'paste')
@@ -407,21 +448,21 @@ export function useEditing<T>(opts: EditingOptions<T>) {
   /** Changes to undo (oldest first) and undone changes to redo; each step is one edit or paste. */
   const past = shallowRef<HistoryChange<T>[][]>([])
   const future = shallowRef<HistoryChange<T>[][]>([])
-  let travelling = false
+  let duringTravel: HistoryChange<T>[][] | undefined
+  let historyGeneration = 0
+
+  function appendHistory(steps: HistoryChange<T>[][]) {
+    const limit = opts.historyLimit()
+    if (limit <= 0 || !steps.length) return
+    past.value = [...past.value, ...steps].slice(-limit)
+    future.value = []
+  }
 
   /** Remembers saved changes as one step; a new change drops what could be redone. */
-  function record(events: readonly CellEditEvent<T>[]) {
-    const limit = opts.historyLimit()
-    if (travelling || limit <= 0 || !events.length) return
-    const step = events.map((e) => ({
-      row: e.row,
-      rowKey: e.rowKey,
-      column: e.column,
-      from: e.oldValue,
-      to: e.value,
-    }))
-    past.value = [...past.value, step].slice(-limit)
-    future.value = []
+  function record(step: HistoryChange<T>[]) {
+    if (opts.historyLimit() <= 0 || !step.length) return
+    if (duringTravel) duringTravel.push(step)
+    else appendHistory([step])
   }
 
   /**
@@ -432,8 +473,10 @@ export function useEditing<T>(opts: EditingOptions<T>) {
   async function travel(dir: 'undo' | 'redo'): Promise<boolean> {
     const stack = dir === 'undo' ? past : future
     const step = stack.value.at(-1)
-    if (!step || travelling || state.value?.saving) return false
-    travelling = true
+    if (!step || duringTravel || state.value?.saving) return false
+    const deferred: HistoryChange<T>[][] = []
+    duringTravel = deferred
+    const generation = historyGeneration
     try {
       stack.value = stack.value.slice(0, -1)
       state.value = null
@@ -447,23 +490,32 @@ export function useEditing<T>(opts: EditingOptions<T>) {
         }
       }
       walk(opts.rows())
-      const find = (key: RowKey) => byKey.get(key)
+      const columns = new Map(opts.columns().map((column) => [column.key, column]))
       const moves: { change: HistoryChange<T>; event: CellEditEvent<T> }[] = []
       for (const change of step) {
-        const row = find(change.rowKey) ?? change.row
-        const now = getCellValue(row, change.column)
+        const row = byKey.get(change.rowKey)
+        const column = columns.get(change.columnKey)
+        if (
+          row === undefined ||
+          !column ||
+          writableField(column) !== change.field ||
+          column.value !== change.getValue ||
+          !canEdit(row, column)
+        )
+          continue
+        const now = getCellValue(row, column)
         const [expected, value] =
           dir === 'undo' ? [change.to, change.from] : [change.from, change.to]
         if (!Object.is(now, expected) && !sameDate(now, expected)) continue // changed since
         const event: CellEditEvent<T> = {
           row,
           rowKey: change.rowKey,
-          column: change.column,
+          column,
           value,
           oldValue: now,
           source: dir,
         }
-        moves.push({ change: { ...change, row }, event })
+        moves.push({ change, event })
         opts.emit(event)
       }
       const saver = opts.save()
@@ -473,12 +525,14 @@ export function useEditing<T>(opts: EditingOptions<T>) {
         done = moves.filter((_, i) => settled[i]!.status === 'fulfilled')
         // a save that failed: that change stays where it was, to try again
         const kept = moves.filter((_, i) => settled[i]!.status === 'rejected')
-        if (kept.length) stack.value = [...stack.value, kept.map((m) => m.change)]
+        if (kept.length && generation === historyGeneration)
+          stack.value = [...stack.value, kept.map((m) => m.change)]
       }
       if (!done.length) return false
       const other = dir === 'undo' ? future : past
-      other.value = [...other.value, done.map((m) => m.change)]
-      const cells = done.map((m) => ({ rowKey: m.change.rowKey, columnKey: m.change.column.key }))
+      if (generation === historyGeneration)
+        other.value = [...other.value, done.map((m) => m.change)]
+      const cells = done.map(({ change: { rowKey, columnKey } }) => ({ rowKey, columnKey }))
       await nextTick()
       // show where it happened: the first cell takes focus if the grid had it
       if (opts.root.value?.contains(document.activeElement))
@@ -486,7 +540,8 @@ export function useEditing<T>(opts: EditingOptions<T>) {
       opts.onTravel?.(cells)
       return true
     } finally {
-      travelling = false
+      duringTravel = undefined
+      appendHistory(deferred)
     }
   }
 
@@ -562,6 +617,8 @@ export function useEditing<T>(opts: EditingOptions<T>) {
     canUndo: () => past.value.length > 0,
     canRedo: () => future.value.length > 0,
     clearHistory() {
+      historyGeneration++
+      if (duringTravel) duringTravel.length = 0
       past.value = []
       future.value = []
     },

@@ -109,6 +109,34 @@ describe('row-reorder', () => {
     expect(w.emitted('row-move')).toHaveLength(1)
   })
 
+  it('keeps the types of sibling and parent keys from the DOM', async () => {
+    const w = make({
+      rows: [
+        { id: 1, name: 'Other parent' },
+        {
+          id: '1',
+          name: 'Parent',
+          children: [
+            { id: 2, name: 'First' },
+            { id: '2', name: 'Second' },
+          ],
+        },
+      ],
+      subRows: (r: Row) => r.children,
+      expanded: ['1'],
+    })
+    await nextTick()
+    await w
+      .find('.vg-row[data-row-key="2"][data-vg-row-key-type="string"] > [data-col-key="name"]')
+      .trigger('keydown', { key: 'ArrowUp', altKey: true })
+    expect(w.emitted('row-move')?.[0]?.[0]).toMatchObject({
+      rowKey: '2',
+      targetKey: 2,
+      parentKey: '1',
+      position: 'before',
+    })
+  })
+
   it('while sorted: handles off, no row-move', async () => {
     const w = make({ sort: { key: 'name', dir: 'asc' }, sortMode: 'client' })
     await nextTick()

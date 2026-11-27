@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
+import { reactive } from 'vue'
 import VGridComponent from '../src/components/VGrid.vue'
 import type { DataSource, GridQuery } from '../src/composables/useDataSource'
 import { nextSorts, sortRowsBy } from '../src/core/sort'
@@ -81,6 +82,18 @@ describe('multi-column sort in the grid', () => {
     return self.w
   }
   let w: ReturnType<typeof mount>
+
+  it('clears the legacy sort when the controlled sort array is emptied in place', async () => {
+    const sorts = reactive<SortState[]>([{ key: 'stake', dir: 'asc' }])
+    w = mountGrid({ sorts })
+    await flushPromises()
+    expect(ids(w)).toEqual([2, 3, 1, 5, 4])
+    sorts.splice(0)
+    await flushPromises()
+    expect(w.props('sort' as never)).toBeNull()
+    expect(ids(w)).toEqual([1, 2, 3, 4, 5])
+    w.unmount()
+  })
 
   it('Shift-click adds keys; the rows sort by all of them; sort stays the first key', async () => {
     w = mountGrid()

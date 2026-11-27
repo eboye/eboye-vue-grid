@@ -37,6 +37,9 @@ export interface GridExportOptions<T> {
   /** Filters (if `filtered`) and sorts a level of child rows. */
   prepare: (rows: readonly T[], filtered: boolean) => readonly T[]
   selected: Ref<RowKey[]>
+  /** Rows the server query or a selected group makes selected without listing the row key. */
+  isImplicitlySelected?: (row: T) => boolean
+  hasImplicitSelection?: () => boolean
   /** Rows shown but not in the data (pinned extra rows): a focused cell may be in one. */
   extraRows: () => readonly T[]
   /** Keyed pinned rows, including those cached from previous server pages. */
@@ -74,10 +77,23 @@ export function useGridExport<T>(opts: GridExportOptions<T>) {
     const which = o.rows ?? 'filtered'
     if (which === 'selected') {
       const picked = new Set(opts.selected.value)
+      const included = new Set<RowKey>()
+      const select = (rows: readonly T[], implicit: boolean) =>
+        rows.filter((row) => {
+          const key = opts.getKey(row)
+          if (
+            included.has(key) ||
+            !(picked.has(key) || (implicit && opts.isImplicitlySelected?.(row)))
+          )
+            return false
+          included.add(key)
+          return true
+        })
       // nested selected rows count even when `children` is off
-      return [...flatten(opts.rows('all'), true, false), ...(opts.pinnedRows?.() ?? [])].filter(
-        (row) => picked.delete(opts.getKey(row)),
-      )
+      return [
+        ...select(flatten(opts.rows('all'), true, false), true),
+        ...select(opts.pinnedRows?.() ?? [], false),
+      ]
     }
     if (which === 'all') return flatten(opts.rows('all'), !!o.children, false)
     if (which === 'page') return flatten(opts.rows('page'), !!o.children, true)
@@ -266,7 +282,7 @@ export function useGridExport<T>(opts: GridExportOptions<T>) {
     if (target.closest('input, textarea, select, [contenteditable="true"]')) return
     const selection = globalThis.getSelection?.()
     if (selection && !selection.isCollapsed && selection.toString()) return
-    if (opts.selected.value.length) {
+    if (opts.selected.value.length || opts.hasImplicitSelection?.()) {
       event.preventDefault()
       void copyRows()
       return

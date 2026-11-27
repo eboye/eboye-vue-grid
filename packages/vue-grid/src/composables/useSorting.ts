@@ -42,10 +42,11 @@ export function useSorting<T>(opts: SortingOptions<T>) {
   })
   // `sorts` set from outside: `sort` follows its first key.
   watch(
-    opts.sorts,
-    (keys, old) => {
-      if (keys.length ? !same(opts.sort.value, keys[0]) : old?.length && opts.sort.value)
-        opts.sort.value = keys[0] ?? null
+    [() => opts.sorts.value[0]?.key, () => opts.sorts.value[0]?.dir],
+    ([key], [previousKey]) => {
+      const first = opts.sorts.value[0]
+      if (key !== undefined ? !same(opts.sort.value, first) : previousKey !== undefined)
+        opts.sort.value = first ?? null
     },
     { immediate: true },
   )

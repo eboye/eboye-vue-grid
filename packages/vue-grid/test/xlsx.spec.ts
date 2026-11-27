@@ -118,6 +118,18 @@ describe('toXlsx', () => {
     expect(Number(cells(sheet, 2)[4]![3])).toBeCloseTo(46347 + 9.5 / 24, 9) // 09:30 in New York
   })
 
+  it('keeps historical zoned timestamps in their original century', () => {
+    const sheet = sheetOf(
+      toXlsx(
+        [{ day: new Date('0000-01-01T12:00:00Z') }, { day: new Date('0099-01-01T12:00:00Z') }],
+        [{ key: 'day' }],
+        { formats: { day: 'datetime' }, timeZone: 'UTC' },
+      ),
+    )
+    expect(cells(sheet, 2)).toEqual([['A2', S.text, 'inlineStr', '0000-01-01 12:00']])
+    expect(cells(sheet, 3)).toEqual([['A3', S.text, 'inlineStr', '0099-01-01 12:00']])
+  })
+
   it('formats override the guess; header: false', () => {
     const sheet = sheetOf(
       toXlsx([{ rate: 0.125 }], [{ key: 'rate', header: 'Rate' }], {

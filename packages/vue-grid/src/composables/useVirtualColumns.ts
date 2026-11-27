@@ -52,6 +52,7 @@ const always = (c: ResolvedColumn) => !!c.pinned || c.kind !== 'data'
  * the CSS grid (and the sub-grids sharing it) lays out as before; rendered cells are placed on
  * their track with `grid-column`. Track positions come from the browser (the template as laid
  * out), read again when the grid resizes or the columns change; scrolling only compares numbers.
+ * An intrinsic pinned track can also change size without changing the grid's box.
  */
 export function useVirtualColumns(o: UseVirtualColumnsOptions): VirtualColumnsState {
   const active = computed(() => !!o.options())
@@ -134,23 +135,34 @@ export function useVirtualColumns(o: UseVirtualColumnsOptions): VirtualColumnsSt
       cell && cell.closest('.vg') === o.root.value ? cell.getAttribute('data-col-key') : null
   }
 
-  let observer: ResizeObserver | undefined
+  const observedKeys = computed(
+    () =>
+      new Set(
+        o
+          .columns()
+          .filter((column) => always(column) || o.keepSized?.(column.key))
+          .map((column) => column.key),
+      ),
+  )
   watch(
-    () => [o.root.value, active.value] as const,
-    ([el, on], _, onCleanup) => {
+    () => [o.root.value, active.value, observedKeys.value] as const,
+    ([el, on, keys], _, onCleanup) => {
       if (!el || !on) return
       el.addEventListener('scroll', onScroll, { passive: true })
       el.addEventListener('focusin', onFocusIn)
-      if (typeof ResizeObserver !== 'undefined') {
-        observer = new ResizeObserver(schedule)
+      const observer =
+        typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(schedule)
+      if (observer) {
         observer.observe(el)
+        const cells = el.querySelectorAll<HTMLElement>(':scope > .vg-header > [data-col-key]')
+        for (const cell of cells)
+          if (keys.has(cell.dataset.colKey!)) observer.observe(cell, { box: 'border-box' })
       }
       measure()
       onCleanup(() => {
         el.removeEventListener('scroll', onScroll)
         el.removeEventListener('focusin', onFocusIn)
         observer?.disconnect()
-        observer = undefined
       })
     },
     { flush: 'post', immediate: true },

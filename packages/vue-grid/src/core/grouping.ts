@@ -45,6 +45,7 @@ export function isRowGroup(row: unknown): row is RowGroup {
 
 /** Prefix of group keys: keeps them apart from the app's row keys. */
 export const GROUP_KEY_PREFIX = '\u001fvg-group:'
+export const GROUP_PATH_SEPARATOR = '\u001e'
 
 /** The `children` arrays of groups: already filtered and sorted, so the grid takes them as they are. */
 export const groupedLevels = new WeakSet<object>()
@@ -143,7 +144,7 @@ export function pathKey(path: readonly { key: string; value: unknown }[]): strin
 
 /** A group's key: its parent's, then the column and the value's id. */
 const groupKey = (parentKey: string, columnKey: string, id: string) =>
-  `${parentKey}${parentKey ? '\u001e' : GROUP_KEY_PREFIX}${columnKey}=${id}`
+  `${parentKey}${parentKey ? GROUP_PATH_SEPARATOR : GROUP_KEY_PREFIX}${JSON.stringify([columnKey, id])}`
 
 /**
  * Group rows for groups the server sent (row grouping with server data), at one level: their

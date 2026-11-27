@@ -647,7 +647,7 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
     const { parseClipboard, pasteArea } = await import('../core/paste')
     const block = parseClipboard(text)
     if (!block.length) return null
-    const width = Math.max(...block.map((r) => r.length))
+    const width = block.reduce((max, row) => Math.max(max, row.length), 0)
     const area = pasteArea(
       { rows: block.length, cols: width },
       b && { rows: b.bottom - b.top + 1, cols: b.right - b.left + 1 },
@@ -952,19 +952,29 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
     closeFind,
     /** Selects the block around these cells (after an undo: the cells it changed). */
     selectCells(refs: readonly CellRef[]) {
-      const at = refs
-        .map((r) => [rowIndex.value.get(r.rowKey), colIndex.value.get(r.columnKey)])
-        .filter((p): p is [number, number] => p[0] !== undefined && p[1] !== undefined)
-      if (!at.length) return
-      const rs = at.map((p) => p[0])
-      const cs = at.map((p) => p[1])
+      let top = Infinity
+      let bottom = -1
+      let left = Infinity
+      let right = -1
+      const rowPositions = rowIndex.value
+      const columnPositions = colIndex.value
+      for (const ref of refs) {
+        const row = rowPositions.get(ref.rowKey)
+        const column = columnPositions.get(ref.columnKey)
+        if (row === undefined || column === undefined) continue
+        top = Math.min(top, row)
+        bottom = Math.max(bottom, row)
+        left = Math.min(left, column)
+        right = Math.max(right, column)
+      }
+      if (bottom < 0) return
       const rows = ordered.value
       const cols = opts.columns()
       const corner = (r: number, c: number) => ({
         rowKey: opts.getKey(rows[r]!),
         columnKey: cols[c]!.key,
       })
-      set(corner(Math.min(...rs), Math.min(...cs)), corner(Math.max(...rs), Math.max(...cs)))
+      set(corner(top, left), corner(bottom, right))
     },
     /** Sets the range from code (`null` clears it). */
     select(range: CellRange | null) {

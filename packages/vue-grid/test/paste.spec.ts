@@ -72,6 +72,13 @@ describe('parseDate', () => {
     const t = parseDate('05/23/2026 14:30', 'en-US')!
     expect([t.getHours(), t.getMinutes()]).toEqual([14, 30])
   })
+
+  it('rejects clock-field rollover in localized dates', () => {
+    expect(parseDate('05/23/2026 12:99', 'en-US')).toBeNull()
+    expect(parseDate('05/23/2026 12:00:99', 'en-US')).toBeNull()
+    expect(parseDate('05/23/2026 24:00', 'en-US')).toBeNull()
+    expect(ymd(parseDate('05/23/0099', 'en-US'))).toEqual([99, 5, 23])
+  })
 })
 
 describe('pasteValue', () => {
@@ -80,6 +87,27 @@ describe('pasteValue', () => {
     expect(pasteValue(' €12.50 ', 'number', ctx)).toBe(12.5)
     expect(pasteValue('', 'number', ctx)).toBeNull()
     expect(pasteValue('n/a', 'number', ctx)).toBeInstanceOf(Error)
+  })
+  it('scales explicit localized percentage text for a percentage target', () => {
+    expect(pasteValue('15%', 'number', { ...ctx, percent: true })).toBe(0.15)
+    expect(pasteValue('15%', 'number', ctx)).toBe(15)
+    expect(pasteValue('15', 'number', { ...ctx, percent: true })).toBe(15)
+    const locale = 'ar-EG'
+    const text = new Intl.NumberFormat(locale, { style: 'percent' }).format(-0.15)
+    expect(pasteValue(text, 'number', { ...ctx, locale, percent: true })).toBe(-0.15)
+  })
+  it('interprets offset-free datetimes in the supplied zone and keeps explicit offsets', () => {
+    const timeZone = 'America/New_York'
+    const zoned = { ...ctx, locale: 'en-GB', timeZone }
+    expect(pasteValue('23/05/2026 08:00:00', 'datetime', zoned)).toBe('2026-05-23T12:00:00.000Z')
+    expect(pasteValue('05/23/2026 8:00:00 AM', 'datetime', { ...ctx, timeZone })).toBe(
+      '2026-05-23T12:00:00.000Z',
+    )
+    expect(pasteValue('2026-05-23T08:00:00+02:00', 'datetime', zoned)).toBe(
+      '2026-05-23T06:00:00.000Z',
+    )
+    expect(pasteValue('2026-11-01T01:30', 'datetime', zoned)).toBe('2026-11-01T05:30:00.000Z')
+    expect(pasteValue('2026-03-08T02:30', 'datetime', zoned)).toBeInstanceOf(Error)
   })
   it('dates keep the type the cell had', () => {
     expect(pasteValue('05/23/2026', 'date', { ...ctx, oldValue: '2026-01-01' })).toBe('2026-05-23')
@@ -119,6 +147,9 @@ describe('fillSeries', () => {
     expect(fillSeries([1, 2], 3)).toEqual([3, 4, 5])
     expect(fillSeries([10, 20, 30], 2)).toEqual([40, 50])
     expect(fillSeries([0.1, 0.2], 2)).toEqual([0.3, 0.4]) // no float noise
+    expect(fillSeries([1234567890123, 1234567890124], 3)).toEqual([
+      1234567890125, 1234567890126, 1234567890127,
+    ])
     expect(fillSeries([5, 3], 2)).toEqual([1, -1])
     expect(fillSeries([7], 3)).toEqual([7, 7, 7]) // one number: copied
     expect(fillSeries([1, 2, 4], 4)).toEqual([1, 2, 4, 1]) // no steady step: repeated
@@ -128,6 +159,8 @@ describe('fillSeries', () => {
   it('dates go on by their step in days, in the type they had', () => {
     expect(fillSeries(['2026-05-30'], 3)).toEqual(['2026-05-31', '2026-06-01', '2026-06-02'])
     expect(fillSeries(['2026-01-01', '2026-01-08'], 2)).toEqual(['2026-01-15', '2026-01-22'])
+    expect(fillSeries(['0099-12-30', '0099-12-31'], 2)).toEqual(['0100-01-01', '0100-01-02'])
+    expect(fillSeries(['2026-02-30'], 1)).toEqual(['2026-02-30'])
     const [d] = fillSeries([new Date(2026, 2, 28)], 1) as Date[]
     expect([d!.getMonth(), d!.getDate()]).toEqual([2, 29])
     // across the spring DST change (Europe, 29 March) the calendar step holds

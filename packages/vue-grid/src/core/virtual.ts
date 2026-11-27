@@ -39,6 +39,8 @@ export interface LayoutInput<T> {
   /** Filters and sorts a child level. */
   prepare: (rows: readonly T[]) => readonly T[]
   isExpanded: (row: T) => boolean
+  /** Reads reactive eligibility only for rows whose keys are expanded. */
+  canExpand?: (row: T) => boolean
   /** Height of the row's detail row when expanded, or 0 for none. */
   detailHeight: (row: T, key: RowKey) => number
   /**
@@ -78,15 +80,15 @@ export function buildLayout<T>(input: LayoutInput<T>): LevelLayout<T> {
       count++
       if (input.isExpanded(row)) {
         const key = input.getKey(row)
-        const d = input.detailHeight(row, key)
+        const current = wrap && row !== null && typeof row === 'object' ? (reactive(row) as T) : row
+        if (input.canExpand && !input.canExpand(current)) continue
+        const d = input.detailHeight(current, key)
         if (d > 0) {
           detail[i] = d
           top += d
           count++
         }
-        const s = input.subRows(
-          wrap && row !== null && typeof row === 'object' ? (reactive(row) as T) : row,
-        )
+        const s = input.subRows(current)
         if (s && 'status' in s) {
           const height = input.statusHeight(key)
           sub.set(key, { kind: 'status', status: s.status, height })

@@ -1,4 +1,5 @@
 import { toDate, toNumber } from '../renderers/format'
+import { localDayKey } from './date'
 
 /** The kinds of built-in column filters. */
 export type FilterType = 'text' | 'number' | 'date' | 'boolean' | 'set'
@@ -132,7 +133,6 @@ export function setKey(value: unknown): string {
 }
 
 const dayFormats = new Map<string, Intl.DateTimeFormat>()
-const pad = (n: number) => String(n).padStart(2, '0')
 
 /**
  * `YYYY-MM-DD` of a date-ish value in the given time zone (default: local). A date-only string
@@ -143,7 +143,7 @@ export function dayKey(value: unknown, timeZone?: string): string | null {
     return toDate(value) ? value.trim() : null
   const d = toDate(value)
   if (!d) return null
-  if (!timeZone) return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+  if (!timeZone) return localDayKey(d)
   let f = dayFormats.get(timeZone)
   if (!f)
     dayFormats.set(
@@ -152,12 +152,15 @@ export function dayKey(value: unknown, timeZone?: string): string | null {
         year: 'numeric',
         month: '2-digit',
         day: '2-digit',
+        era: 'short',
         timeZone,
       })),
     )
   const parts = f.formatToParts(d)
   const get = (t: string) => parts.find((p) => p.type === t)?.value ?? ''
-  return `${get('year')}-${get('month')}-${get('day')}`
+  const year = Number(get('year'))
+  const isoYear = get('era') === 'BC' ? 1 - year : year
+  return `${String(isoYear).padStart(4, '0')}-${get('month')}-${get('day')}`
 }
 
 /** Does a single cell value pass a built-in filter? (`custom` filters need the column's `filterFn`.) */

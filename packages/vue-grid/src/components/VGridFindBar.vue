@@ -34,19 +34,22 @@ interface Match {
   text: string
 }
 
+const pattern = computed(() => {
+  const escaped = query.value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return new RegExp(escaped, matchCase.value ? 'u' : 'iu')
+})
+
 /** Every matching cell, row by row, as the cells show. */
 const matches = computed<Match[]>(() => {
-  const q = query.value
-  if (!q) return []
-  const fold = (s: string) => (matchCase.value ? s : s.toLocaleLowerCase())
-  const needle = fold(q)
+  if (!query.value) return []
+  const search = pattern.value
   const { rows, columns } = find.area(inSelection.value)
   const out: Match[] = []
   for (const row of rows)
     for (const col of columns) {
       const text = find.cellText(row, col)
-      const hay = fold(text)
-      if (wholeCell.value ? hay === needle : hay.includes(needle))
+      const match = search.exec(text)
+      if (match && (!wholeCell.value || match[0] === text))
         out.push({ row, col, id: find.cellId(find.rowKey(row), col.key), text })
     }
   return out
@@ -82,10 +85,9 @@ function go(step: 1 | -1) {
 }
 
 /** A cell's text with the search replaced (every occurrence; the whole text with Whole cell). */
-function replaced(text: string): string {
+function replaced(text: string, search: RegExp): string {
   if (wholeCell.value) return replacement.value
-  const escaped = query.value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  return text.replace(new RegExp(escaped, matchCase.value ? 'g' : 'gi'), () => replacement.value)
+  return text.replace(search, () => replacement.value)
 }
 
 const busy = ref(false)
@@ -98,11 +100,12 @@ async function replace(all: boolean) {
   const inBar = !!had && !!bar.value?.contains(had)
   busy.value = true
   try {
+    const search = new RegExp(pattern.value, pattern.value.flags + 'g')
     const result = await find.write(
-      list.map((x) => ({ row: x.row, column: x.col, text: replaced(x.text) })),
+      list.map((x) => ({ row: x.row, column: x.col, text: replaced(x.text, search) })),
     )
     if (!result) return
-    const count = result.edits.length
+    const count = result.edits.length - result.failed.length
     const skipped = result.skipped.length + result.failed.length
     if (!all) {
       // on to the next match: usually the same place in the list, now that this cell no longer

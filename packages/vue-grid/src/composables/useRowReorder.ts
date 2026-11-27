@@ -1,6 +1,7 @@
 import { nextTick, onBeforeUnmount, watch, type Component, type Ref } from 'vue'
 import VGridRowHandle from '../components/VGridRowHandle.vue'
 import { DRAG_COLUMN_KEY, type ResolvedColumn } from '../internal/context'
+import { domRowKey, gridElement, rowKeyAttrs } from '../internal/gridDom'
 import type { RowKey, RowMoveEvent } from '../types'
 
 export interface RowReorderOptions<T> {
@@ -34,7 +35,14 @@ const MAX_STEP = 24
 const ROW = '.vg-row[data-row-key]:not(.vg-rowgroup)'
 
 /** The rows' parent: the grid, or a sub-grid (its `data-subgrid-for`). */
-const parentKeyOf = (row: Element) => row.parentElement?.getAttribute('data-subgrid-for') ?? null
+const parentKeyOf = (row: Element) => {
+  const parent = row.parentElement
+  if (!parent) return null
+  const key = parent.getAttribute('data-subgrid-for')
+  return key === null ? null : domRowKey(key, parent.getAttribute('data-vg-subgrid-key-type'))
+}
+const rowKeyOf = (row: Element) =>
+  domRowKey(row.getAttribute('data-row-key')!, row.getAttribute('data-vg-row-key-type'))
 
 /** The data rows next to each other at this row's level. */
 function siblings(row: Element): Element[] {
@@ -48,8 +56,8 @@ function siblings(row: Element): Element[] {
  */
 export function useRowReorder<T>(o: RowReorderOptions<T>): RowReorderState {
   let drag: {
-    key: string
-    parent: string | null
+    key: RowKey
+    parent: RowKey | null
     pointerId: number
     x: number
     y: number
@@ -59,17 +67,15 @@ export function useRowReorder<T>(o: RowReorderOptions<T>): RowReorderState {
   let marked: Element | null = null
   let frame = 0
 
-  /** A row by its key as the DOM has it (`data-row-key`, a string). */
-  const find = (key: string) => {
+  const find = (key: RowKey) => {
     let found: T | undefined
     o.walk((row) => {
-      if (found === undefined && String(o.getKey(row)) === key) found = row
+      if (found === undefined && o.getKey(row) === key) found = row
     })
     return found
   }
 
-  const rowEl = (key: string) =>
-    o.root.value?.querySelector(`.vg-row[data-row-key="${CSS.escape(key)}"]`) ?? null
+  const rowEl = (key: RowKey) => gridElement(o.root.value, `${ROW}${rowKeyAttrs(key)}`)
 
   function mark(target: Element | null, side?: 'before' | 'after') {
     if (marked && marked !== target) marked.removeAttribute('data-vg-drop')
@@ -82,7 +88,7 @@ export function useRowReorder<T>(o: RowReorderOptions<T>): RowReorderState {
     if (!drag) return null
     const el = document.elementFromPoint(x, y)?.closest(ROW)
     if (!el || el.closest('.vg') !== o.root.value || parentKeyOf(el) !== drag.parent) return null
-    const key = el.getAttribute('data-row-key')!
+    const key = rowKeyOf(el)
     if (key === drag.key) return null
     const r = (el.firstElementChild ?? el).getBoundingClientRect()
     const side: 'before' | 'after' = y < r.top + r.height / 2 ? 'before' : 'after'
@@ -166,7 +172,7 @@ export function useRowReorder<T>(o: RowReorderOptions<T>): RowReorderState {
     if (!row) return
     e.preventDefault() // no text selection, no focus jump while dragging
     drag = {
-      key: row.getAttribute('data-row-key')!,
+      key: rowKeyOf(row),
       parent: parentKeyOf(row),
       pointerId: e.pointerId,
       x: e.clientX,
@@ -181,19 +187,20 @@ export function useRowReorder<T>(o: RowReorderOptions<T>): RowReorderState {
 
   /** Emits the move; afterwards, focus stays with the moved row (Vue moves its cells). */
   function move(
-    key: string,
-    targetKey: string,
+    key: RowKey,
+    targetKey: RowKey,
     position: 'before' | 'after',
     source: 'drag' | 'keyboard',
   ) {
     const row = find(key)
     const target = find(targetKey)
     if (row === undefined || target === undefined) return
-    const parentKey = rowEl(targetKey) ? parentKeyOf(rowEl(targetKey)!) : null
+    const targetEl = rowEl(targetKey)
+    const parentKey = targetEl ? parentKeyOf(targetEl) : null
     const parent = parentKey === null ? null : (find(parentKey) ?? null)
     const focused = document.activeElement
     const colKey =
-      focused && o.root.value?.contains(focused)
+      focused && focused.closest('.vg') === o.root.value
         ? focused.closest('[data-col-key]')?.getAttribute('data-col-key')
         : null
     o.emit({
@@ -232,13 +239,7 @@ export function useRowReorder<T>(o: RowReorderOptions<T>): RowReorderState {
     const next = list[up ? at - 1 : at + 1]
     e.preventDefault()
     e.stopPropagation()
-    if (next)
-      move(
-        row.getAttribute('data-row-key')!,
-        next.getAttribute('data-row-key')!,
-        up ? 'before' : 'after',
-        'keyboard',
-      )
+    if (next) move(rowKeyOf(row), rowKeyOf(next), up ? 'before' : 'after', 'keyboard')
   }
 
   watch(

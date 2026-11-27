@@ -226,6 +226,31 @@ describe('replace', () => {
     w.unmount()
   })
 
+  it('uses the same Unicode case matching for highlighting and replacing', async () => {
+    const { w, rows } = make()
+    rows[0]!.name = 'Kelvin'
+    await open(w, { key: 'h', ctrlKey: true })
+    await type('find', 'k')
+    expect(matches(w)).toEqual(['1:name'])
+    await type('replace', 'T')
+    await key(box('replace'), { key: 'Enter' })
+    await vi.waitFor(() => expect(rows[0]!.name).toBe('Telvin'))
+  })
+
+  it('counts a rejected save as unchanged only', async () => {
+    const { w } = make({
+      'onCell-edit': () => {},
+      saveCell: async () => {
+        throw new Error('Save failed')
+      },
+    })
+    await open(w, { key: 'h', ctrlKey: true })
+    await type('find', 'Bojan')
+    await type('replace', 'New name')
+    await key(box('replace'), { key: 'Enter' })
+    await vi.waitFor(() => expect(status()).toBe('0 replaced, 1 left as they were'))
+  })
+
   it('without the editing feature, find only finds', async () => {
     const saved = config.global.plugins
     config.global.plugins = [
