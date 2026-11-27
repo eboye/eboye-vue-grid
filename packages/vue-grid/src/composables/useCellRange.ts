@@ -104,6 +104,7 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
   const findReplace = shallowRef(false)
   /** The range when find opened with one ("In selection"); null: every cell. */
   const findScope = shallowRef<Box | null>(null)
+  let findOpener: HTMLElement | null = null
   /** Text to search for when it opens (`openFind({ text })`). */
   const findText = shallowRef('')
   /**
@@ -767,7 +768,11 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
   /** Opens the find bar: in the selected range if there is one, else every cell. */
   function openFind(o: { replace?: boolean; text?: string } = {}) {
     if (!opts.enabled()) return
-    if (!findOpen.value) findScope.value = bounds.value
+    if (!findOpen.value) {
+      findScope.value = bounds.value
+      const active = document.activeElement
+      findOpener = active instanceof HTMLElement && active !== document.body ? active : null
+    }
     if (o.text !== undefined) findText.value = o.text
     if (o.replace && opts.replace) findReplace.value = true
     findOpen.value = true
@@ -775,7 +780,7 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
     findFocus.value++
   }
 
-  /** Closes the bar; the current match becomes the selected cell, with focus. */
+  /** Closes the bar and focuses the current match or returns focus to the opener. */
   function closeFind() {
     if (!findOpen.value) return
     findOpen.value = false
@@ -787,13 +792,19 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
     findCurrent.value = null
     const [rowKey, columnKey] = id ? (JSON.parse(id) as [RowKey, string]) : []
     const r = rowKey !== undefined ? rowIndex.value.get(rowKey) : undefined
+    const opener = findOpener
+    findOpener = null
+    let focusTarget = opener?.isConnected ? opener : undefined
     if (r !== undefined && columnKey !== undefined) {
       const ref = { rowKey: opts.getKey(ordered.value[r]!), columnKey }
       set(ref, ref)
-      refocusing = true
-      ;(cellEl(ref) ?? opts.root.value)?.focus({ preventScroll: true })
-      refocusing = false
-    } else opts.root.value?.focus({ preventScroll: true })
+      focusTarget = cellEl(ref) ?? undefined
+    }
+    refocusing = true
+    focusTarget?.focus({ preventScroll: true })
+    if (!focusTarget || document.activeElement !== focusTarget)
+      opts.root.value?.focus({ preventScroll: true })
+    refocusing = false
   }
 
   /** What find searches: the rows and columns of its scope (or of every cell). */

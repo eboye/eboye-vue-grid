@@ -15,6 +15,14 @@ import type { TooltipController } from './tooltipController'
 export const TIP = 'data-vg-tip'
 export const TIP_OVERFLOW = 'data-vg-tip-overflow'
 
+export function tooltipTarget(node: EventTarget | null, fromFocus = false): HTMLElement | null {
+  if (!(node instanceof Element)) return null
+  const direct = node.closest<HTMLElement>(`[${TIP}]`)
+  if (direct || !fromFocus || !node.matches('.vg-cell[role="gridcell"]')) return direct
+  // Grid navigation focuses the cell, while the text renderer measures its own overflow.
+  return node.querySelector<HTMLElement>(`[${TIP}][${TIP_OVERFLOW}]`)
+}
+
 /**
  * Attributes that give an element a grid tooltip (text, or an array of lines). `overflow`: only while the element's own text is
  * cut off (ellipsis / line clamp). `describe`: also its accessible description, where the text says
@@ -48,7 +56,7 @@ export function useGridTooltip(id: string) {
   function forward(name: Name, event: Event) {
     if (controller) return controller[name](event as never)
     const el = event.target
-    if (!(el instanceof Element) || !el.closest(`[${TIP}]`)) return
+    if (!(el instanceof Element) || !tooltipTarget(el, name === 'focusin')) return
     loading ??= import('./tooltipController').then(
       (m) => (controller = m.createTooltip(tip, anchor)),
     )

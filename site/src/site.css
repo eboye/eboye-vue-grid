@@ -174,7 +174,8 @@ a {
     position: fixed;
     inset: var(--site-header) 0 0 0;
     z-index: 15;
-    max-block-size: none;
+    block-size: calc(100dvh - var(--site-header));
+    overscroll-behavior: contain;
     background: var(--site-surface);
   }
   .site-nav.open {

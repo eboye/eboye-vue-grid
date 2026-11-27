@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, ref, shallowRef, toRaw, useId } from 'vue'
-import { anchorNameFor, trackAnchor, type AnchorTarget, type Placement } from '../internal/anchor'
+import {
+  addAnchorName,
+  anchorNameFor,
+  trackAnchor,
+  type AnchorTarget,
+  type Placement,
+} from '../internal/anchor'
 import type { MenuAction, MenuItem } from '../types'
 import { useMessages } from '../internal/messages'
 
@@ -48,11 +54,14 @@ const point = ref<{ x: number; y: number } | null>(null)
 const placement = ref<Placement>(props.placement)
 const anchorName = ref(props.anchorName ?? ownAnchor)
 const isOpen = ref(false)
-let anchoredElement: HTMLElement | null = null
 let fallbackTarget: AnchorTarget | null = null
 let returnFocus: HTMLElement | null = null
+let releaseAnchor: (() => void) | undefined
 let stopTracking = () => {}
-onBeforeUnmount(() => stopTracking())
+onBeforeUnmount(() => {
+  releaseAnchor?.()
+  stopTracking()
+})
 
 const isAction = (item: MenuItem): item is MenuAction => !('separator' in item)
 // this menu's own items, not a submenu's (which sits inside it)
@@ -111,23 +120,16 @@ function onSubDismiss() {
   if (props.nested) emit('dismiss')
 }
 
-function releaseAnchor() {
-  if (anchoredElement?.style.getPropertyValue('anchor-name') === ownAnchor) {
-    anchoredElement.style.removeProperty('anchor-name')
-  }
-  anchoredElement = null
-}
-
 /** Opens the menu anchored to an element (keyboard / cell) or a viewport point (pointer). */
 async function openAt(target: AnchorTarget, focusAfterClose?: HTMLElement | null) {
   if (isOpen.value) menu.value?.hidePopover?.()
-  releaseAnchor()
+  releaseAnchor?.()
+  releaseAnchor = undefined
   returnFocus = focusAfterClose ?? (document.activeElement as HTMLElement | null)
   fallbackTarget = target
   if (target instanceof HTMLElement) {
     point.value = null
-    target.style.setProperty('anchor-name', ownAnchor)
-    anchoredElement = target
+    releaseAnchor = addAnchorName(target, ownAnchor)
     anchorName.value = ownAnchor
     placement.value = props.placement === 'point' ? 'bottom-start' : props.placement
   } else {
@@ -167,7 +169,8 @@ function onToggle(event: Event) {
       menu.value?.contains(document.activeElement)
     if (focusInside && returnFocus?.isConnected) returnFocus.focus({ preventScroll: true })
     stopTracking()
-    releaseAnchor()
+    releaseAnchor?.()
+    releaseAnchor = undefined
     point.value = null
     fallbackTarget = null
     returnFocus = null

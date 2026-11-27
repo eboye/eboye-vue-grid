@@ -1,6 +1,6 @@
 import type { ShallowRef } from 'vue'
-import { trackAnchor } from './anchor'
-import { TIP, TIP_OVERFLOW } from './tooltip'
+import { addAnchorName, trackAnchor } from './anchor'
+import { TIP, TIP_OVERFLOW, tooltipTarget } from './tooltip'
 
 // Loaded with the first element that has a tooltip (see `useGridTooltip`).
 const HOVER_DELAY = 400
@@ -15,22 +15,16 @@ export function createTooltip(tip: ShallowRef<HTMLElement | undefined>, anchor: 
   let hideTimer = 0
   let warmUntil = 0
   let stopTracking = () => {}
-  let ownAnchor = ''
-  let withOurs = ''
+  let releaseAnchor: (() => void) | undefined
 
-  const tipOf = (node: EventTarget | null) =>
-    node instanceof Element ? node.closest<HTMLElement>(`[${TIP}]`) : null
   const onTip = (node: EventTarget | null) => node instanceof Node && !!tip.value?.contains(node)
 
   function hide() {
     clearTimeout(showTimer)
     clearTimeout(hideTimer)
     if (!target) return
-    // give the element back its own anchor name (a menu or popover trigger is an anchor too)
-    if (target.style.getPropertyValue('anchor-name') === withOurs) {
-      if (ownAnchor) target.style.setProperty('anchor-name', ownAnchor)
-      else target.style.removeProperty('anchor-name')
-    }
+    releaseAnchor?.()
+    releaseAnchor = undefined
     target = null
     stopTracking()
     stopTracking = () => {}
@@ -47,19 +41,19 @@ export function createTooltip(tip: ShallowRef<HTMLElement | undefined>, anchor: 
     const popover = tip.value
     if (!text || !popover?.showPopover || !el.isConnected) return
     if (el.hasAttribute(TIP_OVERFLOW) && !isCut(el)) return
-    if (target !== el) hide()
-    target = el
+    if (target !== el) {
+      hide()
+      target = el
+      releaseAnchor = addAnchorName(el, anchor)
+    }
     popover.textContent = text
-    // `anchor-name` takes a list: keep the element's own (a details or menu trigger's) beside ours
-    ownAnchor = el.style.getPropertyValue('anchor-name')
-    withOurs = ownAnchor ? `${ownAnchor}, ${anchor}` : anchor
-    el.style.setProperty('anchor-name', withOurs)
     try {
       if (!popover.matches(':popover-open')) popover.showPopover()
     } catch {
       // the browser refuses while another popover is opening or closing: no tooltip this time
       return hide()
     }
+    stopTracking()
     stopTracking = trackAnchor(popover, el, 'top')
   }
 
@@ -81,7 +75,7 @@ export function createTooltip(tip: ShallowRef<HTMLElement | undefined>, anchor: 
     pointerover(event: PointerEvent) {
       if (event.pointerType !== 'mouse') return
       if (onTip(event.target)) return clearTimeout(hideTimer)
-      const el = tipOf(event.target)
+      const el = tooltipTarget(event.target)
       if (el) schedule(el, HOVER_DELAY)
       else hideSoon()
     },
@@ -89,7 +83,7 @@ export function createTooltip(tip: ShallowRef<HTMLElement | undefined>, anchor: 
     pointerdown: hide,
     focusin(event: FocusEvent) {
       const focused = event.target as HTMLElement
-      const el = tipOf(focused)
+      const el = tooltipTarget(focused, true)
       // keyboard focus only: a click focuses too, and the pointer has its own delay
       if (el && focused.matches?.(':focus-visible')) {
         // the next task, not now: focus also arrives while the browser closes a popover (it hands

@@ -42,7 +42,7 @@ const points = [
 <template>
   <div class="home">
     <section class="hero">
-      <h1>A Vue 3 data grid built on CSS Grid</h1>
+      <h1 id="site-page-title">A Vue 3 data grid built on CSS Grid</h1>
       <p class="hero-lead">
         Sorting, filtering, grouping, server data, sub-grids, virtual scrolling, export and 29 cell
         renderers. Each feature is opt-in and tree-shakeable, and it is accessible and touch-ready

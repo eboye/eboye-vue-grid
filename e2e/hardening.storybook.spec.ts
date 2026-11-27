@@ -35,6 +35,20 @@ test('virtual scrolling: the rendered window follows many small scroll steps', a
   await expect(page.locator(`#storybook-root .vg-row[aria-rowindex="${index}"]`)).toBeVisible()
 })
 
+test('virtual rows keep narrow text on one line with the full value available', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 375, height: 812 })
+  await story(page, 'grid-range-selection--find-and-replace')
+  const cell = page.locator('.vg-row > [data-col-key="city"]').first()
+  const city = cell.locator('.vg-text')
+  await expect(city).toHaveText('Subotica')
+  await expect(city).toHaveCSS('white-space', 'nowrap')
+  await expect(city).toHaveCSS('text-overflow', 'ellipsis')
+  await cell.focus()
+  await expect(page.locator('.vg-tooltip:popover-open')).toHaveText('Subotica')
+})
+
 test('pin shadows (scroll-edge fallback) follow horizontal scrolling only', async ({ page }) => {
   await story(page, 'grid-columns--resizing')
   const grid = page.locator('#storybook-root .vg')

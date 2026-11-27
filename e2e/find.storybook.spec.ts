@@ -88,7 +88,8 @@ test('focus stays in the bar after the Replace buttons, so Esc still closes it',
   page,
 }) => {
   await open(page)
-  await page.getByRole('button', { name: 'Find and replace' }).click()
+  const opener = page.getByRole('button', { name: 'Find and replace' })
+  await opener.press('Enter')
   await page.keyboard.type('Beograd')
   await page.getByRole('textbox', { name: 'Replace with' }).fill('BG')
   // Replace: the button is off while the change saves, then on again (matches are left)
@@ -102,10 +103,22 @@ test('focus stays in the bar after the Replace buttons, so Esc still closes it',
   await expect(findBox(page)).toBeFocused()
   await page.keyboard.press('Escape')
   await expect(page.locator('.vg-find')).toHaveCount(0)
-  // no match left to land on: focus goes back to the grid
-  await expect
-    .poll(() => page.evaluate(() => !!document.activeElement?.closest('#storybook-root .vg')))
-    .toBe(true)
+  await expect(opener).toBeFocused()
+})
+
+test('Escape after no matches returns focus to the toolbar button', async ({
+  page,
+  browserName,
+}) => {
+  await open(page)
+  const opener = page.getByRole('button', { name: 'Find and replace' })
+  if (browserName === 'webkit') await opener.press('Enter')
+  else await opener.click()
+  await findBox(page).fill('no-such-grid-value')
+  await expect(status(page)).toHaveText('No matches')
+  await page.keyboard.press('Escape')
+  await expect(findBox(page)).toHaveCount(0)
+  await expect(opener).toBeFocused()
 })
 
 test('the open bar, with matches and the replace row, passes axe in light and dark', async ({

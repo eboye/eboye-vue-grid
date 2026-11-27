@@ -12,8 +12,9 @@ import grid from '../packages/vue-grid/package.json' with { type: 'json' }
  * (`raw` keeps the Vue plugin off the module.)
  */
 function demoSource(): Plugin {
+  const themes = { light: 'github-light-high-contrast', dark: 'github-dark-high-contrast' } as const
   const highlighter = createHighlighter({
-    themes: ['github-light', 'github-dark'],
+    themes: Object.values(themes),
     langs: ['vue', 'ts'],
   })
   return {
@@ -26,7 +27,7 @@ function demoSource(): Plugin {
       const code = (await readFile(file, 'utf8')).trimEnd()
       const { tokens } = (await highlighter).codeToTokens(code, {
         lang: file.endsWith('.vue') ? 'vue' : 'ts',
-        themes: { light: 'github-light', dark: 'github-dark' },
+        themes,
         defaultColor: false,
       })
       const styles: Record<string, string>[] = []

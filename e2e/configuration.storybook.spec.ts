@@ -143,4 +143,25 @@ test.describe('configuration', () => {
       .poll(async () => (await headerKeys(page)).indexOf('status'))
       .toBeLessThan(before.indexOf('status'))
   })
+
+  test('parts off: the keyboard header menu anchors its filter to the column header', async ({
+    page,
+  }) => {
+    await story(page, 'parts-off')
+    const city = header(page, 'city')
+    await city.focus()
+    await page.keyboard.press('Shift+F10')
+    const filterItem = page.getByRole('menuitem', { name: 'Filter…' })
+    await expect(filterItem).toBeVisible()
+    await filterItem.press('Enter')
+
+    const filter = page.getByRole('dialog', { name: 'Filter City' })
+    await expect(filter).toBeVisible()
+    await expect(filter.locator(':focus')).toHaveCount(1)
+    const cityBox = (await city.boundingBox())!
+    const filterBox = (await filter.boundingBox())!
+    expect(filterBox.y - (cityBox.y + cityBox.height)).toBeGreaterThanOrEqual(0)
+    expect(filterBox.y - (cityBox.y + cityBox.height)).toBeLessThan(8)
+    expect(filterBox.x + filterBox.width).toBeCloseTo(cityBox.x + cityBox.width, 0)
+  })
 })
