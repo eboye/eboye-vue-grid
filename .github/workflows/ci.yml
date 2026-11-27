@@ -96,7 +96,7 @@ jobs:
         run: npm run e2e -- --workers=1 --output=test-results/playground
       - name: Storybook (Chromium, Firefox, WebKit)
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
-        run: npm run e2e:storybook -- --workers=1 --output=test-results/storybook
+        run: npm run e2e:storybook -- --workers=2 --output=test-results/storybook
       - name: Traces of failed tests
         if: failure()
         uses: actions/upload-artifact@v4
