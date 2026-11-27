@@ -27,6 +27,8 @@ export const it = {
   selectAllMatching: (total) => `Seleziona tutte le ${num(total)} righe`,
   allSelected: (total) => `Tutte le ${num(total)} righe sono selezionate.`,
   clearSelection: 'Annulla selezione',
+  showRowDetails: 'Mostra i dettagli della riga',
+  hideRowDetails: 'Nascondi i dettagli della riga',
   expandRow: 'Espandi riga',
   collapseRow: 'Comprimi riga',
   expandGroup: 'Espandi gruppo',

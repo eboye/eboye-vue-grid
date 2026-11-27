@@ -196,6 +196,7 @@ const typeNames = [
   'VirtualOptions',
   'PinnedRowsState',
   'ColumnState',
+  'ColumnHeaderGroup',
   'SortState',
   'ColumnFilterOptions',
   'FilterOption',

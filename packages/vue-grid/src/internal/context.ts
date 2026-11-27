@@ -78,7 +78,7 @@ export interface GridContext {
     /** Has a resized width (or is being resized): its cells clip their content. */
     isSized(key: string): boolean
   }
-  /** Header rows above the body (2 with column groups). */
+  /** Header rows above the body, including column group levels. */
   headerRows: ComputedRef<number>
   /** Pinned rows (and a totals row) above the body: offsets the body's `aria-rowindex`. */
   pinnedTopCount: ComputedRef<number>
@@ -93,9 +93,14 @@ export interface GridContext {
   /** Rows nest (sub-grids, or grouped rows): the first column has the expander gutter. */
   treeMode: ComputedRef<boolean>
   hasDetail: ComputedRef<boolean>
+  separateDetails: ComputedRef<boolean>
+  canShowDetail(row: any): boolean
   canExpand(row: any): boolean
   isExpanded(key: RowKey): boolean
+  isDetailExpanded(key: RowKey): boolean
   toggleExpanded(row: any): void
+  toggleDetail(key: RowKey): void
+  closeDetail(key: RowKey): void
   children(row: any): any[] | undefined
   subRowState(row: any): SubRowEntry | undefined
   ensureSubRows(row: any): void

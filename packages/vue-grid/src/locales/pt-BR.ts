@@ -27,6 +27,8 @@ export const ptBR = {
   selectAllMatching: (total) => `Selecionar todas as ${num(total)} linhas`,
   allSelected: (total) => `Todas as ${num(total)} linhas estão selecionadas.`,
   clearSelection: 'Limpar seleção',
+  showRowDetails: 'Mostrar detalhes da linha',
+  hideRowDetails: 'Ocultar detalhes da linha',
   expandRow: 'Expandir linha',
   collapseRow: 'Recolher linha',
   expandGroup: 'Expandir grupo',

@@ -27,6 +27,8 @@ export const nl = {
   selectAllMatching: (total) => `Alle ${num(total)} rijen selecteren`,
   allSelected: (total) => `Alle ${num(total)} rijen zijn geselecteerd.`,
   clearSelection: 'Selectie wissen',
+  showRowDetails: 'Rijdetails tonen',
+  hideRowDetails: 'Rijdetails verbergen',
   expandRow: 'Rij uitvouwen',
   collapseRow: 'Rij samenvouwen',
   expandGroup: 'Groep uitvouwen',

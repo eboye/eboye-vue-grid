@@ -35,6 +35,8 @@ export const fr = {
       other: 'Les # lignes sont sélectionnées.',
     }),
   clearSelection: 'Effacer la sélection',
+  showRowDetails: 'Afficher les détails de la ligne',
+  hideRowDetails: 'Masquer les détails de la ligne',
   expandRow: 'Développer la ligne',
   collapseRow: 'Réduire la ligne',
   expandGroup: 'Développer le groupe',

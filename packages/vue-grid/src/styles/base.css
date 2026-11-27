@@ -103,6 +103,13 @@
     text-overflow: ellipsis;
   }
 
+  .vg-header-actions {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    cursor: default;
+  }
+
   .vg-sort {
     display: inline-flex;
     align-items: center;
@@ -237,6 +244,9 @@
     width: var(--vg-expander-size);
     height: var(--vg-expander-size);
     cursor: pointer;
+  }
+  .vg-detail-expander {
+    flex: none;
   }
   .vg-expander-icon {
     width: 1rem;
@@ -704,13 +714,14 @@
     touch-action: none;
     user-select: none;
   }
-  /* Column groups: a sticky row above the column headers, which stick right below it. */
+  /* Column groups: sticky rows stacked above the column headers. */
+  .vg-group-stack,
   .vg-header-groups {
     display: contents;
   }
   .vg-group-cell {
     position: sticky;
-    top: 0;
+    top: var(--vg-group-offset, 0px);
     z-index: var(--vg-z-header);
     display: flex;
     align-items: center;

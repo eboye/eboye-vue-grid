@@ -80,6 +80,14 @@ const cellClass = computed(() => {
 
 const expandable = computed(() => !props.pinned && props.column.isTree && grid.canExpand(props.row))
 const expanded = computed(() => grid.isExpanded(props.rowKey))
+const detailExpandable = computed(
+  () =>
+    !props.pinned &&
+    props.column.isTree &&
+    grid.separateDetails.value &&
+    grid.canShowDetail(props.row),
+)
+const detailExpanded = computed(() => grid.isDetailExpanded(props.rowKey))
 const slotName = computed(() => `cell-${props.column.key}`)
 
 function onAction(name: string, payload?: unknown) {
@@ -88,6 +96,25 @@ function onAction(name: string, payload?: unknown) {
 
 // Editing feature: whether this cell can be / is being edited, and the keys and double-click that start it.
 const edit = grid.editing?.forCell(() => props)
+
+function onKeyDown(event: KeyboardEvent) {
+  if (
+    grid.keyboardNav &&
+    detailExpandable.value &&
+    event.target === event.currentTarget &&
+    event.key === 'Enter' &&
+    event.shiftKey &&
+    !event.altKey &&
+    !event.ctrlKey &&
+    !event.metaKey
+  ) {
+    event.preventDefault()
+    event.stopPropagation()
+    grid.toggleDetail(props.rowKey)
+    return
+  }
+  edit?.onKeyDown(event)
+}
 // Range selection feature: the cell's classes while it is in the selected range (its edges too).
 const inRange = grid.range?.forCell(() => ({
   rowKey: props.rowKey,
@@ -161,7 +188,7 @@ function onClick(event: MouseEvent) {
     @click="onClick"
     @contextmenu="onContextMenu"
     @pointerdown="onPointerDown"
-    @keydown="edit?.onKeyDown($event)"
+    @keydown="onKeyDown"
     @dblclick="edit?.onDblClick($event)"
   >
     <template v-if="column.kind === 'select'">
@@ -209,6 +236,25 @@ function onClick(event: MouseEvent) {
           </svg>
         </button>
       </span>
+      <button
+        v-if="detailExpandable"
+        type="button"
+        class="vg-expander vg-detail-expander"
+        :tabindex="grid.rovingTabindex"
+        :aria-expanded="detailExpanded"
+        :aria-keyshortcuts="grid.keyboardNav ? 'Shift+Enter' : undefined"
+        :aria-label="
+          detailExpanded
+            ? (grid.messages.value.hideRowDetails ?? 'Hide row details')
+            : (grid.messages.value.showRowDetails ?? 'Show row details')
+        "
+        @click.stop="grid.toggleDetail(rowKey)"
+      >
+        <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+          <rect x="2.5" y="3.5" width="11" height="9" rx="1.5" fill="none" stroke="currentColor" />
+          <path d="M3 7h10" stroke="currentColor" />
+        </svg>
+      </button>
       <!-- while editing, the content stays (hidden) and holds the column's width -->
       <div class="vg-cell-content" :inert="edit?.active.value || undefined">
         <RenderSlot

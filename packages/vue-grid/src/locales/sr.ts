@@ -28,6 +28,8 @@ export const sr = {
   selectAllMatching: (total) => `Изабери све редове (${num(total)})`,
   allSelected: (total) => `Изабрани су сви редови (${num(total)}).`,
   clearSelection: 'Поништи избор',
+  showRowDetails: 'Прикажи детаље реда',
+  hideRowDetails: 'Сакриј детаље реда',
   expandRow: 'Прошири ред',
   collapseRow: 'Скупи ред',
   expandGroup: 'Прошири групу',

@@ -39,6 +39,40 @@ const bodyTexts = (w: ReturnType<typeof mount>, key: string) =>
   w.findAll(`[role="row"].vg-row > [data-col-key="${key}"]`).map((c) => c.text())
 
 describe('VGrid rendering', () => {
+  it('keeps header actions outside sorting and gives them independent keyboard focus', async () => {
+    const w = mount(VGrid, {
+      attachTo: document.body,
+      props: { rows, columns, rowKey: 'id' },
+      slots: {
+        'column-actions-name':
+          '<button type="button" disabled>Unavailable</button><button type="button">Name options</button>',
+      },
+    })
+    try {
+      const header = w.get('.vg-header [data-col-key="name"]')
+      const action = header.get('.vg-header-actions button:not(:disabled)')
+      expect(action.element.closest('.vg-sort')).toBeNull()
+
+      const pointerDown = vi.fn()
+      const keyDown = vi.fn()
+      w.element.addEventListener('pointerdown', pointerDown)
+      w.element.addEventListener('keydown', keyDown)
+      await action.trigger('pointerdown')
+      await action.trigger('keydown', { key: 'ArrowDown' })
+      await action.trigger('click')
+      expect(pointerDown).not.toHaveBeenCalled()
+      expect(keyDown).not.toHaveBeenCalled()
+      expect(w.emitted('update:sort')).toBeUndefined()
+
+      await header.trigger('keydown', { key: 'F2' })
+      expect(document.activeElement).toBe(action.element)
+      await header.trigger('keydown', { key: 'Enter' })
+      expect(w.emitted('update:sort')).toEqual([[{ key: 'name', dir: 'asc' }]])
+    } finally {
+      w.unmount()
+    }
+  })
+
   it('renders headers, field paths and renderers', () => {
     const w = mount(VGrid, { props: { rows, columns, rowKey: 'id' } })
     expect(headerTexts(w)).toEqual(['Name', 'Score', 'City'])
@@ -312,6 +346,43 @@ const tree: Row[] = [
 ]
 
 describe('VGrid sub-grids', () => {
+  it('exposes filtered, expanded body rows beyond the virtual viewport without details', async () => {
+    const many = Array.from({ length: 100 }, (_, i) => ({
+      ...tree[1]!,
+      id: i + 1000,
+      name: `Other ${i}`,
+    }))
+    const w = mount(VGrid, {
+      props: {
+        rows: [...tree, ...many],
+        columns,
+        rowKey: 'id',
+        subRows: (row: Row) => row.children,
+        expanded: [1, 11],
+        detailExpanded: [1],
+        virtual: { rowHeight: 40 },
+      },
+      slots: { detail: '<p>Details</p>' },
+    })
+    try {
+      const api = w.vm as unknown as VGridExposed<Row>
+      const ids = () => api.getVisibleRows().map((row) => row.id)
+      expect(w.findAll('.vg-row').length).toBeLessThan(105)
+      expect(ids()).toEqual([1, 11, 111, 12, 2, ...many.map((row) => row.id)])
+
+      api.setFilters({ columns: {}, search: 'Grandchild' })
+      await nextTick()
+      expect(ids()).toEqual([1, 11, 111])
+      await w.setProps({ expanded: [] })
+      expect(ids()).toEqual([1])
+      api.setFilters({ columns: {}, search: 'No matching row' })
+      await nextTick()
+      expect(ids()).toEqual([])
+    } finally {
+      w.unmount()
+    }
+  })
+
   it('expands sync children into a subgrid, nested to any depth', async () => {
     const w = mount(VGrid, {
       props: { rows: tree, columns, rowKey: 'id', subRows: (r: Row) => r.children },
@@ -371,6 +442,147 @@ describe('VGrid sub-grids', () => {
     expect(w.find('[data-row-key="2"] .vg-expander').exists()).toBe(false)
     await w.find('[data-row-key="3"] .vg-expander').trigger('click')
     expect(w.find('.vg-detail .detail').text()).toBe('Details of Charlie')
+  })
+
+  it.each(['expanded', 'detailExpanded'] as const)(
+    'closes a detail from its slot and returns focus to its expander (%s)',
+    async (model) => {
+      const w = mount(VGrid, {
+        attachTo: document.body,
+        props: { rows, columns, rowKey: 'id', [model]: [1, 2] },
+        slots: {
+          detail: ({ close }: { close?: () => void }) =>
+            h('button', { type: 'button', onClick: close }, 'Close details'),
+        },
+      })
+      try {
+        const close = w.get('[data-detail-for="1"] button')
+        const expander = w.get('[data-row-key="1"] .vg-expander')
+        ;(close.element as HTMLButtonElement).focus()
+        await close.trigger('click')
+        expect(w.find('[data-detail-for="1"]').exists()).toBe(false)
+        expect(w.find('[data-detail-for="2"]').exists()).toBe(true)
+        expect(w.emitted(`update:${model}`)).toEqual([[[2]]])
+        expect(document.activeElement).toBe(expander.element)
+      } finally {
+        w.unmount()
+      }
+    },
+  )
+
+  it.each([false, { rowHeight: 40 }] as const)(
+    'opens children without a detail panel on an ineligible parent (virtual: %j)',
+    async (virtual) => {
+      const w = mount(VGrid, {
+        props: {
+          rows: tree,
+          columns,
+          rowKey: 'id',
+          subRows: (row: Row) => row.children,
+          rowExpandable: (row: Row) => !row.children?.length,
+          virtual,
+        },
+        slots: { detail: ({ row }: { row: Row }) => h('p', `Details of ${row.name}`) },
+      })
+      try {
+        await w.get('[data-row-key="1"] .vg-expander').trigger('click')
+
+        expect(w.find('[data-row-key="11"]').exists()).toBe(true)
+        expect(w.find('[data-detail-for="1"]').exists()).toBe(false)
+        if (virtual) {
+          expect(w.get('.vg').attributes('aria-rowcount')).toBe('5')
+          expect(w.get('[data-row-key="11"]').attributes('aria-rowindex')).toBe('3')
+        }
+
+        await w.get('[data-row-key="2"] .vg-expander').trigger('click')
+        expect(w.get('[data-detail-for="2"]').text()).toBe('Details of Leaf')
+        if (virtual) expect(w.get('.vg').attributes('aria-rowcount')).toBe('6')
+      } finally {
+        w.unmount()
+      }
+    },
+  )
+
+  it.each([false, { rowHeight: 40 }] as const)(
+    'opens children and details independently by key (virtual: %j)',
+    async (virtual) => {
+      const w = mount(VGrid, {
+        props: {
+          rows: tree,
+          columns,
+          rowKey: 'id',
+          subRows: (row: Row) => row.children,
+          expanded: [],
+          detailExpanded: [],
+          virtual,
+          'onUpdate:expanded': (keys: number[]) => void w.setProps({ expanded: keys }),
+          'onUpdate:detailExpanded': (keys: number[]) => void w.setProps({ detailExpanded: keys }),
+        },
+        slots: { detail: ({ row }: { row: Row }) => h('p', `Details of ${row.name}`) },
+      })
+      const parent = () => w.get('[data-row-key="1"]')
+      const treeCell = () => parent().get('[data-col-key="name"]')
+      const checkExpansion = (children: boolean, detail: boolean, rowCount: number) => {
+        expect(w.find('[data-subgrid-for="1"]').exists()).toBe(children)
+        expect(w.find('[data-detail-for="1"]').exists()).toBe(detail)
+        expect(parent().attributes('aria-expanded')).toBe(String(children))
+        if (virtual) expect(w.get('.vg').attributes('aria-rowcount')).toBe(String(rowCount))
+      }
+      try {
+        checkExpansion(false, false, 3)
+        await treeCell().trigger('keydown', { key: 'Enter', shiftKey: true })
+        checkExpansion(false, true, 4)
+        await treeCell().trigger('keydown', { key: 'ArrowRight' })
+        checkExpansion(true, true, 6)
+        await parent().get('button[aria-label="Hide row details"]').trigger('click')
+        checkExpansion(true, false, 5)
+        await treeCell().trigger('keydown', { key: 'ArrowLeft' })
+        checkExpansion(false, false, 3)
+
+        await w.setProps({ detailExpanded: [11] })
+        expect(w.find('[data-detail-for="11"]').exists()).toBe(false)
+        await w.setProps({ expanded: [1], rows: tree.map((row) => ({ ...row })) })
+        expect(w.get('[data-detail-for="11"]').text()).toBe('Details of Child 1')
+        expect(w.find('[data-detail-for="1"]').exists()).toBe(false)
+
+        const api = w.vm as unknown as VGridExposed
+        api.expandAll()
+        await nextTick()
+        expect(w.emitted('update:expanded')?.at(-1)).toEqual([[1, 11]])
+        expect(w.emitted('update:detailExpanded')?.at(-1)).toEqual([[1, 11, 111, 12, 2]])
+        api.collapseAll()
+        await nextTick()
+        checkExpansion(false, false, 3)
+      } finally {
+        w.unmount()
+      }
+    },
+  )
+
+  it('loads lazy children only when the independent tree control opens', async () => {
+    const loadSubRows = vi.fn(async (row: Row) => row.children ?? [])
+    const w = mount(VGrid, {
+      props: {
+        rows: tree,
+        columns,
+        rowKey: 'id',
+        detailExpanded: [1],
+        loadSubRows,
+        hasSubRows: (row: Row) => !!row.children?.length,
+      },
+      slots: { detail: '<p>Details</p>' },
+    })
+    try {
+      await flushPromises()
+      expect(w.get('[data-detail-for="1"]').text()).toBe('Details')
+      expect(loadSubRows).not.toHaveBeenCalled()
+      await w.get('[data-row-key="1"] button[aria-label="Expand row"]').trigger('click')
+      await flushPromises()
+      expect(loadSubRows).toHaveBeenCalledTimes(1)
+      expect(w.find('[data-subgrid-for="1"]').exists()).toBe(true)
+    } finally {
+      w.unmount()
+    }
   })
 
   it('expandAll / collapseAll', async () => {

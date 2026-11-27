@@ -321,6 +321,64 @@ describe('features are opt-in', () => {
     expect(groups(w).map(([label]) => label)).toEqual(['Bet', 'Bet', '']) // "Odds" is gone
   })
 
+  it('renders nested header groups with stable keys, correct spans and virtual row indices', async () => {
+    const inventory = { key: 'inventory', label: 'Inventory' }
+    const shipping = { key: 'shipping', label: 'Shipping' }
+    const monthly = { key: 'monthly', label: 'Monthly' }
+    const cols = [
+      { key: 'id', pinned: 'left', groupPath: [inventory, monthly] },
+      { key: 'name', groupPath: [inventory, monthly] },
+      { key: 'score', groupPath: [shipping, monthly] },
+      { key: 'extra', group: 'Notes' },
+    ]
+    const w = mount(VGrid, {
+      props: {
+        rows,
+        columns: cols,
+        rowKey: 'id',
+        virtual: { rowHeight: 40 },
+        features: [
+          columnGroupsFeature,
+          columnPinningFeature,
+          columnVisibilityFeature,
+          virtualScrollingFeature,
+        ],
+      },
+      slots: {
+        'column-group': ({ group }: { group: { label: string } }) => `Group ${group.label}`,
+      },
+    })
+    try {
+      const groups = () =>
+        w
+          .findAll('.vg-header-groups')
+          .map((row) =>
+            row.findAll('.vg-group-cell').map((cell) => cell.attributes('data-group-key')),
+          )
+      expect(groups()).toEqual([
+        ['inventory', 'inventory', 'shipping', 'Notes'],
+        ['monthly', 'monthly', 'monthly', undefined],
+      ])
+      expect(w.findAll('.vg-header-groups').map((row) => row.attributes('aria-rowindex'))).toEqual([
+        '1',
+        '2',
+      ])
+      expect(w.get('.vg').attributes('aria-rowcount')).toBe('6')
+      expect(w.get('.vg-header').attributes('aria-rowindex')).toBe('3')
+      expect(w.get('.vg-row').attributes('aria-rowindex')).toBe('4')
+      expect(w.get('[data-group-key="shipping"]').text()).toBe('Group Shipping')
+
+      await w.setProps({
+        columnState: { order: ['extra', 'score', 'name', 'id'], hidden: ['id', 'name', 'score'] },
+      })
+      expect(groups()).toEqual([['Notes']])
+      expect(w.get('.vg-row').attributes('aria-rowindex')).toBe('3')
+      expect(w.get('.vg').attributes('aria-rowcount')).toBe('5')
+    } finally {
+      w.unmount()
+    }
+  })
+
   it('column visibility: hidden columns show without the feature; hide works with it', async () => {
     const cols = [{ key: 'name' }, { key: 'score', hidden: true }]
     const headerKeys = (w: ReturnType<typeof mount>) =>

@@ -28,6 +28,8 @@ export const srLatn = {
   selectAllMatching: (total) => `Izaberi sve redove (${num(total)})`,
   allSelected: (total) => `Izabrani su svi redovi (${num(total)}).`,
   clearSelection: 'Poništi izbor',
+  showRowDetails: 'Prikaži detalje reda',
+  hideRowDetails: 'Sakrij detalje reda',
   expandRow: 'Proširi red',
   collapseRow: 'Skupi red',
   expandGroup: 'Proširi grupu',

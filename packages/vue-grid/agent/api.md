@@ -10,10 +10,10 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 |---|---|---|---|
 | `aggregationFeature` | Aggregates and the totals row: columns with an `aggregate` (`sum`, `avg`, `min`, `max`, `count` or a function) and `totals` (`true` / `'bottom'` or `'top'`) show a sticky totals row over the rows that pass the filters, on every page. `aggregates` supplies the values instead (e.g. from a server). Without it, `aggregate` and `totals` are ignored. | `totals` `totalsLabel` `aggregates` | `aggregate` |
 | `attributesFeature` | Your own attributes on rows and cells (`row-attrs`, `cell-attrs`), such as test hooks: `:row-attrs="({ rowIndex }) => ({ 'data-test': `row-${rowIndex}` })"`. Each gets the row, its key and its position as shown (cells also the column and its position). The grid's own attributes (role, ARIA, `tabindex`, classes, styles, its `data-*` hooks) and `on…` handlers are left alone. | `rowAttrs` `cellAttrs` |  |
-| `columnGroupsFeature` | Grouped column headers: give columns a `group` and adjacent visible columns of the same group get one header cell spanning them, in a sticky row above the column headers. Groups follow reordering, hiding and pinning (a pin boundary splits a group). Without it, `group` is ignored. |  | `group` |
+| `columnGroupsFeature` | Grouped column headers: give columns a `group` or a `groupPath`. Adjacent visible columns with the same group and ancestors share a sticky header cell. Reordering, hiding, and pin boundaries affect the spans. |  | `group` `groupPath` |
 | `columnPinningFeature` | Pinned columns: `pinned: 'left' \| 'right'` columns stay put (sticky) while the grid scrolls sideways, with edge shadows; runtime pins from the header menu (Pin left / Pin right / Unpin) are kept in `v-model:column-state` and persisted with `storage`. While the pinned columns would take more than `pinned-max-share` of the grid's width (half, by default), they scroll like the others. Without it, pins are ignored. | `pinnedMaxShare` | `pinned` `pinnable` |
 | `columnReorderFeature` | Column reordering: drag a header (mouse, pen, touch), Alt+←/→ on a focused header, and the header menu's Move left / Move right. Columns opt out with `reorderable: false`. The order is part of `v-model:column-state` and persisted with `storage`; `<VGridColumnMenu>` works without it. |  | `reorderable` |
-| `columnResizingFeature` | Column resizing: drag a header's edge (mouse, pen, touch), use ←/→ on the focused edge (Alt+Shift+←/→ on a header with keyboard navigation), or double-click the edge to fit the content. `minWidth` / `maxWidth` bound it; columns opt out with `resizable: false`. Widths are kept in `columnState.widths` and persisted with `storage`. The header menu gains Fit width / Reset width. |  | `maxWidth` `resizable` |
+| `columnResizingFeature` | Column resizing: drag a header's edge (mouse, pen, touch), use ←/→ on the focused edge (Alt+Shift+←/→ on a header with keyboard navigation), or double-click the edge to fit the content. `initialAutoSize` fits a column when real rows first render. `minWidth` / `maxWidth` bound sizing, and `resizable: false` disables manual resizing. Explicit widths are kept in `columnState.widths` and persisted with `storage`. The header menu gains Fit width / Reset width. |  | `maxWidth` `resizable` `initialAutoSize` |
 | `columnVirtualizationFeature` | Column virtualization (`virtual-columns`): for grids with many columns, only the columns in view (plus `overscan`) render their cells, alongside the pinned ones and the checkbox. Every column keeps its place in the CSS grid, so widths, pinning, resizing and sub-grids work as before. Columns sized by their content (`auto`, `min-content`) get a definite width while it's on (`{ width: '10rem' }`). Combines with `virtual` (rows) for large sheets both ways. | `virtualColumns` |  |
 | `columnVisibilityFeature` | Column visibility: `hidden: true` columns, `columnState.hidden` (persisted with `storage`), the header menu's Hide column item and `<VGridColumnMenu>`'s checkboxes. Columns opt out with `hideable: false`. Without it, every column shows. |  | `hidden` `hideable` |
 | `editingFeature` |  | `saveCell` `undoLimit` | `editable` `editor` `editorOptions` `validate` |
@@ -101,7 +101,8 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `v-model:sort` | `SortState \| null` | `null` |  | Sort state: a header click cycles asc → desc → none. Header UI needs the sorting feature. |
 | `v-model:sorts` | `SortState[]` | `[]` | `sortingFeature` | Every sort key, the first one first (`multi-sort`). `sort` is the first of them. |
 | `v-model:columnState` | `ColumnState \| undefined` | `undefined` |  | Column order, hidden columns, runtime pins and resized widths (persisted with `storage`). |
-| `v-model:expanded` | `RowKey[]` | `[]` |  | Keys of expanded rows (sub-grids and detail rows). |
+| `v-model:expanded` | `RowKey[]` | `[]` |  | Keys of expanded rows. Controls both sub-grids and details unless `detailExpanded` is set. |
+| `v-model:detailExpanded` | `RowKey[]` |  |  | Keys of open detail panels. Pass an array (including `[]`) to control details separately. |
 | `v-model:selected` | `RowKey[]` | `[]` | `selectionFeature` | Keys of selected rows. Needs the selection feature. |
 | `v-model:filters` | `FilterState \| null` | `null` | `filteringFeature` | Column filters and quick search: `{ columns: Record<key, ColumnFilter>, search }`. Needs the filtering feature. |
 | `v-model:page` | `number` | `1` | `paginationFeature` | Current page (1-based); resets to 1 when sort or filters change. Needs the pagination feature. |
@@ -137,10 +138,12 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | Slot | Scope | Description |
 |---|---|---|
 | `cell-<key>` | `{ row: T; value: unknown; rowKey: RowKey; rowIndex: number; depth: number; column: ColumnDef<T> }` | A column's body cell, replacing its renderer: `#cell-<key>`. |
-| `header-<key>` | `{ column: ColumnDef<T> }` | A column's header content: `#header-<key>`. |
+| `header-<key>` | `{ column: ColumnDef<T> }` | A column's header label: `#header-<key>`. For controls use `#column-actions-<key>`. |
+| `column-actions-<key>` | `{ column: ColumnDef<T> }` | Interactive content beside the header label and sort button: `#column-actions-<key>`. |
+| `column-group` | `{ group: ColumnHeaderGroup; level: number }` | Content of a grouped column header. The top group row is level 0. |
 | `total-<key>` | `{ value: unknown; column: ColumnDef<T>; group?: RowGroup<T> }` | A column's cell in the totals row and in group rows (aggregation, row grouping); `group` in group rows. |
 | `group-<key>` | `{ value: unknown; count: number; rows: readonly T[]; column: ColumnDef<T>; group: RowGroup<T> }` | The value of a group row grouped by this column (row grouping feature): `#group-<key>`. |
-| `detail` | `{ row: T; rowKey: RowKey; depth: number }` | Expandable detail row under a row: any content, even another grid. |
+| `detail` | `{ row: T; rowKey: RowKey; depth: number; close: () => void }` | Expandable detail row. `close()` collapses the panel and returns focus to its row expander. |
 | `empty` |  | Shown when there are no rows. |
 | `no-match` | `{ clearFilters: () => void; filterCount: number }` | Shown when filters hide every row, instead of the message and its Clear filters button. |
 | `load-error` | `{ error: unknown; retry: () => Promise<void>; stale: boolean }` | A failed server request (server data): `stale` when the rows from before stay on screen (the notice above them), else in place of the rows. `retry()` asks again. |
@@ -157,6 +160,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `scrollToTop` | `void` |  | Scrolls the grid back to its first row. |
 | `scrollToRow` | `void` |  | Scrolls a row (top-level or nested, also in virtual mode) into view. |
 | `scrollToColumn` | `Promise<void>` |  | Scrolls a column into view sideways (with `virtual-columns`, renders it first). |
+| `getVisibleRows` | `readonly T[]` |  | Current page's visible body data in display order, including expanded children and rows outside the virtual viewport. Omits generated group headers, details, totals, and pinned rows. Reactive when called in a computed. Treat the returned rows as read-only. |
 | `expandAll` | `void` |  | Expands every expandable row (sub-grids and detail rows) that passes the filters. |
 | `collapseAll` | `void` |  | Collapses every row. |
 | `setColumnState` | `void` |  | Replaces the column state (order, hidden, pins, widths), and saves it with `storage`. |
@@ -206,7 +210,9 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `minWidth` | `string` |  | Lower bound; combined with `width` into `minmax(minWidth, width)`, and the resize minimum. |
 | `maxWidth` | `string` | `columnResizingFeature` | Upper bound when the user resizes the column (column resizing feature). |
 | `resizable` | `boolean` | `columnResizingFeature` | Can the user resize this column (column resizing feature)? Default `true`. |
+| `initialAutoSize` | `boolean` | `columnResizingFeature` | Fit the column to its first rendered data and header, within the resize bounds (column resizing feature). |
 | `group` | `string` | `columnGroupsFeature` | Header group label (column groups feature): adjacent visible columns with the same `group` share one header cell above their own headers. |
+| `groupPath` | `readonly ColumnHeaderGroup[]` | `columnGroupsFeature` | Column header groups from outermost to innermost. Takes precedence over `group`. |
 | `align` | `Align` |  | Cell and header alignment (default: the renderer's, e.g. `end` for numbers, else `start`). |
 | `sortable` | `boolean` | `sortingFeature` | A sort button in the header (sorting feature). Client sorting needs `sort-mode="client"`. |
 | `sortField` | `string` |  | Server sorting: the name the backend sorts this column by, when it isn't the column key (e.g. `'player.lastName'` or `'PLACED_AT'`). It arrives as `field` in `query.sort` / `query.sorts`; `v-model:sort` keeps the column key. |
@@ -611,6 +617,13 @@ The first items of a list, with a “+N more” toggle. Emits `expand`. Align: `
 | `hidden` | `string[]` | Keys of hidden columns. |
 | `pinned`? | `Record<string, PinSide \| null>` | Runtime pin overrides (e.g. from the header menu). `null` = explicitly unpinned; a missing key falls back to the column's `pinned` definition. Optional so older persisted state still loads. |
 | `widths`? | `Record<string, string>` | Widths the user resized columns to (CSS lengths, e.g. `'240px'`). Column resizing feature. |
+
+### `ColumnHeaderGroup`
+
+| Field | Type | Description |
+|---|---|---|
+| `key` | `string` | Stable identifier within the parent group. |
+| `label` | `string` | Visible label, which can change without changing the key. |
 
 ### `SortState`
 
