@@ -151,13 +151,28 @@ test('the open bar, with matches and the replace row, passes axe in light and da
 })
 
 test('typing straight after Ctrl+F goes into the search, not into the cell', async ({ page }) => {
-  await open(page)
-  await cell(page, 3, 'player').click()
-  // no wait: the bar may still be loading
-  await page.keyboard.press('ControlOrMeta+f')
-  await page.keyboard.type('Niš', { delay: 5 })
-  await expect(findBox(page)).toHaveValue('Niš')
+  let releaseFindBar!: () => void
+  const findBar = new Promise<void>((resolve) => {
+    releaseFindBar = resolve
+  })
+  await page.route(/\/VGridFindBar(?:-[^/]+\.js|\.vue)(?:\?.*)?$/, async (route) => {
+    await findBar
+    await route.continue()
+  })
+  try {
+    await open(page)
+    await cell(page, 3, 'player').click()
+    await page.keyboard.press('ControlOrMeta+f')
+    await page.keyboard.type('Ni')
+    await expect(findBox(page)).toHaveCount(0)
+  } finally {
+    releaseFindBar()
+  }
+  await expect(findBox(page)).toHaveValue('Ni')
   await expect(findBox(page)).toBeFocused()
+  // Playwright inserts characters outside its keyboard layout as text, without keydown.
+  await page.keyboard.insertText('š')
+  await expect(findBox(page)).toHaveValue('Niš')
   await expect(page.locator('.vg-editor-control')).toHaveCount(0) // the cell didn't start editing
   await expect(status(page)).toHaveText(/^1 of \d+$/)
 })

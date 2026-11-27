@@ -206,6 +206,8 @@ test('actions menu: a submenu opens with →, chooses with Enter and closes ever
   const trigger = valueCell(page, 1).getByRole('button', { name: 'Row actions' })
   await trigger.focus()
   await page.keyboard.press('Enter')
+  const menu = page.getByRole('menu', { name: 'Row actions' })
+  await expect(menu.getByRole('menuitem').first()).toBeFocused()
   await page.keyboard.press('m') // typeahead → "Move to"
   const parent = page.getByRole('menuitem', { name: 'Move to' })
   await expect(parent).toBeFocused()
