@@ -300,6 +300,8 @@ export function validateGridConfig(config: GridConfigInput): ValidationResult {
     'loadSubRows',
     'hasSubRows',
     'rowExpandable',
+    'treeExpanderAttrs',
+    'detailExpanderAttrs',
     'isRowSelectable',
     'rowClass',
     'rowAttrs',

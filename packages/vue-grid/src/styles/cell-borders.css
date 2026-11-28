@@ -1,0 +1,12 @@
+/* Opt in to unlayered cell borders when a global width reset takes precedence over the theme. */
+.vg-root.vg-restore-cell-borders :where(.vg-header-cell) {
+  border-bottom: var(--vg-header-border);
+  border-inline-end: var(--vg-header-border-inline-end);
+}
+.vg-root.vg-restore-cell-borders :where(.vg-cell) {
+  border-bottom: var(--_vg-cell-border-bottom);
+  border-inline-end: var(--vg-cell-border-inline-end);
+}
+.vg-root.vg-restore-cell-borders :where(.vg-pinned-bottom > .vg-row:first-child > .vg-cell) {
+  border-top: var(--vg-header-border);
+}

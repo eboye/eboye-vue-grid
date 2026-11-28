@@ -115,11 +115,22 @@ describe('rowAttrs and cellAttrs', () => {
     const saved = config.global.plugins
     config.global.plugins = [createVueGrid({ renderers: allRenderers })]
     try {
+      const detailExpanderAttrs = vi.fn(() => ({ 'aria-label': 'Custom details' }))
       const w = mount(VGrid, {
-        props: { rows, columns, rowKey: 'id', rowAttrs: () => ({ 'data-test': 'r' }) },
+        props: {
+          rows,
+          columns,
+          rowKey: 'id',
+          rowAttrs: () => ({ 'data-test': 'r' }),
+          detailExpanded: [],
+          detailExpanderAttrs,
+        },
+        slots: { detail: 'Details' },
       })
       mounted.push(w)
       expect(row(w, 1).attributes()).not.toHaveProperty('data-test')
+      expect(row(w, 1).get('.vg-detail-expander').attributes('aria-label')).toBe('Show row details')
+      expect(detailExpanderAttrs).not.toHaveBeenCalled()
       expect(warn.mock.calls.flat().join(' ')).toContain('attributesFeature')
       // with it, per grid
       const w2 = mount(VGrid, {

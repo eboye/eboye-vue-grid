@@ -1119,6 +1119,96 @@ The tree cell's **→ / ←** keys open and close children. **Shift+Enter** togg
 when keyboard navigation is enabled. Detail keys stay in the model when a branch closes, so its
 panels reopen when the branch is shown again. `expandAll()` and `collapseAll()` update both models.
 
+### Separate tree and detail columns
+
+Set `tree-column-key` for tree indentation and the tree expander. With independent detail
+expansion, set `detail-expander-column-key` to place the detail button in its own column.
+
+```vue
+<script setup lang="ts">
+import { ref } from 'vue'
+import {
+  VGrid,
+  columnPinningFeature,
+  keyboardNavigationFeature,
+  subGridsFeature,
+} from '@nocopypaste/vue-grid'
+
+interface Project {
+  id: number
+  name: string
+  tasks?: Project[]
+}
+
+const openDetails = ref<number[]>([])
+const columns = [
+  { key: 'details', header: 'Details', width: '4.5rem', pinned: 'left' as const },
+  { key: 'name', header: 'Project', width: '12rem', pinned: 'left' as const },
+]
+const projects: Project[] = [
+  { id: 1, name: 'Website update', tasks: [{ id: 2, name: 'Review content' }] },
+]
+</script>
+
+<template>
+  <VGrid
+    v-model:detail-expanded="openDetails"
+    :rows="projects"
+    :columns="columns"
+    :features="[columnPinningFeature, keyboardNavigationFeature, subGridsFeature]"
+    :sub-rows="(row) => row.tasks"
+    row-key="id"
+    tree-column-key="name"
+    detail-expander-column-key="details"
+  >
+    <template #detail="{ row, close }">
+      <p>Details for {{ row.name }}</p>
+      <button type="button" @click="close()">Close details</button>
+    </template>
+  </VGrid>
+</template>
+```
+
+Both options fall back to the first visible data column when omitted or when their key is hidden
+or missing. Controls follow the chosen columns through reordering and pinning. With a shared
+expansion model, the single button follows `tree-column-key`. With independent details,
+**Shift+Enter** works in either control column.
+
+### Row-specific expander names
+
+With `attributesFeature`, use `tree-expander-attrs` and `detail-expander-attrs` to give the buttons distinct accessible
+names and test hooks. Each callback receives `{ row, rowKey, expanded }` for its own button.
+
+```vue
+<VGrid
+  :rows="projects"
+  :columns="columns"
+  row-key="id"
+  :sub-rows="(row) => row.tasks"
+  v-model:detail-expanded="openDetails"
+  :features="[attributesFeature, subGridsFeature]"
+  :tree-expander-attrs="
+    ({ row, rowKey, expanded }) => ({
+      'aria-label': `${expanded ? 'Hide' : 'Show'} tasks for ${row.name}`,
+      'data-testid': `tasks-${rowKey}`,
+    })
+  "
+  :detail-expander-attrs="
+    ({ row, rowKey, expanded }) => ({
+      'aria-label': `${expanded ? 'Hide' : 'Show'} details for ${row.name}`,
+      'data-testid': `details-${rowKey}`,
+    })
+  "
+>
+  <template #detail="{ row }">{{ row.summary }}</template>
+</VGrid>
+```
+
+The tree callback also applies to the shared expander when expansion uses a single model.
+The detail callback applies when `v-model:detail-expanded` controls a separate button.
+Omitted or blank `aria-label` values use the grid's localized defaults. The callbacks accept
+`data-*` attributes and work with virtual rows.
+
 Use the detail slot's `close()` for a control inside the panel. It collapses the panel and returns
 focus to the row's expander.
 
@@ -1138,6 +1228,28 @@ Use `grid.getVisibleRows()` in a computed to count or inspect the current page's
 It follows sorting, filtering, and expansion and includes rows outside the virtual viewport.
 It excludes generated group headers, detail panels, pinned rows, and totals. A parent row from
 your own tree is still a data row, so filter by your own leaf marker when counting only leaves.
+
+### Scroll through a content-height detail grid
+
+When a grid in a detail slot grows to fit its rows, add `vg-scroll-chain-y` to that child grid.
+Vertical wheel input over the child can then scroll the outer grid. The child keeps its own
+horizontal scrolling and pinned columns.
+With selective CSS imports, include `@nocopypaste/vue-grid/scroll-chain.css`.
+
+```vue
+<template #detail="{ row }">
+  <VGrid
+    :rows="row.tasks"
+    :columns="taskColumns"
+    row-key="id"
+    density="compact"
+    class="vg-scroll-chain-y"
+  />
+</template>
+```
+
+See **Grid / Detail rows / Content Height Detail Grid** in Storybook for a virtual outer grid
+with a content-height child and pinned child columns.
 
 ### Refreshing tree and grouped views
 
@@ -1217,6 +1329,52 @@ import { VGrid, VGridColumnMenu, columnVisibilityFeature } from '@nocopypaste/vu
         label="Columns"
         filter-placeholder="Find a column…"
         reset-label="Reset"
+        @update:column-state="setColumnState($event!)"
+      />
+    </template>
+  </VGrid>
+</template>
+```
+
+Use `icon-only` for a compact trigger. Its `label` supplies the accessible name and tooltip.
+The optional `#icon` slot replaces the default icon. Call `open()` on the picker ref to open the
+same panel from a custom command. With `menusFeature`, append an item in `header-menu` and handle
+it in `header-action`:
+
+```vue
+<script setup lang="ts">
+import { ref } from 'vue'
+import {
+  VGrid,
+  VGridColumnMenu,
+  columnVisibilityFeature,
+  menusFeature,
+} from '@nocopypaste/vue-grid'
+
+const picker = ref<InstanceType<typeof VGridColumnMenu>>()
+const rows = [{ id: 1, name: 'Cedar', region: 'North' }]
+const columns = [
+  { key: 'name', header: 'Name', hideable: false },
+  { key: 'region', header: 'Region' },
+]
+</script>
+
+<template>
+  <VGrid
+    :rows="rows"
+    :columns="columns"
+    :features="[columnVisibilityFeature, menusFeature]"
+    :header-menu="({ items }) => [...items, { name: 'choose-columns', label: 'Choose columns' }]"
+    row-key="id"
+    @header-action="({ name }) => name === 'choose-columns' && picker?.open()"
+  >
+    <template #toolbar="{ columnState, setColumnState }">
+      <VGridColumnMenu
+        ref="picker"
+        :columns="columns"
+        :column-state="columnState"
+        icon-only
+        label="Choose columns"
         @update:column-state="setColumnState($event!)"
       />
     </template>
@@ -1321,13 +1479,14 @@ when needed. See **Grid / Columns / Initial Autosizing** in Storybook.
 
 ```ts
 col({ key: 'id', pinned: 'left', width: '4rem' }),
-col({ key: 'actions', pinned: 'right', width: 'min-content' }),
+col({ key: 'actions', pinned: 'right', pinnable: false, width: 'min-content' }),
 ```
 
 With `columnPinningFeature`, pinned columns stay put while the grid scrolls sideways (without it,
 `pinned` is ignored); a shadow marks the edge
 (`--vg-shadow-pinned`). They can only be reordered within their pin group. Users can pin/unpin at
-runtime from the header menu unless the column has `pinnable: false`.
+runtime from the header menu. For a column with `pinnable: false`, the definition's `pinned`
+value is authoritative, including when controlled or saved state contains an old pin override.
 
 On a narrow grid (a phone, a side panel), pinned columns that would take more than half its
 width scroll like the others, so the rest of the row stays readable; they pin again once the
@@ -1930,12 +2089,84 @@ or Tailwind's — wins without `!important`.
   --vg-cell-padding-x: 1rem;
   --vg-cell-padding-y: 0.5rem;
   --vg-row-border: 1px solid #e2e8f0;
+  --vg-cell-border-inline-end: 1px solid var(--vg-color-border);
+  --vg-header-border-inline-end: 2px solid var(--vg-color-border-strong);
+  --vg-header-min-height: 3rem;
   --vg-outer-border: none;
   --vg-subgrid-indent: 2rem;
 }
 ```
 
 The full token list is in the [README](../packages/vue-grid/README.md#theming).
+
+Inline-end borders are independent of the horizontal row and header borders. They default to
+`none` and follow text direction on both pinned and scrollable columns. The optional
+`--vg-header-min-height` applies to column header cells at every density. The default is
+`auto`, and taller content can still grow. The minimum follows CSS box sizing, so padding
+and borders are added to a content-box minimum. See **Theming / Dividers** in Storybook.
+
+### Sort indicators at the inline end
+
+Add `vg-sort-indicator-end` to move sort indicators and multi-sort ranks to the end of the
+available sort button. Labels keep their column alignment, including multiline header slots.
+Separate filters and header actions keep their space, and resize grips remain available.
+
+```vue
+<VGrid class="vg-sort-indicator-end" :rows="items" :columns="columns" row-key="id">
+  <template #header-name>Item<br />description</template>
+</VGrid>
+```
+
+### Custom sort indicator artwork
+
+The optional `#sort-icon` slot receives `{ column, direction }`. The direction is `null` for
+an unsorted column, `'asc'` for ascending, or `'desc'` for descending. Give the slot a decorative
+SVG or icon component. The grid continues to announce the sort state and render the separate
+multi-sort priority badge.
+
+Set `--vg-sort-icon-size` to size the built-in and custom icon boxes. The default is `0.875rem`.
+An SVG at the root of the slot fills the box.
+
+```vue
+<VGrid
+  class="vg-sort-indicator-end"
+  :rows="items"
+  :columns="columns"
+  row-key="id"
+  style="--vg-sort-icon-size: 1rem"
+>
+  <template #sort-icon="{ direction }">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor">
+      <path v-if="direction === 'asc'" d="M8 13V3m-4 4 4-4 4 4" />
+      <path v-else-if="direction === 'desc'" d="M8 3v10m-4-4 4 4 4-4" />
+      <path v-else d="M3 5h10M3 8h7M3 11h4" />
+    </svg>
+  </template>
+</VGrid>
+```
+
+### Unlayered border resets
+
+If a global reset applies `border-width: 0` outside a cascade layer, add
+`vg-restore-cell-borders` to the grid. This applies the theme's body and column header cell
+borders outside the layer on that grid, including the separators around pinned rows.
+
+```vue
+<VGrid
+  class="inventory-grid vg-restore-cell-borders"
+  :rows="items"
+  :columns="columns"
+  row-key="id"
+/>
+
+<style>
+.inventory-grid {
+  --vg-row-border: 1px solid var(--vg-color-border);
+  --vg-header-border: 1px solid var(--vg-color-border-strong);
+  --vg-header-border-inline-end: 1px solid color-mix(in srgb, currentColor 35%, transparent);
+}
+</style>
+```
 
 ### Dark mode
 
@@ -2516,6 +2747,30 @@ A custom bar with the same numbers:
   </template>
 </VGrid>
 ```
+
+### Tree counts and Back to top
+
+```vue
+<VGrid
+  :rows="projects"
+  :columns="columns"
+  :features="[subGridsFeature, statusBarFeature, virtualScrollingFeature]"
+  :sub-rows="(project) => project.tasks"
+  :status-bar="{ rowCountMode: 'visible', fullyExpandedCount, backToTop: true }"
+  :virtual="{ rowHeight: 40 }"
+  row-key="id"
+  style="height: 320px"
+/>
+```
+
+`rowCountMode: 'visible'` counts the logical data rows on the current page, including parents,
+shown descendants, and pinned data rows. Expanding and collapsing a branch updates the count.
+Detail panels, group headers, totals, and the virtual viewport do not affect it.
+
+Supply `fullyExpandedCount` from the app's data to show a second figure. For example, two
+projects with three tasks each have a fully expanded count of eight. **Back to top** scrolls to
+the start of the current page. Use `messages.visibleRowCount`, `messages.fullyExpandedCount`,
+and `messages.backToTop` to override the localized text.
 
 ---
 

@@ -27,9 +27,18 @@ const plural = (count: number, one: string, many: string) =>
   `${n(count)} ${count === 1 ? one : many}`
 const m = useMessages()
 
-const rowsText = computed(() =>
-  rowCountText(m.value, n, scope.value.rowCount, scope.value.totalRowCount),
-)
+const rowsText = computed(() => {
+  const count = props.bar.visibleRowCount.value
+  return count === undefined
+    ? rowCountText(m.value, n, scope.value.rowCount, scope.value.totalRowCount)
+    : (m.value.visibleRowCount?.(n(count), count) ?? `${plural(count, 'row', 'rows')} shown`)
+})
+const fullyExpandedText = computed(() => {
+  const count = props.bar.fullyExpandedCount.value
+  if (count === undefined) return undefined
+  const formatted = n(count)
+  return m.value.fullyExpandedCount?.(formatted, count) ?? `${formatted} fully expanded`
+})
 const selectedText = computed(() => {
   const { selectedCount, allSelected } = scope.value
   return (
@@ -50,7 +59,15 @@ const label = (name: StatusBarAggregate) =>
   <div class="vg-status-bar" role="group" :aria-label="m.statusBar ?? 'Grid status'">
     <Custom v-if="render" />
     <template v-else>
-      <span v-if="bar.show.value.rows" class="vg-status-item">{{ rowsText }}</span>
+      <span
+        v-if="bar.show.value.rows"
+        class="vg-status-item"
+        :role="bar.visibleRowCount.value === undefined ? undefined : 'status'"
+        >{{ rowsText }}</span
+      >
+      <span v-if="fullyExpandedText !== undefined" class="vg-status-item">{{
+        fullyExpandedText
+      }}</span>
       <span v-if="scope.selectedCount && bar.show.value.selected" class="vg-status-item">
         {{ selectedText }}
       </span>
@@ -84,6 +101,14 @@ const label = (name: StatusBarAggregate) =>
           >
         </span>
       </span>
+      <button
+        v-if="bar.backToTop.value"
+        type="button"
+        class="vg-link-button"
+        @click="bar.scrollToTop()"
+      >
+        {{ m.backToTop ?? 'Back to top' }}
+      </button>
     </template>
   </div>
 </template>

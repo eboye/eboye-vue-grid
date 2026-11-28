@@ -51,6 +51,8 @@ import type {
   CellContext,
   CellRendererDefinition,
   ClassValue,
+  ExpanderAttrs,
+  ExpanderAttrsContext,
   ExtraAttrs,
   RowAttrsContext,
   ColumnDef,
@@ -70,6 +72,7 @@ import type {
   MenuItem,
   PinnedRowsState,
   RowKey,
+  SortDir,
   SortState,
   PaginationOptions,
   StatusBarOptions,
@@ -113,7 +116,9 @@ const props = withDefaults(
     /**
      * A status bar under the grid (status bar feature): rows that pass the filters ("84 of 200
      * rows"), selected rows, active filters with Clear; `{ summary: ['total'] }` adds the sum and
-     * average of those columns over the selected rows. `#status-bar` replaces its content.
+     * average of those columns over the selected rows. Set `rowCountMode: 'visible'` for the
+     * shown tree rows, `fullyExpandedCount` for a supplied total, or `backToTop: true` for a
+     * scroll button. `#status-bar` replaces its content.
      */
     statusBar?: boolean | StatusBarOptions
     /**
@@ -169,6 +174,14 @@ const props = withDefaults(
     hasSubRows?: (row: T) => boolean
     /** With a `#detail` slot: which rows can expand to show it (default: every row). */
     rowExpandable?: (row: T) => boolean
+    /** Column for tree indentation and the tree or shared expander. Defaults to the first visible data column. */
+    treeColumnKey?: string
+    /** Column for the separate detail expander. Defaults to the first visible data column. */
+    detailExpanderColumnKey?: string
+    /** Accessible name and data attributes for the tree or shared row expander (attributes feature). */
+    treeExpanderAttrs?: (ctx: ExpanderAttrsContext<T>) => ExpanderAttrs | null | undefined
+    /** Accessible name and data attributes for the separate detail expander (attributes feature). */
+    detailExpanderAttrs?: (ctx: ExpanderAttrsContext<T>) => ExpanderAttrs | null | undefined
     /** Pointer cursor on rows (`row-click` is emitted either way). */
     rowClickable?: boolean
     /** Extra classes for a row. */
@@ -382,6 +395,8 @@ defineSlots<{
   [key: `header-${string}`]: (scope: { column: ColumnDef<T> }) => unknown
   /** Interactive content beside the header label and sort button: `#column-actions-<key>`. */
   [key: `column-actions-${string}`]: (scope: { column: ColumnDef<T> }) => unknown
+  /** Decorative artwork for sortable headers. Direction is null when the column is unsorted. */
+  'sort-icon'?: (scope: { column: ColumnDef<T>; direction: SortDir | null }) => unknown
   /** Content of a grouped column header. The top group row is level 0. */
   'column-group'?: (scope: { group: ColumnHeaderGroup; level: number }) => unknown
   /** A column's cell in the totals row and in group rows (aggregation, row grouping); `group` in group rows. */
@@ -581,6 +596,10 @@ const rowMoves = features.rowReorder?.useRowReorder<T>({
 const resolvedColumns = computed<ResolvedColumn[]>(() => {
   const state = effectiveState.value
   const data = visibleColumns(layoutColumns.value, state)
+  const expanderColumn = (key: string | undefined) =>
+    (key === undefined ? undefined : data.find((column) => column.key === key)) ?? data[0]
+  const treeColumn = expanderColumn(props.treeColumnKey)
+  const detailColumn = expanderColumn(props.detailExpanderColumnKey)
   const list: ResolvedColumn[] = []
   const pinStart = data.some((c) => pinOf(c, state) === 'left') ? 'left' : undefined
   if (props.rowReorder && rowMoves) list.push(rowMoves.column(pinStart))
@@ -596,23 +615,27 @@ const resolvedColumns = computed<ResolvedColumn[]>(() => {
       pinned: pinStart,
       pinEdge: false,
       isTree: false,
+      isDetail: false,
     })
   }
-  data.forEach((def, i) => {
+  data.forEach((def) => {
     const { component, definition, fallback } = resolveRenderer(def)
+    const options = fallback
+      ? {}
+      : { ...(definition?.defaults as object), ...(def.rendererOptions as object) }
     list.push({
       key: def.key,
       kind: 'data',
       def,
       component,
       definition,
-      options: fallback
-        ? {}
-        : { ...(definition?.defaults as object), ...(def.rendererOptions as object) },
+      options,
+      plainText: component === textRenderer.component && Object.keys(options).length === 0,
       align: def.align ?? definition?.align ?? 'start',
       pinned: pinOf(def, state),
       pinEdge: false,
-      isTree: i === 0,
+      isTree: def === treeColumn,
+      isDetail: def === detailColumn,
     })
   })
   // The pin edge is found in CSS (`:has()`); the class is only a fallback for engines without it.
@@ -1445,6 +1468,14 @@ const statusBar = features.statusBar?.useStatusBar<T>({
         ? (ds?.total.value ?? sourceRows.value.length)
         : filteredTopRows.value.length,
   totalRowCount: () => (serverMode.value ? undefined : sourceRows.value.length),
+  visibleRowCount: () => {
+    const pinned = pins?.items.value
+    const count = grouping?.active.value ? undefined : virtualLayout.value?.dataRowCount
+    return (
+      (count ?? visibleRows.value.length) + (pinned?.top.length ?? 0) + (pinned?.bottom.length ?? 0)
+    )
+  },
+  scrollToTop,
   rows: () => availableDataRows.value,
   selection: sel && { count: selectedTotal },
   selected,
@@ -1519,8 +1550,11 @@ if (process.env.NODE_ENV !== 'production') {
       missing('editing', `Column "${editCol}" is \`editable\`; that`)
     if (!features.rangeSelection && props.rangeSelection)
       missing('rangeSelection', '`range-selection`')
-    if (!features.attributes && (props.rowAttrs || props.cellAttrs))
-      missing('attributes', '`row-attrs` / `cell-attrs`')
+    if (
+      !features.attributes &&
+      (props.rowAttrs || props.cellAttrs || props.treeExpanderAttrs || props.detailExpanderAttrs)
+    )
+      missing('attributes', 'Row, cell, and expander attributes')
     const exportCol = props.columns.find((c) => c.exportValue)?.key
     if (!features.export && exportCol)
       missing('export', `Column "${exportCol}" has an \`exportValue\`; that`)
@@ -1564,6 +1598,7 @@ const context: GridContext = {
   sortRows: prepareRows,
   sortable,
   SortMarker: features.sorting?.SortMarker,
+  SortIcon: features.sorting?.SortIcon,
   editing: editing && { ...editing, Editor: features.editing!.Editor },
   range: cellRange,
   resize: resize && {
@@ -1982,7 +2017,13 @@ defineExpose<VGridExposed<T>>({
           </div>
         </div>
         <template v-if="skeletonRows && !windowRows.length">
-          <div v-for="n in skeletonRows" :key="n" class="vg-row vg-skeleton-row" aria-hidden="true">
+          <div
+            v-for="n in skeletonRows"
+            :key="n"
+            class="vg-row vg-skeleton-row"
+            :class="{ 'vg-row-virtual': isVirtual }"
+            aria-hidden="true"
+          >
             <div
               v-for="col in context.shownColumns.value"
               :key="col.key"

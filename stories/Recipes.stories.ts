@@ -5,7 +5,7 @@ import { createColumnHelper, type CellActionEvent } from '@nocopypaste/vue-grid'
 import { Grid as VGrid } from './support'
 
 /**
- * Common back-office cells rebuilt from the generic renderers — no app-specific components:
+ * Examples of combining built-in renderers:
  *
  * | Need | Renderer + options |
  * |---|---|
@@ -24,7 +24,7 @@ import { Grid as VGrid } from './support'
 const logAction = fn()
 
 const meta = {
-  title: 'Recipes/Back-office grid',
+  title: 'Recipes/Renderer combinations',
   args: { onCellAction: logAction },
 } satisfies Meta<{ onCellAction: (e: CellActionEvent<Bet>) => void }>
 

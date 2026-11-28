@@ -39,6 +39,9 @@
     "./theme.css": "./dist/theme.css",
     "./core.css": "./dist/core.css",
     "./renderers.css": "./dist/renderers.css",
+    "./sort-indicator.css": "./dist/sort-indicator.css",
+    "./scroll-chain.css": "./dist/scroll-chain.css",
+    "./cell-borders.css": "./dist/cell-borders.css",
     "./agent": {
       "types": "./dist/types/agent/index.d.ts",
       "import": "./dist/agent/index.js"

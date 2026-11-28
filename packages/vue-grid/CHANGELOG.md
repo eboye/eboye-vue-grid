@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased
+
+- Add `vg-scroll-chain-y` so content-height detail grids can pass vertical scrolling to the parent.
+- Add an icon-only trigger, `#icon` slot, and `open()` to the column picker. Fixed column pins
+  take precedence over controlled and saved overrides.
+- Add status bar options for the visible tree row count, a fully expanded total, and a Back to top button.
+- Add `tree-column-key` and `detail-expander-column-key` to place tree and detail controls by column key.
+- Add the `vg-sort-indicator-end` class to place sort indicators at the inline end of sortable headers.
+- Add the `#sort-icon` slot for custom sort artwork in all three sort states and
+  `--vg-sort-icon-size` to size both built-in and custom icons.
+- Add theme tokens for inline-end cell and header dividers and a minimum column header height.
+- Add the `vg-restore-cell-borders` class for grids that use an unlayered border-width reset.
+- Add `tree-expander-attrs` and `detail-expander-attrs` to the attributes feature for row-specific
+  accessible names and test hooks, with localized defaults and the existing keyboard behavior.
+
 ## 0.26.0 — 2026-11-28
 
 - Nested column headers use `groupPath` and support custom group labels. Interactive controls

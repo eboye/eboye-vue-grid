@@ -25,6 +25,8 @@ export interface LevelLayout<T = unknown> {
   height: number
   /** Rendered rows in the level, nested ones included. */
   rowCount: number
+  /** Data and group rows, including expanded descendants but excluding details and status rows. */
+  dataRowCount: number
 }
 
 export type SubLayout<T> =
@@ -73,6 +75,7 @@ export function buildLayout<T>(input: LayoutInput<T>): LevelLayout<T> {
     const sub = new Map<RowKey, SubLayout<T>>()
     let top = 0
     let count = 0
+    let dataRowCount = n
     for (let i = 0; i < n; i++) {
       const row = raw[i]!
       tops[i] = top
@@ -100,12 +103,13 @@ export function buildLayout<T>(input: LayoutInput<T>): LevelLayout<T> {
           sub.set(key, { kind: 'rows', layout: child })
           top += chrome + child.height
           count += child.rowCount
+          dataRowCount += child.dataRowCount
         }
       }
     }
     tops[n] = top
     rowsBefore[n] = count
-    return { rows, tops, rowsBefore, detail, sub, height: top, rowCount: count }
+    return { rows, tops, rowsBefore, detail, sub, height: top, rowCount: count, dataRowCount }
   }
   return level(input.rows)
 }

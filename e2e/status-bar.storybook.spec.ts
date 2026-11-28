@@ -95,3 +95,36 @@ test.describe('status bar', () => {
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360)
   })
 })
+
+test('the tree status bar counts logical rows and returns to the top of the grid', async ({
+  page,
+}) => {
+  await page.goto(`${base}/iframe.html?id=grid-status-bar--tree-counts&viewMode=story`)
+  const grid = page.getByRole('treegrid', { name: 'Projects and tasks' })
+  const footer = page.getByRole('group', { name: 'Grid status' })
+  const shown = footer.getByRole('status')
+  const project = grid.locator('[data-row-key="1"]')
+  const treeButton = project.locator('.vg-tree-gutter button')
+
+  await expect(shown).toHaveText('2 rows shown')
+  await expect(footer.getByText('50 fully expanded')).toBeVisible()
+  await treeButton.click()
+  await expect(shown).toHaveText('50 rows shown')
+  await expect(grid.getByText('Task 48', { exact: true })).toHaveCount(0)
+
+  await project.getByRole('button', { name: 'Show row details' }).click()
+  await expect(grid.getByText('Details of Website update')).toBeVisible()
+  await expect(shown).toHaveText('50 rows shown')
+  await grid.evaluate((el) => (el.scrollTop = el.scrollHeight))
+  await expect(grid.getByText('Task 48', { exact: true })).toBeVisible()
+  await expect(shown).toHaveText('50 rows shown')
+
+  const backToTop = footer.getByRole('button', { name: 'Back to top' })
+  await backToTop.press('Enter')
+  await expect.poll(() => grid.evaluate((el) => el.scrollTop)).toBe(0)
+  await expect(backToTop).toBeFocused()
+  await expect(treeButton).toBeVisible()
+  await treeButton.click()
+  await expect(shown).toHaveText('2 rows shown')
+  await expect(footer.getByText('50 fully expanded')).toBeVisible()
+})

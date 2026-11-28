@@ -16,7 +16,7 @@ import { selectionState, toggleRowSelection } from '../src/core/selection'
 import { buildLayout, locateRow, visibleSpan, type LayoutInput } from '../src/core/virtual'
 import { pageItems } from '../src/core/pagination'
 import { localStorageAdapter } from '../src/core/storage'
-import type { ColumnDef } from '../src/types'
+import type { ColumnDef, ColumnState } from '../src/types'
 
 describe('value', () => {
   it('reads dot paths and tolerates missing segments', () => {
@@ -79,6 +79,22 @@ describe('columns', () => {
     expect(effectivePin(cols[3]!, state)).toBeUndefined()
     expect(effectivePin(cols[1]!, state)).toBe('right')
     expect(visibleColumns(cols, state).map((c) => c.key)).toEqual(['a', 'd', 'e', 'b'])
+  })
+
+  it('keeps the definition pin on fixed columns even with stale overrides', () => {
+    const columns: ColumnDef[] = [
+      { key: 'actions', pinned: 'left', pinnable: false },
+      { key: 'name', pinnable: false },
+      { key: 'status' },
+    ]
+    const stale: ColumnState = {
+      order: ['name', 'actions', 'status'],
+      hidden: [],
+      pinned: { actions: null, name: 'right', status: 'right' },
+    }
+    expect(effectivePin(columns[0]!, stale)).toBe('left')
+    expect(effectivePin(columns[1]!, stale)).toBeUndefined()
+    expect(normalizeColumnState(columns, stale).pinned).toEqual({ status: 'right' })
   })
 
   it('pins at the inner edge of the pin group and unpins', () => {

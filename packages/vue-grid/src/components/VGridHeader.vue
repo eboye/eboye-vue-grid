@@ -143,7 +143,14 @@ function ariaSort(col: ResolvedColumn) {
             />
             <template v-else>{{ col.def.header ?? col.key }}</template>
           </span>
-          <svg class="vg-sort-icon" viewBox="0 0 16 16" aria-hidden="true">
+          <component
+            :is="grid.SortIcon"
+            v-if="grid.SortIcon && grid.slots['sort-icon']"
+            :artwork="grid.slots['sort-icon']"
+            :column="col.def"
+            :direction="sortOf(col)?.dir ?? null"
+          />
+          <svg v-else class="vg-sort-icon" viewBox="0 0 16 16" aria-hidden="true">
             <path class="vg-sort-up" d="M4.5 6.5 8 3l3.5 3.5" />
             <path class="vg-sort-down" d="M4.5 9.5 8 13l3.5-3.5" />
           </svg>

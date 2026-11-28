@@ -98,6 +98,7 @@ watchEffect(() => {
       :class="[
         'vg-row',
         {
+          'vg-row-virtual': layout,
           'vg-row-selected': item.selected,
           'vg-row-highlighted': !item.group && grid.isHighlighted(item.key),
           'vg-row-clickable': !item.group && grid.rowClickable.value,

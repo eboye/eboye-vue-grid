@@ -31,12 +31,16 @@ export interface ResolvedColumn {
   component: Component | undefined
   definition: CellRendererDefinition | undefined
   options: Record<string, unknown>
+  /** The built-in text renderer with no configured options. */
+  plainText?: boolean
   align: Align
   pinned: 'left' | 'right' | undefined
   /** Last left-pinned or first right-pinned column. Only set where CSS `:has()` is unsupported. */
   pinEdge: boolean
-  /** First data column — hosts the expander and the depth indent. */
+  /** Hosts the tree or shared expander and depth indent. */
   isTree: boolean
+  /** Hosts the separate detail expander. */
+  isDetail: boolean
 }
 
 export interface GridContext {
@@ -67,6 +71,7 @@ export interface GridContext {
   range?: import('../composables/useCellRange').CellRangeState
   /** Sorting feature: a column's number in a multi-column sort. */
   SortMarker?: Component
+  SortIcon?: Component
   /** Only with the column resizing feature. */
   resize?: {
     /** The header edge grip component. */

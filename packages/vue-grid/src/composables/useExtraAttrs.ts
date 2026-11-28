@@ -1,6 +1,13 @@
 import type { ObjectDirective } from 'vue'
 import type { ResolvedColumn } from '../internal/context'
-import type { CellAttrsContext, ExtraAttrs, RowAttrsContext, RowKey } from '../types'
+import type {
+  CellAttrsContext,
+  ExpanderAttrs,
+  ExpanderAttrsContext,
+  ExtraAttrs,
+  RowAttrsContext,
+  RowKey,
+} from '../types'
 
 /**
  * Attributes the grid keeps for itself: its roles, ARIA, focus order, classes, styles and its own
@@ -44,6 +51,10 @@ export interface ExtraAttrsProps {
   rowAttrs?: (ctx: RowAttrsContext<any>) => ExtraAttrs | null | undefined
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   cellAttrs?: (ctx: CellAttrsContext<any>) => ExtraAttrs | null | undefined
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- the grid's generic `T` is erased here
+  treeExpanderAttrs?: (ctx: ExpanderAttrsContext<any>) => ExpanderAttrs | null | undefined
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- the grid's generic `T` is erased here
+  detailExpanderAttrs?: (ctx: ExpanderAttrsContext<any>) => ExpanderAttrs | null | undefined
 }
 
 /**
@@ -59,6 +70,18 @@ export function useExtraAttrs(
   const row = (ctx: RowAttrsContext) => props.rowAttrs?.(ctx)
   return {
     directive: vExtraAttrs,
+    expander: (kind: 'tree' | 'detail', row: unknown, rowKey: RowKey, expanded: boolean) => {
+      const callback = kind === 'tree' ? props.treeExpanderAttrs : props.detailExpanderAttrs
+      const attrs = callback?.({ row, rowKey, expanded })
+      if (!attrs) return undefined
+      const result: Omit<ExpanderAttrs, 'aria-label'> & { 'aria-label'?: string } = {}
+      const label = attrs['aria-label']
+      if (typeof label === 'string' && label.trim()) result['aria-label'] = label
+      for (const [name, value] of Object.entries(attrs)) {
+        if (/^data-[\w.:-]+$/.test(name)) result[name as `data-${string}`] = value
+      }
+      return result
+    },
     /** A body row (group rows get none). */
     row: (item: { row: unknown; key: RowKey; index: number; group?: unknown }, depth: number) =>
       item.group

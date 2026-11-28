@@ -14,6 +14,7 @@
     --vg-select-column-width: 2.75rem;
     --vg-drag-column-width: 2.25rem;
     --vg-expander-size: 1.5rem;
+    --_vg-resize-grip-width: 8px;
     --vg-subgrid-indent: 1.25rem;
     --vg-z-header: 3;
     --vg-z-pinned: 2;
@@ -118,8 +119,8 @@
   }
   .vg-sort-icon {
     flex: none;
-    width: 0.875rem;
-    height: 0.875rem;
+    inline-size: var(--vg-sort-icon-size, 0.875rem);
+    block-size: var(--vg-sort-icon-size, 0.875rem);
     fill: none;
     stroke: currentColor;
     stroke-width: 1.75;
@@ -339,7 +340,8 @@
   .vg-virtual {
     overflow-anchor: none;
   }
-  .vg-virtual .vg-row > .vg-cell {
+  /* Mark rows at render time so a nested grid uses its own scrolling mode. */
+  .vg-row.vg-row-virtual > .vg-cell {
     box-sizing: border-box;
     height: var(--vg-row-height);
     overflow: hidden;
@@ -709,7 +711,7 @@
     inset-block: 0;
     inset-inline-end: 0;
     z-index: 1;
-    inline-size: 8px;
+    inline-size: var(--_vg-resize-grip-width);
     cursor: col-resize;
     touch-action: none;
     user-select: none;

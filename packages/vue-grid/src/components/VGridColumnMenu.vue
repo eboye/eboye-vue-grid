@@ -10,6 +10,8 @@ const props = withDefaults(
     columns: readonly ColumnDef[]
     /** The button. Default: `messages.columns`, else `Columns`. */
     label?: string
+    /** Show just the icon; the label remains the accessible name and tooltip. */
+    iconOnly?: boolean
     /** Default: `messages.filterColumns`, else `Filter columns…`. */
     filterPlaceholder?: string
     /** Default: `messages.resetColumns`, else `Reset columns`. */
@@ -25,12 +27,14 @@ const text = computed(() => ({
 }))
 
 const columnState = defineModel<ColumnState | undefined>('columnState', { default: undefined })
+defineSlots<{ icon?: () => unknown }>()
 
 const id = useId()
 const trigger = shallowRef<HTMLButtonElement>()
 const panel = shallowRef<HTMLElement>()
 const filterInput = shallowRef<HTMLInputElement>()
 const filter = ref('')
+const isOpen = ref(false)
 const anchor = anchorNameFor(`columns-${id}`)
 
 const state = computed(() => normalizeColumnState(props.columns, columnState.value))
@@ -61,12 +65,22 @@ function reset() {
   columnState.value = normalizeColumnState(props.columns, null)
 }
 
+/** Opens the picker anchored to its own trigger. */
+function open() {
+  const el = panel.value
+  if (!el?.showPopover || el.matches(':popover-open')) return
+  el.showPopover({ source: trigger.value })
+}
+
+defineExpose({ open })
+
 let stopTracking = () => {}
 onBeforeUnmount(() => stopTracking())
 
 function onToggle(event: Event) {
   stopTracking()
-  if ((event as ToggleEvent).newState !== 'open') return
+  isOpen.value = (event as ToggleEvent).newState === 'open'
+  if (!isOpen.value) return
   // Placed, followed and hidden by CSS anchor positioning; JS only where unsupported.
   if (panel.value && trigger.value)
     stopTracking = trackAnchor(panel.value, trigger.value, 'bottom-end')
@@ -82,10 +96,16 @@ function onToggle(event: Event) {
       class="vg-button"
       aria-haspopup="dialog"
       :aria-controls="id"
+      :aria-expanded="isOpen"
+      :aria-label="iconOnly ? text.label : undefined"
+      :title="iconOnly ? text.label : undefined"
       :popovertarget="id"
       :style="{ 'anchor-name': anchor }"
     >
-      <svg viewBox="0 0 16 16" aria-hidden="true" class="vg-button-icon">
+      <span v-if="$slots.icon" class="vg-button-icon" aria-hidden="true">
+        <slot name="icon" />
+      </span>
+      <svg v-else viewBox="0 0 16 16" aria-hidden="true" class="vg-button-icon">
         <path
           d="M2 3h12M2 8h12M2 13h12"
           fill="none"
@@ -94,7 +114,7 @@ function onToggle(event: Event) {
           stroke-linecap="round"
         />
       </svg>
-      {{ text.label }}
+      {{ iconOnly ? '' : text.label }}
     </button>
     <div
       :id="id"

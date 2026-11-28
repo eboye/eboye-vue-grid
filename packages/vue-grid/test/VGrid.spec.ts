@@ -11,7 +11,7 @@ import VGridPagination from '../src/components/VGridPagination.vue'
 import { defineCellRenderer } from '../src/registry/registry'
 import { numberRenderer } from '../src/renderers'
 import { createVueGrid } from '../src/registry/plugin'
-import type { ColumnDef, VGridExposed } from '../src/types'
+import type { ColumnDef, ExpanderAttrsContext, VGridExposed } from '../src/types'
 
 interface Row {
   id: number
@@ -323,6 +323,55 @@ describe('VGrid column state', () => {
     expect(headerTexts(w)).toEqual(['Name', 'Score', 'City'])
     w.unmount()
   })
+
+  it('retains fixed pins when controlled or stored state tries to unpin them', () => {
+    const fixedColumns = columns.map((column) =>
+      column.key === 'city' ? { ...column, pinned: 'left', pinnable: false } : column,
+    )
+    const stale = { order: ['name', 'score', 'city'], hidden: [], pinned: { city: null } }
+    const controlled = mount(VGrid, {
+      props: { rows, columns: fixedColumns, rowKey: 'id', columnState: stale },
+    })
+    const stored = mount(VGrid, {
+      props: {
+        rows,
+        columns: fixedColumns,
+        rowKey: 'id',
+        storage: { load: () => stale, save: vi.fn() },
+      },
+    })
+    try {
+      for (const grid of [controlled, stored]) {
+        expect(headerTexts(grid)).toEqual(['City', 'Name', 'Score'])
+        expect(grid.get('.vg-header [data-col-key="city"]').classes()).toContain('vg-pin-left')
+      }
+    } finally {
+      controlled.unmount()
+      stored.unmount()
+    }
+  })
+
+  it('names an icon-only column picker and exposes its native open action', () => {
+    const w = mount(VGridColumnMenu, {
+      props: { columns, label: 'Choose columns', iconOnly: true },
+      slots: { icon: '<svg data-custom-icon />' },
+    })
+    try {
+      const trigger = w.get('button')
+      expect(trigger.text()).toBe('')
+      expect(trigger.attributes('aria-label')).toBe('Choose columns')
+      expect(trigger.attributes('title')).toBe('Choose columns')
+      expect(trigger.find('[aria-hidden="true"] [data-custom-icon]').exists()).toBe(true)
+      const panel = w.get('[role="dialog"]').element
+      const showPopover = vi.fn()
+      Object.defineProperty(panel, 'showPopover', { value: showPopover })
+      vi.spyOn(panel, 'matches').mockReturnValue(false)
+      w.vm.open()
+      expect(showPopover).toHaveBeenCalledWith({ source: trigger.element })
+    } finally {
+      w.unmount()
+    }
+  })
 })
 
 const tree: Row[] = [
@@ -558,6 +607,93 @@ describe('VGrid sub-grids', () => {
       }
     },
   )
+
+  it('customizes each virtual row expander and preserves its state, keyboard, and focus', async () => {
+    const ignoredHandler = vi.fn()
+    const w = mount(VGrid, {
+      attachTo: document.body,
+      props: {
+        rows: tree,
+        columns,
+        rowKey: 'id',
+        subRows: (row: Row) => row.children,
+        detailExpanded: [],
+        virtual: { rowHeight: 40 },
+        messages: { showRowDetails: 'Show localized details' },
+        treeExpanderAttrs: ({ row, rowKey, expanded }: ExpanderAttrsContext<Row>) => ({
+          'aria-label': `${expanded ? 'Hide' : 'Show'} children of ${row.name}`,
+          'data-testid': `children-${rowKey}`,
+          'aria-expanded': false,
+          onClick: ignoredHandler,
+        }),
+        detailExpanderAttrs: ({ row, rowKey, expanded }: ExpanderAttrsContext<Row>) => ({
+          'aria-label':
+            rowKey === 1 ? `${expanded ? 'Hide' : 'Show'} details for ${row.name}` : '  ',
+          'data-testid': `details-${rowKey}`,
+        }),
+      },
+      slots: {
+        detail: ({ close }: { close: () => void }) =>
+          h('button', { type: 'button', onClick: close }, 'Close details'),
+      },
+    })
+    try {
+      const row = w.get('[data-row-key="1"]')
+      const cell = row.get('[data-col-key="name"]')
+      const children = row.get('[data-testid="children-1"]')
+      const detail = row.get('[data-testid="details-1"]')
+      expect(children.attributes('aria-label')).toBe(`Show children of ${tree[0]!.name}`)
+      expect(detail.attributes('aria-label')).toBe(`Show details for ${tree[0]!.name}`)
+      expect(w.get('[data-testid="details-2"]').attributes('aria-label')).toBe(
+        'Show localized details',
+      )
+
+      await cell.trigger('keydown', { key: 'ArrowRight' })
+      expect(children.attributes('aria-label')).toBe(`Hide children of ${tree[0]!.name}`)
+      expect(children.attributes('aria-expanded')).toBe('true')
+      expect(detail.attributes('aria-expanded')).toBe('false')
+      expect(ignoredHandler).not.toHaveBeenCalled()
+
+      await cell.trigger('keydown', { key: 'Enter', shiftKey: true })
+      expect(detail.attributes('aria-label')).toBe(`Hide details for ${tree[0]!.name}`)
+      const close = w.get<HTMLButtonElement>('[data-detail-for="1"] button')
+      close.element.focus()
+      await close.trigger('click')
+      expect(document.activeElement).toBe(detail.element)
+      expect(detail.attributes('aria-expanded')).toBe('false')
+      expect(children.attributes('aria-expanded')).toBe('true')
+    } finally {
+      w.unmount()
+    }
+  })
+
+  it('falls back to the first visible data column when an expander column is unavailable', async () => {
+    const w = mount(VGrid, {
+      props: {
+        rows: tree,
+        columns,
+        rowKey: 'id',
+        subRows: (row: Row) => row.children,
+        treeColumnKey: 'city',
+        detailExpanderColumnKey: 'missing',
+        detailExpanded: [],
+      },
+      slots: { detail: () => h('p', 'Details') },
+    })
+    const row = w.get('[data-row-key="1"]')
+    const cell = (key: string) => row.get(`[data-col-key="${key}"]`)
+    try {
+      expect(cell('city').find('.vg-tree-gutter .vg-expander').exists()).toBe(true)
+      expect(cell('name').find('.vg-detail-expander').exists()).toBe(true)
+      await w.setProps({
+        columnState: { order: ['score', 'name', 'city'], hidden: ['city'] },
+      })
+      expect(cell('score').find('.vg-tree-gutter .vg-expander').exists()).toBe(true)
+      expect(cell('score').find('.vg-detail-expander').exists()).toBe(true)
+    } finally {
+      w.unmount()
+    }
+  })
 
   it('loads lazy children only when the independent tree control opens', async () => {
     const loadSubRows = vi.fn(async (row: Row) => row.children ?? [])

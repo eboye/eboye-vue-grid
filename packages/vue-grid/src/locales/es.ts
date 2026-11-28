@@ -122,6 +122,10 @@ export const es = {
   page: (page) => `Página ${page}`,
 
   statusBar: 'Estado de la tabla',
+  visibleRowCount: (shown, count) =>
+    `${rows(count, shown)} ${count === 1 ? 'visible' : 'visibles'}`,
+  fullyExpandedCount: (count) => `${count} con todo expandido`,
+  backToTop: 'Volver arriba',
   rowCount: (shown, total, count, totalCount) =>
     total === undefined ? rows(count, shown) : `${shown} de ${rows(totalCount ?? count, total)}`,
   selectedCount: (count, all, amount) =>

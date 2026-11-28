@@ -269,6 +269,7 @@ export function useRowReorder<T>(o: RowReorderOptions<T>): RowReorderState {
       pinned,
       pinEdge: false,
       isTree: false,
+      isDetail: false,
     }),
   }
 }

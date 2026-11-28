@@ -55,6 +55,49 @@ export const WithVirtualScrolling: Story = {
   args: { rows: makeBets(2000, 5), virtual: { rowHeight: 40 }, statusBar: { summary: ['stake'] } },
 }
 
+/** Show the current tree row count, the fully expanded count, and a return to the first row. */
+export const TreeCounts: Story = {
+  render: () => ({
+    components: { VGrid },
+    setup() {
+      interface Task {
+        id: number
+        name: string
+        children?: Task[]
+      }
+      const tasks = Array.from({ length: 48 }, (_, i) => ({ id: i + 3, name: `Task ${i + 1}` }))
+      const rows: Task[] = [
+        { id: 1, name: 'Website update', children: tasks },
+        { id: 2, name: 'Content audit' },
+      ]
+      return {
+        rows,
+        columns: [{ key: 'name', header: 'Project or task' }],
+        expanded: ref<RowKey[]>([]),
+        detailExpanded: ref<RowKey[]>([]),
+        fullyExpandedCount: rows.length + tasks.length,
+      }
+    },
+    template: `
+      <VGrid
+        v-model:expanded="expanded"
+        v-model:detail-expanded="detailExpanded"
+        :rows="rows"
+        :columns="columns"
+        :sub-rows="row => row.children"
+        :virtual="{ rowHeight: 40 }"
+        :status-bar="{ rowCountMode: 'visible', fullyExpandedCount, backToTop: true }"
+        row-key="id"
+        aria-label="Projects and tasks"
+        style="height: 280px"
+      >
+        <template #detail="{ row }">
+          <p>Details of {{ row.name }}</p>
+        </template>
+      </VGrid>`,
+  }),
+}
+
 /** `aggregates` picks what each summary column shows: here the smallest and largest stake. */
 export const MinAndMax: Story = {
   args: { statusBar: { summary: ['stake', 'change'], aggregates: ['min', 'max'] } },

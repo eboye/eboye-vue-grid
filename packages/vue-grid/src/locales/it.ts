@@ -110,6 +110,10 @@ export const it = {
   page: (page) => `Pagina ${page}`,
 
   statusBar: 'Stato della tabella',
+  visibleRowCount: (shown, count) =>
+    `${rows(count, shown)} ${count === 1 ? 'visibile' : 'visibili'}`,
+  fullyExpandedCount: (count) => `${count} con tutti i rami espansi`,
+  backToTop: 'Torna in alto',
   rowCount: (shown, total, count, totalCount) =>
     total === undefined ? rows(count, shown) : `${shown} di ${rows(totalCount ?? count, total)}`,
   selectedCount: (count, all, amount) =>

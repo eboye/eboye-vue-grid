@@ -1,3 +1,4 @@
+import VGridSortIcon from '../components/VGridSortIcon.vue'
 import VGridSortMarker from '../components/VGridSortMarker.vue'
 import { useSorting } from '../composables/useSorting'
 import { sortRows } from '../core/sort'
@@ -12,4 +13,5 @@ export const sortingFeature: SortingFeature = {
   sortRows,
   useSorting,
   SortMarker: VGridSortMarker,
+  SortIcon: VGridSortIcon,
 }
