@@ -3126,9 +3126,11 @@ column header. Configure the status bar and picker through their own options.
   :status-bar="{
     rowCountMode: 'visible',
     fullyExpandedCount,
+    groupCounts: true,
     backToTop: true,
     attrs: {
       root: { 'data-test': 'grid-status' },
+      counts: { 'data-test': 'row-counts' },
       rowCount: { 'data-test': 'rows-shown' },
       fullyExpandedCount: { 'data-test': 'rows-expanded' },
       backToTop: { 'data-test': 'back-to-top' },

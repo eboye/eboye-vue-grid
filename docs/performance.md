@@ -1,14 +1,16 @@
 # Grid performance baseline
 
 The benchmark mounts the grid inside a production Storybook build. The four standard workloads
-use six columns. The two hierarchical workloads use the same 2,000 tasks in 50 expanded branches
-or groups. The 50-row
-workload represents one already-fetched server page. Only that workload renders every row.
+use six columns. The two standard hierarchical workloads use the same 2,000 tasks in 50 expanded
+branches or groups. The 50-row workload represents one already-fetched server page and renders
+every row.
 Two additional workloads exercise the same 500 expanded child rows with 17 custom cell slots,
 a pinned column, and a content-height detail grid. They use a 640 px wide grid and vary overscan.
 
-- **First mount** measures the first grid mount on a freshly loaded story. Dataset construction,
-  Storybook startup, asset loading, and server fetch time are outside the measurement.
+- **First mount** measures from the mount action through DOM commit and synchronous layout on a
+  freshly loaded story. Each workload has seven samples from separate browser contexts. The
+  workload order rotates between rounds. Dataset construction, Storybook startup, asset loading,
+  and server fetch time are outside the measurement.
 - **Warm mount and update** measure from the action through Vue's DOM commit and synchronous
   layout. The update changes a field on ten displayed rows through the `rows` prop and retains
   their keys. These timings stop before paint.
@@ -19,30 +21,36 @@ a pinned column, and a content-height detail grid. They use a 640 px wide grid a
   while the snapshot update replaces them all. The detail measurement ends after DOM commit
   and layout. The native jump runs with the detail open and ends when the last row is laid out.
 
-Two warm-up runs precede seven measured runs per workload. The first warm-up supplies the first
-mount measurement. All workloads use a 448 px high grid at a 1280 × 900 browser viewport. The
-virtual workloads use 36 px rows. The standard workloads use six rows of overscan.
+In a separate context for each workload, two warm-up runs precede seven measured warm runs.
+All workloads use a 448 px high grid at a 1280 × 900 browser viewport. The virtual workloads use
+36 px rows. The standard virtual workloads use six rows of overscan.
 
 ## Results
 
-Measured with the 0.27.0 grid on 2026-11-28 on a Ryzen 7 5800X with 14 logical CPUs available, Arch Linux
-7.3.6, Node 24.19.0, and headless Chromium 159.0.8154.6.
+Measured with the 0.28.0 grid on 2026-11-28 on a Ryzen 7 5800X with 14 logical CPUs available, Arch Linux
+7.3.6, Node 24.19.0, and headless Chromium 159.0.8154.6. Mount and update timings in the tables
+are medians.
 
 | Workload                         | Rows rendered at top | First mount | Median warm mount | Median 10-row update | Scroll p95 | Frames over 25 ms |
 | -------------------------------- | -------------------: | ----------: | ----------------: | -------------------: | ---------: | ----------------: |
-| 50-row server page               |                   50 |     57.7 ms |           24.2 ms |               5.5 ms |    16.8 ms |           0 / 420 |
-| 2,000-task virtual tree          |                   19 |     42.5 ms |           20.2 ms |               9.8 ms |    16.8 ms |          18 / 420 |
-| 2,000-task virtual grouped table |                   19 |    136.6 ms |           15.2 ms |               8.1 ms |    16.7 ms |           3 / 420 |
-| 10,000-row virtual flat table    |                   19 |     75.4 ms |           16.8 ms |               7.3 ms |    16.8 ms |           0 / 420 |
+| 50-row server page               |                   50 |     64.1 ms |           31.2 ms |               6.0 ms |    16.7 ms |           0 / 420 |
+| 2,000-task virtual tree          |                   19 |     40.7 ms |           12.5 ms |               5.2 ms |    16.7 ms |           0 / 420 |
+| 2,000-task virtual grouped table |                   19 |     52.2 ms |           16.1 ms |               6.8 ms |    16.8 ms |           0 / 420 |
+| 10,000-row virtual flat table    |                   19 |     39.9 ms |           16.3 ms |               7.4 ms |    16.8 ms |           0 / 420 |
 
 | Overscan | Rows at top | First mount | Warm mount | Sparse update | Snapshot update | Open detail | Native jump | Frames over 25 ms |
 | -------: | ----------: | ----------: | ---------: | ------------: | --------------: | ----------: | ----------: | ----------------: |
-|        2 |          15 |     76.1 ms |    21.9 ms |        3.9 ms |          7.7 ms |      5.8 ms |     30.0 ms |          11 / 420 |
-|        6 |          19 |     92.8 ms |    25.1 ms |        5.1 ms |         11.1 ms |      7.9 ms |     36.2 ms |           3 / 420 |
+|        2 |          15 |     58.9 ms |    30.2 ms |        6.4 ms |         12.4 ms |      9.3 ms |     36.1 ms |           5 / 420 |
+|        6 |          19 |     67.6 ms |    27.3 ms |        4.7 ms |          9.8 ms |      8.0 ms |     34.6 ms |          10 / 420 |
 
-The smaller window mounted four fewer rows and had lower median action times in this run, with
-more long scroll frames. These sequential local measurements are sensitive to machine load.
-Evaluate overscan with the expected cell content and scrolling pattern. The global default is six.
+First-mount samples for the grouped table ranged from 38.4 ms to 100.7 ms. The previous baseline
+recorded a single first-mount sample per workload, so its first-mount figures cannot establish
+a version-to-version change.
+
+The custom-cell workload with overscan set to two mounted four fewer rows and had a lower median
+first-mount time in this run. The workload with overscan set to six had lower median warm mount
+and update times. These local measurements are sensitive to machine load. Evaluate overscan with
+the expected cell content and scrolling pattern. The global default is six.
 
 ## Reproduce
 
@@ -59,6 +67,7 @@ In a second shell, run the benchmark with Playwright Chromium installed.
 STORYBOOK_URL=http://127.0.0.1:6006 npm run --silent benchmark:grid > grid-benchmark.json
 ```
 
-Set `BENCHMARK_RUNS` to change the sample count. The JSON records the environment, frame counts,
-and individual warm mount and update samples. Run the same workloads in the same browser and
-environment when comparing changes. Portable CI pass/fail thresholds are outside this baseline.
+Set `BENCHMARK_FRESH_CONTEXTS` to change the number of first-mount samples per workload and
+`BENCHMARK_RUNS` to change the number of measured warm runs. The JSON records the environment,
+frame counts, and individual first-mount, warm mount, and update samples. Run the same workloads
+in the same browser and environment when comparing changes.

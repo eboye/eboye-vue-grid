@@ -1446,6 +1446,9 @@ section, worked out from your column list.
   expanded descendants, pinned rows, and rows outside the virtual viewport. Set `fullyExpandedCount`
   to show an app-supplied total for all expanded branches and `backToTop: true` to add a scroll
   button. See [Tree counts and Back to top](../../docs/examples.md#tree-counts-and-back-to-top).
+- **Counts group**: `groupCounts: true` puts the native row counts in one polite live region
+  that reads both counts when either changes. Use `attrs.counts` to attach data attributes to
+  the group. Back to top sits outside the announcement.
 - **Summary**: `summary` lists column keys; while rows are selected, the bar shows each column's
   sum and average over them (`aggregates: ['sum', 'avg', 'min', 'max']` picks), formatted
   like the column's cells. Selected child rows count too. With "select all N matching rows" on

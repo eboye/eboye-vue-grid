@@ -613,6 +613,8 @@ setup: repository Settings → Pages → Source: GitHub Actions.
 Releases publish from GitHub Actions ([`release.yml`](.github/workflows/release.yml)) with npm
 trusted publishing: npm trusts the workflow through GitHub's OIDC token, so no npm token or
 `npm login` is involved, and every version carries provenance.
+Before publishing, the workflow runs `npm run test:package` to verify that the packed grid can
+be installed and bundled in a clean consumer app.
 
 1. Set the new version in `packages/vue-grid`, `packages/vue-grid-mcp` and
    `packages/cell-renderer-template` (and the latter two's `@nocopypaste/vue-grid` range), in

@@ -3,6 +3,7 @@ import { chromium } from 'playwright'
 
 const workloads = ['page', 'tree', 'grouped', 'flat', 'custom-overscan-two', 'custom-overscan-six']
 const samples = Number(process.env.BENCHMARK_RUNS ?? 7)
+const freshContexts = Number(process.env.BENCHMARK_FRESH_CONTEXTS ?? 7)
 const warmups = 2
 const scrollFrames = 60
 const base = process.env.STORYBOOK_URL ?? 'http://localhost:6006'
@@ -10,6 +11,8 @@ const viewport = { width: 1280, height: 900 }
 
 if (!Number.isSafeInteger(samples) || samples < 1)
   throw new Error('BENCHMARK_RUNS must be a positive integer')
+if (!Number.isSafeInteger(freshContexts) || freshContexts < 1)
+  throw new Error('BENCHMARK_FRESH_CONTEXTS must be a positive integer')
 
 const quantile = (values, fraction) => {
   const sorted = values.toSorted((a, b) => a - b)
@@ -18,16 +21,15 @@ const quantile = (values, fraction) => {
 const round = (value) => Number(value.toFixed(2))
 
 const browser = await chromium.launch()
-try {
-  const results = []
-  for (const workload of workloads) {
-    const page = await browser.newPage({ viewport, deviceScaleFactor: 1 })
+async function measure(workload, count, mountOnly = false) {
+  const page = await browser.newPage({ viewport, deviceScaleFactor: 1 })
+  try {
     await page.goto(
       `${base}/iframe.html?id=grid-benchmarks--${workload}&viewMode=story&args=startMounted:!false`,
     )
     await page.evaluate(async () => void (await document.fonts.ready))
-    const runs = await page.getByTestId('grid-benchmark').evaluate(
-      async (fixture, { count, scrollFrames, custom }) => {
+    return await page.getByTestId('grid-benchmark').evaluate(
+      async (fixture, { count, scrollFrames, custom, mountOnly }) => {
         const frame = () => new Promise((resolve) => requestAnimationFrame(resolve))
         const grid = () => fixture.querySelector('.vg[aria-label="Benchmark grid"]')
         const revision = () =>
@@ -66,6 +68,7 @@ try {
           const viewport = grid()
           if (!viewport || revision()?.textContent.trim() !== '0')
             throw new Error('Expected a mounted grid with the initial revision')
+          if (mountOnly) return [{ mountMs }]
           const renderedRows = viewport.querySelectorAll('.vg-row').length
 
           const max = viewport.scrollHeight - viewport.clientHeight
@@ -107,16 +110,34 @@ try {
         }
         return runs
       },
-      { count: warmups + samples, scrollFrames, custom: workload.startsWith('custom-') },
+      { count, scrollFrames, custom: workload.startsWith('custom-'), mountOnly },
       { timeout: 10_000 },
     )
+  } finally {
     await page.close()
+  }
+}
 
+try {
+  const firstMounts = new Map(workloads.map((workload) => [workload, []]))
+  for (let context = 0; context < freshContexts; context++) {
+    for (let offset = 0; offset < workloads.length; offset++) {
+      const workload = workloads[(context + offset) % workloads.length]
+      const [run] = await measure(workload, 1, true)
+      firstMounts.get(workload).push(run.mountMs)
+    }
+  }
+
+  const results = []
+  for (const workload of workloads) {
+    const runs = await measure(workload, warmups + samples)
+    const firstMountSamples = firstMounts.get(workload)
     const measured = runs.slice(warmups)
     const intervals = measured.flatMap((run) => run.intervals)
     results.push({
       workload,
-      firstMountMs: round(runs[0].mountMs),
+      firstMountMs: round(quantile(firstMountSamples, 0.5)),
+      firstMountSamplesMs: firstMountSamples.map(round),
       medianMountMs: round(
         quantile(
           measured.map((run) => run.mountMs),
@@ -170,6 +191,7 @@ try {
         },
         warmups,
         samples,
+        freshContexts,
         results,
       },
       null,

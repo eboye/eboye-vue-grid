@@ -151,11 +151,13 @@ export function useStatusBar<T>(opts: UseStatusBarOptions<T>) {
         : undefined,
     ),
     fullyExpandedCount: computed(() => config.value?.fullyExpandedCount),
+    groupCounts: computed(() => !!config.value?.groupCounts),
     attrs: computed(() => {
       const attrs = config.value?.attrs
       return (
         attrs && {
           root: dataAttrs(attrs.root),
+          counts: dataAttrs(attrs.counts),
           rowCount: dataAttrs(attrs.rowCount),
           fullyExpandedCount: dataAttrs(attrs.fullyExpandedCount),
           backToTop: dataAttrs(attrs.backToTop),
