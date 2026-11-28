@@ -71,6 +71,7 @@ export const propFeatures: Readonly<Record<string, FeatureId>> = {
   rangeSelection: 'rangeSelection',
   range: 'rangeSelection',
   rowAttrs: 'attributes',
+  columnHeaderAttrs: 'attributes',
   cellAttrs: 'attributes',
   treeExpanderAttrs: 'attributes',
   detailExpanderAttrs: 'attributes',

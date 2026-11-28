@@ -158,6 +158,9 @@
     "detailExpanderAttrs": {
       "description": "Accessible name and data attributes for the separate detail expander (attributes feature)."
     },
+    "columnHeaderAttrs": {
+      "description": "Application data attributes for each native data column header (attributes feature)."
+    },
     "rowClickable": {
       "type": "boolean",
       "description": "Pointer cursor on rows (`row-click` is emitted either way)."

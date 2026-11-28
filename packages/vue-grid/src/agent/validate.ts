@@ -305,6 +305,7 @@ export function validateGridConfig(config: GridConfigInput): ValidationResult {
     'isRowSelectable',
     'rowClass',
     'rowAttrs',
+    'columnHeaderAttrs',
     'cellAttrs',
     'contextMenu',
   ]) {

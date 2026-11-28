@@ -43,6 +43,27 @@ const attrNames = (w: VueWrapper, sel: string) =>
   w.findAll(sel).map((el) => el.element.getAttributeNames().sort().join(' '))
 
 describe('rowAttrs and cellAttrs', () => {
+  it('adds native header hooks without overriding sort and column attributes', async () => {
+    const w = make({
+      columnHeaderAttrs: ({ columnKey }: { columnKey: string }) => ({
+        'data-test': `header-${columnKey}`,
+        'data-col-key': 'wrong',
+        'data-sort-dir': 'desc',
+        role: 'presentation',
+      }),
+    })
+    const header = w.get('[data-test="header-name"]')
+    expect(header.attributes('data-col-key')).toBe('name')
+    expect(header.attributes('role')).toBe('columnheader')
+    expect(header.attributes('data-sort-dir')).toBeUndefined()
+    await header.get('button.vg-sort').trigger('click')
+    expect(header.attributes('aria-sort')).toBe('ascending')
+    await w.setProps({ columnHeaderAttrs: undefined })
+    expect(
+      w.get('[role="columnheader"][data-col-key="name"]').attributes('data-test'),
+    ).toBeUndefined()
+  })
+
   it('without them, rows and cells carry only the grid’s own attributes', () => {
     const plain = make()
     const withNothing = make({ rowAttrs: () => undefined, cellAttrs: () => null })

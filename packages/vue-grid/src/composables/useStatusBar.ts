@@ -1,4 +1,5 @@
 import { computed, type Ref } from 'vue'
+import { dataAttrs } from '../internal/dataAttrs'
 import { aggregateValues } from '../core/aggregate'
 import { getCellValue } from '../core/value'
 import { formatNumber } from '../renderers/format'
@@ -150,6 +151,17 @@ export function useStatusBar<T>(opts: UseStatusBarOptions<T>) {
         : undefined,
     ),
     fullyExpandedCount: computed(() => config.value?.fullyExpandedCount),
+    attrs: computed(() => {
+      const attrs = config.value?.attrs
+      return (
+        attrs && {
+          root: dataAttrs(attrs.root),
+          rowCount: dataAttrs(attrs.rowCount),
+          fullyExpandedCount: dataAttrs(attrs.fullyExpandedCount),
+          backToTop: dataAttrs(attrs.backToTop),
+        }
+      )
+    }),
     backToTop: computed(() => !!config.value?.backToTop),
     scrollToTop: opts.scrollToTop,
     canClear: opts.canClear,

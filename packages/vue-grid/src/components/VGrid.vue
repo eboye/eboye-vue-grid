@@ -56,6 +56,8 @@ import type {
   ExtraAttrs,
   RowAttrsContext,
   ColumnDef,
+  ColumnHeaderAttrsContext,
+  DataAttrs,
   ColumnHeaderGroup,
   ColumnState,
   FlashMode,
@@ -182,6 +184,8 @@ const props = withDefaults(
     treeExpanderAttrs?: (ctx: ExpanderAttrsContext<T>) => ExpanderAttrs | null | undefined
     /** Accessible name and data attributes for the separate detail expander (attributes feature). */
     detailExpanderAttrs?: (ctx: ExpanderAttrsContext<T>) => ExpanderAttrs | null | undefined
+    /** Application data attributes for each native data column header (attributes feature). */
+    columnHeaderAttrs?: (ctx: ColumnHeaderAttrsContext<T>) => DataAttrs | null | undefined
     /** Pointer cursor on rows (`row-click` is emitted either way). */
     rowClickable?: boolean
     /** Extra classes for a row. */
@@ -1552,9 +1556,13 @@ if (process.env.NODE_ENV !== 'production') {
       missing('rangeSelection', '`range-selection`')
     if (
       !features.attributes &&
-      (props.rowAttrs || props.cellAttrs || props.treeExpanderAttrs || props.detailExpanderAttrs)
+      (props.rowAttrs ||
+        props.cellAttrs ||
+        props.columnHeaderAttrs ||
+        props.treeExpanderAttrs ||
+        props.detailExpanderAttrs)
     )
-      missing('attributes', 'Row, cell, and expander attributes')
+      missing('attributes', 'Row, cell, header, and expander attributes')
     const exportCol = props.columns.find((c) => c.exportValue)?.key
     if (!features.export && exportCol)
       missing('export', `Column "${exportCol}" has an \`exportValue\`; that`)

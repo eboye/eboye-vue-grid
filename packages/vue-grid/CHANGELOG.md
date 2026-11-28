@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Add application data hooks for native column headers, status bar controls, and column picker parts.
+
 ## 0.27.0 — 2026-11-28
 
 - Add `vg-scroll-chain-y` so content-height detail grids can pass vertical scrolling to the parent.

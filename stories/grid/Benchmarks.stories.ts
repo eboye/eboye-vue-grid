@@ -15,3 +15,5 @@ export const Page: Story = { args: { workload: 'page' } }
 export const Tree: Story = { args: { workload: 'tree' } }
 export const Grouped: Story = { args: { workload: 'grouped' } }
 export const Flat: Story = { args: { workload: 'flat' } }
+export const CustomOverscanTwo: Story = { args: { workload: 'custom', overscan: 2 } }
+export const CustomOverscanSix: Story = { args: { workload: 'custom', overscan: 6 } }

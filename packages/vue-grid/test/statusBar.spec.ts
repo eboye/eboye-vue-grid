@@ -88,7 +88,17 @@ describe('status bar', () => {
   it('localizes the opt-in footer and scrolls the grid back to the first row', async () => {
     const w = await mountGrid({
       rows: [],
-      statusBar: { rowCountMode: 'visible', fullyExpandedCount: 0, backToTop: true },
+      statusBar: {
+        rowCountMode: 'visible',
+        fullyExpandedCount: 0,
+        backToTop: true,
+        attrs: {
+          root: { 'data-test': 'footer', role: 'presentation' },
+          rowCount: { 'data-test': 'visible-count' },
+          fullyExpandedCount: { 'data-test': 'expanded-count' },
+          backToTop: { 'data-test': 'back-to-top', type: 'submit' },
+        },
+      },
       messages: {
         visibleRowCount: (formatted: string) => `Shown: ${formatted}`,
         fullyExpandedCount: (formatted: string) => `Expanded: ${formatted}`,
@@ -96,6 +106,10 @@ describe('status bar', () => {
       },
     })
     const scrollTo = vi.fn()
+    expect(w.get('[data-test="footer"]').attributes('role')).toBe('group')
+    expect(w.get('[data-test="visible-count"]').attributes('role')).toBe('status')
+    expect(w.get('[data-test="expanded-count"]').text()).toBe('Expanded: 0')
+    expect(w.get('[data-test="back-to-top"]').attributes('type')).toBe('button')
     Object.defineProperty(w.get('[role="grid"]').element, 'scrollTo', { value: scrollTo })
     expect(bar(w).text()).toContain('Shown: 0')
     expect(bar(w).text()).toContain('Expanded: 0')

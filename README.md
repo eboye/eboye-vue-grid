@@ -566,6 +566,7 @@ npm run dev              # playground → http://localhost:5180
 npm run storybook        # Storybook  → http://localhost:6006
 npm run site             # showcase   → http://localhost:5190 (uses the built package: npm run build first)
 npm test                 # unit tests (Vitest)
+npm run test:package     # clean-install bundle smoke test (run after npm run build)
 npm run typecheck && npm run lint && npm run format:check   # npm run format fixes formatting
 npm run build            # both packages → dist/
 npm run e2e              # browser tests, Chromium + Firefox (first time: npx playwright install chromium firefox);

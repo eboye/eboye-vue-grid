@@ -1,7 +1,7 @@
 import { availableParallelism, cpus, platform, release } from 'node:os'
 import { chromium } from 'playwright'
 
-const workloads = ['page', 'tree', 'grouped', 'flat']
+const workloads = ['page', 'tree', 'grouped', 'flat', 'custom-overscan-two', 'custom-overscan-six']
 const samples = Number(process.env.BENCHMARK_RUNS ?? 7)
 const warmups = 2
 const scrollFrames = 60
@@ -27,7 +27,7 @@ try {
     )
     await page.evaluate(async () => void (await document.fonts.ready))
     const runs = await page.getByTestId('grid-benchmark').evaluate(
-      async (fixture, { count, scrollFrames }) => {
+      async (fixture, { count, scrollFrames, custom }) => {
         const frame = () => new Promise((resolve) => requestAnimationFrame(resolve))
         const grid = () => fixture.querySelector('.vg[aria-label="Benchmark grid"]')
         const revision = () =>
@@ -85,13 +85,29 @@ try {
           const updateMs = await commit('update')
           if (revision()?.textContent.trim() !== '1')
             throw new Error('The row update did not render')
-          runs.push({ mountMs, updateMs, intervals, renderedRows })
+          let freshUpdateMs, detailMs, jumpMs
+          if (custom) {
+            freshUpdateMs = await commit('fresh')
+            if (revision()?.textContent.trim() !== '2') throw new Error('Snapshot did not render')
+            detailMs = await commit('detail')
+            if (!viewport.querySelector('.vg-detail')) throw new Error('Detail did not open')
+            await settle()
+            const last = `[data-row-key="${CSS.escape(fixture.dataset.lastRow)}"] > [data-col-key="revision"]`
+            const start = performance.now()
+            viewport.scrollTop = viewport.scrollHeight
+            for (let i = 0; i < 20 && !viewport.querySelector(last); i++) await frame()
+            const lastCell = viewport.querySelector(last)
+            if (!lastCell) throw new Error('Native jump did not render the last row')
+            lastCell.getBoundingClientRect()
+            jumpMs = performance.now() - start
+          }
+          runs.push({ mountMs, updateMs, freshUpdateMs, detailMs, jumpMs, intervals, renderedRows })
           await commit('mount')
           await settle()
         }
         return runs
       },
-      { count: warmups + samples, scrollFrames },
+      { count: warmups + samples, scrollFrames, custom: workload.startsWith('custom-') },
       { timeout: 10_000 },
     )
     await page.close()
@@ -119,6 +135,26 @@ try {
       renderedRowsAtTop: measured[0].renderedRows,
       mountSamplesMs: measured.map((run) => round(run.mountMs)),
       updateSamplesMs: measured.map((run) => round(run.updateMs)),
+      ...(workload.startsWith('custom-') && {
+        medianFreshUpdateMs: round(
+          quantile(
+            measured.map((run) => run.freshUpdateMs),
+            0.5,
+          ),
+        ),
+        medianDetailMs: round(
+          quantile(
+            measured.map((run) => run.detailMs),
+            0.5,
+          ),
+        ),
+        medianNativeJumpMs: round(
+          quantile(
+            measured.map((run) => run.jumpMs),
+            0.5,
+          ),
+        ),
+      }),
     })
   }
   console.log(

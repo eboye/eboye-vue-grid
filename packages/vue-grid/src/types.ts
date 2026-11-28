@@ -520,6 +520,30 @@ export interface CellContext<T = any> {
  */
 export type ExtraAttrs = Record<string, string | number | boolean | null | undefined>
 
+/** Application-owned data attributes for native grid controls. */
+export type DataAttrs = { [name: `data-${string}`]: string | number | boolean | null | undefined }
+
+export interface ColumnHeaderAttrsContext<T = any> {
+  column: ColumnDef<T>
+  columnKey: string
+}
+
+export interface ColumnMenuOptionAttrsContext {
+  column: ColumnDef
+  columnKey: string
+  checked: boolean
+  disabled: boolean
+}
+
+export interface ColumnMenuPartAttrs {
+  trigger?: DataAttrs
+  panel?: DataAttrs
+  reset?: DataAttrs
+  option?: (
+    ctx: ColumnMenuOptionAttrsContext,
+  ) => { label?: DataAttrs; checkbox?: DataAttrs } | null | undefined
+}
+
 /** Row-specific accessible name and data attributes for an expansion button. */
 export interface ExpanderAttrs {
   /** A non-blank name overrides the grid's localized default. */
@@ -800,6 +824,8 @@ export type StatusBarAggregate = 'sum' | 'avg' | 'min' | 'max'
 
 /** The `status-bar` prop's options (status bar feature). */
 export interface StatusBarOptions {
+  /** Data attributes for the stock status bar and its native controls. */
+  attrs?: Partial<Record<'root' | 'rowCount' | 'fullyExpandedCount' | 'backToTop', DataAttrs>>
   /**
    * Column keys to summarise over the selected rows, like a spreadsheet's status bar: e.g.
    * `['stake']` shows "Stake: Sum €1,234.50 Average €123.45" while rows are selected.
