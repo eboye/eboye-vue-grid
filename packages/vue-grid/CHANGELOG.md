@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.26.0 — 2026-11-28
+
+- Nested column headers use `groupPath` and support custom group labels. Interactive controls
+  can sit beside a column's sort button in `#column-actions-<key>`, with keyboard access via F2.
+- Opt-in `initialAutoSize` fits headers and rendered content within a column's width bounds
+  once rows are available. Saved and manual widths take precedence.
+- Use `v-model:detail-expanded` to control detail panels separately from tree expansion.
+  The detail slot's `close()` collapses the panel and returns focus to its row expander.
+- `getVisibleRows()` exposes the current page's visible data in display order, including
+  expanded children and rows beyond the virtual viewport.
+- Storybook examples cover fitted and paged tables, overlays, and tree and grouped views that
+  retain expansion through refreshes. The grid benchmark measures mounting, scrolling, and
+  incremental row updates across four workloads.
+
 ## 0.25.1 — 2026-11-27
 
 - Find and Replace keeps its original selected cells when rows or columns move. Matching and

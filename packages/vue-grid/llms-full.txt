@@ -732,7 +732,7 @@ The parts that change how you write it:
 
 ---
 
-# @nocopypaste/vue-grid 0.25.1 — API reference
+# @nocopypaste/vue-grid 0.26.0 — API reference
 
 > Generated from the TypeScript sources (`scripts/gen-agent.mjs`). Machine-readable: `agent/api.json`, `agent/grid-config.schema.json`.
 
