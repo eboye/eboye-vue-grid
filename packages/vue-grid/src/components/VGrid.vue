@@ -119,7 +119,8 @@ const props = withDefaults(
      * A status bar under the grid (status bar feature): rows that pass the filters ("84 of 200
      * rows"), selected rows, active filters with Clear; `{ summary: ['total'] }` adds the sum and
      * average of those columns over the selected rows. Set `rowCountMode: 'visible'` for the
-     * shown tree rows, `fullyExpandedCount` for a supplied total, or `backToTop: true` for a
+     * shown tree rows, `fullyExpandedCount` for a supplied total, `groupCounts: true` to announce
+     * both counts together, or `backToTop: true` for a
      * scroll button. `#status-bar` replaces its content.
      */
     statusBar?: boolean | StatusBarOptions

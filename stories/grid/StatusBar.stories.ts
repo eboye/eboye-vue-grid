@@ -86,7 +86,7 @@ export const TreeCounts: Story = {
         :columns="columns"
         :sub-rows="row => row.children"
         :virtual="{ rowHeight: 40 }"
-        :status-bar="{ rowCountMode: 'visible', fullyExpandedCount, backToTop: true }"
+        :status-bar="{ rowCountMode: 'visible', fullyExpandedCount, groupCounts: true, backToTop: true }"
         row-key="id"
         aria-label="Projects and tasks"
         style="height: 280px"

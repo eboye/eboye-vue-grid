@@ -582,10 +582,15 @@
     justify-content: space-between;
   }
   /* Status bar (status bar feature): counts on the left, the selection summary on the right. */
-  .vg-status-bar {
+  .vg-status-bar,
+  .vg-status-counts {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
+  }
+  .vg-status-counts {
+    min-inline-size: 0;
+    gap: inherit;
   }
   .vg-status-item {
     display: inline-flex;

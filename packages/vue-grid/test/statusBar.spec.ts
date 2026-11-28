@@ -3,7 +3,7 @@ import { config, flushPromises, mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import VGridComponent from '../src/components/VGrid.vue'
 import type { DataSource } from '../src/composables/useDataSource'
-import type { StatusBarScope } from '../src/types'
+import type { StatusBarOptions, StatusBarScope } from '../src/types'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const VGrid = VGridComponent as any
@@ -120,6 +120,53 @@ describe('status bar', () => {
     await w.setProps({ statusBar: true })
     expect(bar(w).text()).toBe('0 rows')
     expect(bar(w).find('button').exists()).toBe(false)
+  })
+
+  it('announces changes to both native counts in one opt-in status region', async () => {
+    const statusBar: StatusBarOptions = {
+      groupCounts: true,
+      rowCountMode: 'visible',
+      fullyExpandedCount: 4,
+      backToTop: true,
+      attrs: {
+        counts: { 'data-test': 'counts' },
+        rowCount: { 'data-test': 'visible-count' },
+        fullyExpandedCount: { 'data-test': 'expanded-count' },
+        backToTop: { 'data-test': 'back-to-top' },
+      },
+    }
+    const w = await mountGrid({
+      rows: [{ ...rows[0]!, children: rows.slice(1) }],
+      subRows: (row: Row) => row.children,
+      statusBar,
+    })
+    const counts = bar(w).get('[data-test="counts"]')
+    expect(
+      bar(w)
+        .findAll('[role="status"]')
+        .map((region) => region.element),
+    ).toEqual([counts.element])
+    expect(counts.attributes('aria-atomic')).toBe('true')
+    expect(counts.get('[data-test="visible-count"]').text()).toBe('1 row shown')
+    expect(counts.get('[data-test="expanded-count"]').text()).toBe('4 fully expanded')
+    expect(counts.find('button').exists()).toBe(false)
+    expect(bar(w).get('button[data-test="back-to-top"]').text()).toBe('Back to top')
+
+    await w.get('.vg-tree-gutter button').trigger('click')
+    expect(counts.get('[data-test="visible-count"]').text()).toBe('4 rows shown')
+    await w.setProps({ statusBar: { ...statusBar, fullyExpandedCount: 6 } })
+    expect(counts.get('[data-test="expanded-count"]').text()).toBe('6 fully expanded')
+    expect(bar(w).get('[data-test="counts"]').element).toBe(counts.element)
+
+    await w.setProps({ statusBar: { ...statusBar, rows: false } })
+    expect(counts.find('[data-test="visible-count"]').exists()).toBe(false)
+    expect(counts.text()).toBe('4 fully expanded')
+    await w.setProps({ statusBar: { ...statusBar, fullyExpandedCount: undefined } })
+    expect(counts.text()).toBe('4 rows shown')
+
+    await w.setProps({ statusBar: { ...statusBar, groupCounts: false } })
+    expect(bar(w).find('[data-test="counts"]').exists()).toBe(false)
+    expect(bar(w).get('[data-test="visible-count"]').attributes('role')).toBe('status')
   })
 
   it('counts the selection and summarises chosen columns over the selected rows', async () => {

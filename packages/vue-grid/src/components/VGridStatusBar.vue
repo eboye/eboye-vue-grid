@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, inject } from 'vue'
+import { computed, createTextVNode, h, inject, type VNode } from 'vue'
 import type { StatusBarState } from '../composables/useStatusBar'
 import { FORMAT_CONTEXT_KEY } from '../registry/plugin'
 import { formatNumber } from '../renderers/format'
@@ -39,6 +39,43 @@ const fullyExpandedText = computed(() => {
   const formatted = n(count)
   return m.value.fullyExpandedCount?.(formatted, count) ?? `${formatted} fully expanded`
 })
+const Counts = () => {
+  const { bar } = props
+  const attrs = bar.attrs.value
+  const grouped = bar.groupCounts.value
+  const items: VNode[] = []
+  if (bar.show.value.rows) {
+    items.push(
+      h(
+        'span',
+        {
+          ...attrs?.rowCount,
+          key: 'row-count',
+          class: 'vg-status-item',
+          role: !grouped && bar.visibleRowCount.value !== undefined ? 'status' : undefined,
+        },
+        rowsText.value,
+      ),
+    )
+  }
+  if (fullyExpandedText.value !== undefined) {
+    if (grouped && items.length) items.push(createTextVNode(' '))
+    items.push(
+      h(
+        'span',
+        { ...attrs?.fullyExpandedCount, key: 'expanded-count', class: 'vg-status-item' },
+        fullyExpandedText.value,
+      ),
+    )
+  }
+  return grouped && items.length
+    ? h(
+        'span',
+        { ...attrs?.counts, class: 'vg-status-counts', role: 'status', 'aria-atomic': 'true' },
+        items,
+      )
+    : items
+}
 const selectedText = computed(() => {
   const { selectedCount, allSelected } = scope.value
   return (
@@ -64,19 +101,7 @@ const label = (name: StatusBarAggregate) =>
   >
     <Custom v-if="render" />
     <template v-else>
-      <span
-        v-if="bar.show.value.rows"
-        class="vg-status-item"
-        :role="bar.visibleRowCount.value === undefined ? undefined : 'status'"
-        v-bind="bar.attrs.value?.rowCount"
-        >{{ rowsText }}</span
-      >
-      <span
-        v-if="fullyExpandedText !== undefined"
-        class="vg-status-item"
-        v-bind="bar.attrs.value?.fullyExpandedCount"
-        >{{ fullyExpandedText }}</span
-      >
+      <Counts />
       <span v-if="scope.selectedCount && bar.show.value.selected" class="vg-status-item">
         {{ selectedText }}
       </span>

@@ -825,7 +825,9 @@ export type StatusBarAggregate = 'sum' | 'avg' | 'min' | 'max'
 /** The `status-bar` prop's options (status bar feature). */
 export interface StatusBarOptions {
   /** Data attributes for the stock status bar and its native controls. */
-  attrs?: Partial<Record<'root' | 'rowCount' | 'fullyExpandedCount' | 'backToTop', DataAttrs>>
+  attrs?: Partial<
+    Record<'root' | 'counts' | 'rowCount' | 'fullyExpandedCount' | 'backToTop', DataAttrs>
+  >
   /**
    * Column keys to summarise over the selected rows, like a spreadsheet's status bar: e.g.
    * `['stake']` shows "Stake: Sum €1,234.50 Average €123.45" while rows are selected.
@@ -839,6 +841,8 @@ export interface StatusBarOptions {
   rowCountMode?: 'filtered' | 'visible'
   /** App-supplied row count with all branches expanded. Omit to hide this figure. */
   fullyExpandedCount?: number
+  /** Group the displayed row counts into one polite live region. Default `false`. */
+  groupCounts?: boolean
   /** Show a button that scrolls to the top of the current page. Default `false`. */
   backToTop?: boolean
   /** The selected count. Default `true`. */
