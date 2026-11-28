@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.27.0 — 2026-11-28
 
 - Add `vg-scroll-chain-y` so content-height detail grids can pass vertical scrolling to the parent.
 - Add an icon-only trigger, `#icon` slot, and `open()` to the column picker. Fixed column pins
@@ -14,6 +14,11 @@
 - Add the `vg-restore-cell-borders` class for grids that use an unlayered border-width reset.
 - Add `tree-expander-attrs` and `detail-expander-attrs` to the attributes feature for row-specific
   accessible names and test hooks, with localized defaults and the existing keyboard behavior.
+
+- Keep virtual row styles scoped to their own grid, reduce first-render work for virtual rows,
+  and update the virtual window sooner after scroll jumps.
+- Keep optional sort artwork and expander attributes in their features. Use separate CSS imports
+  for sort styling, scroll chaining, and border restoration when importing styles selectively.
 
 ## 0.26.0 — 2026-11-28
 
