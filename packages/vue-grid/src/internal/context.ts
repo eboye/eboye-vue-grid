@@ -5,6 +5,8 @@ import type {
   CellRendererDefinition,
   ClassValue,
   ColumnDef,
+  ExpanderAttrs,
+  ExpanderAttrsContext,
   FlashMode,
   GridMessages,
   GridPart,
@@ -31,12 +33,16 @@ export interface ResolvedColumn {
   component: Component | undefined
   definition: CellRendererDefinition | undefined
   options: Record<string, unknown>
+  /** The built-in text renderer with no configured options. */
+  plainText?: boolean
   align: Align
   pinned: 'left' | 'right' | undefined
   /** Last left-pinned or first right-pinned column. Only set where CSS `:has()` is unsupported. */
   pinEdge: boolean
-  /** First data column — hosts the expander and the depth indent. */
+  /** Hosts the tree or shared expander and depth indent. */
   isTree: boolean
+  /** Hosts the separate detail expander. */
+  isDetail: boolean
 }
 
 export interface GridContext {
@@ -101,6 +107,8 @@ export interface GridContext {
   toggleExpanded(row: any): void
   toggleDetail(key: RowKey): void
   closeDetail(key: RowKey): void
+  treeExpanderAttrs(ctx: ExpanderAttrsContext<any>): ExpanderAttrs | null | undefined
+  detailExpanderAttrs(ctx: ExpanderAttrsContext<any>): ExpanderAttrs | null | undefined
   children(row: any): any[] | undefined
   subRowState(row: any): SubRowEntry | undefined
   ensureSubRows(row: any): void

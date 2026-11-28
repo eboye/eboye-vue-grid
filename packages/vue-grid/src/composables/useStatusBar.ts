@@ -21,6 +21,9 @@ export interface UseStatusBarOptions<T> {
   rowCount: () => number
   /** Top-level rows before filtering; undefined when unknown (server data). */
   totalRowCount: () => number | undefined
+  /** Logical data rows shown on the current page, independent of the virtual viewport. */
+  visibleRowCount: () => number
+  scrollToTop: () => void
   /** Top-level rows, all of them, to find the selected ones in. */
   rows: () => readonly T[]
   /** The selection feature's state (its `count` includes "all matching"), if the grid has it. */
@@ -141,6 +144,14 @@ export function useStatusBar<T>(opts: UseStatusBarOptions<T>) {
         clear: c.clear !== false,
       }
     }),
+    visibleRowCount: computed(() =>
+      config.value?.rows !== false && config.value?.rowCountMode === 'visible'
+        ? opts.visibleRowCount()
+        : undefined,
+    ),
+    fullyExpandedCount: computed(() => config.value?.fullyExpandedCount),
+    backToTop: computed(() => !!config.value?.backToTop),
+    scrollToTop: opts.scrollToTop,
     canClear: opts.canClear,
     scope: computed<StatusBarScope>(() => ({
       rowCount: opts.rowCount(),

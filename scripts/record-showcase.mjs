@@ -312,7 +312,7 @@ await page.keyboard.press('Escape')
 await wait(850)
 
 // 6. Renderer recipes
-await sbStory('recipes-back-office-grid--bet-monitor')
+await sbStory('recipes-renderer-combinations--bet-monitor')
 await caption(
   '29 cell renderers — and your own',
   'multi-line · copy · chips · switches · favourites · details popovers',
@@ -336,7 +336,7 @@ await caption(
   'a few --vg-* tokens · @layer, so Tailwind and your CSS always win',
 )
 await wait(1800)
-await sbStory('recipes-back-office-grid--bet-monitor', '&globals=scheme:dark')
+await sbStory('recipes-renderer-combinations--bet-monitor', '&globals=scheme:dark')
 await caption('Dark mode built in', 'light-dark() colours follow the OS or your switch')
 await wait(2200)
 await page.screenshot({ path: join(outDir, 'showcase-poster.png') })

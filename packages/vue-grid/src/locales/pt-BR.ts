@@ -110,6 +110,10 @@ export const ptBR = {
   page: (page) => `Página ${page}`,
 
   statusBar: 'Status da tabela',
+  visibleRowCount: (shown, count) =>
+    `${rows(count, shown)} ${count === 1 ? 'visível' : 'visíveis'}`,
+  fullyExpandedCount: (count) => `${count} com tudo expandido`,
+  backToTop: 'Voltar ao topo',
   rowCount: (shown, total, count, totalCount) =>
     total === undefined ? rows(count, shown) : `${shown} de ${rows(totalCount ?? count, total)}`,
   selectedCount: (count, all, amount) =>

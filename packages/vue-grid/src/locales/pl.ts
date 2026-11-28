@@ -112,6 +112,9 @@ export const pl = {
   page: (page) => `Strona ${page}`,
 
   statusBar: 'Stan tabeli',
+  visibleRowCount: (shown, count) => `Widoczne: ${rows(count, shown)}`,
+  fullyExpandedCount: (count) => `${count} po pełnym rozwinięciu`,
+  backToTop: 'Wróć na górę',
   rowCount: (shown, total, count, totalCount) =>
     total === undefined ? rows(count, shown) : `${shown} z ${rows(totalCount ?? count, total)}`,
   selectedCount: (count, all) => (all ? `Zaznaczono wszystkie: ${count}` : `Zaznaczono: ${count}`),

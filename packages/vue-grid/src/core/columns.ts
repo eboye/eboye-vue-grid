@@ -4,16 +4,17 @@ type PinGroup = PinSide | 'none'
 
 /** The column's pin side after applying runtime overrides from column state. */
 export function effectivePin(
-  col: Pick<ColumnDef, 'key' | 'pinned'>,
+  col: Pick<ColumnDef, 'key' | 'pinned' | 'pinnable'>,
   state?: Pick<ColumnState, 'pinned'>,
 ): PinSide | undefined {
+  if (col.pinnable === false) return col.pinned
   const override = state?.pinned?.[col.key]
   if (override !== undefined) return override ?? undefined
   return col.pinned
 }
 
 const pinGroup = (
-  col: Pick<ColumnDef, 'key' | 'pinned'> | undefined,
+  col: Pick<ColumnDef, 'key' | 'pinned' | 'pinnable'> | undefined,
   state?: ColumnState,
 ): PinGroup => (col && effectivePin(col, state)) ?? 'none'
 
@@ -26,13 +27,13 @@ const isPinValue = (v: unknown): v is PinSide | null => v === 'left' || v === 'r
 /**
  * Reconciles (possibly stale or persisted) column state with the current column definitions:
  * unknown keys are dropped, new columns are appended in definition order, columns with no stored
- * visibility take their `hidden` default, and invalid pin overrides are discarded.
+ * visibility take their `hidden` default, and invalid or locked pin overrides are discarded.
  */
 export function normalizeColumnState(
   columns: readonly ColumnDef[],
   state?: Partial<ColumnState> | null,
 ): ColumnState {
-  const known = new Set(columns.map((c) => c.key))
+  const known = new Map(columns.map((c) => [c.key, c]))
   const storedOrder = Array.isArray(state?.order) ? state.order : []
   const order = storedOrder.filter((k, i) => known.has(k) && storedOrder.indexOf(k) === i)
   const seen = new Set(order)
@@ -55,7 +56,8 @@ export function normalizeColumnState(
   const pinned: Record<string, PinSide | null> = {}
   if (state?.pinned && typeof state.pinned === 'object') {
     for (const [k, v] of Object.entries(state.pinned)) {
-      if (known.has(k) && isPinValue(v)) pinned[k] = v
+      const col = known.get(k)
+      if (col && col.pinnable !== false && isPinValue(v)) pinned[k] = v
     }
   }
   const out: ColumnState = { order, hidden, pinned }

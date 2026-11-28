@@ -111,6 +111,9 @@ export const ja = {
   page: (page) => `${page} ページ`,
 
   statusBar: '表の状態',
+  visibleRowCount: (shown) => `${shown} 行を表示`,
+  fullyExpandedCount: (count) => `すべて展開時に ${count} 行`,
+  backToTop: '先頭に戻る',
   rowCount: (shown, total, count) =>
     total === undefined ? rows(count, shown) : `${total} 行中 ${shown} 行`,
   selectedCount: (count, all) => (all ? `${count} 件すべて選択` : `${count} 件選択`),

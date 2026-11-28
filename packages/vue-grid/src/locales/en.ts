@@ -113,6 +113,9 @@ export const en = {
   page: (page) => `Page ${page}`,
 
   statusBar: 'Grid status',
+  visibleRowCount: (shown, count) => `${rows(count, shown)} shown`,
+  fullyExpandedCount: (count) => `${count} fully expanded`,
+  backToTop: 'Back to top',
   rowCount: (shown, total, count, totalCount) =>
     total === undefined ? rows(count, shown) : `${shown} of ${rows(totalCount ?? count, total)}`,
   selectedCount: (count, all) => `${all ? 'All ' : ''}${count} selected`,

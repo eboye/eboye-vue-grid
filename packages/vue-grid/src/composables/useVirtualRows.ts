@@ -90,7 +90,6 @@ const SETTLE_MS = 120
 export function useVirtualRows<T>(opts: VirtualRowsOptions<T>) {
   const scrollTop = ref(0)
   const viewportHeight = ref(0)
-  let scrollFrame = 0
   let resizeObserver: ResizeObserver | undefined
   let viewportFrame = 0
 
@@ -109,11 +108,17 @@ export function useVirtualRows<T>(opts: VirtualRowsOptions<T>) {
   function onScroll() {
     if (!opts.options()) return
     const el = opts.root.value
+    if (!el) return
+    markScrolling()
+    // Native scroll events arrive on the browser's rendering cadence. Queue Vue's patch from
+    // the event itself instead of waiting for another animation-frame callback.
+    scrollTop.value = el.scrollTop
+  }
+
+  function markScrolling() {
     scrolling.value = true
     // With `scrollend`, the long timer is only a safety net (loading never stays paused).
     settle(hasScrollEnd ? SCROLL_IDLE_MS * 4 : SCROLL_IDLE_MS)
-    cancelAnimationFrame(scrollFrame)
-    scrollFrame = requestAnimationFrame(() => (scrollTop.value = el?.scrollTop ?? 0))
   }
 
   watch(
@@ -201,7 +206,6 @@ export function useVirtualRows<T>(opts: VirtualRowsOptions<T>) {
     measurer?.disconnect()
     cancelAnimationFrame(measureFrame)
     cancelAnimationFrame(viewportFrame)
-    cancelAnimationFrame(scrollFrame)
     window.clearTimeout(idleTimer)
   })
 
@@ -254,8 +258,8 @@ export function useVirtualRows<T>(opts: VirtualRowsOptions<T>) {
     const v = opts.options()
     if (!v) return null
     const pad = (v.overscan ?? 6) * v.rowHeight
-    // Before the first measurement, render one screen's worth rather than nothing.
-    const height = viewportHeight.value || 800
+    // Mount a provisional dozen rows until the root ref supplies the measured viewport.
+    const height = viewportHeight.value || 12 * v.rowHeight
     return { top: scrollTop.value - pad, bottom: scrollTop.value + height + pad }
   })
 
@@ -344,7 +348,16 @@ export function useVirtualRows<T>(opts: VirtualRowsOptions<T>) {
     const v = opts.options()
     if (!l || !v) return false
     const at = locateRow(l, key, opts.keyOf(), v.rowHeight, subgridChrome.value.top)
-    if (at && opts.root.value) opts.root.value.scrollTop = at.top
+    const el = opts.root.value
+    if (at && el) {
+      el.scrollTop = at.top
+      const top = el.scrollTop // use the browser's clamped position at the end of the grid
+      if (top !== scrollTop.value) {
+        markScrolling()
+        // An explicit jump can render in the same Vue flush, before the native scroll event.
+        scrollTop.value = top
+      }
+    }
     return true
   }
 

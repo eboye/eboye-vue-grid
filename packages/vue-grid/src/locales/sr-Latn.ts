@@ -111,6 +111,9 @@ export const srLatn = {
   page: (page) => `Strana ${page}`,
 
   statusBar: 'Status tabele',
+  visibleRowCount: (shown, count) => `Prikazano: ${rows(count, shown)}`,
+  fullyExpandedCount: (count) => `${count} nakon potpunog proširivanja`,
+  backToTop: 'Nazad na vrh',
   rowCount: (shown, total, count, totalCount) =>
     total === undefined ? rows(count, shown) : `${shown} od ${rows(totalCount ?? count, total)}`,
   selectedCount: (count, all) => (all ? `Izabrano sve: ${count}` : `Izabrano: ${count}`),

@@ -27,9 +27,10 @@ const columns = [
   { key: 'stake', header: 'Stake', renderer: 'currency' },
 ]
 const bar = (w: ReturnType<typeof mount>) => w.find('.vg-status-bar')
-const mountGrid = async (props: Record<string, unknown>) => {
+const mountGrid = async (props: Record<string, unknown>, slots?: Record<string, () => string>) => {
   const w = mount(VGrid, {
     props: { rows, columns, rowKey: 'id', locale: 'en-US', currency: 'EUR', ...props },
+    slots,
   })
   await flushPromises()
   // The default content is its own chunk: wait for the first load.
@@ -59,6 +60,52 @@ describe('status bar', () => {
     await flushPromises()
     expect(bar(w).text()).toBe('4 rows')
     expect(w.emitted('update:filters')!.at(-1)![0]).toEqual({ columns: {}, search: '' })
+  })
+
+  it('counts shown tree rows beyond the virtual viewport and leaves detail panels out', async () => {
+    const w = await mountGrid(
+      {
+        rows: [{ ...rows[0]!, children: rows.slice(1) }],
+        subRows: (row: Row) => row.children,
+        virtual: { rowHeight: 40, overscan: 0 },
+        detailExpanded: [],
+        statusBar: { rowCountMode: 'visible', fullyExpandedCount: 4 },
+      },
+      { detail: () => 'Row details' },
+    )
+    expect(bar(w).text()).toContain('1 row shown')
+    expect(bar(w).text()).toContain('4 fully expanded')
+
+    await w.get('.vg-tree-gutter button').trigger('click')
+    expect(bar(w).text()).toContain('4 rows shown')
+    await w.setProps({ detailExpanded: [1] })
+    expect(w.text()).toContain('Row details')
+    expect(bar(w).text()).toContain('4 rows shown')
+    await w.get('.vg-tree-gutter button').trigger('click')
+    expect(bar(w).text()).toContain('1 row shown')
+  })
+
+  it('localizes the opt-in footer and scrolls the grid back to the first row', async () => {
+    const w = await mountGrid({
+      rows: [],
+      statusBar: { rowCountMode: 'visible', fullyExpandedCount: 0, backToTop: true },
+      messages: {
+        visibleRowCount: (formatted: string) => `Shown: ${formatted}`,
+        fullyExpandedCount: (formatted: string) => `Expanded: ${formatted}`,
+        backToTop: 'First row',
+      },
+    })
+    const scrollTo = vi.fn()
+    Object.defineProperty(w.get('[role="grid"]').element, 'scrollTo', { value: scrollTo })
+    expect(bar(w).text()).toContain('Shown: 0')
+    expect(bar(w).text()).toContain('Expanded: 0')
+    expect(bar(w).get('button').text()).toBe('First row')
+    await bar(w).get('button').trigger('click')
+    expect(scrollTo).toHaveBeenCalledWith({ top: 0 })
+
+    await w.setProps({ statusBar: true })
+    expect(bar(w).text()).toBe('0 rows')
+    expect(bar(w).find('button').exists()).toBe(false)
   })
 
   it('counts the selection and summarises chosen columns over the selected rows', async () => {

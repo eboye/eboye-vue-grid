@@ -111,6 +111,9 @@ export const sr = {
   page: (page) => `Страна ${page}`,
 
   statusBar: 'Статус табеле',
+  visibleRowCount: (shown, count) => `Приказано: ${rows(count, shown)}`,
+  fullyExpandedCount: (count) => `${count} након потпуног проширивања`,
+  backToTop: 'Назад на врх',
   rowCount: (shown, total, count, totalCount) =>
     total === undefined ? rows(count, shown) : `${shown} од ${rows(totalCount ?? count, total)}`,
   selectedCount: (count, all) => (all ? `Изабрано све: ${count}` : `Изабрано: ${count}`),

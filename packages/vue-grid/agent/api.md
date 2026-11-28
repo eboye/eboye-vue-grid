@@ -44,7 +44,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `features` | `readonly GridFeature[]` |  |  | Opt-in features for this grid (added to the app-wide `createVueGrid({ features })`): `sortingFeature`, `filteringFeature`, `serverDataFeature`, `paginationFeature`, or `allFeatures`. Read once, when the grid is created. |
 | `dataSource` | `DataSource<T>` |  | `serverDataFeature` | Server data: called with the current query (sort, filters, search, page) whenever it changes. The grid cancels superseded requests, shows loading and errors, and sorts / filters / pages nothing itself. |
 | `pagination` | `boolean \| PaginationOptions` | `false` | `paginationFeature` | Built-in pagination under the grid (server-side with `dataSource`, client-side otherwise). |
-| `statusBar` | `boolean \| StatusBarOptions` |  | `statusBarFeature` | A status bar under the grid (status bar feature): rows that pass the filters ("84 of 200 rows"), selected rows, active filters with Clear; `{ summary: ['total'] }` adds the sum and average of those columns over the selected rows. `#status-bar` replaces its content. |
+| `statusBar` | `boolean \| StatusBarOptions` |  | `statusBarFeature` | A status bar under the grid (status bar feature): rows that pass the filters ("84 of 200 rows"), selected rows, active filters with Clear; `{ summary: ['total'] }` adds the sum and average of those columns over the selected rows. Set `rowCountMode: 'visible'` for the shown tree rows, `fullyExpandedCount` for a supplied total, or `backToTop: true` for a scroll button. `#status-bar` replaces its content. |
 | `saveCell` | `(event: CellEditEvent<T>) => unknown` |  | `editingFeature` | Saves an edited cell (editing feature), after `cell-edit`: return a Promise and the cell shows it saving; a rejection keeps the editor open with the error's message. Without it, `cell-edit` alone carries the change. |
 | `rangeSelection` | `boolean` |  | `rangeSelectionFeature` | Cell-range selection (range selection feature), as in a spreadsheet: drag across cells or Shift+click to select a block, Shift+arrows to extend it, Ctrl/⌘+A for every cell, Esc to clear; Ctrl/⌘+C copies it. Bind `v-model:range` to read or set it. |
 | `undoLimit` | `number` |  | `editingFeature` | How many changes undo remembers (editing feature): each edit, checkbox flip or paste is one. Ctrl/⌘+Z undoes, Ctrl+Y / Ctrl/⌘+Shift+Z redo; `0` turns undo off. Default `100`. |
@@ -63,6 +63,10 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `loadSubRows` | `(row: T) => Promise<T[]>` |  | `subGridsFeature` | Lazy child rows, loaded on first expand (cached, with loading / error / retry). |
 | `hasSubRows` | `(row: T) => boolean` |  | `subGridsFeature` | With `loadSubRows`: which rows get an expander (default: every row). |
 | `rowExpandable` | `(row: T) => boolean` |  |  | With a `#detail` slot: which rows can expand to show it (default: every row). |
+| `treeColumnKey` | `string` |  |  | Column for tree indentation and the tree or shared expander. Defaults to the first visible data column. |
+| `detailExpanderColumnKey` | `string` |  |  | Column for the separate detail expander. Defaults to the first visible data column. |
+| `treeExpanderAttrs` | `(ctx: ExpanderAttrsContext<T>) => ExpanderAttrs \| null \| undefined` |  |  | Accessible name and data attributes for the tree or shared row expander. |
+| `detailExpanderAttrs` | `(ctx: ExpanderAttrsContext<T>) => ExpanderAttrs \| null \| undefined` |  |  | Accessible name and data attributes for the separate detail expander. |
 | `rowClickable` | `boolean` | `false` |  | Pointer cursor on rows (`row-click` is emitted either way). |
 | `rowClass` | `(row: T, index: number) => ClassValue` |  |  | Extra classes for a row. |
 | `rowAttrs` | `(ctx: RowAttrsContext<T>) => ExtraAttrs \| null \| undefined` |  | `attributesFeature` | Extra attributes for each data row, such as test hooks (`{ 'data-test': ... }`). |
@@ -140,6 +144,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `cell-<key>` | `{ row: T; value: unknown; rowKey: RowKey; rowIndex: number; depth: number; column: ColumnDef<T> }` | A column's body cell, replacing its renderer: `#cell-<key>`. |
 | `header-<key>` | `{ column: ColumnDef<T> }` | A column's header label: `#header-<key>`. For controls use `#column-actions-<key>`. |
 | `column-actions-<key>` | `{ column: ColumnDef<T> }` | Interactive content beside the header label and sort button: `#column-actions-<key>`. |
+| `sort-icon` | `{ column: ColumnDef<T>; direction: SortDir \| null }` | Decorative artwork for sortable headers. Direction is null when the column is unsorted. |
 | `column-group` | `{ group: ColumnHeaderGroup; level: number }` | Content of a grouped column header. The top group row is level 0. |
 | `total-<key>` | `{ value: unknown; column: ColumnDef<T>; group?: RowGroup<T> }` | A column's cell in the totals row and in group rows (aggregation, row grouping); `group` in group rows. |
 | `group-<key>` | `{ value: unknown; count: number; rows: readonly T[]; column: ColumnDef<T>; group: RowGroup<T> }` | The value of a group row grouped by this column (row grouping feature): `#group-<key>`. |
@@ -219,7 +224,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `sortValue` | `(row: T) => unknown` | `sortingFeature` | The value client sorting compares (default: the renderer's sort value, else the cell value). |
 | `sortFn` | `(a: T, b: T) => number` | `sortingFeature` | A full comparator for client sorting; wins over `sortValue`. |
 | `pinned` | `PinSide` | `columnPinningFeature` | Initial pin side (the header menu can change it at runtime unless `pinnable: false`). |
-| `pinnable` | `boolean` | `columnPinningFeature` | Can the user pin/unpin it from the header menu? Default `true`. |
+| `pinnable` | `boolean` | `columnPinningFeature` | Allow runtime pin changes. `false` keeps the definition's pin and ignores saved overrides. |
 | `hidden` | `boolean` | `columnVisibilityFeature` | Initial visibility (column state wins once it exists). |
 | `hideable` | `boolean` | `columnVisibilityFeature` | Can the user hide it from the column menu? Default `true`. |
 | `reorderable` | `boolean` | `columnReorderFeature` | Can the user move it? Default `true`. |

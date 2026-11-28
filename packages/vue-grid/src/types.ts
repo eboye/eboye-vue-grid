@@ -174,7 +174,7 @@ export interface ColumnDef<T = any, R extends RendererRef = RendererName> {
   sortFn?: (a: T, b: T) => number
   /** Initial pin side (the header menu can change it at runtime unless `pinnable: false`). */
   pinned?: PinSide
-  /** Can the user pin/unpin it from the header menu? Default `true`. */
+  /** Allow runtime pin changes. `false` keeps the definition's pin and ignores saved overrides. */
   pinnable?: boolean
   /** Initial visibility (column state wins once it exists). */
   hidden?: boolean
@@ -520,6 +520,20 @@ export interface CellContext<T = any> {
  */
 export type ExtraAttrs = Record<string, string | number | boolean | null | undefined>
 
+/** Row-specific accessible name and data attributes for an expansion button. */
+export interface ExpanderAttrs {
+  /** A non-blank name overrides the grid's localized default. */
+  'aria-label'?: string | null
+  [name: `data-${string}`]: string | number | boolean | null | undefined
+}
+
+/** The row and current state of the expansion button being rendered. */
+export interface ExpanderAttrsContext<T = unknown> {
+  row: T
+  rowKey: RowKey
+  expanded: boolean
+}
+
 /** What `rowAttrs` gets for a data row (group, detail and totals rows get none). */
 export interface RowAttrsContext<T = any> {
   row: T
@@ -795,6 +809,12 @@ export interface StatusBarOptions {
   aggregates?: StatusBarAggregate[]
   /** The row count (`84 of 200 rows`). Default `true`. */
   rows?: boolean
+  /** Count filtered top-level rows (default), or the data rows shown on the current page, including expanded children. */
+  rowCountMode?: 'filtered' | 'visible'
+  /** App-supplied row count with all branches expanded. Omit to hide this figure. */
+  fullyExpandedCount?: number
+  /** Show a button that scrolls to the top of the current page. Default `false`. */
+  backToTop?: boolean
   /** The selected count. Default `true`. */
   selected?: boolean
   /** The active filter count. Default `true`. */
@@ -1259,6 +1279,12 @@ export interface GridMessages {
     count: number,
     totalCount: number | undefined,
   ) => string
+  /** Format the visible row count. Default `N rows shown` (`1 row shown`). */
+  visibleRowCount?: (formatted: string, count: number) => string
+  /** Format the app-supplied fully expanded count. Default `N fully expanded`. */
+  fullyExpandedCount?: (formatted: string, count: number) => string
+  /** Label for the status bar's scroll button. Default `Back to top`. */
+  backToTop?: string
   /**
    * Default `` `${count} selected` `` (`All ${count} selected` with all matching rows). `count` is
    * formatted; `amount` is the number, for plurals.

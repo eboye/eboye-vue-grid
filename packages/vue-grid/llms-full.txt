@@ -778,7 +778,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `features` | `readonly GridFeature[]` |  |  | Opt-in features for this grid (added to the app-wide `createVueGrid({ features })`): `sortingFeature`, `filteringFeature`, `serverDataFeature`, `paginationFeature`, or `allFeatures`. Read once, when the grid is created. |
 | `dataSource` | `DataSource<T>` |  | `serverDataFeature` | Server data: called with the current query (sort, filters, search, page) whenever it changes. The grid cancels superseded requests, shows loading and errors, and sorts / filters / pages nothing itself. |
 | `pagination` | `boolean \| PaginationOptions` | `false` | `paginationFeature` | Built-in pagination under the grid (server-side with `dataSource`, client-side otherwise). |
-| `statusBar` | `boolean \| StatusBarOptions` |  | `statusBarFeature` | A status bar under the grid (status bar feature): rows that pass the filters ("84 of 200 rows"), selected rows, active filters with Clear; `{ summary: ['total'] }` adds the sum and average of those columns over the selected rows. `#status-bar` replaces its content. |
+| `statusBar` | `boolean \| StatusBarOptions` |  | `statusBarFeature` | A status bar under the grid (status bar feature): rows that pass the filters ("84 of 200 rows"), selected rows, active filters with Clear; `{ summary: ['total'] }` adds the sum and average of those columns over the selected rows. Set `rowCountMode: 'visible'` for the shown tree rows, `fullyExpandedCount` for a supplied total, or `backToTop: true` for a scroll button. `#status-bar` replaces its content. |
 | `saveCell` | `(event: CellEditEvent<T>) => unknown` |  | `editingFeature` | Saves an edited cell (editing feature), after `cell-edit`: return a Promise and the cell shows it saving; a rejection keeps the editor open with the error's message. Without it, `cell-edit` alone carries the change. |
 | `rangeSelection` | `boolean` |  | `rangeSelectionFeature` | Cell-range selection (range selection feature), as in a spreadsheet: drag across cells or Shift+click to select a block, Shift+arrows to extend it, Ctrl/⌘+A for every cell, Esc to clear; Ctrl/⌘+C copies it. Bind `v-model:range` to read or set it. |
 | `undoLimit` | `number` |  | `editingFeature` | How many changes undo remembers (editing feature): each edit, checkbox flip or paste is one. Ctrl/⌘+Z undoes, Ctrl+Y / Ctrl/⌘+Shift+Z redo; `0` turns undo off. Default `100`. |
@@ -797,6 +797,10 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `loadSubRows` | `(row: T) => Promise<T[]>` |  | `subGridsFeature` | Lazy child rows, loaded on first expand (cached, with loading / error / retry). |
 | `hasSubRows` | `(row: T) => boolean` |  | `subGridsFeature` | With `loadSubRows`: which rows get an expander (default: every row). |
 | `rowExpandable` | `(row: T) => boolean` |  |  | With a `#detail` slot: which rows can expand to show it (default: every row). |
+| `treeColumnKey` | `string` |  |  | Column for tree indentation and the tree or shared expander. Defaults to the first visible data column. |
+| `detailExpanderColumnKey` | `string` |  |  | Column for the separate detail expander. Defaults to the first visible data column. |
+| `treeExpanderAttrs` | `(ctx: ExpanderAttrsContext<T>) => ExpanderAttrs \| null \| undefined` |  |  | Accessible name and data attributes for the tree or shared row expander. |
+| `detailExpanderAttrs` | `(ctx: ExpanderAttrsContext<T>) => ExpanderAttrs \| null \| undefined` |  |  | Accessible name and data attributes for the separate detail expander. |
 | `rowClickable` | `boolean` | `false` |  | Pointer cursor on rows (`row-click` is emitted either way). |
 | `rowClass` | `(row: T, index: number) => ClassValue` |  |  | Extra classes for a row. |
 | `rowAttrs` | `(ctx: RowAttrsContext<T>) => ExtraAttrs \| null \| undefined` |  | `attributesFeature` | Extra attributes for each data row, such as test hooks (`{ 'data-test': ... }`). |
@@ -874,6 +878,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `cell-<key>` | `{ row: T; value: unknown; rowKey: RowKey; rowIndex: number; depth: number; column: ColumnDef<T> }` | A column's body cell, replacing its renderer: `#cell-<key>`. |
 | `header-<key>` | `{ column: ColumnDef<T> }` | A column's header label: `#header-<key>`. For controls use `#column-actions-<key>`. |
 | `column-actions-<key>` | `{ column: ColumnDef<T> }` | Interactive content beside the header label and sort button: `#column-actions-<key>`. |
+| `sort-icon` | `{ column: ColumnDef<T>; direction: SortDir \| null }` | Decorative artwork for sortable headers. Direction is null when the column is unsorted. |
 | `column-group` | `{ group: ColumnHeaderGroup; level: number }` | Content of a grouped column header. The top group row is level 0. |
 | `total-<key>` | `{ value: unknown; column: ColumnDef<T>; group?: RowGroup<T> }` | A column's cell in the totals row and in group rows (aggregation, row grouping); `group` in group rows. |
 | `group-<key>` | `{ value: unknown; count: number; rows: readonly T[]; column: ColumnDef<T>; group: RowGroup<T> }` | The value of a group row grouped by this column (row grouping feature): `#group-<key>`. |
@@ -953,7 +958,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `sortValue` | `(row: T) => unknown` | `sortingFeature` | The value client sorting compares (default: the renderer's sort value, else the cell value). |
 | `sortFn` | `(a: T, b: T) => number` | `sortingFeature` | A full comparator for client sorting; wins over `sortValue`. |
 | `pinned` | `PinSide` | `columnPinningFeature` | Initial pin side (the header menu can change it at runtime unless `pinnable: false`). |
-| `pinnable` | `boolean` | `columnPinningFeature` | Can the user pin/unpin it from the header menu? Default `true`. |
+| `pinnable` | `boolean` | `columnPinningFeature` | Allow runtime pin changes. `false` keeps the definition's pin and ignores saved overrides. |
 | `hidden` | `boolean` | `columnVisibilityFeature` | Initial visibility (column state wins once it exists). |
 | `hideable` | `boolean` | `columnVisibilityFeature` | Can the user hide it from the column menu? Default `true`. |
 | `reorderable` | `boolean` | `columnReorderFeature` | Can the user move it? Default `true`. |
@@ -1986,6 +1991,8 @@ column is indented per depth (`--vg-subgrid-indent`), rows get `aria-level`, the
 `treegrid`. With `loadSubRows` children are fetched on first expand.
 
 Need children with a **different** set of columns? Put another `<VGrid>` in the `#detail` slot.
+For a child sized to its content, add `class="vg-scroll-chain-y"` to let vertical wheel input
+scroll the outer grid while the child contains horizontal scrolling.
 
 ## Column menu, reorder, persistence
 
@@ -2087,6 +2094,10 @@ Pin items need `columnPinningFeature`, move items `columnReorderFeature`, Hide c
 ```
 
 Columns opt out with `pinnable: false`, `reorderable: false`, `hideable: false`.
+With `pinnable: false`, the column keeps the pin from its definition even if controlled or saved
+column state supplies a different pin. A `VGridColumnMenu` ref exposes `open()` for custom header
+actions. Use `icon-only` to show a decorative icon with the `label` as the accessible name and
+tooltip, and `#icon` to supply your own artwork. [Column picker example](../../docs/examples.md#add-a-column-picker)
 
 ### `VGridMenu` for your own triggers
 
@@ -2926,6 +2937,10 @@ section, worked out from your column list.
 - **Counts**: the top-level rows that pass the filters, on every page (`84 of 200 rows`, or the
   server's `total` with a data source), the selected rows, and the active filters with a **Clear**
   button.
+- **Tree counts**: `rowCountMode: 'visible'` counts the current page's data rows, including
+  expanded descendants, pinned rows, and rows outside the virtual viewport. Set `fullyExpandedCount`
+  to show an app-supplied total for all expanded branches and `backToTop: true` to add a scroll
+  button. See [Tree counts and Back to top](../../docs/examples.md#tree-counts-and-back-to-top).
 - **Summary**: `summary` lists column keys; while rows are selected, the bar shows each column's
   sum and average over them (`aggregates: ['sum', 'avg', 'min', 'max']` picks), formatted
   like the column's cells. Selected child rows count too. With "select all N matching rows" on
@@ -3093,6 +3108,15 @@ participate in the normal Tab order.
 With `range-selection` (`rangeSelectionFeature`), `Shift+arrows` select a block of cells from the
 focused one, `Ctrl/⌘+A` every cell, `Esc` clears it and `Ctrl/⌘+C` copies it; cells in it carry
 `aria-selected`.
+
+Use `tree-expander-attrs` and `detail-expander-attrs` for row-specific `aria-label` and
+`data-*` attributes on expansion buttons. Each callback receives `{ row, rowKey, expanded }`.
+The tree callback also covers the shared expander. The detail callback applies to the separate
+button enabled by `v-model:detail-expanded`. Omitted or blank labels use localized defaults.
+
+Set `tree-column-key` to place tree indentation and the tree or shared expander. Set
+`detail-expander-column-key` to place the separate detail button. Both use the first visible
+data column when their key is omitted, hidden, or missing.
 
 ## Touch, phones and tablets
 
@@ -3372,6 +3396,22 @@ Override any token on `:root`, a wrapper, or the grid itself:
 Motion stays on the compositor (`transform`, `opacity`) wherever layout would otherwise animate.
 Row highlights (hover, selection) appear at once and fade out over `--vg-transition`, so the grid
 responds the moment the pointer arrives.
+
+`--vg-cell-border-inline-end` and `--vg-header-border-inline-end` set independent vertical rules
+on body and column header cells, including pinned columns. Both default to `none`.
+`--vg-header-min-height` sets a minimum for column header cells at any density and defaults to
+`auto`.
+
+If an unlayered border-width reset takes precedence over the theme, add
+`class="vg-restore-cell-borders"` to a grid to restore its body and column header cell rules.
+All border tokens still apply, including separate colors for header dividers and horizontal rules.
+
+Add `class="vg-sort-indicator-end"` to put sortable headers' indicators and ranks at the inline
+end of the sort button while keeping each column's label alignment.
+
+Use `#sort-icon="{ column, direction }"` for decorative sort artwork. The direction is
+`null`, `'asc'`, or `'desc'`. Omitting the slot uses the built-in artwork.
+`--vg-sort-icon-size` sizes either icon box and defaults to `0.875rem`.
 
 Colours use `light-dark()`: set `color-scheme: light dark` on `html` to follow the OS, or
 `color-scheme: dark` to force dark; with neither, the grid is light. For a theme switch, set it in a

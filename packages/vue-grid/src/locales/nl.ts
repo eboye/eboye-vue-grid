@@ -110,6 +110,9 @@ export const nl = {
   page: (page) => `Pagina ${page}`,
 
   statusBar: 'Tabelstatus',
+  visibleRowCount: (shown, count) => `${rows(count, shown)} zichtbaar`,
+  fullyExpandedCount: (count) => `${count} bij volledig uitklappen`,
+  backToTop: 'Terug naar boven',
   rowCount: (shown, total, count, totalCount) =>
     total === undefined ? rows(count, shown) : `${shown} van ${rows(totalCount ?? count, total)}`,
   selectedCount: (count, all) => `${all ? 'Alle ' : ''}${count} geselecteerd`,

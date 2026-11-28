@@ -2,9 +2,10 @@
 import { computed, shallowRef, watch } from 'vue'
 import { getCellValue } from '../core/value'
 import { toNumber } from '../renderers/format'
+import { PlainTextCell } from '../renderers/PlainTextCell'
 import { textRenderer } from '../renderers/text'
 import { useInternalGrid, type ResolvedColumn } from '../internal/context'
-import type { FlashMode, RowKey } from '../types'
+import type { ExpanderAttrs, FlashMode, RowKey } from '../types'
 import { RenderSlot } from '../internal/RenderSlot'
 
 const props = withDefaults(
@@ -80,14 +81,45 @@ const cellClass = computed(() => {
 
 const expandable = computed(() => !props.pinned && props.column.isTree && grid.canExpand(props.row))
 const expanded = computed(() => grid.isExpanded(props.rowKey))
-const detailExpandable = computed(
+const canToggleDetail = computed(
   () =>
     !props.pinned &&
-    props.column.isTree &&
+    (props.column.isDetail || props.column.isTree) &&
     grid.separateDetails.value &&
     grid.canShowDetail(props.row),
 )
+const detailExpandable = computed(() => props.column.isDetail && canToggleDetail.value)
 const detailExpanded = computed(() => grid.isDetailExpanded(props.rowKey))
+function resolveExpanderAttrs(attrs: ExpanderAttrs | null | undefined, fallback: string) {
+  const label = attrs?.['aria-label']
+  const result: ExpanderAttrs & { 'aria-label': string } = {
+    'aria-label': typeof label === 'string' && label.trim() ? label : fallback,
+  }
+  for (const [name, value] of Object.entries(attrs ?? {})) {
+    if (/^data-[\w.:-]+$/.test(name)) result[name as `data-${string}`] = value
+  }
+  return result
+}
+const treeButtonAttrs = computed(() =>
+  resolveExpanderAttrs(
+    grid.treeExpanderAttrs({ row: props.row, rowKey: props.rowKey, expanded: expanded.value }),
+    expanded.value
+      ? (grid.messages.value.collapseRow ?? 'Collapse row')
+      : (grid.messages.value.expandRow ?? 'Expand row'),
+  ),
+)
+const detailButtonAttrs = computed(() =>
+  resolveExpanderAttrs(
+    grid.detailExpanderAttrs({
+      row: props.row,
+      rowKey: props.rowKey,
+      expanded: detailExpanded.value,
+    }),
+    detailExpanded.value
+      ? (grid.messages.value.hideRowDetails ?? 'Hide row details')
+      : (grid.messages.value.showRowDetails ?? 'Show row details'),
+  ),
+)
 const slotName = computed(() => `cell-${props.column.key}`)
 
 function onAction(name: string, payload?: unknown) {
@@ -100,7 +132,7 @@ const edit = grid.editing?.forCell(() => props)
 function onKeyDown(event: KeyboardEvent) {
   if (
     grid.keyboardNav &&
-    detailExpandable.value &&
+    canToggleDetail.value &&
     event.target === event.currentTarget &&
     event.key === 'Enter' &&
     event.shiftKey &&
@@ -217,11 +249,7 @@ function onClick(event: MouseEvent) {
           class="vg-expander"
           :tabindex="grid.rovingTabindex"
           :aria-expanded="expanded"
-          :aria-label="
-            expanded
-              ? (grid.messages.value.collapseRow ?? 'Collapse row')
-              : (grid.messages.value.expandRow ?? 'Expand row')
-          "
+          v-bind="treeButtonAttrs"
           @click.stop="grid.toggleExpanded(row)"
         >
           <svg viewBox="0 0 16 16" aria-hidden="true" class="vg-expander-icon">
@@ -243,11 +271,7 @@ function onClick(event: MouseEvent) {
         :tabindex="grid.rovingTabindex"
         :aria-expanded="detailExpanded"
         :aria-keyshortcuts="grid.keyboardNav ? 'Shift+Enter' : undefined"
-        :aria-label="
-          detailExpanded
-            ? (grid.messages.value.hideRowDetails ?? 'Hide row details')
-            : (grid.messages.value.showRowDetails ?? 'Show row details')
-        "
+        v-bind="detailButtonAttrs"
         @click.stop="grid.toggleDetail(rowKey)"
       >
         <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
@@ -261,6 +285,11 @@ function onClick(event: MouseEvent) {
           v-if="grid.slots[slotName]"
           :fn="grid.slots[slotName]"
           :scope="{ row, value, rowKey, rowIndex, depth, column: column.def }"
+        />
+        <PlainTextCell
+          v-else-if="column.plainText"
+          :value="value"
+          :ellipsis="grid.virtual.value && !pinned"
         />
         <component
           :is="column.component"

@@ -41,6 +41,42 @@ const makeRows = (): Row[] =>
   }))
 
 describe('partial updates re-render only what changed', () => {
+  it('keeps default text, overflow tips, slots and configured text current across row replacements', async () => {
+    const rows = reactive([{ id: 1, name: 'First', score: 1, city: 'North' }])
+    const columns = [
+      { key: 'name' },
+      { key: 'score' },
+      { key: 'city', rendererOptions: { secondary: (_value: unknown, row: Row) => row.name } },
+    ]
+    const w = mount(VGrid, {
+      props: { rows, columns, rowKey: 'id', virtual: { rowHeight: 36 } },
+      slots: { 'cell-score': ({ row }: { row: Row }) => h('strong', `${row.name} ${row.score}`) },
+    })
+    try {
+      const name = () => w.get('[data-row-key="1"] > [data-col-key="name"] .vg-text')
+      const score = () => w.get('[data-row-key="1"] > [data-col-key="score"]').text()
+      const city = () => w.get('[data-row-key="1"] > [data-col-key="city"]').text()
+
+      rows[0]!.name = 'Updated'
+      await nextTick()
+      expect(name().text()).toBe('Updated')
+      expect(name().attributes('data-vg-tip')).toBe('Updated')
+      expect(score()).toBe('Updated 1')
+      expect(city()).toBe('North Updated')
+
+      await w.setProps({ rows: [{ ...rows[0], name: 'Replaced', score: 2 }] })
+      expect(name().text()).toBe('Replaced')
+      expect(score()).toBe('Replaced 2')
+      expect(city()).toBe('North Replaced')
+
+      await w.setProps({ virtual: false })
+      expect(name().classes()).not.toContain('vg-text-ellipsis')
+      expect(name().attributes('data-vg-tip')).toBeUndefined()
+    } finally {
+      w.unmount()
+    }
+  })
+
   it('reactive rows: mutating one field re-renders exactly that cell', async () => {
     const { Counter, renders, reset } = counting()
     const rows = reactive(makeRows())

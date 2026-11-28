@@ -57,6 +57,7 @@ onBeforeUnmount(() => {
       :class="[
         'vg-row',
         'vg-row-pinned',
+        { 'vg-row-virtual': ariaStart !== undefined },
         item.kind === 'total'
           ? 'vg-row-total'
           : [

@@ -122,6 +122,10 @@ export const fr = {
   page: (page) => `Page ${page}`,
 
   statusBar: 'État de la grille',
+  visibleRowCount: (shown, count) =>
+    `${rows(count, shown)} ${count === 1 ? 'visible' : 'visibles'}`,
+  fullyExpandedCount: (count) => `${count} après déploiement complet`,
+  backToTop: 'Retour en haut',
   rowCount: (shown, total, count, totalCount) =>
     total === undefined ? rows(count, shown) : `${shown} sur ${rows(totalCount ?? count, total)}`,
   selectedCount: (count, all, amount) =>

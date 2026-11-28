@@ -373,7 +373,7 @@ test('chip text colour is chosen in CSS for raw data colours', async ({ page }) 
 })
 
 test('recipes grid: switches and stars apply, popover opens, layout fits', async ({ page }) => {
-  await story(page, 'recipes-back-office-grid--bet-monitor')
+  await story(page, 'recipes-renderer-combinations--bet-monitor')
   const web = page.locator('[data-row-key="2"] > [data-col-key="web"]').getByRole('switch')
   await web.click()
   await expect(web).toHaveAttribute('aria-checked', 'true')

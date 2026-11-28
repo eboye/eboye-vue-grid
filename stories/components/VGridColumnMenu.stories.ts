@@ -1,7 +1,14 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import { ref } from 'vue'
 import { fn } from 'storybook/test'
-import { VGridColumnMenu, type ColumnDef, type ColumnState } from '@nocopypaste/vue-grid'
+import {
+  VGridColumnMenu,
+  type ColumnDef,
+  type ColumnState,
+  type HeaderActionEvent,
+  type HeaderMenuContext,
+} from '@nocopypaste/vue-grid'
+import { Grid as VGrid } from '../support'
 
 const columns: ColumnDef[] = [
   { key: 'id', header: '#', hideable: false },
@@ -48,4 +55,43 @@ export const Localised: Story = {
     filterPlaceholder: 'Pretraži kolone…',
     resetLabel: 'Vrati podrazumevano',
   },
+}
+
+/** The same icon-only picker can open from the toolbar or a header menu command. */
+export const HeaderCommand: Story = {
+  render: () => ({
+    components: { VGrid, VGridColumnMenu },
+    setup() {
+      const picker = ref<InstanceType<typeof VGridColumnMenu>>()
+      return {
+        picker,
+        rows: [{ id: 1, name: 'Cedar', region: 'North' }],
+        columns: [
+          { key: 'name', header: 'Name', hideable: false },
+          { key: 'region', header: 'Region' },
+        ],
+        headerMenu: ({ items }: HeaderMenuContext) => [
+          ...items,
+          { name: 'choose-columns', label: 'Choose columns' },
+        ],
+        onHeaderAction: ({ name }: HeaderActionEvent) => {
+          if (name === 'choose-columns') picker.value?.open()
+        },
+      }
+    },
+    template: `
+      <VGrid :rows="rows" :columns="columns" row-key="id" aria-label="Locations"
+        :header-menu="headerMenu" @header-action="onHeaderAction">
+        <template #toolbar="{ columnState, setColumnState }">
+          <VGridColumnMenu ref="picker" :columns="columns" :column-state="columnState"
+            icon-only label="Choose columns" @update:column-state="setColumnState">
+            <template #icon>
+              <svg viewBox="0 0 16 16" width="16" height="16" data-testid="picker-icon">
+                <path d="M2 3h12v10H2zM6 3v10m4-10v10" fill="none" stroke="currentColor" />
+              </svg>
+            </template>
+          </VGridColumnMenu>
+        </template>
+      </VGrid>`,
+  }),
 }

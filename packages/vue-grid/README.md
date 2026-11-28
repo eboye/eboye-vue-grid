@@ -492,6 +492,8 @@ column is indented per depth (`--vg-subgrid-indent`), rows get `aria-level`, the
 `treegrid`. With `loadSubRows` children are fetched on first expand.
 
 Need children with a **different** set of columns? Put another `<VGrid>` in the `#detail` slot.
+For a child sized to its content, add `class="vg-scroll-chain-y"` to let vertical wheel input
+scroll the outer grid while the child contains horizontal scrolling.
 
 ## Column menu, reorder, persistence
 
@@ -593,6 +595,10 @@ Pin items need `columnPinningFeature`, move items `columnReorderFeature`, Hide c
 ```
 
 Columns opt out with `pinnable: false`, `reorderable: false`, `hideable: false`.
+With `pinnable: false`, the column keeps the pin from its definition even if controlled or saved
+column state supplies a different pin. A `VGridColumnMenu` ref exposes `open()` for custom header
+actions. Use `icon-only` to show a decorative icon with the `label` as the accessible name and
+tooltip, and `#icon` to supply your own artwork. [Column picker example](../../docs/examples.md#add-a-column-picker)
 
 ### `VGridMenu` for your own triggers
 
@@ -1432,6 +1438,10 @@ section, worked out from your column list.
 - **Counts**: the top-level rows that pass the filters, on every page (`84 of 200 rows`, or the
   server's `total` with a data source), the selected rows, and the active filters with a **Clear**
   button.
+- **Tree counts**: `rowCountMode: 'visible'` counts the current page's data rows, including
+  expanded descendants, pinned rows, and rows outside the virtual viewport. Set `fullyExpandedCount`
+  to show an app-supplied total for all expanded branches and `backToTop: true` to add a scroll
+  button. See [Tree counts and Back to top](../../docs/examples.md#tree-counts-and-back-to-top).
 - **Summary**: `summary` lists column keys; while rows are selected, the bar shows each column's
   sum and average over them (`aggregates: ['sum', 'avg', 'min', 'max']` picks), formatted
   like the column's cells. Selected child rows count too. With "select all N matching rows" on
@@ -1599,6 +1609,15 @@ participate in the normal Tab order.
 With `range-selection` (`rangeSelectionFeature`), `Shift+arrows` select a block of cells from the
 focused one, `Ctrl/⌘+A` every cell, `Esc` clears it and `Ctrl/⌘+C` copies it; cells in it carry
 `aria-selected`.
+
+Use `tree-expander-attrs` and `detail-expander-attrs` for row-specific `aria-label` and
+`data-*` attributes on expansion buttons. Each callback receives `{ row, rowKey, expanded }`.
+The tree callback also covers the shared expander. The detail callback applies to the separate
+button enabled by `v-model:detail-expanded`. Omitted or blank labels use localized defaults.
+
+Set `tree-column-key` to place tree indentation and the tree or shared expander. Set
+`detail-expander-column-key` to place the separate detail button. Both use the first visible
+data column when their key is omitted, hidden, or missing.
 
 ## Touch, phones and tablets
 
@@ -1878,6 +1897,22 @@ Override any token on `:root`, a wrapper, or the grid itself:
 Motion stays on the compositor (`transform`, `opacity`) wherever layout would otherwise animate.
 Row highlights (hover, selection) appear at once and fade out over `--vg-transition`, so the grid
 responds the moment the pointer arrives.
+
+`--vg-cell-border-inline-end` and `--vg-header-border-inline-end` set independent vertical rules
+on body and column header cells, including pinned columns. Both default to `none`.
+`--vg-header-min-height` sets a minimum for column header cells at any density and defaults to
+`auto`.
+
+If an unlayered border-width reset takes precedence over the theme, add
+`class="vg-restore-cell-borders"` to a grid to restore its body and column header cell rules.
+All border tokens still apply, including separate colors for header dividers and horizontal rules.
+
+Add `class="vg-sort-indicator-end"` to put sortable headers' indicators and ranks at the inline
+end of the sort button while keeping each column's label alignment.
+
+Use `#sort-icon="{ column, direction }"` for decorative sort artwork. The direction is
+`null`, `'asc'`, or `'desc'`. Omitting the slot uses the built-in artwork.
+`--vg-sort-icon-size` sizes either icon box and defaults to `0.875rem`.
 
 Colours use `light-dark()`: set `color-scheme: light dark` on `html` to follow the OS, or
 `color-scheme: dark` to force dark; with neither, the grid is light. For a theme switch, set it in a
