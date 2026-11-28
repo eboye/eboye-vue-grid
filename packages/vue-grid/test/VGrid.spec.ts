@@ -372,6 +372,38 @@ describe('VGrid column state', () => {
       w.unmount()
     }
   })
+
+  it('binds picker hooks to the native controls and follows column visibility', async () => {
+    const w = mount(VGridColumnMenu, {
+      props: {
+        columns,
+        partAttrs: {
+          trigger: { 'data-test': 'picker' },
+          panel: { 'data-test': 'panel', 'data-placement': 'wrong' },
+          reset: { 'data-test': 'reset' },
+          option: ({ columnKey, checked }) => ({
+            label: { 'data-test': `label-${columnKey}` },
+            checkbox: { 'data-test': `toggle-${columnKey}`, 'data-checked': checked },
+          }),
+        },
+      },
+    })
+    try {
+      expect(w.get('[data-test="picker"]').attributes('aria-haspopup')).toBe('dialog')
+      expect(w.get('[data-test="panel"]').attributes('role')).toBe('dialog')
+      expect(w.get('[data-test="panel"]').attributes('data-placement')).toBe('bottom-end')
+      const checkbox = w.get<HTMLInputElement>(
+        'label[data-test="label-name"] input[data-test="toggle-name"]',
+      )
+      expect(checkbox.attributes('type')).toBe('checkbox')
+      await checkbox.setValue(false)
+      expect(checkbox.attributes('data-checked')).toBe('false')
+      await w.get('button[data-test="reset"]').trigger('click')
+      expect(checkbox.attributes('data-checked')).toBe('true')
+    } finally {
+      w.unmount()
+    }
+  })
 })
 
 const tree: Row[] = [

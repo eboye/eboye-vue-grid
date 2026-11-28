@@ -2,7 +2,8 @@
 import { computed, nextTick, onBeforeUnmount, ref, shallowRef, useId } from 'vue'
 import { normalizeColumnState, setColumnHidden } from '../core/columns'
 import { anchorNameFor, trackAnchor } from '../internal/anchor'
-import type { ColumnDef, ColumnState } from '../types'
+import { dataAttrs } from '../internal/dataAttrs'
+import type { ColumnDef, ColumnMenuPartAttrs, ColumnState } from '../types'
 import { useMessages } from '../internal/messages'
 
 const props = withDefaults(
@@ -16,6 +17,8 @@ const props = withDefaults(
     filterPlaceholder?: string
     /** Default: `messages.resetColumns`, else `Reset columns`. */
     resetLabel?: string
+    /** Application data attributes for the native picker controls. */
+    partAttrs?: ColumnMenuPartAttrs
   }>(),
   {},
 )
@@ -39,6 +42,17 @@ const anchor = anchorNameFor(`columns-${id}`)
 
 const state = computed(() => normalizeColumnState(props.columns, columnState.value))
 const byKey = computed(() => new Map(props.columns.map((c) => [c.key, c])))
+const visibleCount = computed(() => state.value.order.length - state.value.hidden.length)
+const partAttrs = computed(() => {
+  const parts = props.partAttrs
+  return (
+    parts && {
+      trigger: dataAttrs(parts.trigger),
+      panel: dataAttrs(parts.panel),
+      reset: dataAttrs(parts.reset),
+    }
+  )
+})
 
 const items = computed(() => {
   const q = filter.value.trim().toLowerCase()
@@ -46,9 +60,19 @@ const items = computed(() => {
     .map((key) => byKey.value.get(key)!)
     .filter((col) => col.hideable !== false)
     .filter((col) => !q || (col.header ?? col.key).toLowerCase().includes(q))
+    .map((column) => {
+      const checked = isVisible(column.key)
+      const disabled = checked && visibleCount.value <= 1
+      const attrs = props.partAttrs?.option?.({ column, columnKey: column.key, checked, disabled })
+      return {
+        column,
+        checked,
+        disabled,
+        labelAttrs: dataAttrs(attrs?.label),
+        checkboxAttrs: dataAttrs(attrs?.checkbox),
+      }
+    })
 })
-
-const visibleCount = computed(() => state.value.order.length - state.value.hidden.length)
 
 function isVisible(key: string) {
   return !state.value.hidden.includes(key)
@@ -101,6 +125,7 @@ function onToggle(event: Event) {
       :title="iconOnly ? text.label : undefined"
       :popovertarget="id"
       :style="{ 'anchor-name': anchor }"
+      v-bind="partAttrs?.trigger"
     >
       <span v-if="$slots.icon" class="vg-button-icon" aria-hidden="true">
         <slot name="icon" />
@@ -125,6 +150,7 @@ function onToggle(event: Event) {
       class="vg-menu vg-column-panel"
       data-placement="bottom-end"
       :style="{ 'position-anchor': anchor }"
+      v-bind="partAttrs?.panel"
       @toggle="onToggle"
     >
       <input
@@ -136,22 +162,28 @@ function onToggle(event: Event) {
         :aria-label="text.filter"
       />
       <ul class="vg-column-list">
-        <li v-for="col in items" :key="col.key">
-          <label class="vg-column-option">
+        <li v-for="item in items" :key="item.column.key">
+          <label class="vg-column-option" v-bind="item.labelAttrs">
             <input
               type="checkbox"
-              :checked="isVisible(col.key)"
-              :disabled="isVisible(col.key) && visibleCount <= 1"
-              @change="toggle(col.key)"
+              :checked="item.checked"
+              :disabled="item.disabled"
+              v-bind="item.checkboxAttrs"
+              @change="toggle(item.column.key)"
             />
-            <span>{{ col.header ?? col.key }}</span>
+            <span>{{ item.column.header ?? item.column.key }}</span>
           </label>
         </li>
         <li v-if="!items.length" class="vg-text-muted vg-column-none">
           {{ m.noMatchingColumns ?? 'No matching columns' }}
         </li>
       </ul>
-      <button type="button" class="vg-button vg-button-ghost" @click="reset">
+      <button
+        type="button"
+        class="vg-button vg-button-ghost"
+        v-bind="partAttrs?.reset"
+        @click="reset"
+      >
         {{ text.reset }}
       </button>
     </div>

@@ -1,7 +1,11 @@
 import type { ObjectDirective } from 'vue'
+import { dataAttrs } from '../internal/dataAttrs'
 import type { ResolvedColumn } from '../internal/context'
 import type {
   CellAttrsContext,
+  ColumnDef,
+  ColumnHeaderAttrsContext,
+  DataAttrs,
   ExpanderAttrs,
   ExpanderAttrsContext,
   ExtraAttrs,
@@ -47,6 +51,7 @@ export const vExtraAttrs: ObjectDirective<Element, ExtraAttrs | null | undefined
 
 /** The grid's props (read on each call, so they stay reactive). */
 export interface ExtraAttrsProps {
+  columnHeaderAttrs?: (ctx: ColumnHeaderAttrsContext) => DataAttrs | null | undefined
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- the grid's generic `T` is erased here
   rowAttrs?: (ctx: RowAttrsContext<any>) => ExtraAttrs | null | undefined
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -70,6 +75,8 @@ export function useExtraAttrs(
   const row = (ctx: RowAttrsContext) => props.rowAttrs?.(ctx)
   return {
     directive: vExtraAttrs,
+    columnHeader: (column: ColumnDef) =>
+      dataAttrs(props.columnHeaderAttrs?.({ column, columnKey: column.key })),
     expander: (kind: 'tree' | 'detail', row: unknown, rowKey: RowKey, expanded: boolean) => {
       const callback = kind === 'tree' ? props.treeExpanderAttrs : props.detailExpanderAttrs
       const attrs = callback?.({ row, rowKey, expanded })

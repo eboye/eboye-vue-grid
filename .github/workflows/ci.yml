@@ -65,6 +65,7 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
       - run: npm ci
       - run: npm run build
+      - run: npm run test:package
       - run: npm run build -w site # the showcase (GitHub Pages)
       - run: npm run typecheck
       - run: npm run lint

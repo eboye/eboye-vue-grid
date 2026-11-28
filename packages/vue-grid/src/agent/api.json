@@ -205,6 +205,13 @@
       "feature": "attributes"
     },
     {
+      "name": "columnHeaderAttrs",
+      "type": "(ctx: ColumnHeaderAttrsContext<T>) => DataAttrs | null | undefined",
+      "required": false,
+      "description": "Application data attributes for each native data column header (attributes feature).",
+      "feature": "attributes"
+    },
+    {
       "name": "rowClickable",
       "type": "boolean",
       "required": false,
@@ -1199,6 +1206,7 @@
       "props": [
         "treeExpanderAttrs",
         "detailExpanderAttrs",
+        "columnHeaderAttrs",
         "rowAttrs",
         "cellAttrs"
       ],

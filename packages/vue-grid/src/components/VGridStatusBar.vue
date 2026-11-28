@@ -56,18 +56,27 @@ const label = (name: StatusBarAggregate) =>
 </script>
 
 <template>
-  <div class="vg-status-bar" role="group" :aria-label="m.statusBar ?? 'Grid status'">
+  <div
+    class="vg-status-bar"
+    role="group"
+    :aria-label="m.statusBar ?? 'Grid status'"
+    v-bind="bar.attrs.value?.root"
+  >
     <Custom v-if="render" />
     <template v-else>
       <span
         v-if="bar.show.value.rows"
         class="vg-status-item"
         :role="bar.visibleRowCount.value === undefined ? undefined : 'status'"
+        v-bind="bar.attrs.value?.rowCount"
         >{{ rowsText }}</span
       >
-      <span v-if="fullyExpandedText !== undefined" class="vg-status-item">{{
-        fullyExpandedText
-      }}</span>
+      <span
+        v-if="fullyExpandedText !== undefined"
+        class="vg-status-item"
+        v-bind="bar.attrs.value?.fullyExpandedCount"
+        >{{ fullyExpandedText }}</span
+      >
       <span v-if="scope.selectedCount && bar.show.value.selected" class="vg-status-item">
         {{ selectedText }}
       </span>
@@ -103,6 +112,7 @@ const label = (name: StatusBarAggregate) =>
       </span>
       <button
         v-if="bar.backToTop.value"
+        v-bind="bar.attrs.value?.backToTop"
         type="button"
         class="vg-link-button"
         @click="bar.scrollToTop()"

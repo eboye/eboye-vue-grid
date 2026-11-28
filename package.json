@@ -24,6 +24,7 @@
     "build-storybook": "storybook build -o storybook-static",
     "e2e:storybook": "playwright test -c e2e/storybook.config.ts",
     "benchmark:grid": "node scripts/benchmark-grid.mjs",
+    "test:package": "node scripts/smoke-grid-package.mjs",
     "showcase": "node scripts/record-showcase.mjs",
     "screenshots": "node scripts/renderer-screenshots.mjs",
     "format:check": "prettier --check .",

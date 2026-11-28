@@ -3111,6 +3111,52 @@ await expect(page.locator('[data-test="row-0"] [data-test="player-0"]')).toHaveT
 - The grid's own attributes stay: `role`, `aria-*`, `tabindex`, `id`, `class`, `style`, its `data-*`
   hooks and `on…` handlers are ignored here. Group and totals rows get none.
 
+### Test hooks on native headers, status bar, and column picker
+
+With `attributesFeature`, `column-header-attrs` receives `{ column, columnKey }` for each data
+column header. Configure the status bar and picker through their own options.
+
+```vue
+<VGrid
+  :rows="rows"
+  :columns="columns"
+  row-key="id"
+  :features="[attributesFeature, statusBarFeature, columnVisibilityFeature]"
+  :column-header-attrs="({ columnKey }) => ({ 'data-test': `header-${columnKey}` })"
+  :status-bar="{
+    rowCountMode: 'visible',
+    fullyExpandedCount,
+    backToTop: true,
+    attrs: {
+      root: { 'data-test': 'grid-status' },
+      rowCount: { 'data-test': 'rows-shown' },
+      fullyExpandedCount: { 'data-test': 'rows-expanded' },
+      backToTop: { 'data-test': 'back-to-top' },
+    },
+  }"
+>
+  <template #toolbar="{ columnState, setColumnState }">
+    <VGridColumnMenu
+      :columns="columns"
+      :column-state="columnState"
+      :part-attrs="{
+        trigger: { 'data-test': 'choose-columns' },
+        panel: { 'data-test': 'column-picker' },
+        reset: { 'data-test': 'reset-columns' },
+        option: ({ columnKey }) => ({
+          label: { 'data-test': `option-${columnKey}` },
+          checkbox: { 'data-test': `toggle-${columnKey}` },
+        }),
+      }"
+      @update:column-state="setColumnState($event!)"
+    />
+  </template>
+</VGrid>
+```
+
+Picker callbacks also receive `column`, `checked`, and `disabled`. These hooks accept application
+`data-*` attributes. Native roles, events, and internal data attributes stay with the grid.
+
 ---
 
 ## 31. Row reordering

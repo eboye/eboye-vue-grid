@@ -80,7 +80,10 @@ function ariaSort(col: ResolvedColumn) {
       :data-col-key="col.key"
       :aria-sort="ariaSort(col)"
       :data-sort-dir="grid.sortable(col.def) ? sortOf(col)?.dir : undefined"
-      v-bind="tipAttrs(col.def.headerTooltip, { describe: true })"
+      v-bind="{
+        ...tipAttrs(col.def.headerTooltip, { describe: true }),
+        ...(col.kind === 'data' ? grid.attrs?.columnHeader(col.def) : undefined),
+      }"
       :class="[
         'vg-header-cell',
         `vg-align-${col.align}`,
