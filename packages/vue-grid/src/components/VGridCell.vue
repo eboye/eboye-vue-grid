@@ -5,7 +5,7 @@ import { toNumber } from '../renderers/format'
 import { PlainTextCell } from '../renderers/PlainTextCell'
 import { textRenderer } from '../renderers/text'
 import { useInternalGrid, type ResolvedColumn } from '../internal/context'
-import type { ExpanderAttrs, FlashMode, RowKey } from '../types'
+import type { FlashMode, RowKey } from '../types'
 import { RenderSlot } from '../internal/RenderSlot'
 
 const props = withDefaults(
@@ -90,36 +90,12 @@ const canToggleDetail = computed(
 )
 const detailExpandable = computed(() => props.column.isDetail && canToggleDetail.value)
 const detailExpanded = computed(() => grid.isDetailExpanded(props.rowKey))
-function resolveExpanderAttrs(attrs: ExpanderAttrs | null | undefined, fallback: string) {
-  const label = attrs?.['aria-label']
-  const result: ExpanderAttrs & { 'aria-label': string } = {
-    'aria-label': typeof label === 'string' && label.trim() ? label : fallback,
-  }
-  for (const [name, value] of Object.entries(attrs ?? {})) {
-    if (/^data-[\w.:-]+$/.test(name)) result[name as `data-${string}`] = value
-  }
-  return result
-}
-const treeButtonAttrs = computed(() =>
-  resolveExpanderAttrs(
-    grid.treeExpanderAttrs({ row: props.row, rowKey: props.rowKey, expanded: expanded.value }),
-    expanded.value
-      ? (grid.messages.value.collapseRow ?? 'Collapse row')
-      : (grid.messages.value.expandRow ?? 'Expand row'),
-  ),
-)
-const detailButtonAttrs = computed(() =>
-  resolveExpanderAttrs(
-    grid.detailExpanderAttrs({
-      row: props.row,
-      rowKey: props.rowKey,
-      expanded: detailExpanded.value,
-    }),
-    detailExpanded.value
-      ? (grid.messages.value.hideRowDetails ?? 'Hide row details')
-      : (grid.messages.value.showRowDetails ?? 'Show row details'),
-  ),
-)
+const treeButtonAttrs =
+  grid.attrs &&
+  computed(() => grid.attrs?.expander('tree', props.row, props.rowKey, expanded.value))
+const detailButtonAttrs =
+  grid.attrs &&
+  computed(() => grid.attrs?.expander('detail', props.row, props.rowKey, detailExpanded.value))
 const slotName = computed(() => `cell-${props.column.key}`)
 
 function onAction(name: string, payload?: unknown) {
@@ -249,6 +225,11 @@ function onClick(event: MouseEvent) {
           class="vg-expander"
           :tabindex="grid.rovingTabindex"
           :aria-expanded="expanded"
+          :aria-label="
+            expanded
+              ? (grid.messages.value.collapseRow ?? 'Collapse row')
+              : (grid.messages.value.expandRow ?? 'Expand row')
+          "
           v-bind="treeButtonAttrs"
           @click.stop="grid.toggleExpanded(row)"
         >
@@ -271,6 +252,11 @@ function onClick(event: MouseEvent) {
         :tabindex="grid.rovingTabindex"
         :aria-expanded="detailExpanded"
         :aria-keyshortcuts="grid.keyboardNav ? 'Shift+Enter' : undefined"
+        :aria-label="
+          detailExpanded
+            ? (grid.messages.value.hideRowDetails ?? 'Hide row details')
+            : (grid.messages.value.showRowDetails ?? 'Show row details')
+        "
         v-bind="detailButtonAttrs"
         @click.stop="grid.toggleDetail(rowKey)"
       >

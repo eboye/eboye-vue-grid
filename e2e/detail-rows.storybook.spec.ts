@@ -13,11 +13,20 @@ test('wheel over a content-height detail grid scrolls the outer grid vertically'
   const pinned = child.locator('[data-row-key="1"] > [data-col-key="name"]')
   await expect(pinned).toBeVisible()
   expect(await child.evaluate((el) => el.scrollHeight - el.clientHeight)).toBe(0)
+  await expect(child).toHaveCSS('overscroll-behavior-y', 'auto')
+  await expect
+    .poll(() => outer.evaluate((el) => el.scrollHeight - el.clientHeight))
+    .toBeGreaterThan(1000)
   expect(await outer.evaluate((el) => el.scrollTop)).toBe(0)
 
-  await pinned.hover()
-  await page.mouse.wheel(0, 200)
-  await expect.poll(() => outer.evaluate((el) => el.scrollTop)).toBeGreaterThan(0)
+  await expect(async () => {
+    if ((await outer.evaluate((el) => el.scrollTop)) > 0) return
+    await pinned.hover()
+    await page.mouse.wheel(0, 200)
+    await expect
+      .poll(() => outer.evaluate((el) => el.scrollTop), { timeout: 500 })
+      .toBeGreaterThan(0)
+  }).toPass({ timeout: 10_000 })
   expect(await child.evaluate((el) => el.scrollTop)).toBe(0)
   await expect(outer).toHaveCSS('overscroll-behavior-y', 'contain')
   await expect(child).toHaveCSS('overscroll-behavior-x', 'contain')

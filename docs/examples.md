@@ -1176,7 +1176,7 @@ expansion model, the single button follows `tree-column-key`. With independent d
 
 ### Row-specific expander names
 
-Use `tree-expander-attrs` and `detail-expander-attrs` to give the buttons distinct accessible
+With `attributesFeature`, use `tree-expander-attrs` and `detail-expander-attrs` to give the buttons distinct accessible
 names and test hooks. Each callback receives `{ row, rowKey, expanded }` for its own button.
 
 ```vue
@@ -1186,6 +1186,7 @@ names and test hooks. Each callback receives `{ row, rowKey, expanded }` for its
   row-key="id"
   :sub-rows="(row) => row.tasks"
   v-model:detail-expanded="openDetails"
+  :features="[attributesFeature, subGridsFeature]"
   :tree-expander-attrs="
     ({ row, rowKey, expanded }) => ({
       'aria-label': `${expanded ? 'Hide' : 'Show'} tasks for ${row.name}`,
@@ -1233,6 +1234,7 @@ your own tree is still a data row, so filter by your own leaf marker when counti
 When a grid in a detail slot grows to fit its rows, add `vg-scroll-chain-y` to that child grid.
 Vertical wheel input over the child can then scroll the outer grid. The child keeps its own
 horizontal scrolling and pinned columns.
+With selective CSS imports, include `@nocopypaste/vue-grid/scroll-chain.css`.
 
 ```vue
 <template #detail="{ row }">

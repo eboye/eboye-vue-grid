@@ -12,8 +12,8 @@
   `--vg-sort-icon-size` to size both built-in and custom icons.
 - Add theme tokens for inline-end cell and header dividers and a minimum column header height.
 - Add the `vg-restore-cell-borders` class for grids that use an unlayered border-width reset.
-- Add `tree-expander-attrs` and `detail-expander-attrs` for row-specific accessible names and
-  test hooks, with localized defaults and the existing keyboard and focus behavior.
+- Add `tree-expander-attrs` and `detail-expander-attrs` to the attributes feature for row-specific
+  accessible names and test hooks, with localized defaults and the existing keyboard behavior.
 
 ## 0.26.0 — 2026-11-28
 

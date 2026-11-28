@@ -178,6 +178,10 @@ what you import.
   | `renderers.css` | Styles for the cell renderers (other than text); uses the theme's tokens                                                                | 2.2 kB |
   | `style.css`     | All of the above                                                                                                                        | 7.0 kB |
 
+  `style.css` also includes three opt-in styles. With selective imports, add `sort-indicator.css`
+  for inline-end placement or custom sort artwork, `scroll-chain.css` for vertical scroll
+  chaining, and `cell-borders.css` to restore borders under an unlayered reset.
+
   For a fully custom look, import only `base.css` (and `renderers.css` if you use renderers)
   and style the `.vg-*` classes yourself. See [Theming](#theming).
 
@@ -1610,7 +1614,7 @@ With `range-selection` (`rangeSelectionFeature`), `Shift+arrows` select a block 
 focused one, `Ctrl/⌘+A` every cell, `Esc` clears it and `Ctrl/⌘+C` copies it; cells in it carry
 `aria-selected`.
 
-Use `tree-expander-attrs` and `detail-expander-attrs` for row-specific `aria-label` and
+With `attributesFeature`, use `tree-expander-attrs` and `detail-expander-attrs` for row-specific `aria-label` and
 `data-*` attributes on expansion buttons. Each callback receives `{ row, rowKey, expanded }`.
 The tree callback also covers the shared expander. The detail callback applies to the separate
 button enabled by `v-model:detail-expanded`. Omitted or blank labels use localized defaults.

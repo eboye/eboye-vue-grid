@@ -5,8 +5,6 @@ import type {
   CellRendererDefinition,
   ClassValue,
   ColumnDef,
-  ExpanderAttrs,
-  ExpanderAttrsContext,
   FlashMode,
   GridMessages,
   GridPart,
@@ -73,6 +71,7 @@ export interface GridContext {
   range?: import('../composables/useCellRange').CellRangeState
   /** Sorting feature: a column's number in a multi-column sort. */
   SortMarker?: Component
+  SortIcon?: Component
   /** Only with the column resizing feature. */
   resize?: {
     /** The header edge grip component. */
@@ -107,8 +106,6 @@ export interface GridContext {
   toggleExpanded(row: any): void
   toggleDetail(key: RowKey): void
   closeDetail(key: RowKey): void
-  treeExpanderAttrs(ctx: ExpanderAttrsContext<any>): ExpanderAttrs | null | undefined
-  detailExpanderAttrs(ctx: ExpanderAttrsContext<any>): ExpanderAttrs | null | undefined
   children(row: any): any[] | undefined
   subRowState(row: any): SubRowEntry | undefined
   ensureSubRows(row: any): void

@@ -3,3 +3,6 @@
 @import './base.css';
 @import './theme.css';
 @import './renderers.css';
+@import './sort-indicator.css';
+@import './scroll-chain.css';
+@import './cell-borders.css';

@@ -873,6 +873,7 @@ export interface SortingFeature {
   useSorting: typeof import('./composables/useSorting').useSorting
   /** A header's place in a multi-column sort. */
   SortMarker: Component
+  SortIcon?: Component
 }
 export interface FilteringFeature {
   readonly feature: 'filtering'

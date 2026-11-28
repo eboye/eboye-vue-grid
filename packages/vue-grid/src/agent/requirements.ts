@@ -72,6 +72,8 @@ export const propFeatures: Readonly<Record<string, FeatureId>> = {
   range: 'rangeSelection',
   rowAttrs: 'attributes',
   cellAttrs: 'attributes',
+  treeExpanderAttrs: 'attributes',
+  detailExpanderAttrs: 'attributes',
   virtualColumns: 'columnVirtualization',
   rowReorder: 'rowReorder',
 }

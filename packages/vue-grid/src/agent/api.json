@@ -194,13 +194,15 @@
       "name": "treeExpanderAttrs",
       "type": "(ctx: ExpanderAttrsContext<T>) => ExpanderAttrs | null | undefined",
       "required": false,
-      "description": "Accessible name and data attributes for the tree or shared row expander."
+      "description": "Accessible name and data attributes for the tree or shared row expander (attributes feature).",
+      "feature": "attributes"
     },
     {
       "name": "detailExpanderAttrs",
       "type": "(ctx: ExpanderAttrsContext<T>) => ExpanderAttrs | null | undefined",
       "required": false,
-      "description": "Accessible name and data attributes for the separate detail expander."
+      "description": "Accessible name and data attributes for the separate detail expander (attributes feature).",
+      "feature": "attributes"
     },
     {
       "name": "rowClickable",
@@ -1195,6 +1197,8 @@
       "export": "attributesFeature",
       "description": "Your own attributes on rows and cells (`row-attrs`, `cell-attrs`), such as test hooks: `:row-attrs=\"({ rowIndex }) => ({ 'data-test': `row-${rowIndex}` })\"`. Each gets the row, its key and its position as shown (cells also the column and its position). The grid's own attributes (role, ARIA, `tabindex`, classes, styles, its `data-*` hooks) and `on…` handlers are left alone.",
       "props": [
+        "treeExpanderAttrs",
+        "detailExpanderAttrs",
         "rowAttrs",
         "cellAttrs"
       ],

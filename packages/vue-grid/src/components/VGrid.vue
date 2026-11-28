@@ -178,9 +178,9 @@ const props = withDefaults(
     treeColumnKey?: string
     /** Column for the separate detail expander. Defaults to the first visible data column. */
     detailExpanderColumnKey?: string
-    /** Accessible name and data attributes for the tree or shared row expander. */
+    /** Accessible name and data attributes for the tree or shared row expander (attributes feature). */
     treeExpanderAttrs?: (ctx: ExpanderAttrsContext<T>) => ExpanderAttrs | null | undefined
-    /** Accessible name and data attributes for the separate detail expander. */
+    /** Accessible name and data attributes for the separate detail expander (attributes feature). */
     detailExpanderAttrs?: (ctx: ExpanderAttrsContext<T>) => ExpanderAttrs | null | undefined
     /** Pointer cursor on rows (`row-click` is emitted either way). */
     rowClickable?: boolean
@@ -1550,8 +1550,11 @@ if (process.env.NODE_ENV !== 'production') {
       missing('editing', `Column "${editCol}" is \`editable\`; that`)
     if (!features.rangeSelection && props.rangeSelection)
       missing('rangeSelection', '`range-selection`')
-    if (!features.attributes && (props.rowAttrs || props.cellAttrs))
-      missing('attributes', '`row-attrs` / `cell-attrs`')
+    if (
+      !features.attributes &&
+      (props.rowAttrs || props.cellAttrs || props.treeExpanderAttrs || props.detailExpanderAttrs)
+    )
+      missing('attributes', 'Row, cell, and expander attributes')
     const exportCol = props.columns.find((c) => c.exportValue)?.key
     if (!features.export && exportCol)
       missing('export', `Column "${exportCol}" has an \`exportValue\`; that`)
@@ -1595,6 +1598,7 @@ const context: GridContext = {
   sortRows: prepareRows,
   sortable,
   SortMarker: features.sorting?.SortMarker,
+  SortIcon: features.sorting?.SortIcon,
   editing: editing && { ...editing, Editor: features.editing!.Editor },
   range: cellRange,
   resize: resize && {
@@ -1621,8 +1625,6 @@ const context: GridContext = {
   toggleExpanded,
   toggleDetail,
   closeDetail,
-  treeExpanderAttrs: (ctx) => props.treeExpanderAttrs?.(ctx),
-  detailExpanderAttrs: (ctx) => props.detailExpanderAttrs?.(ctx),
   children: (row) => childrenOf(row),
   subRowState: (row) => sub?.state(row),
   ensureSubRows: (row) => sub?.ensure(row),

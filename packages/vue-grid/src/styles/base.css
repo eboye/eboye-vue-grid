@@ -74,11 +74,6 @@
     );
   }
 
-  /* A content-height child can pass vertical wheel input to the surrounding scrollport. */
-  .vg-root.vg-scroll-chain-y > .vg-viewport > .vg {
-    overscroll-behavior-y: auto;
-  }
-
   .vg-header,
   .vg-row,
   .vg-detail-row,
@@ -122,22 +117,10 @@
     min-width: 0;
     cursor: pointer;
   }
-  .vg-sort-icon,
-  .vg-sort-icon-custom {
+  .vg-sort-icon {
     flex: none;
     inline-size: var(--vg-sort-icon-size, 0.875rem);
     block-size: var(--vg-sort-icon-size, 0.875rem);
-  }
-  .vg-sort-icon-custom {
-    display: inline-grid;
-    place-items: center;
-    pointer-events: none;
-  }
-  .vg-sort-icon-custom > svg {
-    inline-size: 100%;
-    block-size: 100%;
-  }
-  .vg-sort-icon {
     fill: none;
     stroke: currentColor;
     stroke-width: 1.75;
@@ -183,29 +166,6 @@
   }
   .vg-header-cell.vg-align-end .vg-sort {
     flex-direction: row-reverse;
-  }
-  .vg-root.vg-sort-indicator-end > :where(.vg-viewport) > :where(.vg) > :where(.vg-header) {
-    & > :where(.vg-header-cell) > .vg-sort {
-      flex: 1 1 auto;
-      flex-direction: row;
-      text-align: start;
-    }
-    & > :where(.vg-header-cell.vg-align-center) > .vg-sort {
-      text-align: center;
-    }
-    & > :where(.vg-header-cell.vg-align-end) > .vg-sort {
-      text-align: end;
-    }
-    & > :where(.vg-header-cell) > .vg-sort > .vg-header-label {
-      flex: 1 1 auto;
-    }
-    /* Reserve room for the overlaid grip even when the theme has no inline header padding. */
-    & > :where(.vg-header-cell:has(> .vg-resize-handle)) > .vg-sort {
-      margin-inline-end: max(
-        0px,
-        calc(var(--_vg-resize-grip-width) - var(--vg-header-padding-x, 0px))
-      );
-    }
   }
   .vg-row-clickable > .vg-cell,
   .vg-cell-clickable {

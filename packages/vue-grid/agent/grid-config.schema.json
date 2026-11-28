@@ -153,10 +153,10 @@
       "description": "Column for the separate detail expander. Defaults to the first visible data column."
     },
     "treeExpanderAttrs": {
-      "description": "Accessible name and data attributes for the tree or shared row expander."
+      "description": "Accessible name and data attributes for the tree or shared row expander (attributes feature)."
     },
     "detailExpanderAttrs": {
-      "description": "Accessible name and data attributes for the separate detail expander."
+      "description": "Accessible name and data attributes for the separate detail expander (attributes feature)."
     },
     "rowClickable": {
       "type": "boolean",

@@ -743,7 +743,7 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | Export | What it enables | Props | Column options |
 |---|---|---|---|
 | `aggregationFeature` | Aggregates and the totals row: columns with an `aggregate` (`sum`, `avg`, `min`, `max`, `count` or a function) and `totals` (`true` / `'bottom'` or `'top'`) show a sticky totals row over the rows that pass the filters, on every page. `aggregates` supplies the values instead (e.g. from a server). Without it, `aggregate` and `totals` are ignored. | `totals` `totalsLabel` `aggregates` | `aggregate` |
-| `attributesFeature` | Your own attributes on rows and cells (`row-attrs`, `cell-attrs`), such as test hooks: `:row-attrs="({ rowIndex }) => ({ 'data-test': `row-${rowIndex}` })"`. Each gets the row, its key and its position as shown (cells also the column and its position). The grid's own attributes (role, ARIA, `tabindex`, classes, styles, its `data-*` hooks) and `on…` handlers are left alone. | `rowAttrs` `cellAttrs` |  |
+| `attributesFeature` | Your own attributes on rows and cells (`row-attrs`, `cell-attrs`), such as test hooks: `:row-attrs="({ rowIndex }) => ({ 'data-test': `row-${rowIndex}` })"`. Each gets the row, its key and its position as shown (cells also the column and its position). The grid's own attributes (role, ARIA, `tabindex`, classes, styles, its `data-*` hooks) and `on…` handlers are left alone. | `treeExpanderAttrs` `detailExpanderAttrs` `rowAttrs` `cellAttrs` |  |
 | `columnGroupsFeature` | Grouped column headers: give columns a `group` or a `groupPath`. Adjacent visible columns with the same group and ancestors share a sticky header cell. Reordering, hiding, and pin boundaries affect the spans. |  | `group` `groupPath` |
 | `columnPinningFeature` | Pinned columns: `pinned: 'left' \| 'right'` columns stay put (sticky) while the grid scrolls sideways, with edge shadows; runtime pins from the header menu (Pin left / Pin right / Unpin) are kept in `v-model:column-state` and persisted with `storage`. While the pinned columns would take more than `pinned-max-share` of the grid's width (half, by default), they scroll like the others. Without it, pins are ignored. | `pinnedMaxShare` | `pinned` `pinnable` |
 | `columnReorderFeature` | Column reordering: drag a header (mouse, pen, touch), Alt+←/→ on a focused header, and the header menu's Move left / Move right. Columns opt out with `reorderable: false`. The order is part of `v-model:column-state` and persisted with `storage`; `<VGridColumnMenu>` works without it. |  | `reorderable` |
@@ -799,8 +799,8 @@ Opt-in: pass them as `:features="[…]"` on `<VGrid>` or once via `createVueGrid
 | `rowExpandable` | `(row: T) => boolean` |  |  | With a `#detail` slot: which rows can expand to show it (default: every row). |
 | `treeColumnKey` | `string` |  |  | Column for tree indentation and the tree or shared expander. Defaults to the first visible data column. |
 | `detailExpanderColumnKey` | `string` |  |  | Column for the separate detail expander. Defaults to the first visible data column. |
-| `treeExpanderAttrs` | `(ctx: ExpanderAttrsContext<T>) => ExpanderAttrs \| null \| undefined` |  |  | Accessible name and data attributes for the tree or shared row expander. |
-| `detailExpanderAttrs` | `(ctx: ExpanderAttrsContext<T>) => ExpanderAttrs \| null \| undefined` |  |  | Accessible name and data attributes for the separate detail expander. |
+| `treeExpanderAttrs` | `(ctx: ExpanderAttrsContext<T>) => ExpanderAttrs \| null \| undefined` |  | `attributesFeature` | Accessible name and data attributes for the tree or shared row expander (attributes feature). |
+| `detailExpanderAttrs` | `(ctx: ExpanderAttrsContext<T>) => ExpanderAttrs \| null \| undefined` |  | `attributesFeature` | Accessible name and data attributes for the separate detail expander (attributes feature). |
 | `rowClickable` | `boolean` | `false` |  | Pointer cursor on rows (`row-click` is emitted either way). |
 | `rowClass` | `(row: T, index: number) => ClassValue` |  |  | Extra classes for a row. |
 | `rowAttrs` | `(ctx: RowAttrsContext<T>) => ExtraAttrs \| null \| undefined` |  | `attributesFeature` | Extra attributes for each data row, such as test hooks (`{ 'data-test': ... }`). |
@@ -1676,6 +1676,10 @@ what you import.
   | `core.css`      | `base.css` + `theme.css`                                                                                                                | 5.4 kB |
   | `renderers.css` | Styles for the cell renderers (other than text); uses the theme's tokens                                                                | 2.2 kB |
   | `style.css`     | All of the above                                                                                                                        | 7.0 kB |
+
+  `style.css` also includes three opt-in styles. With selective imports, add `sort-indicator.css`
+  for inline-end placement or custom sort artwork, `scroll-chain.css` for vertical scroll
+  chaining, and `cell-borders.css` to restore borders under an unlayered reset.
 
   For a fully custom look, import only `base.css` (and `renderers.css` if you use renderers)
   and style the `.vg-*` classes yourself. See [Theming](#theming).
@@ -3109,7 +3113,7 @@ With `range-selection` (`rangeSelectionFeature`), `Shift+arrows` select a block 
 focused one, `Ctrl/⌘+A` every cell, `Esc` clears it and `Ctrl/⌘+C` copies it; cells in it carry
 `aria-selected`.
 
-Use `tree-expander-attrs` and `detail-expander-attrs` for row-specific `aria-label` and
+With `attributesFeature`, use `tree-expander-attrs` and `detail-expander-attrs` for row-specific `aria-label` and
 `data-*` attributes on expansion buttons. Each callback receives `{ row, rowKey, expanded }`.
 The tree callback also covers the shared expander. The detail callback applies to the separate
 button enabled by `v-model:detail-expanded`. Omitted or blank labels use localized defaults.

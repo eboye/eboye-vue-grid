@@ -34,13 +34,19 @@ function emitTheme(): Plugin {
       const base = css('base.css')
       const theme = css('theme.css')
       const renderers = css('renderers.css')
+      const sortIndicator = css('sort-indicator.css')
+      const scrollChain = css('scroll-chain.css')
+      const cellBorders = css('cell-borders.css')
       const core = `${base}\n${theme}`
       const files: Record<string, string> = {
         'base.css': base,
         'theme.css': theme,
         'core.css': core,
         'renderers.css': renderers,
-        'vue-grid.css': `${core}\n${renderers}`,
+        'sort-indicator.css': sortIndicator,
+        'scroll-chain.css': scrollChain,
+        'cell-borders.css': cellBorders,
+        'vue-grid.css': [core, renderers, sortIndicator, scrollChain, cellBorders].join('\n'),
       }
       for (const [fileName, source] of Object.entries(files)) {
         this.emitFile({ type: 'asset', fileName, source: minify(source, fileName) })

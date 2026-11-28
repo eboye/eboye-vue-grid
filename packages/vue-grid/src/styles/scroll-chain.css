@@ -1,0 +1,6 @@
+@layer vue-grid {
+  /* A content-height child can pass vertical wheel input to the surrounding scrollport. */
+  .vg-root.vg-scroll-chain-y > .vg-viewport > .vg {
+    overscroll-behavior-y: auto;
+  }
+}
