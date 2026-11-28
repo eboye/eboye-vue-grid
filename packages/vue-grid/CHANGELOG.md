@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.29.0 — 2026-11-28
+
+- Add an optional status bar counts group that announces the visible and fully expanded counts
+  together. Use `statusBar.attrs.counts` to add data attributes to the group.
+
 ## 0.28.0 — 2026-11-28
 
 - Add application data hooks for native column headers, status bar controls, and column picker parts.
