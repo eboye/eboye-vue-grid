@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.28.0 — 2026-11-28
 
 - Add application data hooks for native column headers, status bar controls, and column picker parts.
 
