@@ -739,7 +739,7 @@ add-on can compose them:
 
 ## 5. Custom cells with slots
 
-A `#cell-<key>` slot replaces the renderer for that column; `#header-<key>` replaces its header.
+A `#cell-<key>` slot replaces the renderer for that column. Use `#header-<key>` for its header label.
 
 ```vue
 <VGrid :rows="rows" :columns="columns" row-key="id">
@@ -756,6 +756,26 @@ A `#cell-<key>` slot replaces the renderer for that column; `#header-<key>` repl
 
 Cell slot props: `{ row, value, rowKey, rowIndex, depth, column }`. Use a slot for a one-off; write
 a renderer (§20) for anything reused across grids.
+
+### Interactive header controls
+
+Use `#column-actions-<key>` for buttons, inputs, and menu triggers. The slot receives
+`{ column }` and sits beside the sort button. With `keyboardNavigationFeature` enabled, focus
+the column header and press F2 to reach the first enabled action. Enter on the header still sorts
+the column.
+
+```vue
+<VGrid :rows="rows" :columns="columns" row-key="id">
+  <template #column-actions-total>
+    <button type="button" @click="showTotalHelp">About totals</button>
+  </template>
+</VGrid>
+```
+
+Use `#column-group` for controls in a grouped header. For overlays, anchor a `VGridMenu` to the
+trigger. Its popover can extend beyond the grid's scroll container without changing its height.
+The **Grid / Columns / Interactive Headers** Storybook example demonstrates this in a table
+fitted to the number of displayed rows.
 
 ---
 
@@ -1089,7 +1109,58 @@ const lineColumns = [
 </template>
 ```
 
-Expansion state is shared with sub-grids through `v-model:expanded`.
+Expansion state is shared with sub-grids through `v-model:expanded`. Use `row-expandable` to
+choose which rows get a detail panel. A row excluded by that predicate can still expand its
+tree children.
+
+For separate tree and detail controls, bind `v-model:detail-expanded` to an array of row keys,
+starting with `[]` if all panels are closed. `v-model:expanded` then controls the tree only.
+The tree cell's **→ / ←** keys open and close children. **Shift+Enter** toggles the detail panel
+when keyboard navigation is enabled. Detail keys stay in the model when a branch closes, so its
+panels reopen when the branch is shown again. `expandAll()` and `collapseAll()` update both models.
+
+Use the detail slot's `close()` for a control inside the panel. It collapses the panel and returns
+focus to the row's expander.
+
+```vue
+<template #detail="{ row, close }">
+  <p>{{ row.summary }}</p>
+  <button type="button" @click="close()">Close details</button>
+</template>
+```
+
+Keep row keys stable across server pages so a detail panel reopens when its row returns. For
+actions inside the panel, anchor a `VGridMenu` to a button. Its popover can extend past the grid's
+scroll container, and closing the menu returns focus to its trigger. See **Grid / Detail rows /
+Paged Details** in Storybook.
+
+Use `grid.getVisibleRows()` in a computed to count or inspect the current page's visible data.
+It follows sorting, filtering, and expansion and includes rows outside the virtual viewport.
+It excludes generated group headers, detail panels, pinned rows, and totals. A parent row from
+your own tree is still a data row, so filter by your own leaf marker when counting only leaves.
+
+### Refreshing tree and grouped views
+
+Use the same stable task IDs in both views. Build the tree from parent IDs and pass the flat
+tasks to the grouped view. Share `v-model:detail-expanded` so an open detail follows its task
+between views. Derive the visible task count from the active grid's `getVisibleRows()`.
+
+**Grid / Detail rows / Refreshing Views** in Storybook keeps both grids mounted in the same
+layout area and makes the inactive grid hidden and inert. Switching preserves each grid's
+expansion and scroll position. Keyboard navigation resumes
+at the last focused cell and scrolls it into view if needed. Try replacing all records or updating
+one task and adding a leaf under a collapsed branch. The new leaf joins the visible count when
+you expand that branch or group.
+
+### Content-sized pages
+
+For small server pages, let data rows and detail panels size to their content. Omit `virtual` and
+give the grid a `max-block-size` if it should scroll beyond a height limit. Use a flexible track
+for wrapping text and leave enough width for any action columns.
+
+**Grid / Detail rows / Content Sized Page** in Storybook shows a two-row final page with a
+multiline cell and an expanded detail panel. The table grows when the panel opens and shrinks
+when it closes. The following row's action stays usable throughout.
 
 ---
 
@@ -1190,7 +1261,28 @@ Adjacent visible columns with the same `group` share one header cell, in a stick
 column headers. Groups follow the layout: reorder a column away and its group splits, hide all
 of a group's columns and it disappears, resize a column and the group widens. A pin boundary
 always splits a group, so pinned groups stay pinned. A group wider than the view keeps its label
-in sight while it scrolls by, clear of the pinned columns. Keyboard navigation skips the group row.
+in sight while it scrolls by, clear of the pinned columns. Arrow-key navigation skips the group
+headers.
+
+For nested headers, give each column a `groupPath` from the outermost to the innermost group.
+Use the same keys for columns in the same group. Labels can change while the keys stay stable.
+
+```ts
+const inventory = { key: 'inventory', label: 'Inventory' }
+const current = { key: 'current', label: 'Current stock' }
+const planned = { key: 'planned', label: 'Planned stock' }
+const columns = [
+  col({ key: 'available', groupPath: [inventory, current] }),
+  col({ key: 'reserved', groupPath: [inventory, current] }),
+  col({ key: 'incoming', groupPath: [inventory, planned] }),
+]
+```
+
+Each visible level gets a sticky row. A column with a shorter path has blank cells at the deeper
+levels. For custom content, use `#column-group="{ group, level }"` (level 0 is outermost).
+The header cells carry `data-group-key` and `data-group-start` (the first column key of that
+span), and their rows carry `data-group-level`. Combine these hooks to locate a specific span
+when a group is split by pinning or reordering.
 
 ### Resizable columns
 
@@ -1207,6 +1299,23 @@ Drag a header's right edge to resize (mouse, pen, touch). Double-click the edge 
 cell. Focus the edge and press ← / → (Shift for bigger steps), or, with keyboard navigation,
 Alt+Shift+← / → on a header. The header menu gains _Fit width_ and _Reset width_. Widths are saved
 in `columnState.widths` (e.g. `{ player: '240px' }`) and persisted with `storage`.
+
+### Initial content autosizing
+
+Enable `initialAutoSize` on selected columns with `columnResizingFeature`.
+
+```ts
+col({ key: 'name', width: '12rem', initialAutoSize: true, minWidth: '8rem', maxWidth: '24rem' })
+```
+
+The grid uses the configured width while it waits for real rows and a measurable layout. It then
+fits the header and rendered cells within the resize bounds. With paging or virtualization, only
+the cells rendered at the time of measurement contribute. Later row changes keep the fitted width.
+`resizable: false` can be used to fit a column without exposing manual resize controls.
+
+The fitted width is a local default. Explicit widths from `columnState.widths` or `storage` take
+precedence. _Reset width_ clears the explicit width and restores the fitted default, measuring it
+when needed. See **Grid / Columns / Initial Autosizing** in Storybook.
 
 ### Pinned columns
 

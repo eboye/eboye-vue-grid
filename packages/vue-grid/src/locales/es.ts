@@ -35,6 +35,8 @@ export const es = {
       other: 'Las # filas están seleccionadas.',
     }),
   clearSelection: 'Borrar selección',
+  showRowDetails: 'Mostrar detalles de la fila',
+  hideRowDetails: 'Ocultar detalles de la fila',
   expandRow: 'Expandir fila',
   collapseRow: 'Contraer fila',
   expandGroup: 'Expandir grupo',

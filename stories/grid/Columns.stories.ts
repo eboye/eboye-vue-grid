@@ -4,6 +4,7 @@ import { fn } from 'storybook/test'
 import { createColumnHelper, VGridColumnMenu, type ColumnState } from '@nocopypaste/vue-grid'
 import { makeBets, statusTones, type Bet } from '../data'
 import { Grid as VGrid, type GridArgs } from '../support'
+import InteractiveHeaderFixture from './InteractiveHeaderFixture.vue'
 
 const bet = createColumnHelper<Bet>()
 const wideColumns = [
@@ -166,6 +167,52 @@ export const Resizing: Story = {
   }),
 }
 
+/** Fit selected columns to the first rendered rows, while honoring saved widths. */
+export const InitialAutosizing: Story = {
+  render: () => ({
+    components: { VGrid },
+    setup() {
+      const rows = ref<{ id: number; name: string; owner: string }[]>([])
+      const loading = ref(true)
+      const show = ref(true)
+      const columns = [
+        {
+          key: 'name',
+          header: 'Project',
+          width: '100px',
+          maxWidth: '240px',
+          initialAutoSize: true,
+        },
+        { key: 'owner', header: 'Owner', width: '80px', minWidth: '120px', initialAutoSize: true },
+        { key: 'stage', header: 'Stage', width: '70px', initialAutoSize: true, resizable: false },
+        { key: 'id', header: 'ID', width: '1fr', resizable: false },
+      ]
+      const load = () => {
+        rows.value = [
+          { id: 1, name: 'A long project name that exceeds the width limit', owner: 'A' },
+        ]
+        loading.value = false
+      }
+      const replace = () => {
+        rows.value = [{ id: 2, name: 'Roadmap', owner: 'A' }]
+      }
+      return { columns, rows, loading, show, load, replace }
+    },
+    template: `
+      <button type="button" @click="load">Load projects</button>
+      <button type="button" @click="replace">Replace projects</button>
+      <button type="button" @click="show = !show">{{ show ? 'Hide table' : 'Show table' }}</button>
+      <div v-show="show" class="sb-frame" style="max-width: 640px">
+        <VGrid
+          :rows="rows" :columns="columns" :loading="loading" row-key="id"
+          storage="storybook-columns-initial-autosizing" aria-label="Projects" skeleton
+        >
+          <template #cell-stage><span>Ready for scheduling</span></template>
+        </VGrid>
+      </div>`,
+  }),
+}
+
 /**
  * With `columnGroupsFeature`, give columns a `group` and adjacent columns of the same group share a
  * header cell above theirs. The group row is sticky, pinned groups stay pinned (a pin boundary
@@ -216,6 +263,74 @@ export const Groups: Story = {
     components: { VGrid },
     setup: () => ({ args }),
     template: `<div class="sb-frame" style="max-width: 900px; height: 420px"><VGrid v-bind="args" style="height: 100%" /></div>`,
+  }),
+}
+
+/** Nested column groups over a mix of fixed and flexible columns. */
+export const NestedGroups: Story = {
+  render: () => ({
+    components: { VGrid },
+    setup() {
+      const inventory = { key: 'inventory', label: 'Inventory' }
+      const activity = { key: 'activity', label: 'Activity' }
+      const identity = { key: 'identity', label: 'Identity' }
+      const columns = [
+        { key: 'id', width: '88px', pinned: 'left', groupPath: [inventory, identity] },
+        { key: 'name', width: '1fr', minWidth: '132px', groupPath: [inventory, identity] },
+        {
+          key: 'location',
+          width: '120px',
+          groupPath: [inventory, { key: 'location', label: 'Location' }],
+        },
+        {
+          key: 'quantity',
+          width: '160px',
+          groupPath: [activity, { key: 'current', label: 'Current' }],
+        },
+        {
+          key: 'change',
+          width: '1fr',
+          minWidth: '150px',
+          groupPath: [activity, { key: 'trend', label: 'Trend' }],
+        },
+        { key: 'status', width: '110px', groupPath: [activity] },
+      ]
+      const rows = Array.from({ length: 100 }, (_, i) => ({
+        id: i + 1,
+        name: `Item ${i + 1}`,
+        location: i % 2 ? 'East' : 'West',
+        quantity: i * 10,
+        change: i % 3,
+        status: 'Available',
+      }))
+      const compact = ref(false)
+      return { columns, rows, compact }
+    },
+    template: `
+      <div>
+        <button type="button" @click="compact = !compact">{{ compact ? 'Widen grid' : 'Narrow grid' }}</button>
+        <div :style="{ width: compact ? '520px' : '920px', height: '360px' }">
+          <VGrid
+            :columns="columns"
+            :rows="rows"
+            :virtual="{ rowHeight: 36 }"
+            row-key="id"
+            storage="nested-group-layout"
+            aria-label="Inventory activity"
+            style="height: 100%"
+          >
+            <template #column-group="{ group }">{{ group.label }}</template>
+          </VGrid>
+        </div>
+      </div>`,
+  }),
+}
+
+/** Focus the Name header and press F2 to reach its menu. The menu can extend past the fitted grid. */
+export const InteractiveHeaders: Story = {
+  render: () => ({
+    components: { InteractiveHeaderFixture },
+    template: '<InteractiveHeaderFixture />',
   }),
 }
 

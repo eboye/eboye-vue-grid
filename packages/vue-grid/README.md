@@ -129,7 +129,7 @@ an opt-in feature:
 | `columnVisibilityFeature`     | `hidden: true` columns, `columnState.hidden`, the header menu's Hide column item; without it every column shows                                                                                                                                                                                                                         |
 | `keyboardNavigationFeature`   | The ARIA grid pattern: one Tab stop, arrow keys / Home / End / PageUp / PageDown between cells, Enter, Space to select, →/← to expand, Alt+←/→ to move a column. Without it the grid is an ARIA `table` with its controls in the Tab order                                                                                              |
 | `columnResizingFeature`       | Drag a header edge to resize (mouse, pen, touch), double-click it to fit the content, ←/→ on the focused edge (Alt+Shift+←/→ on a header with keyboard navigation); `minWidth` / `maxWidth` bound it, `resizable: false` opts out; widths in `columnState.widths`, persisted with `storage`; Fit width / Reset width in the header menu |
-| `columnGroupsFeature`         | Grouped column headers: columns with the same `group` share a header cell in a sticky row above theirs; groups follow reordering, hiding, resizing and pinning (a pin boundary splits a group); a wide group keeps its label in sight while scrolling                                                                                   |
+| `columnGroupsFeature`         | Sticky grouped column headers with `group` or nested `groupPath`; spans follow reordering, hiding, resizing and pinning; a wide group keeps its label in sight while scrolling                                                                                                                                                          |
 | `rowPinningFeature`           | `v-model:pinned-rows` / `pinRow()`: rows that stay in view above or below the body, plus `pinned-top-rows` / `pinned-bottom-rows` for rows that aren't in the data                                                                                                                                                                      |
 | `rowReorderFeature`           | `row-reorder`: a handle column to drag rows by (mouse, pen, touch) and Alt+↑ / Alt+↓; emits `row-move`, `moveRow()` applies it. See [Row reordering](#row-reordering)                                                                                                                                                                   |
 | `aggregationFeature`          | Column `aggregate` (`sum`, `avg`, `min`, `max`, `count`, a function) and `totals`: a sticky totals row over the filtered rows                                                                                                                                                                                                           |
@@ -318,9 +318,10 @@ Clicks on links, buttons and inputs inside a cell never trigger `row-click`.
 
 ### Slots
 
-`cell-<key>` (`{ row, value, rowKey, rowIndex, depth, column }`) · `header-<key>` (`{ column }`) ·
+`cell-<key>` (`{ row, value, rowKey, rowIndex, depth, column }`) · `header-<key>` (`{ column }`, header label) ·
+`column-actions-<key>` (`{ column }`, interactive header controls) ·
 `total-<key>` (`{ value, column, group? }`, a cell of the totals row or a group row) ·
-`group-<key>` (`{ value, count, rows, column, group }`, the value of a group row) · `detail` (`{ row, rowKey, depth }`) ·
+`group-<key>` (`{ value, count, rows, column, group }`, the value of a group row) · `detail` (`{ row, rowKey, depth, close }`, with focus return on close) ·
 `toolbar` (`{ columns, columnState, setColumnState, filters, setFilters, clearFilters, activeFilterCount, selected, selectedCount, selectAllMatching, clearSelection }`) ·
 `empty` · `loading` · `sub-rows-loading` (`{ row }`) · `no-match` (`{ clearFilters, filterCount }`) ·
 `load-error` (`{ error, retry, stale }`, server data) · `select-all-banner` (`{ total, page, all, selectAll, clearSelection }`) ·
@@ -398,6 +399,7 @@ animate on the compositor (GPU): a busy live feed costs the main thread about a 
   minWidth?: string              // combined into minmax(minWidth, width); also the resize minimum
   maxWidth?: string              // resize maximum (columnResizingFeature)
   resizable?: boolean            // can the user resize it (columnResizingFeature, default true)
+  initialAutoSize?: boolean      // fit to the first rendered data and header (columnResizingFeature)
   group?: string                 // header group label (columnGroupsFeature)
   align?: 'start' | 'center' | 'end'
   sortable?: boolean; sortValue?: (row) => unknown; sortFn?: (a, b) => number
@@ -1592,6 +1594,8 @@ With `keyboardNavigationFeature` it is an ARIA `grid` (`treegrid` with sub-grids
 `Home`/`End`, `Ctrl+Home`/`Ctrl+End`, `PageUp`/`PageDown`; `ContextMenu` / `Shift+F10` opens the context menu. `Enter` sorts a header (`Shift+Enter` adds it with `multi-sort`) or activates the
 cell's control; `Space` toggles row selection; `→`/`←` on a tree cell expands/collapses; `Alt+←/→` on a
 header moves the column; `Alt+Shift+←/→` on a header resizes it (with `columnResizingFeature`).
+`F2` on a column header focuses its first enabled custom action. Custom controls also
+participate in the normal Tab order.
 With `range-selection` (`rangeSelectionFeature`), `Shift+arrows` select a block of cells from the
 focused one, `Ctrl/⌘+A` every cell, `Esc` clears it and `Ctrl/⌘+C` copies it; cells in it carry
 `aria-selected`.

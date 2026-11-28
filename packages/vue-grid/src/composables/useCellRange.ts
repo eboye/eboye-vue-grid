@@ -30,17 +30,8 @@ export interface CellRangeOptions<T> {
   enabled: () => boolean
   /** `v-model:range`: null unless the range covers more than one cell. */
   model: Ref<CellRange | null>
-  /** How the body nests (as virtual scrolling reads it), to list its rows as laid out. */
-  levels: {
-    /** The top level on screen (this page; group rows when grouped). */
-    top: () => readonly T[]
-    keyOf: () => (row: T) => RowKey
-    open: () => ReadonlySet<RowKey>
-    tree: () =>
-      ((keyOf: (row: T) => RowKey) => { children(row: T): readonly T[] | undefined }) | null
-    prepare: () => (rows: readonly T[]) => readonly T[]
-    isGroup: () => ((row: T) => boolean) | undefined
-  }
+  /** The body's visible data rows, in display order. */
+  rows: () => readonly T[]
   /** The visible data columns, left to right. */
   columns: () => readonly RangeColumn<T>[]
   getKey: (row: T) => RowKey
@@ -121,25 +112,7 @@ export function useCellRange<T>(opts: CellRangeOptions<T>) {
   const cellId = (rowKey: RowKey, columnKey: string) => JSON.stringify([rowKey, columnKey])
 
   /** The body's data rows as laid out, top to bottom: expanded children in, group rows out. */
-  const ordered = computed<T[]>(() => {
-    const l = opts.levels
-    const key = l.keyOf()
-    const open = l.open()
-    const tree = l.tree()?.(key)
-    const prepare = l.prepare()
-    const isGroup = l.isGroup()
-    const out: T[] = []
-    const walk = (level: readonly T[]) => {
-      for (const row of level) {
-        if (!isGroup?.(row)) out.push(row)
-        if (!tree || !open.has(key(row))) continue
-        const kids = tree.children(row)
-        if (kids?.length) walk(prepare(kids))
-      }
-    }
-    walk(l.top())
-    return out
-  })
+  const ordered = computed(opts.rows)
 
   /** Row positions by key. Read only while a range exists. */
   const rowIndex = computed(() => {

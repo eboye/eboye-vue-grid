@@ -54,6 +54,20 @@ const namesIn = (w: Wrapper, groupKey: string) =>
 const groupRow = (w: Wrapper, label: string) =>
   w.findAll('.vg-rowgroup').find((r) => r.find('.vg-rowgroup-value').text() === label)!
 
+it('exposes data rows only when both levels of their group are open', async () => {
+  const w = mount(VGrid, { props: { rows, columns, rowKey: 'id', groupBy: ['region', 'status'] } })
+  try {
+    const api = w.vm as unknown as VGridExposed<Row>
+    expect(api.getVisibleRows()).toEqual([])
+    await groupRow(w, 'North').get('button.vg-expander').trigger('click')
+    expect(api.getVisibleRows()).toEqual([])
+    await groupRow(w, 'Paid').get('button.vg-expander').trigger('click')
+    expect(api.getVisibleRows().map((row) => row.id)).toEqual([1, 6])
+  } finally {
+    w.unmount()
+  }
+})
+
 describe('groupRows', () => {
   const opts = { columns: [columns[1]!], allColumns: columns }
 

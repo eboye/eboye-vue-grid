@@ -28,6 +28,8 @@ export const ja = {
   selectAllMatching: (total) => `${num(total)} 行すべてを選択`,
   allSelected: (total) => `${num(total)} 行すべてが選択されています。`,
   clearSelection: '選択を解除',
+  showRowDetails: '行の詳細を表示',
+  hideRowDetails: '行の詳細を非表示',
   expandRow: '行を展開',
   collapseRow: '行を折りたたむ',
   expandGroup: 'グループを展開',

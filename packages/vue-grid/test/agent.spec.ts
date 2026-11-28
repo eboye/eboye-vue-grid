@@ -151,9 +151,21 @@ describe('validateGridConfig', () => {
       validateGridConfig({
         ...base,
         features: ['allFeatures'],
-        columns: [{ key: 'a', pinned: 'left', group: 'G' }],
+        columns: [
+          { key: 'a', pinned: 'left', group: 'G' },
+          { key: 'b', groupPath: [{ key: 'g', label: 'Group' }] },
+        ],
       }).ok,
     ).toBe(true)
+    expect(
+      find(
+        validateGridConfig({
+          ...base,
+          columns: [{ key: 'a', groupPath: [{ key: 'g', label: 'Group' }] }],
+        }).diagnostics,
+        'columns[0].groupPath',
+      )[0]?.message,
+    ).toContain('columnGroupsFeature')
   })
 
   it('flags unknown and unregistered renderers', () => {

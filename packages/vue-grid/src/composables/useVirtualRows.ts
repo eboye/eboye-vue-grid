@@ -32,12 +32,12 @@ export interface VirtualRowsOptions<T> {
   /** The row key reader (its reactive inputs read once per layout pass). */
   keyOf: () => (row: T) => RowKey
   expanded: () => ReadonlySet<RowKey>
+  /** Detail keys supplied separately, or undefined to share the tree's expansion keys. */
+  detailExpanded: () => ReadonlySet<RowKey> | undefined
   /** Tree mode: a factory for a snapshot of the sub-row cache; null without sub-grids. */
   subRows: () => ((keyOf: (row: T) => RowKey) => SubRowsSnapshot<T>) | null
-  hasDetail: () => boolean
-  /** Rows that never have a detail row (group rows of the row grouping feature). */
-  isGroup?: () => ((row: T) => boolean) | undefined
-  rowExpandable: () => ((row: T) => boolean) | undefined
+  /** Returns a row eligibility predicate when a detail slot is present. */
+  detailEligibility: () => ((row: T) => boolean) | undefined
   /** Filters and sorts a child level (its reactive inputs read once per layout pass). */
   preparer: () => (rows: readonly T[]) => readonly T[]
 }
@@ -217,27 +217,27 @@ export function useVirtualRows<T>(opts: VirtualRowsOptions<T>) {
     const key = opts.keyOf()
     const rawKey = (row: T) => key(toRaw(row))
     const expandedKeys = opts.expanded()
+    const detailKeys = opts.detailExpanded() ?? expandedKeys
     const tree = opts.subRows()?.(key) ?? null
-    const detail = opts.hasDetail()
-    const isGroup = opts.isGroup?.()
-    const rowExpandable = opts.rowExpandable()
+    const canShowDetail = opts.detailEligibility()
     void heights.size // any new or changed height re-runs the layout
     const measured = toRaw(heights)
     const detailEstimate = v.detailHeight ?? v.rowHeight * 4
-    const expandable = (row: T) =>
-      !!tree?.mayHaveChildren(row) || (detail && (rowExpandable ? rowExpandable(row) : true))
     return buildLayout<T>({
       rows: opts.rows(),
       getKey: key,
       rowHeight: v.rowHeight,
       prepare: opts.preparer(),
-      isExpanded: (row) => expandedKeys.has(rawKey(row)),
-      canExpand: expandable,
-      // group rows (row grouping) have no detail row
+      isExpanded: (row) => {
+        const k = rawKey(row)
+        return expandedKeys.has(k) || (canShowDetail !== undefined && detailKeys.has(k))
+      },
       detailHeight: (row, k) =>
-        detail && !isGroup?.(row) ? (measured.get(heightId('d', k)) ?? detailEstimate) : 0,
-      subRows: (row) => {
-        if (!tree) return undefined
+        detailKeys.has(k) && canShowDetail?.(row)
+          ? (measured.get(heightId('d', k)) ?? detailEstimate)
+          : 0,
+      subRows: (row, k) => {
+        if (!tree || !expandedKeys.has(k) || !tree.mayHaveChildren(row)) return undefined
         const state = tree.state(row)
         const kids = tree.children(row)
         if (!state && !kids?.length) return undefined
@@ -270,7 +270,7 @@ export function useVirtualRows<T>(opts: VirtualRowsOptions<T>) {
   let anchor: { key: RowKey; offset: number } | null = null
   let lastRows: unknown
   let lastExpanded: unknown
-  const variableHeights = () => opts.hasDetail() || opts.subRows() !== null
+  const variableHeights = () => opts.detailEligibility() !== undefined || opts.subRows() !== null
   function bodyBounds(el: HTMLElement) {
     const viewport = el.getBoundingClientRect()
     const header = el.querySelector(':scope > .vg-header > .vg-header-cell')

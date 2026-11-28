@@ -27,6 +27,8 @@ export const de = {
   selectAllMatching: (total) => `Alle ${num(total)} Zeilen auswählen`,
   allSelected: (total) => `Alle ${num(total)} Zeilen sind ausgewählt.`,
   clearSelection: 'Auswahl aufheben',
+  showRowDetails: 'Zeilendetails anzeigen',
+  hideRowDetails: 'Zeilendetails ausblenden',
   expandRow: 'Zeile aufklappen',
   collapseRow: 'Zeile zuklappen',
   expandGroup: 'Gruppe aufklappen',

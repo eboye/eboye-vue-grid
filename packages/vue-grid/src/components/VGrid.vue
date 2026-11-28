@@ -20,6 +20,7 @@ import {
 import { effectivePin, gridTemplate, normalizeColumnState, visibleColumns } from '../core/columns'
 import type { RowGroup } from '../core/grouping'
 import { localStorageAdapter } from '../core/storage'
+import { gridElement, rowKeyAttrs } from '../internal/gridDom'
 import { getCellValue, resolveRowKey, type RowKeyGetter } from '../core/value'
 import type { RowPatches } from '../core/patch'
 import type { MenuHandle } from '../composables/useGridMenus'
@@ -53,6 +54,7 @@ import type {
   ExtraAttrs,
   RowAttrsContext,
   ColumnDef,
+  ColumnHeaderGroup,
   ColumnState,
   FlashMode,
   FilterState,
@@ -283,8 +285,10 @@ const sort = defineModel<SortState | null>('sort', { default: null })
 const sorts = defineModel<SortState[]>('sorts', { default: () => [] })
 /** Column order, hidden columns, runtime pins and resized widths (persisted with `storage`). */
 const columnState = defineModel<ColumnState | undefined>('columnState', { default: undefined })
-/** Keys of expanded rows (sub-grids and detail rows). */
+/** Keys of expanded rows. Controls both sub-grids and details unless `detailExpanded` is set. */
 const expanded = defineModel<RowKey[]>('expanded', { default: () => [] })
+/** Keys of open detail panels. Pass an array (including `[]`) to control details separately. */
+const detailExpanded = defineModel<RowKey[]>('detailExpanded')
 /** Keys of selected rows. Needs the selection feature. */
 const selected = defineModel<RowKey[]>('selected', { default: () => [] })
 /** Column filters and quick search: `{ columns: Record<key, ColumnFilter>, search }`. Needs the filtering feature. */
@@ -374,8 +378,12 @@ defineSlots<{
     depth: number
     column: ColumnDef<T>
   }) => unknown
-  /** A column's header content: `#header-<key>`. */
+  /** A column's header label: `#header-<key>`. For controls use `#column-actions-<key>`. */
   [key: `header-${string}`]: (scope: { column: ColumnDef<T> }) => unknown
+  /** Interactive content beside the header label and sort button: `#column-actions-<key>`. */
+  [key: `column-actions-${string}`]: (scope: { column: ColumnDef<T> }) => unknown
+  /** Content of a grouped column header. The top group row is level 0. */
+  'column-group'?: (scope: { group: ColumnHeaderGroup; level: number }) => unknown
   /** A column's cell in the totals row and in group rows (aggregation, row grouping); `group` in group rows. */
   [key: `total-${string}`]: (scope: {
     value: unknown
@@ -390,8 +398,8 @@ defineSlots<{
     column: ColumnDef<T>
     group: RowGroup<T>
   }) => unknown
-  /** Expandable detail row under a row: any content, even another grid. */
-  detail?: (scope: { row: T; rowKey: RowKey; depth: number }) => unknown
+  /** Expandable detail row. `close()` collapses the panel and returns focus to its row expander. */
+  detail?: (scope: { row: T; rowKey: RowKey; depth: number; close: () => void }) => unknown
   /** Shown when there are no rows. */
   empty?: () => unknown
   /** Shown when filters hide every row, instead of the message and its Clear filters button. */
@@ -624,20 +632,25 @@ const resize = features.columnResizing?.useColumnResize({
   state: () => effectiveState.value,
   setState: setColumnState,
 })
-/** A resized width (live while dragging, else committed), overriding the column's own `width`. */
-const resizedWidth = (key: string) =>
-  resize?.live.value?.key === key ? resize.live.value.width : effectiveState.value.widths?.[key]
+/** Explicit widths take precedence over the content-sized default. */
+const resizedWidth = ({ key, initialAutoSize }: ColumnDef<T>) => {
+  if (resize?.live.value?.key === key) return resize.live.value.width
+  const widths = effectiveState.value.widths
+  if (widths && Object.hasOwn(widths, key)) return widths[key]
+  return initialAutoSize ? resize?.initialWidth(key) : undefined
+}
 const canResize = (col: ColumnDef) => !!resize && col.resizable !== false
 /**
  * Columns as sized: resized widths applied (for the grid template and the pinned offsets). A
  * resized track is a plain length (already clamped to `minWidth` / `maxWidth`): a `minmax()` track
  * stays at its minimum whenever the columns overflow the grid, so it would never grow.
  */
+const withWidth = (c: ResolvedColumn, width: string | undefined) =>
+  width ? { ...c, def: { ...c.def, width, minWidth: undefined }, sized: true } : c
 const sizedColumns = computed(() =>
-  resolvedColumns.value.map((c) => {
-    const width = c.kind === 'data' ? resizedWidth(c.key) : undefined
-    return width ? { ...c, def: { ...c.def, width, minWidth: undefined }, sized: true } : c
-  }),
+  resolvedColumns.value.map((c) =>
+    withWidth(c, c.kind === 'data' ? resizedWidth(c.def) : undefined),
+  ),
 )
 
 // ── Column virtualization ───────────────────────────────────────────────────────────────────
@@ -654,20 +667,22 @@ const cols = features.columnVirtualization?.useVirtualColumns({
   keepSized: (key) => statePinnedKeys.value.includes(key),
 })
 
-const template = computed(() =>
-  cols?.active.value
-    ? cols.template(sizedColumns.value)
-    : gridTemplate(sizedColumns.value.map((c) => c.def)),
-)
+const columnTemplate = (columns: typeof sizedColumns.value) =>
+  cols?.active.value ? cols.template(columns) : gridTemplate(columns.map((c) => c.def))
+const template = computed(() => columnTemplate(sizedColumns.value))
 
-/** A row of column group headers is shown (column groups feature, some visible column grouped). */
-const hasGroups = computed(
-  () =>
-    !!features.columnGroups &&
-    resolvedColumns.value.some((c) => c.kind === 'data' && !!c.def.group),
+const groupDepth = (column: ColumnDef<T>) => column.groupPath?.length ?? (column.group ? 1 : 0)
+const groupLevels = computed(() =>
+  features.columnGroups
+    ? resolvedColumns.value.reduce(
+        (depth, column) => Math.max(depth, column.kind === 'data' ? groupDepth(column.def) : 0),
+        0,
+      )
+    : 0,
 )
-/** Header rows above the body (1, or 2 with column groups): offsets `aria-rowindex`. */
-const headerRows = computed(() => (hasGroups.value ? 2 : 1))
+const hasGroups = computed(() => groupLevels.value > 0)
+/** Header rows above the body, including each group level. */
+const headerRows = computed(() => groupLevels.value + 1)
 
 // ── Sorting ─────────────────────────────────────────────────────────────────────────────────
 const sortable = (col: ColumnDef<T>) => !!features.sorting && !!col.sortable
@@ -729,21 +744,55 @@ watch(
 
 const treeMode = computed(() => !!sub && !!(props.subRows || props.loadSubRows))
 const hasDetail = computed(() => !!slots.detail)
+const detailEligibility = computed(() => {
+  if (!hasDetail.value) return undefined
+  const isGroup = grouping?.active.value ? grouping.isGroup : undefined
+  const rowExpandable = props.rowExpandable
+  return (row: T) => !isGroup?.(row) && (rowExpandable?.(row) ?? true)
+})
+const canShowDetail = (row: T) => detailEligibility.value?.(row) ?? false
 const expandedSet = computed(() => new Set(expanded.value))
+const detailExpandedSet = computed(() =>
+  detailExpanded.value === undefined ? undefined : new Set(detailExpanded.value),
+)
+const separateDetails = computed(() => detailExpandedSet.value !== undefined)
 /** Known child rows (sub-grids only). */
 const childrenOf = (row: T) => (treeMode.value ? sub?.children(row) : undefined)
 
 function canExpand(row: T): boolean {
   if (treeMode.value && sub?.mayHaveChildren(row)) return true
-  return hasDetail.value && (props.rowExpandable ? props.rowExpandable(row) : true)
+  return !separateDetails.value && canShowDetail(row)
+}
+
+function toggleExpandedKey(keys: ReadonlySet<RowKey>, key: RowKey): RowKey[] {
+  const next = new Set(keys)
+  if (next.has(key)) next.delete(key)
+  else next.add(key)
+  return [...next]
 }
 
 function toggleExpanded(row: T) {
-  const key = getKey(row)
-  const next = new Set(expandedSet.value)
-  if (next.has(key)) next.delete(key)
-  else next.add(key)
-  expanded.value = [...next]
+  expanded.value = toggleExpandedKey(expandedSet.value, getKey(row))
+}
+
+function toggleDetail(key: RowKey) {
+  if (detailExpandedSet.value)
+    detailExpanded.value = toggleExpandedKey(detailExpandedSet.value, key)
+}
+
+/** Close from inside a detail panel and restore focus before removing its controls. */
+function closeDetail(key: RowKey) {
+  const separate = detailExpandedSet.value
+  const keys = separate ?? expandedSet.value
+  if (!keys.has(key)) return
+  const expander = separate ? '.vg-detail-expander' : '.vg-expander'
+  gridElement<HTMLButtonElement>(
+    root.value,
+    `.vg-row${rowKeyAttrs(key)} > .vg-cell ${expander}`,
+  )?.focus()
+  const next = toggleExpandedKey(keys, key)
+  if (separate) detailExpanded.value = next
+  else expanded.value = next
 }
 
 // ── Filtering ───────────────────────────────────────────────────────────────────────────────
@@ -853,6 +902,21 @@ const skeletonRows = computed(() =>
     : 0,
 )
 const loadError = computed(() => (serverMode.value ? ds?.error.value : undefined))
+const hasInitialSizing = computed(() => props.columns.some((column) => column.initialAutoSize))
+resize?.watchInitial(
+  () =>
+    hasInitialSizing.value && !isLoading.value && !loadError.value
+      ? (cols?.rendered.value ?? resolvedColumns.value)
+          .filter((column) => column.kind === 'data' && column.def.initialAutoSize)
+          .map((column) => column.key)
+      : [],
+  (keys) =>
+    columnTemplate(
+      sizedColumns.value.map((column) =>
+        keys.has(column.key) ? withWidth(column, 'max-content') : column,
+      ),
+    ),
+)
 const reload = async () => {
   sub?.clear()
   await ds?.reload()
@@ -1198,10 +1262,9 @@ const virt = features.virtualScrolling?.useVirtualRows<T>({
   rows: () => displayRows.value,
   keyOf: levelKeyOf,
   expanded: openKeys,
+  detailExpanded: () => detailExpandedSet.value,
   subRows: subRowsReader,
-  hasDetail: () => hasDetail.value,
-  isGroup: isGroupReader,
-  rowExpandable: () => props.rowExpandable,
+  detailEligibility: () => detailEligibility.value,
   preparer: levelPreparer,
 })
 const onScroll = () => virt?.onScroll()
@@ -1217,6 +1280,28 @@ const windowRows = computed(() => {
     return displayRows.value.slice(start, start + currentPageSize.value)
   }
   return displayRows.value
+})
+const visibleRows = computed<readonly T[]>(() => {
+  const top = windowRows.value
+  const readTree = subRowsReader()
+  const isGroup = isGroupReader()
+  if (!readTree && !isGroup) return top
+
+  const key = levelKeyOf()
+  const tree = readTree?.(key)
+  const open = openKeys()
+  const prepare = levelPreparer()
+  const rows: T[] = []
+  const walk = (level: readonly T[]) => {
+    for (const row of level) {
+      if (!isGroup?.(row)) rows.push(row)
+      if (!tree || !open.has(key(row)) || !tree.mayHaveChildren(row)) continue
+      const children = tree.children(row)
+      if (children?.length) walk(prepare(children))
+    }
+  }
+  walk(top)
+  return rows
 })
 const virtualBodyCount = computed(() => Math.max(1, virtualLayout.value?.rowCount ?? 0))
 // Stay on a page that exists — when filters shrink the rows, the page size grows, the app sets an
@@ -1308,14 +1393,7 @@ const cellRange = features.rangeSelection?.useCellRange<T>({
   root,
   enabled: () => !!props.rangeSelection,
   model: range,
-  levels: {
-    top: () => windowRows.value,
-    keyOf: levelKeyOf,
-    open: openKeys,
-    tree: subRowsReader,
-    prepare: levelPreparer,
-    isGroup: isGroupReader,
-  },
+  rows: () => visibleRows.value,
   columns: () => resolvedColumns.value.filter((c) => c.kind === 'data'),
   getKey,
   format: () => formatContext.value,
@@ -1415,13 +1493,15 @@ if (process.env.NODE_ENV !== 'production') {
     if (!features.virtualScrolling && props.virtual) missing('virtualScrolling', '`virtual`')
     if (!features.columnVirtualization && props.virtualColumns)
       missing('columnVirtualization', '`virtual-columns`')
+    if (!features.columnResizing && hasInitialSizing.value)
+      missing('columnResizing', 'Column `initialAutoSize`')
     if (!features.rowReorder && props.rowReorder) missing('rowReorder', '`row-reorder`')
     if (!features.selection && props.selectable) missing('selection', '`selectable`')
     if (!features.subGrids && (props.subRows || props.loadSubRows))
       missing('subGrids', '`sub-rows` / `load-sub-rows`')
-    const groupedCol = props.columns.find((c) => c.group)?.key
+    const groupedCol = props.columns.find(groupDepth)?.key
     if (!features.columnGroups && groupedCol)
-      missing('columnGroups', `Column "${groupedCol}" has a \`group\`; that`)
+      missing('columnGroups', `Column "${groupedCol}" has a \`group\` or \`groupPath\`; that`)
     const hiddenCol = props.columns.find((c) => c.hidden)?.key ?? columnState.value?.hidden?.[0]
     if (!features.columnVisibility && hiddenCol)
       missing('columnVisibility', `Column "${hiddenCol}" is hidden; that`)
@@ -1502,9 +1582,14 @@ const context: GridContext = {
   },
   treeMode,
   hasDetail,
+  separateDetails,
+  canShowDetail,
   canExpand,
   isExpanded: (key) => expandedSet.value.has(key),
+  isDetailExpanded: (key) => (detailExpandedSet.value ?? expandedSet.value).has(key),
   toggleExpanded,
+  toggleDetail,
+  closeDetail,
   children: (row) => childrenOf(row),
   subRowState: (row) => sub?.state(row),
   ensureSubRows: (row) => sub?.ensure(row),
@@ -1597,15 +1682,20 @@ function scrollToColumn(key: string): Promise<void> {
 
 function expandAll() {
   const keys: RowKey[] = []
+  const detailKeys: RowKey[] = []
+  const separate = separateDetails.value
   walk(sourceRows.value, (row) => {
     if (canExpand(row)) keys.push(getKey(row))
+    if (separate && canShowDetail(row)) detailKeys.push(getKey(row))
   })
   expanded.value = keys
+  if (separate) detailExpanded.value = detailKeys
   grouping?.setAll(true)
 }
 
 function collapseAll() {
   expanded.value = []
+  if (separateDetails.value) detailExpanded.value = []
   grouping?.setAll(false)
 }
 
@@ -1690,10 +1780,11 @@ const startEdit = (rowKey: RowKey, columnKey: string) =>
   editing?.startAt(rowKey, columnKey) ?? false
 const stopEdit = (cancel = false) => editing?.stop(cancel)
 
-defineExpose<VGridExposed>({
+defineExpose<VGridExposed<T>>({
   scrollToTop,
   scrollToRow,
   scrollToColumn,
+  getVisibleRows: () => visibleRows.value,
   expandAll,
   collapseAll,
   setColumnState,
@@ -1834,7 +1925,8 @@ defineExpose<VGridExposed>({
         <component
           :is="features.columnGroups.GroupRow"
           v-if="hasGroups && features.columnGroups"
-          :aria-rowindex="virtualLayout ? 1 : undefined"
+          :levels="groupLevels"
+          :indexed="!!virtualLayout"
         />
         <VGridHeader
           :aria-rowindex="virtualLayout ? headerRows : undefined"

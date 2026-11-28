@@ -29,6 +29,8 @@ export const pl = {
   selectAllMatching: (total) => `Zaznacz wszystkie wiersze (${num(total)})`,
   allSelected: (total) => `Zaznaczono wszystkie wiersze (${num(total)}).`,
   clearSelection: 'Wyczyść zaznaczenie',
+  showRowDetails: 'Pokaż szczegóły wiersza',
+  hideRowDetails: 'Ukryj szczegóły wiersza',
   expandRow: 'Rozwiń wiersz',
   collapseRow: 'Zwiń wiersz',
   expandGroup: 'Rozwiń grupę',

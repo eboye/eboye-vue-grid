@@ -30,6 +30,8 @@ export const en = {
   selectAllMatching: (total) => `Select all ${num(total)} rows`,
   allSelected: (total) => `All ${num(total)} rows are selected.`,
   clearSelection: 'Clear selection',
+  showRowDetails: 'Show row details',
+  hideRowDetails: 'Hide row details',
   expandRow: 'Expand row',
   collapseRow: 'Collapse row',
   expandGroup: 'Expand group',

@@ -1,7 +1,7 @@
 import type { Ref } from 'vue'
 import { gridElement, gridElements } from '../internal/gridDom'
 
-// Group header cells (column groups) aren't interactive: the arrow keys skip them.
+// Arrow keys skip group header cells. Custom controls inside those cells use the native Tab order.
 const CELL = ':is([role="gridcell"], [role="columnheader"]):not(.vg-group-cell)'
 const FOCUSABLE =
   'button, a[href], input, select, textarea, summary, [tabindex]:not([tabindex="-1"])'
@@ -135,7 +135,11 @@ export function useGridKeyboard(root: Ref<HTMLElement | undefined>, opts: GridKe
       return
     }
 
-    const expander = gridElement<HTMLButtonElement>(root.value, '.vg-expander', cell)
+    const expander = gridElement<HTMLButtonElement>(
+      root.value,
+      '.vg-expander:not(.vg-detail-expander)',
+      cell,
+    )
     let next: HTMLElement | undefined
     let vertical = false
     /** Virtualized columns: the column a horizontal key goes to, and the row it is in. */
@@ -191,6 +195,20 @@ export function useGridKeyboard(root: Ref<HTMLElement | undefined>, opts: GridKe
         next = cellAt(allRows, Math.max(0, rowIndex - 10), col)
         vertical = true
         break
+      case 'F2': {
+        if (!isHeader) return
+        const actions = cell.querySelector('.vg-header-actions')
+        if (!actions) return
+        for (const control of actions.querySelectorAll<HTMLElement>(FOCUSABLE)) {
+          if (control.matches(':disabled,[aria-disabled="true"]')) continue
+          control.focus()
+          if (document.activeElement === control) {
+            event.preventDefault()
+            break
+          }
+        }
+        return
+      }
       case 'Enter': {
         const inner = cell.querySelector<HTMLElement>(isHeader ? '.vg-sort' : FOCUSABLE)
         if (inner) {

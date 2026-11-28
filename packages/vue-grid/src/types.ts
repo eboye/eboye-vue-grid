@@ -119,6 +119,13 @@ export type RendererOptions<R> =
       ? CellRendererRegistry[R]
       : Record<string, unknown>
 
+export interface ColumnHeaderGroup {
+  /** Stable identifier within the parent group. */
+  key: string
+  /** Visible label, which can change without changing the key. */
+  label: string
+}
+
 export interface ColumnDef<T = any, R extends RendererRef = RendererName> {
   /** Unique, stable column id. Also used for sort state, column state and slot names. */
   key: string
@@ -142,11 +149,15 @@ export interface ColumnDef<T = any, R extends RendererRef = RendererName> {
   maxWidth?: string
   /** Can the user resize this column (column resizing feature)? Default `true`. */
   resizable?: boolean
+  /** Fit the column to its first rendered data and header, within the resize bounds (column resizing feature). */
+  initialAutoSize?: boolean
   /**
    * Header group label (column groups feature): adjacent visible columns with the same `group`
    * share one header cell above their own headers.
    */
   group?: string
+  /** Column header groups from outermost to innermost. Takes precedence over `group`. */
+  groupPath?: readonly ColumnHeaderGroup[]
   /** Cell and header alignment (default: the renderer's, e.g. `end` for numbers, else `start`). */
   align?: Align
   /** A sort button in the header (sorting feature). Client sorting needs `sort-mode="client"`. */
@@ -563,13 +574,19 @@ export interface HeaderActionEvent<T = any> {
 }
 
 /** Methods exposed on a `<VGrid>` template ref: `const grid = ref<VGridExposed>()`. */
-export interface VGridExposed {
+export interface VGridExposed<T = unknown> {
   /** Scrolls the grid back to its first row. */
   scrollToTop(): void
   /** Scrolls a row (top-level or nested, also in virtual mode) into view. */
   scrollToRow(key: RowKey): void
   /** Scrolls a column into view sideways (with `virtual-columns`, renders it first). */
   scrollToColumn(key: string): Promise<void>
+  /**
+   * Current page's visible body data in display order, including expanded children and rows outside
+   * the virtual viewport. Omits generated group headers, details, totals, and pinned rows.
+   * Reactive when called in a computed. Treat the returned rows as read-only.
+   */
+  getVisibleRows(): readonly T[]
   /** Expands every expandable row (sub-grids and detail rows) that passes the filters. */
   expandAll(): void
   /** Collapses every row. */
@@ -1069,6 +1086,10 @@ export interface GridMessages {
   expandRow?: string
   /** Default `Collapse row`. */
   collapseRow?: string
+  /** Default `Show row details`. */
+  showRowDetails?: string
+  /** Default `Hide row details`. */
+  hideRowDetails?: string
   /** Default `Expand group`. */
   expandGroup?: string
   /** Default `Collapse group`. */

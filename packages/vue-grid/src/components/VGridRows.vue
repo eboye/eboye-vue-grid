@@ -60,6 +60,7 @@ const items = computed(() => {
       index: props.indexOffset + at,
       expandable,
       expanded: expandable && grid.isExpanded(key),
+      detailExpanded: grid.isDetailExpanded(key) && grid.canShowDetail(row),
       selected: grid.selectMode.value ? grid.rowCheckState(row) === 'all' : undefined,
       virtual: span ? level!.info(at, key) : undefined,
     }
@@ -100,7 +101,7 @@ watchEffect(() => {
           'vg-row-selected': item.selected,
           'vg-row-highlighted': !item.group && grid.isHighlighted(item.key),
           'vg-row-clickable': !item.group && grid.rowClickable.value,
-          'vg-row-expanded': item.expanded,
+          'vg-row-expanded': item.expanded || item.detailExpanded,
           'vg-rowgroup': item.group,
         },
         item.group ? undefined : grid.rowClass(item.row, item.index),
@@ -137,9 +138,8 @@ watchEffect(() => {
       </template>
     </div>
 
-    <template v-if="item.expanded">
+    <template v-if="item.detailExpanded">
       <div
-        v-if="grid.hasDetail.value && !item.group"
         role="row"
         class="vg-detail-row"
         :data-detail-for="String(item.key)"
@@ -151,10 +151,20 @@ watchEffect(() => {
           :tabindex="grid.rovingTabindex"
           :class="['vg-detail', grid.ui.value.detail]"
         >
-          <RenderSlot :fn="grid.slots.detail" :scope="{ row: item.row, rowKey: item.key, depth }" />
+          <RenderSlot
+            :fn="grid.slots.detail"
+            :scope="{
+              row: item.row,
+              rowKey: item.key,
+              depth,
+              close: () => grid.closeDetail(item.key),
+            }"
+          />
         </div>
       </div>
+    </template>
 
+    <template v-if="item.expanded">
       <div
         v-if="
           grid.treeMode.value && (grid.subRowState(item.row) || grid.children(item.row)?.length)

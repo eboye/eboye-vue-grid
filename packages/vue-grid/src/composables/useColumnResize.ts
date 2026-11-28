@@ -1,5 +1,6 @@
-import { nextTick, onBeforeUnmount, shallowRef, type Ref } from 'vue'
+import { nextTick, onBeforeUnmount, shallowRef, watchPostEffect, type Ref } from 'vue'
 import { setColumnWidth } from '../core/columns'
+import { gridElement } from '../internal/gridDom'
 import type { ColumnDef, ColumnState } from '../types'
 
 export interface ColumnResizeOptions {
@@ -22,6 +23,7 @@ const DEFAULT_MIN = 40
 export function useColumnResize(opts: ColumnResizeOptions) {
   /** The width being dragged (or measured), applied before it is committed. */
   const live = shallowRef<{ key: string; width: string } | null>(null)
+  const initialWidths = shallowRef(new Map<string, string>())
   /** Key of the column being dragged. */
   const resizing = shallowRef<string | null>(null)
   let frame = 0
@@ -120,8 +122,79 @@ export function useColumnResize(opts: ColumnResizeOptions) {
     commit(key, `${width}px`)
   }
 
+  function watchInitial(
+    candidateKeys: () => readonly string[],
+    measurementTemplate: (keys: ReadonlySet<string>) => string,
+  ) {
+    watchPostEffect((onCleanup) => {
+      const root = opts.root.value
+      if (!root) return
+      const keys = candidateKeys()
+      if (!keys.length) return
+      const saved = opts.state().widths
+      const pending = keys.filter(
+        (key) => !initialWidths.value.has(key) && !Object.hasOwn(saved ?? {}, key),
+      )
+      if (!pending.length) return
+
+      const fit = () => {
+        // Wait for a real row in this grid and for layout (for example, in a hidden tab).
+        if (
+          !root.clientWidth ||
+          !gridElement(root, '.vg-row[data-row-key]:not(.vg-rowgroup), .vg-row[data-pinned-key]')
+        )
+          return false
+        const headers = new Map<string, HTMLElement>()
+        for (const key of pending) {
+          const header = headerCell(key)
+          if (header) headers.set(key, header)
+        }
+        if (!headers.size) return false
+
+        // Measure all pending columns in one layout and restore the Vue-owned template before paint.
+        const style = root.style
+        const previous = style.getPropertyValue('--vg-columns')
+        const measurements = new Map<string, number>()
+        style.setProperty('--vg-columns', measurementTemplate(new Set(headers.keys())))
+        try {
+          for (const [key, header] of headers)
+            measurements.set(key, header.getBoundingClientRect().width)
+        } finally {
+          style.setProperty('--vg-columns', previous)
+        }
+        const next = new Map(initialWidths.value)
+        for (const [key, px] of measurements) next.set(key, `${clamp(key, Math.ceil(px))}px`)
+        initialWidths.value = next
+        return true
+      }
+
+      if (fit()) return
+      let frame = 0
+      const retry = () => {
+        if (frame) return
+        // Defer layout changes until outside ResizeObserver delivery.
+        frame = requestAnimationFrame(() => {
+          frame = 0
+          if (fit()) disconnect()
+        })
+      }
+      const resize = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(retry)
+      const rows = typeof MutationObserver === 'undefined' ? undefined : new MutationObserver(retry)
+      const disconnect = () => {
+        cancelAnimationFrame(frame)
+        resize?.disconnect()
+        rows?.disconnect()
+      }
+      resize?.observe(root)
+      rows?.observe(root, { childList: true, subtree: true })
+      onCleanup(disconnect)
+    })
+  }
+
   return {
     live,
+    initialWidth: (key: string) => initialWidths.value.get(key),
+    watchInitial,
     resizing,
     onPointerDown,
     step,

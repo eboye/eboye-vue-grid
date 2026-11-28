@@ -163,6 +163,15 @@ function ariaSort(col: ResolvedColumn) {
           />
           <template v-else>{{ col.def.header ?? col.key }}</template>
         </span>
+        <div
+          v-if="grid.slots[`column-actions-${col.key}`]"
+          class="vg-header-actions"
+          @pointerdown.stop
+          @contextmenu.stop
+          @keydown.stop
+        >
+          <RenderSlot :fn="grid.slots[`column-actions-${col.key}`]" :scope="{ column: col.def }" />
+        </div>
         <template v-if="grid.filters && col.def.filterable">
           <component
             :is="grid.filters.FilterButton"

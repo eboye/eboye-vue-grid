@@ -1,7 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
-import { createColumnHelper } from '@nocopypaste/vue-grid'
+import { createColumnHelper, type VGridExposed } from '@nocopypaste/vue-grid'
+import { computed, ref } from 'vue'
 import { betColumns, makeBets, type Bet } from '../data'
 import { Grid as VGrid, type GridArgs } from '../support'
+import PagedDetailFixture from './PagedDetailFixture.vue'
+import RefreshingViewsFixture from './RefreshingViewsFixture.vue'
 
 interface Leg {
   leg: number
@@ -74,5 +77,75 @@ export const FreeformContent: Story = {
           </dl>
         </template>
       </VGrid>`,
+  }),
+}
+
+export const IndependentExpansion: Story = {
+  render: () => ({
+    components: { VGrid },
+    setup() {
+      interface ProjectRow {
+        id: number
+        name: string
+        kind: 'project' | 'task'
+        children?: ProjectRow[]
+      }
+      const rows: ProjectRow[] = [
+        {
+          id: 1,
+          name: 'Website update',
+          kind: 'project',
+          children: [{ id: 2, name: 'Review content', kind: 'task' }],
+        },
+      ]
+      const columns = [{ key: 'name', header: 'Name' }]
+      const expanded = ref<number[]>([])
+      const detailExpanded = ref<number[]>([])
+      const grid = ref<VGridExposed<ProjectRow>>()
+      const taskCount = computed(
+        () => grid.value?.getVisibleRows().filter((row) => row.kind === 'task').length ?? 0,
+      )
+      return { rows, columns, expanded, detailExpanded, grid, taskCount }
+    },
+    template: `
+      <VGrid
+        ref="grid"
+        v-model:expanded="expanded"
+        v-model:detail-expanded="detailExpanded"
+        :rows="rows"
+        :columns="columns"
+        :sub-rows="row => row.children"
+        :virtual="{ rowHeight: 40 }"
+        row-key="id"
+        aria-label="Projects and tasks"
+        style="height: 280px"
+      >
+        <template #detail="{ row }"><p>Details of {{ row.name }}</p></template>
+      </VGrid>
+      <p role="status">Visible tasks: {{ taskCount }}</p>`,
+  }),
+}
+
+/** Server-paged projects with a keyboard-accessible detail panel and its own anchored menu. */
+export const PagedDetails: Story = {
+  render: () => ({
+    components: { PagedDetailFixture },
+    template: '<PagedDetailFixture />',
+  }),
+}
+
+/** A short final page with wrapping cells and details that grow with their content. */
+export const ContentSizedPage: Story = {
+  render: () => ({
+    components: { PagedDetailFixture },
+    template: '<PagedDetailFixture short-page />',
+  }),
+}
+
+/** Switch between a project tree and teams while refreshing the same tasks. */
+export const RefreshingViews: Story = {
+  render: () => ({
+    components: { RefreshingViewsFixture },
+    template: '<RefreshingViewsFixture />',
   }),
 }

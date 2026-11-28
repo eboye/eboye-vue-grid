@@ -39,15 +39,16 @@ export interface LayoutInput<T> {
   /** Filters and sorts a child level. */
   prepare: (rows: readonly T[]) => readonly T[]
   isExpanded: (row: T) => boolean
-  /** Reads reactive eligibility only for rows whose keys are expanded. */
-  canExpand?: (row: T) => boolean
   /** Height of the row's detail row when expanded, or 0 for none. */
   detailHeight: (row: T, key: RowKey) => number
   /**
    * The expanded row's sub-grid container: its status (loading / error) or its children (before
    * filtering); undefined = no container.
    */
-  subRows: (row: T) => { status: 'loading' | 'error' } | { children: readonly T[] } | undefined
+  subRows: (
+    row: T,
+    key: RowKey,
+  ) => { status: 'loading' | 'error' } | { children: readonly T[] } | undefined
   /** Height of a sub-grid status row (measured or estimated). */
   statusHeight: (key: RowKey) => number
   /** Border + padding of a sub-grid container, above and below its rows. */
@@ -81,14 +82,13 @@ export function buildLayout<T>(input: LayoutInput<T>): LevelLayout<T> {
       if (input.isExpanded(row)) {
         const key = input.getKey(row)
         const current = wrap && row !== null && typeof row === 'object' ? (reactive(row) as T) : row
-        if (input.canExpand && !input.canExpand(current)) continue
         const d = input.detailHeight(current, key)
         if (d > 0) {
           detail[i] = d
           top += d
           count++
         }
-        const s = input.subRows(current)
+        const s = input.subRows(current, key)
         if (s && 'status' in s) {
           const height = input.statusHeight(key)
           sub.set(key, { kind: 'status', status: s.status, height })

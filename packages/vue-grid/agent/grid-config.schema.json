@@ -428,7 +428,17 @@
           "number"
         ]
       },
-      "description": "Keys of expanded rows (sub-grids and detail rows)."
+      "description": "Keys of expanded rows. Controls both sub-grids and details unless `detailExpanded` is set."
+    },
+    "detailExpanded": {
+      "type": "array",
+      "items": {
+        "type": [
+          "string",
+          "number"
+        ]
+      },
+      "description": "Keys of open detail panels. Pass an array (including `[]`) to control details separately."
     },
     "selected": {
       "type": "array",
@@ -607,9 +617,35 @@
           "type": "boolean",
           "description": "Can the user resize this column (column resizing feature)? Default `true`."
         },
+        "initialAutoSize": {
+          "type": "boolean",
+          "description": "Fit the column to its first rendered data and header, within the resize bounds (column resizing feature)."
+        },
         "group": {
           "type": "string",
           "description": "Header group label (column groups feature): adjacent visible columns with the same `group` share one header cell above their own headers."
+        },
+        "groupPath": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string",
+                "description": "Stable identifier within the parent group."
+              },
+              "label": {
+                "type": "string",
+                "description": "Visible label, which can change without changing the key."
+              }
+            },
+            "required": [
+              "key",
+              "label"
+            ],
+            "additionalProperties": false
+          },
+          "description": "Column header groups from outermost to innermost. Takes precedence over `group`."
         },
         "align": {
           "enum": [
